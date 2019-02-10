@@ -5,3 +5,4 @@ authors = ["François Cadeillan <francois@azsystem.fr>"]
 edition = "2018"
 
 [dependencies]
+clap = { features = ["yaml"] }

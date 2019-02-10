@@ -1,0 +1,19 @@
+name: FutureCommander
+version: "0.1.0"
+author: François Cadeillan <francois@azsystem.fr>
+about: Perform user-delayed filesystem operations
+subcommands:
+  - ls:
+      about: List content of a directory AFTER apply
+      args:
+        - path:
+            help: Directory to display
+            takes_value: true
+  - cd:
+      about: Change working directory
+      args:
+        - path:
+            help: Target directory
+            takes_value: true
+  - cwd:
+      about: Show current directory
