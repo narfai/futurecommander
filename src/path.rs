@@ -6,15 +6,6 @@ pub fn absolute(cwd: &Path, path: &Path) -> PathBuf {
     normalize(&cwd.join(path) )
 }
 
-#[test]
-fn test_absolute() {
-    use std::env;
-    let cwd: Path = env::current_dir().unwrap().as_path();
-    assert_eq!(absolute(&cwd, Path::from("././")).is_absolute(), true);
-    assert_eq!(absolute(&cwd, Path::from("/./")).is_absolute(), true);
-    assert_eq!(absolute(&cwd, Path::from("../")).is_absolute(), true);
-}
-
 /**
 * Thanks to ThatsGobbles ( https://github.com/ThatsGobbles ) for his solution : https://github.com/rust-lang/rfcs/issues/2208
 * This code will be removed when os::make_absolute will be marked as stable
