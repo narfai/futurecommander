@@ -112,24 +112,16 @@ impl Vfs {
             match self.hierarchy.get_mut(&parent) {
                 Some(children) => {
                     match children.get(&vpath) {
-                        Some(_) => {
-                            println!("{:?} exists => replacing in childs", vpath.clone());
-                            children.replace(vpath);
-                        },
-                        None => {
-                            println!("{:?} do not exists => inserting in childs", vpath.clone());
-                            children.insert(vpath);
-                        }
+                        Some(_) => { children.replace(vpath); },
+                        None => { children.insert(vpath); }
                     }
                 },
                 None => {
-                    println!("{:?} do not have a parent yet => create parent & inserting in its childs", vpath.clone());
                     let mut children: HashSet<VirtualPath> = HashSet::new();
                     children.insert(vpath);
                     self.hierarchy.insert(parent, children);
                 }
             }
-            println!("vfs : {:?}", &self);
         } else {
             panic!("YOU'RE TRYING TO ATTACH THE ROOT")
         }
@@ -201,10 +193,10 @@ fn vfs_is_consistent_over_async() {
 #[test]
 #[should_panic]
 fn vfs_do_not_ensure_parent_is_directory() {
-    /**
-        This test prove that vfs does not ensure or fail if we add a file which is supposed to contain files.
+    /*
+        This test prove that vfs does not ensure consistency or fail if we add a file which is supposed to contain files.
         We'll see how serious it could be.
-    **/
+    */
     let mut vfs = Vfs::new();
     let child = VirtualPath::from_str("/wrong/path", false);
     vfs.attach(child.clone());
