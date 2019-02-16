@@ -46,20 +46,18 @@ impl VirtualPath {
 
 #[test]
 fn is_path_buf_virtually_equal() {
-    let vpath1 = VirtualPath::from_path_buf(PathBuf::from("/intentionally/wrong/full/path"), true);
-    let vpath2 = VirtualPath::from_path_buf(PathBuf::from("/intentionally/wrong/full/path"), true);
+    let vpath1 = VirtualPath::from_str("/intentionally/wrong/full/path", true);
+    let vpath2 = VirtualPath::from_str("/intentionally/wrong/full/path", true);
     assert_eq!(vpath1.into_path_buf(), vpath2.into_path_buf());
 }
 
 #[test]
 fn is_path_buf_parent_virtually_equal() {
-    let parent = VirtualPath::from_path_buf(PathBuf::from("/intentionally/wrong/full/"), true);
-    let child = VirtualPath::from_path_buf(PathBuf::from("/intentionally/wrong/full/path"), true);
-    if let Some(child_parent) = child.parent() {
-        assert_eq!(parent.into_path_buf(), child_parent.into_path_buf());
-    } else {
-        panic!("Child has no parents");
-    }
+    let parent = VirtualPath::from_str("/intentionally/wrong/full/", true);
+    let child = VirtualPath::from_str("/intentionally/wrong/full/path", true);
+
+    let child_parent = child.parent().unwrap();
+    assert_eq!(parent.into_path_buf(), child_parent.into_path_buf());
 }
 
 //Rely on PathBuf implementation for identify & order VirtualPaths over Iterators
@@ -81,26 +79,24 @@ impl PartialEq for VirtualPath {
     }
 }
 
-
 #[test]
 fn is_virtual_path_virtually_equal() {
-    let vpath1 = VirtualPath::from_path_buf(PathBuf::from("/intentionally/wrong/full/path"), true);
-    let vpath2 = VirtualPath::from_path_buf(PathBuf::from("/intentionally/wrong/full/path"), true);
+    let vpath1 = VirtualPath::from_str("/intentionally/wrong/full/path", true);
+    let vpath2 = VirtualPath::from_str("/intentionally/wrong/full/path", true);
     assert_eq!(vpath1, vpath2);
 }
 
 #[test]
 fn is_virtual_path_parent_virtually_equal() {
-    let parent = VirtualPath::from_path_buf(PathBuf::from("/intentionally/wrong/full/"), true);
-    let child = VirtualPath::from_path_buf(PathBuf::from("/intentionally/wrong/full/path"), true);
-    if let Some(child_parent) = child.parent() {
-        assert_eq!(parent, child_parent);
-    } else {
-        panic!("Child has no parent");
-    }
+    let parent = VirtualPath::from_str("/intentionally/wrong/full/", true);
+    let child = VirtualPath::from_str("/intentionally/wrong/full/path", true);
+    let child_parent = child.parent().unwrap();
+    assert_eq!(parent, child_parent);
 }
 
+#[derive(Debug)]
 pub struct Vfs {
+    //TODO may it could be BTreeMap<PathBuf, HashSet<VirtualPath>> as long as key path is *always* a directory
     pub hierarchy: BTreeMap<VirtualPath, HashSet<VirtualPath>>
 }
 
@@ -117,17 +113,23 @@ impl Vfs {
                 Some(children) => {
                     match children.get(&vpath) {
                         Some(_) => {
-                            children.replace(vpath.clone());
+                            println!("{:?} exists => replacing in childs", vpath.clone());
+                            children.replace(vpath);
                         },
-                        None => { children.insert(vpath.clone()); }
+                        None => {
+                            println!("{:?} do not exists => inserting in childs", vpath.clone());
+                            children.insert(vpath);
+                        }
                     }
                 },
                 None => {
+                    println!("{:?} do not have a parent yet => create parent & inserting in its childs", vpath.clone());
                     let mut children: HashSet<VirtualPath> = HashSet::new();
-                    children.insert(vpath.clone());
+                    children.insert(vpath);
                     self.hierarchy.insert(parent, children);
                 }
             }
+            println!("vfs : {:?}", &self);
         } else {
             panic!("YOU'RE TRYING TO ATTACH THE ROOT")
         }
@@ -144,65 +146,74 @@ impl Vfs {
 }
 
 #[test]
-fn attach_child_to_root_then_find_it_in_children() {
+fn vfs_attach_child_to_root_then_find_it_in_children() {
     let mut vfs = Vfs::new();
-    let vpath = VirtualPath::from_path_buf(PathBuf::from("/wrong/path"), true);
-    let parent = VirtualPath::from_path_buf(PathBuf::from("/wrong"), true);
+    let vpath = VirtualPath::from_str("/wrong/path", true);
+    let parent = VirtualPath::from_str("/wrong", true);
 
     vfs.attach(vpath.clone());
 
-    if let Some(children) = vfs.children(parent.clone()) {
-        if let Some(same_vpath) = children.get(&(vpath.clone())) {
-            assert_eq!(vpath, same_vpath.clone());
-        } else {
-            panic!("No child found in set")
-        }
-    } else {
-        panic!("No children found")
-    }
+    let children= vfs.children(parent.clone()).unwrap();
+    let same_vpath = children.get(&(vpath.clone())).unwrap();
+    assert_eq!(vpath, same_vpath.clone());
 }
 
 #[test]
-fn update_a_child() {
+fn vfs_update_a_child() {
     let mut vfs = Vfs::new();
-    let vpath = VirtualPath::from_path_buf(PathBuf::from("/wrong/path"), true);
-    vfs.attach(vpath.clone());
+    {
+        let vpath = VirtualPath::from_str("/wrong/path", true);
+        vfs.attach(vpath.clone());
 
-    if let Some(parent) = vpath.parent() {
-        if let Some(children) = vfs.children(parent) {
-            if let Some(same_vpath) = children.get(&(vpath.clone())) {
-                assert_eq!(vpath, same_vpath.clone());
-                assert_eq!(same_vpath.is_dir(), true);
-            } else {
-                panic!("No child found in set")
-            }
-        } else {
-            panic!("No children found")
-        }
-    } else {
-        panic!("No parent found")
+        let parent = vpath.parent().unwrap();
+        let children = vfs.children(parent).unwrap();
+        let same_vpath = children.get(&(vpath.clone())).unwrap();
+        assert_eq!(vpath, same_vpath.clone());
+        assert_eq!(same_vpath.is_dir(), true);
     }
 
-    let new_vpath = VirtualPath::from_path_buf(PathBuf::from("/wrong/path"), false);
-    vfs.attach(new_vpath.clone());
+    {
+        let new_vpath = VirtualPath::from_str("/wrong/path", false);
+        vfs.attach(new_vpath.clone());
 
-    if let Some(parent) = new_vpath.parent() {
-        if let Some(children) = vfs.children(parent) {
-            if let Some(same_vpath) = children.get(&(new_vpath.clone())) {
-                assert_eq!(new_vpath, same_vpath.clone());
-                assert_eq!(same_vpath.is_dir(), false);
-            } else {
-                panic!("No child found in set")
-            }
-        } else {
-            panic!("No children found")
-        }
-    } else {
-        panic!("No parent found")
+        let parent = new_vpath.parent().unwrap();
+        let children = vfs.children(parent).unwrap();
+        let same_vpath = children.get(&(new_vpath.clone())).unwrap();
+
+        assert_eq!(new_vpath, same_vpath.clone());
+        assert_eq!(same_vpath.is_dir(), false);
     }
 }
 
-#[test]
-fn is_consistent_over_async() {
 
+#[test]
+fn vfs_is_consistent_over_async() {
+    let mut vfs = Vfs::new();
+    let child = VirtualPath::from_str("/wrong/path", false);
+    vfs.attach(child.clone());
+    let parent = VirtualPath::from_str("/wrong", true);
+    vfs.attach(parent.clone());
+
+    let owned_child = vfs.children(parent).unwrap().get(&(child)).unwrap();
+    assert_eq!(child, owned_child.clone());
+}
+
+#[test]
+#[should_panic]
+fn vfs_do_not_ensure_parent_is_directory() {
+    /**
+        This test prove that vfs does not ensure or fail if we add a file which is supposed to contain files.
+        We'll see how serious it could be.
+    **/
+    let mut vfs = Vfs::new();
+    let child = VirtualPath::from_str("/wrong/path", false);
+    vfs.attach(child.clone());
+    let parent = VirtualPath::from_str("/wrong", false);
+    vfs.attach(parent.clone());
+
+    let owned_child = vfs.children(parent.clone()).unwrap().get(&(child)).unwrap();
+    assert_eq!(child, owned_child.clone());
+
+    let owned_parent = vfs.children(VirtualPath::from_str("/", true)).unwrap().get(&(parent)).unwrap();
+    assert!(owned_parent.is_dir())
 }
