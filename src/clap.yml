@@ -17,3 +17,5 @@ subcommands:
             takes_value: true
   - cwd:
       about: Show current directory
+  - exit:
+      about: Exit program

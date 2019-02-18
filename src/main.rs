@@ -13,12 +13,13 @@ mod path;
 use path::absolute;
 
 mod vfs;
-use vfs::{Vfs, VirtualPath};
+use vfs::{VirtualFileSystem, VirtualPath};
 
+//TODO proper shell / file ui representation
 fn main() {
     let yaml = load_yaml!("clap.yml");
     let mut cwd: PathBuf = env::current_dir().unwrap();
-    let mut vfs = vfs::Vfs::new();
+    let mut vfs = VirtualFileSystem::new();
 
     loop {
         let mut input = String::new();
@@ -29,18 +30,18 @@ fn main() {
 
             match App::from_yaml(yaml).get_matches_from_safe(argv) {
                 Ok(matches) => {
-                    if let Some(matches) = matches.subcommand_matches("ls") {
-                        let path = PathBuf::from(matches.value_of("path").unwrap_or(cwd.to_str().unwrap()));
-                        path.as_path().read_dir()
-                            .and_then(|results: ReadDir| {
-                                for result in results {
-                                    let result= result.unwrap();
-                                    vfs.attach(VirtualPath::from_path_buf(result.path(), result.path().is_dir()))
-                                }
-                                Ok(())
-                            }).unwrap();
+                    if let Some(matches) = matches.subcommand_matches("exit") {
+                        break;
+                    }
 
-                        let children = vfs.children(VirtualPath::from_path_buf(path, true)).unwrap();
+                    if let Some(matches) = matches.subcommand_matches("ls") {
+                        let path = Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap()));
+
+                        vfs.read(path);
+
+                        let state = vfs.get_state();
+
+                        let children = state.children(&VirtualPath::from_path_buf(path.to_path_buf())).unwrap();
                         for child in children {
                             println!("VChild {:?}", child);
                         }
@@ -51,7 +52,11 @@ fn main() {
                     } else if let Some(matches) = matches.subcommand_matches("cd") {
                         let path = Path::new(matches.value_of("path").unwrap());
 
-                        if path.exists() && path.is_dir() {
+                        vfs.read(path);
+
+                        let state = vfs.get_state();
+
+                        if state.is_directory(&VirtualPath::from_path_buf(path.to_path_buf()),) {
                             cwd = absolute(&cwd.as_path(), &path).to_path_buf();
                             println!("{:?}", cwd);
                         } else {
@@ -70,10 +75,3 @@ fn main() {
         }
     }
 }
-
-
-#[test]
-fn it_works() {
-    assert_eq!(2 + 2, 4);
-}
-
