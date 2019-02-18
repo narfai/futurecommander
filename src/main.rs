@@ -1,18 +1,13 @@
 #[macro_use]
 extern crate clap;
 
-use std::path::{ PathBuf, Path, Component };
-use std::fs::{ ReadDir, DirEntry };
-use std::io::{stdin, stdout};
+use std::path::{ PathBuf, Path };
+use std::io::{stdin};
 
-use std::ffi::{ OsString, OsStr };
-
-use clap::App;
+use self::clap::App;
 use std::env;
 mod path;
 use path::absolute;
-
-mod vfs;
 use vfs::{VirtualFileSystem, VirtualPath};
 
 //TODO proper shell / file ui representation
