@@ -28,33 +28,21 @@ fn main() {
                     if let Some(_) = matches.subcommand_matches("exit") {
                         break;
                     }
-
-                    if let Some(matches) = matches.subcommand_matches("ls") {
+                    if let Some(matches) = matches.subcommand_matches("debug_vfs_state") {
+                        println!("{:#?}", vfs.get_state());
+                    } else if let Some(matches) = matches.subcommand_matches("ls") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
 
                         println!("{:#?}", path);
 
-                        vfs.read(path.as_path());
+                        let results = vfs.ls(VirtualPath::from_path_buf(path));
 
-                        let state = vfs.get_state();
-
-                        let cmp_path = VirtualPath::from_path_buf(path.to_path_buf());
-
-                        if state.is_directory(&cmp_path) {
-                            match state.children(&cmp_path) {
-                                Some(children) => {
-                                    for child in children {
-                                        println!("{:?} VChild {:?}", if state.is_directory(&child) {"DIRECTORY"} else {"FILE"}, child);
-                                    }
-                                },
-                                None => {
-                                    println!("No children");
-                                }
-                            };
+                        if results.is_empty() {
+                            println!("No children");
                         } else {
-                            vfs.read(path.parent().unwrap());
-                            let state = vfs.get_state();
-                            println!("FILE VChild {:?}", state.get(&cmp_path));
+                            for child in results.into_iter() {
+                                println!("{:?}", child);
+                            }
                         }
 
                     } else if let Some(matches) = matches.subcommand_matches("cp") {
@@ -72,7 +60,7 @@ fn main() {
                     } else if let Some(matches) = matches.subcommand_matches("cd") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap()));
 
-                        vfs.read(path.as_path());
+                        vfs.read_virtual(path.as_path());
 
                         let state = vfs.get_state();
 

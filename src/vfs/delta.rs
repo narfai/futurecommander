@@ -64,12 +64,12 @@ impl VirtualDelta {
         match path.parent() {
             Some(parent) => match self.hierarchy.get(&parent) {
                 Some(children) => {
-                    for child in children {
-                        if child == path {
-                            return Some(&child);
-                        }
+                    match children.get(path) {
+                        Some(child) => {
+                            Some(&child)
+                        },
+                        None => None
                     }
-                    return None;
                 }
                 None => None
             },
@@ -105,17 +105,10 @@ impl VirtualDelta {
     }
 
     pub fn is_file(&self, vpath: &VirtualPath) -> bool {
-        if let Some(parent) = vpath.parent() {
-            if let Some(children) = self.hierarchy.get(&parent) {
-                for child in children {
-                    if child == vpath {
-                        return !self.is_directory(&vpath);
-                    }
-                }
-            }
+        match self.get(vpath) {
+            Some(_) => !self.is_directory(&vpath),
+            None => false
         }
-
-        return false;
     }
 
     pub fn exists(&self, vpath: &VirtualPath) -> bool {
@@ -123,32 +116,6 @@ impl VirtualDelta {
     }
 }
 
-#[test]
-fn vfs_attach_child_to_root_then_find_it_in_children() {
-    let mut vfs = VirtualDelta::new();
-    let vpath = VirtualPath::from_str("/virtual/path");
-
-    vfs.attach(vpath.clone(), true);
-
-    let children= vfs.children(&VirtualPath::from_str("/virtual")).unwrap();
-    let same_vpath = children.get(&(vpath.clone())).unwrap();
-    assert_eq!(vpath, same_vpath.clone());
-}
-
-
-#[test]
-fn vfs_is_consistent_over_async() {
-    let mut vfs = VirtualDelta::new();
-
-    let child = VirtualPath::from_str("/virtual/path");
-    vfs.attach(child.clone(), false);
-
-    let parent = VirtualPath::from_str("/virtual");
-    vfs.attach(parent.clone(), true);
-
-    let owned_child = vfs.children(&parent).unwrap().get(&(child)).unwrap();
-    assert_eq!(child, owned_child.clone());
-}
 
 impl <'a, 'b> Add<&'b VirtualDelta> for &'a VirtualDelta {
     type Output = VirtualDelta;
@@ -178,42 +145,74 @@ impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
     }
 }
 
-#[test]
-fn add_a_vfs_to_another(){
-    let mut vfs_r = VirtualDelta::new();
-    vfs_r.attach(VirtualPath::from_str("/R/to_replace"), false);
-    vfs_r.attach(VirtualPath::from_str("/R/to_not_change"), false);
-    vfs_r.attach(VirtualPath::from_str("/R/to_complete"), true);
+#[cfg(test)]
+mod virtual_delta_tests {
+    use super::*;
 
-    let mut vfs_ra = VirtualDelta::new();
-    vfs_ra.attach(VirtualPath::from_str("/R/to_replace/A"), true);
-    vfs_ra.attach(VirtualPath::from_str("/R/to_not_change"), false);
-    vfs_ra.attach(VirtualPath::from_str("/R/to_complete/B"), false);
+    #[test]
+    fn virtual_delta_attach_child_to_root_then_find_it_in_children() {
+        let mut vfs = VirtualDelta::new();
+        let vpath = VirtualPath::from_str("/virtual/path");
 
-    let vfs_r_prime = &vfs_r + &vfs_ra;
-    assert!(vfs_r_prime.is_directory(&VirtualPath::from_str("/R")));
-    assert!(vfs_r_prime.is_directory(&VirtualPath::from_str("/R/to_replace")));
-    assert!(vfs_r_prime.is_directory(&VirtualPath::from_str("/R/to_complete")));
-    assert!(!vfs_r_prime.is_directory(&VirtualPath::from_str("/R/to_not_change")));
-    assert!(vfs_r_prime.exists(&VirtualPath::from_str("/R/to_replace/A")));
-    assert!(vfs_r_prime.exists(&VirtualPath::from_str("/R/to_complete/B")));
-}
+        vfs.attach(vpath.clone(), true);
 
-#[test]
-fn substract_a_vfs_from_another(){
-    let mut vfs_r = VirtualDelta::new();
-    vfs_r.attach(VirtualPath::from_str("/R/to_remove"), true);
-    vfs_r.attach(VirtualPath::from_str("/R/to_not_change"), false);
-    vfs_r.attach(VirtualPath::from_str("/R/to_not_change_dir/to_remove"), false);
+        let children= vfs.children(&VirtualPath::from_str("/virtual")).unwrap();
+        let same_vpath = children.get(&(vpath.clone())).unwrap();
+        assert_eq!(vpath, same_vpath.clone());
+    }
 
-    let mut vfs_rs = VirtualDelta::new();
-    vfs_rs.attach(VirtualPath::from_str("/R/to_remove"), true);
-    vfs_rs.attach(VirtualPath::from_str("/R/to_not_change_dir/to_remove"), false);
 
-    let vfs_r_prime = &vfs_r - &vfs_rs;
-    assert!(vfs_r_prime.is_directory(&VirtualPath::from_str("/R")));
-    assert!(!vfs_r_prime.is_directory(&VirtualPath::from_str("/R/to_not_change")));
-    assert!(vfs_r_prime.is_directory(&VirtualPath::from_str("/R/to_not_change_dir")));
-    assert!(!vfs_r_prime.exists(&VirtualPath::from_str("/R/to_remove")));
-    assert!(!vfs_r_prime.exists(&VirtualPath::from_str("/R/to_not_change_dir/to_remove")));
+    #[test]
+    fn virtual_delta_is_consistent_over_async() {
+        let mut vfs = VirtualDelta::new();
+
+        let child = VirtualPath::from_str("/virtual/path");
+        vfs.attach(child.clone(), false);
+
+        let parent = VirtualPath::from_str("/virtual");
+        vfs.attach(parent.clone(), true);
+
+        let owned_child = vfs.children(&parent).unwrap().get(&(child)).unwrap();
+        assert_eq!(child, owned_child.clone());
+    }
+
+    #[test]
+    fn virtual_delta_add_a_delta_to_another(){
+        let mut vfs_r = VirtualDelta::new();
+        vfs_r.attach(VirtualPath::from_str("/R/to_replace"), false);
+        vfs_r.attach(VirtualPath::from_str("/R/to_not_change"), false);
+        vfs_r.attach(VirtualPath::from_str("/R/to_complete"), true);
+
+        let mut vfs_ra = VirtualDelta::new();
+        vfs_ra.attach(VirtualPath::from_str("/R/to_replace/A"), true);
+        vfs_ra.attach(VirtualPath::from_str("/R/to_not_change"), false);
+        vfs_ra.attach(VirtualPath::from_str("/R/to_complete/B"), false);
+
+        let vfs_r_prime = &vfs_r + &vfs_ra;
+        assert!(vfs_r_prime.is_directory(&VirtualPath::from_str("/R")));
+        assert!(vfs_r_prime.is_directory(&VirtualPath::from_str("/R/to_replace")));
+        assert!(vfs_r_prime.is_directory(&VirtualPath::from_str("/R/to_complete")));
+        assert!(!vfs_r_prime.is_directory(&VirtualPath::from_str("/R/to_not_change")));
+        assert!(vfs_r_prime.exists(&VirtualPath::from_str("/R/to_replace/A")));
+        assert!(vfs_r_prime.exists(&VirtualPath::from_str("/R/to_complete/B")));
+    }
+
+    #[test]
+    fn virtual_delta_substract_a_delta_from_another(){
+        let mut vfs_r = VirtualDelta::new();
+        vfs_r.attach(VirtualPath::from_str("/R/to_remove"), true);
+        vfs_r.attach(VirtualPath::from_str("/R/to_not_change"), false);
+        vfs_r.attach(VirtualPath::from_str("/R/to_not_change_dir/to_remove"), false);
+
+        let mut vfs_rs = VirtualDelta::new();
+        vfs_rs.attach(VirtualPath::from_str("/R/to_remove"), true);
+        vfs_rs.attach(VirtualPath::from_str("/R/to_not_change_dir/to_remove"), false);
+
+        let vfs_r_prime = &vfs_r - &vfs_rs;
+        assert!(vfs_r_prime.is_directory(&VirtualPath::from_str("/R")));
+        assert!(!vfs_r_prime.is_directory(&VirtualPath::from_str("/R/to_not_change")));
+        assert!(vfs_r_prime.is_directory(&VirtualPath::from_str("/R/to_not_change_dir")));
+        assert!(!vfs_r_prime.exists(&VirtualPath::from_str("/R/to_remove")));
+        assert!(!vfs_r_prime.exists(&VirtualPath::from_str("/R/to_not_change_dir/to_remove")));
+    }
 }
