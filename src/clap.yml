@@ -19,3 +19,18 @@ subcommands:
       about: Show current directory
   - exit:
       about: Exit program
+  - cp:
+      about: Virtually copy a file to a directory
+      args:
+      - source:
+            help: Source file or directory to copy
+            takes_value: true
+      - destination:
+            help: Destination directory
+            takes_value: true
+  - rm:
+      about: Virtually delete a file or directory
+      args:
+      - path:
+            help: Source file or directory to delete
+            takes_value: true

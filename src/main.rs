@@ -30,35 +30,59 @@ fn main() {
 
             match App::from_yaml(yaml).get_matches_from_safe(argv) {
                 Ok(matches) => {
-                    if let Some(matches) = matches.subcommand_matches("exit") {
+                    if let Some(_) = matches.subcommand_matches("exit") {
                         break;
                     }
 
                     if let Some(matches) = matches.subcommand_matches("ls") {
-                        let path = Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap()));
+                        let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
 
-                        vfs.read(path);
+                        println!("{:#?}", path);
+
+                        vfs.read(path.as_path());
 
                         let state = vfs.get_state();
 
-                        let children = state.children(&VirtualPath::from_path_buf(path.to_path_buf())).unwrap();
-                        for child in children {
-                            println!("VChild {:?}", child);
+                        let cmp_path = VirtualPath::from_path_buf(path.to_path_buf());
+
+                        if state.is_directory(&cmp_path) {
+                            match state.children(&cmp_path) {
+                                Some(children) => {
+                                    for child in children {
+                                        println!("{:?} VChild {:?}", if state.is_directory(&child) {"DIRECTORY"} else {"FILE"}, child);
+                                    }
+                                },
+                                None => {
+                                    println!("No children");
+                                }
+                            };
+                        } else {
+                            vfs.read(path.parent().unwrap());
+                            let state = vfs.get_state();
+                            println!("FILE VChild {:?}", state.get(&cmp_path));
                         }
 
-                    } else if let Some(matches) = matches.subcommand_matches("cwd") {
-                        println!("{:?}", cwd)
+                    } else if let Some(matches) = matches.subcommand_matches("cp") {
+                        let source = absolute(cwd.as_path(),Path::new(matches.value_of("source").unwrap()));
+                        let destination = absolute(cwd.as_path(), Path::new(matches.value_of("destination").unwrap()));
+                        vfs.copy(
+                            VirtualPath::from_path_buf(source),
+                            VirtualPath::from_path_buf(destination)
+                        );
+
+                    } else if let Some(matches) = matches.subcommand_matches("rm") {
+                        let path = absolute(cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
+                        vfs.rm(&VirtualPath::from_path_buf(path));
 
                     } else if let Some(matches) = matches.subcommand_matches("cd") {
-                        let path = Path::new(matches.value_of("path").unwrap());
+                        let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap()));
 
-                        vfs.read(path);
+                        vfs.read(path.as_path());
 
                         let state = vfs.get_state();
 
                         if state.is_directory(&VirtualPath::from_path_buf(path.to_path_buf()),) {
-                            cwd = absolute(&cwd.as_path(), &path).to_path_buf();
-                            println!("{:?}", cwd);
+                            cwd = path;
                         } else {
                             println!("Target does not exists or is not a directory");
                         }
