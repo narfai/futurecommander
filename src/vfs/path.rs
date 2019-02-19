@@ -1,4 +1,3 @@
-use crate::delta::VirtualDelta;
 use std::cmp::Ordering;
 use std::path::{ PathBuf, Path };
 use std::ffi::{ OsStr };
@@ -29,6 +28,17 @@ impl VirtualPath {
         }
     }
 
+    pub fn get_path(&self) -> PathBuf {
+        self.path.clone()
+    }
+
+    pub fn get_source(&self) -> Option<PathBuf> {
+        match &self.source {
+            Some(source) => Some(source.to_path_buf()),
+            None => None
+        }
+    }
+
     pub fn file_name(&self) -> &OsStr {
         self.path.file_name().unwrap()
     }
@@ -37,11 +47,8 @@ impl VirtualPath {
         VirtualPath::from_path_buf(self.path.join(node_name))
     }
 
-    pub fn parent(&self) -> Option<VirtualPath> {
-        match self.path.parent() {
-            Some(parent) => Some(VirtualPath::from_path_buf(parent.to_path_buf())),
-            None => None
-        }
+    pub fn parent(&self) -> Option<&Path> {
+        self.path.parent()
     }
 
     pub fn from_path_buf(path: PathBuf) -> VirtualPath {
@@ -66,6 +73,17 @@ impl VirtualPath {
         }
     }
 
+    pub fn from_path(path: &Path) -> VirtualPath {
+        if path.is_relative() {
+            panic!("Does not supports relative paths");
+        }
+
+        VirtualPath {
+            path: path.to_path_buf(),
+            source: None
+        }
+    }
+
     pub fn from(path: PathBuf, source: Option<PathBuf>) -> VirtualPath {
         if path.is_relative() {
             panic!("Does not supports relative paths");
@@ -80,8 +98,12 @@ impl VirtualPath {
         PathBuf::from(self.path)
     }
 
+    pub fn to_path_buf(&self) -> PathBuf {
+        PathBuf::from(self.path.to_path_buf())
+    }
+
     pub fn with_new_parent(&self, new_parent: &Path) -> VirtualPath {
-        let stripped = self.path.as_path().strip_prefix(self.parent().unwrap().as_path()).unwrap();
+        let stripped = self.path.as_path().strip_prefix(self.parent().unwrap()).unwrap();
         VirtualPath {
             path: new_parent.join(stripped).to_path_buf(),
             source: None
@@ -122,7 +144,7 @@ mod virtual_path_tests {
     fn virtual_path_is_path_buf_virtually_equal() {
         let vpath1 = VirtualPath::from_str("/intentionally/virtual/full/path");
         let vpath2 = VirtualPath::from_str("/intentionally/virtual/full/path");
-        assert_eq!(vpath1.into_path_buf(), vpath2.into_path_buf());
+        assert_eq!(vpath1.get_path(), vpath2.get_path());
     }
 
     #[test]
@@ -130,8 +152,8 @@ mod virtual_path_tests {
         let parent = VirtualPath::from_str("/intentionally/virtual/full/");
         let child = VirtualPath::from_str("/intentionally/virtual/full/path");
 
-        let child_parent = child.parent().unwrap();
-        assert_eq!(parent.into_path_buf(), child_parent.into_path_buf());
+        let child_parent = child.parent().unwrap().to_path_buf();
+        assert_eq!(parent.get_path(), child_parent);
     }
 
     #[test]
@@ -145,7 +167,7 @@ mod virtual_path_tests {
     fn virtual_path_parent_virtually_equal() {
         let parent = VirtualPath::from_str("/intentionally/virtual/full/");
         let child = VirtualPath::from_str("/intentionally/virtual/full/path");
-        let child_parent = child.parent().unwrap();
+        let child_parent = VirtualPath::from_path(child.parent().unwrap());
         assert_eq!(parent, child_parent);
     }
 
@@ -169,3 +191,4 @@ mod virtual_path_tests {
         assert_eq!(calculate_hash(&vpath1), calculate_hash(&vpath2));
     }
 }
+

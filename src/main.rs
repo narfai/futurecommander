@@ -8,7 +8,7 @@ use self::clap::App;
 use std::env;
 mod path;
 use path::absolute;
-use vfs::{VirtualFileSystem, VirtualPath};
+use vfs::{VirtualFileSystem};
 
 //TODO proper shell / file ui representation
 fn main() {
@@ -28,14 +28,14 @@ fn main() {
                     if let Some(_) = matches.subcommand_matches("exit") {
                         break;
                     }
-                    if let Some(matches) = matches.subcommand_matches("debug_vfs_state") {
+                    if let Some(_matches) = matches.subcommand_matches("debug_vfs_state") {
                         println!("{:#?}", vfs.get_state());
                     } else if let Some(matches) = matches.subcommand_matches("ls") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
 
                         println!("{:#?}", path);
 
-                        let results = vfs.ls(VirtualPath::from_path_buf(path));
+                        let results = vfs.ls(path.as_path());
 
                         if results.is_empty() {
                             println!("No children");
@@ -49,13 +49,13 @@ fn main() {
                         let source = absolute(cwd.as_path(),Path::new(matches.value_of("source").unwrap()));
                         let destination = absolute(cwd.as_path(), Path::new(matches.value_of("destination").unwrap()));
                         vfs.copy(
-                            VirtualPath::from_path_buf(source),
-                            VirtualPath::from_path_buf(destination)
+                            source.as_path(),
+                            destination.as_path()
                         );
 
                     } else if let Some(matches) = matches.subcommand_matches("rm") {
                         let path = absolute(cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
-                        vfs.rm(&VirtualPath::from_path_buf(path));
+                        vfs.rm(path.as_path());
 
                     } else if let Some(matches) = matches.subcommand_matches("cd") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap()));
@@ -64,7 +64,7 @@ fn main() {
 
                         let state = vfs.get_state();
 
-                        if state.is_directory(&VirtualPath::from_path_buf(path.to_path_buf()),) {
+                        if state.is_directory(path.as_path()) {
                             cwd = path;
                         } else {
                             println!("Target does not exists or is not a directory");

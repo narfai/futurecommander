@@ -20,6 +20,9 @@
 
 ## Optimization performances and readability
 
+
+* Vpath.path => Vpath.identity
+* Makes VirtualPath & Path / PathBuf comparable
 * VirtualPath slices : Actuellement les PathBuf et Vpath sont clonés A CHAQUE FOIS
 * interfaçage propre en Result, Attach, Detach, Read, Rm, Copy, Move
 * proper logs & errors
