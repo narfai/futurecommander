@@ -35,14 +35,11 @@ fn main() {
 
                         println!("{:#?}", path);
 
-                        let results = vfs.ls(path.as_path());
-
-                        if results.is_empty() {
-                            println!("No children");
-                        } else {
-                            for child in results.into_iter() {
+                        match vfs.ls(path.as_path()) {
+                            Some(results) => for child in results.into_iter() {
                                 println!("{:?}", child);
-                            }
+                            },
+                            None => println!("No children")
                         }
 
                     } else if let Some(matches) = matches.subcommand_matches("cp") {

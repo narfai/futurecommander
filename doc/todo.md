@@ -21,8 +21,10 @@
 ## Optimization performances and readability
 
 
-* Vpath.path => Vpath.identity
-* Makes VirtualPath & Path / PathBuf comparable
+* find a way that vdelta + or += plays with references
+* proper to_state, as_state
+* Vpath.path => Vpath.identity OK
+* Vdelta += Vdelta
 * VirtualPath slices : Actuellement les PathBuf et Vpath sont clonés A CHAQUE FOIS
 * interfaçage propre en Result, Attach, Detach, Read, Rm, Copy, Move
 * proper logs & errors

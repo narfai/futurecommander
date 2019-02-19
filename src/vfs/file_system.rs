@@ -44,47 +44,47 @@ impl VirtualFileSystem {
     }
     //pub fn is_virtual(&self, path: &Path) -> bool
 
-    pub fn convert_to_real_path(&self, path: &Path) -> Option<PathBuf> {
-        let state = self.get_state();
-        match state.get(path) {
-            Some(vpath) => Some(vpath.as_source_path().to_path_buf()),
+    pub fn convert_to_real_path(&self, identity: &Path) -> Option<PathBuf> {
+        match self.get_state().get(identity) {
+            Some(virtual_identity) => Some(virtual_identity.to_referent_source()),
             None => None
         }
     }
 
     //TODO -> Result ?
-    pub fn read_virtual(&mut self, path: &Path) {
+    pub fn read_virtual(&mut self, identity: &Path) {
         //To reduce fs read and keep self.real with a consistent state
         //if self.is_virtual(path) {
-        if let Some(real_path) = self.convert_to_real_path(path) {
-            if path != real_path {
+        if let Some(real_identity) = self.convert_to_real_path(identity) {
+            if identity != real_identity {
 //                println!("CONVERT {:?} TO {:?}", path, real_path);
-                if real_path.as_path().is_dir() {
-                    self.read(real_path.as_path(), Some(path));
+                if real_identity.as_path().is_dir() {
+                    self.read(real_identity.as_path(), Some(identity));
                 }
             }
         }
-        if path.is_dir() {
-            self.read(path, None);
+        if identity.is_dir() {
+            self.read(identity, None);
         }
     }
 
-    pub fn read(&mut self, path: &Path, virtual_parent: Option<&Path>){
+    pub fn read(&mut self, identity: &Path, virtual_parent: Option<&Path>){
         println!("FS READ");
-        path.read_dir().and_then(|results: ReadDir| {
+        identity.read_dir().and_then(|results: ReadDir| {
             for result in results {
                 match result {
                     Ok(result) => {
                         let virtual_path = match virtual_parent {
                             Some(parent) => {
-                                let vpath = VirtualPath::from_path_buf(result.path());
+                                let virtual_path = VirtualPath::from_path_buf(result.path())
+                                    .with_new_parent(parent);
 //                                    println!("VIRTUALLY ADD FROM FS : PARENT {:?}, NEW PATH: {:?}", parent, vpath.with_new_parent(parent));
-                                self.add.attach(vpath.with_new_parent(parent).get_path(), vpath.get_source(), result.path().is_dir());
-                                vpath
+                                self.add.attach_virtual( &virtual_path, result.path().is_dir());
+                                virtual_path
                             },
                             None => VirtualPath::from_path_buf(result.path())
                         };
-                        self.real.attach(virtual_path.get_path(), virtual_path.get_source(), result.path().is_dir());
+                        self.real.attach_virtual(&virtual_path, result.path().is_dir());
                     },
                     Err(error) => { println!("{:?}", error); }
                 };
@@ -99,89 +99,102 @@ impl VirtualFileSystem {
 
 
     //TODO -> Result
-    pub fn rm(&mut self, path: &Path) {
-        self.read_virtual(path);
-        self.read_virtual(path.parent().unwrap());
+    pub fn rm(&mut self, identity: &Path) {
+        self.read_virtual(identity);
+        self.read_virtual(identity.parent().unwrap());
         let state = self.get_state();
-        if state.exists(path) {
-            let mut sub_delta = VirtualDelta::new();
-            for child in state.walk(path) {
-                sub_delta.attach(child.to_path_buf(), state.get(child).unwrap().get_source(), state.is_directory(&child));
+        match state.get(identity) {
+            Some(virtual_existing) => {
+                let mut sub_delta = VirtualDelta::new();
+                for virtual_child in state.walk(identity) {
+                    sub_delta.attach_virtual(
+                        virtual_child,
+                        state.is_directory(virtual_child.as_identity())
+                    );
+                }
+                sub_delta.attach_virtual(
+                    virtual_existing,
+                    state.is_directory(virtual_existing.as_identity())
+                );
+                self.sub = &self.sub + &sub_delta;
+                self.add = &self.add - &sub_delta;
+            },
+            None => {
+                println!("No such file or directory");
             }
-            sub_delta.attach(path.to_path_buf(), state.get(path).unwrap().get_source(), state.is_directory(&path));
-            self.sub = &self.sub + &sub_delta;
-            self.add = &self.add - &sub_delta;
-        } else {
-            println!("No such file or directory");
         }
     }
 
     //TODO -> Result
-    pub fn copy(&mut self, source: &Path, destination: &Path) {
-        self.read_virtual(source);
-        self.read_virtual(destination);
-        if let Some(parent) = destination.parent() {
+    pub fn copy(&mut self, source_identity: &Path, destination_identity: &Path) {
+        self.read_virtual(source_identity);
+        self.read_virtual(destination_identity);
+        if let Some(parent) = destination_identity.parent() {
             self.read_virtual(parent);
         }
 
         let state = self.get_state();
-        if !state.exists(&source) {
-            panic!("Source {:?} does not exists", source);
-        } else if !state.is_directory(destination) {
-            panic!("Destination {:?} isnt a directory", destination);
-        } else {
-            let mut add_delta = VirtualDelta::new();
+        match state.get(source_identity) {
+            Some(virtual_source) => {
+                match state.get(destination_identity) {
+                    Some(virtual_destination) => {
+                        if !state.is_directory(virtual_destination.as_identity()) {
+                            panic!("Destination {:?} isnt a directory", virtual_destination);
+                        }
+                        let mut add_delta = VirtualDelta::new();
+                        let virtual_new = virtual_destination
+                            .join(virtual_source.file_name())
+                            .with_source(Some(virtual_source.as_referent_source()));
 
-            let owned_destination = state.get(destination).unwrap().as_path();
-            let owned_source = state.get(&source).unwrap();
+                        add_delta.attach_virtual(
+                            &virtual_new,
+                            state.is_directory(virtual_source.as_identity())
+                        );
 
-            let src_parent = owned_source.as_source_path();
-            let dst_parent = owned_destination.join(source.file_name().unwrap());
+                        for virtual_child in state.walk(virtual_source.as_identity()) {
+                            let virtual_new_child = virtual_child.clone()
+                                .with_new_parent(virtual_new.as_identity())
+                                .with_source(Some(virtual_child.as_referent_source()));
 
-            if state.exists(dst_parent.as_path()) {
-                println!("Destination file virtually exists : {:?}", dst_parent);
-            } else {
-                add_delta.attach(
-                    dst_parent.to_path_buf(),
-                    Some(src_parent.to_path_buf()),
-                    state.is_directory(&source)
-                );
+                            add_delta.attach_virtual(
+                                &virtual_new_child,
+                                state.is_directory(virtual_child.as_identity())
+                            );
+                        }
 
-                for child_path in state.walk(&source) {
-                    let src = state.get(&child_path).unwrap().as_source_path();
-                    let dst = VirtualPath::from_path(child_path).with_new_parent(dst_parent.as_path()).as_path().to_path_buf();
-                    add_delta.attach(
-                        dst,
-                        Some(src.to_path_buf()),
-                        state.is_directory(src)
-                    );
+                        self.add = &self.add + &add_delta;
+                        self.sub = &self.sub - &add_delta;
+                    },
+                    None => { panic!("Destination {:?} does not exists", destination_identity); }
                 }
-
-                self.add = &self.add + &add_delta;
-                self.sub = &self.sub - &add_delta;
-            }
+            },
+            None => { panic!("Source {:?} does not exists", source_identity); }
         }
     }
 
-    pub fn ls(&mut self, path: &Path) -> Vec<LsResult>{
-        self.read_virtual(path);
+    pub fn ls(&mut self, identity: &Path) -> Option<Vec<LsResult>>{
+        self.read_virtual(identity);
 
         let state = self.get_state();
         let mut result_set : Vec<LsResult> = Vec::new();
 
-        if state.is_directory(path) {
-            if let Some(children) = state.children(path) {
+        if state.is_directory(identity) {
+            if let Some(children) = state.children(identity) {
                 for child in children {
-                    result_set.push(LsResult::from(&child, state.is_directory(child.as_path())));
+                    result_set.push(LsResult::from(&child, state.is_directory(child.as_identity())));
                 }
             }
-        } else {
-            self.read_virtual(path.parent().unwrap());
-            if let Some(child) = state.get(path) {
-                result_set.push(LsResult::from(&child, state.is_directory(child.as_path())));
+        } else if let Some(parent) = identity.parent() {
+            self.read_virtual(parent);
+            if let Some(child) = state.get(identity) {
+                result_set.push(LsResult::from(&child, state.is_directory(child.as_identity())));
             }
         }
-        result_set
+        if result_set.is_empty() {
+            None
+        } else {
+            Some(result_set)
+        }
     }
 }
 
@@ -230,6 +243,7 @@ mod virtual_file_system_tests {
     fn virtual_file_system_copy(){
         let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
         let mut vfs = VirtualFileSystem::new();
+
         vfs.read_virtual(sample_path.as_path());
 
         vfs.copy(
@@ -237,10 +251,15 @@ mod virtual_file_system_tests {
             sample_path.join(&Path::new("A")).as_path()
         );
 
-        let results = vfs.ls(sample_path.join(&Path::new("A/B/D")).as_path());
-        assert!(!results.is_empty());
-        assert!(results.contains(&LsResult::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/E"))), true)));
-        assert!(results.contains(&LsResult::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/G"))), true)));
+        match vfs.ls(sample_path.join(&Path::new("A/B/D")).as_path()) {
+            Some(results) => {
+                assert!(!results.is_empty());
+                assert!(results.contains(&LsResult::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/E"))), true)));
+                assert!(results.contains(&LsResult::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/G"))), true)));
+            },
+            None => { panic!("No results") }
+        }
+
     }
 
     #[test]
@@ -252,7 +271,7 @@ mod virtual_file_system_tests {
         let real_source = VirtualPath::from_path_buf(sample_path.join(&Path::new("F")));
 
         vfs.copy(
-            real_source.as_path(),
+            real_source.as_identity(),
             sample_path.join(&Path::new("A")).as_path()
         );
         vfs.copy(
@@ -264,9 +283,12 @@ mod virtual_file_system_tests {
             sample_path.join(&Path::new("B/D/E")).as_path()
         );
 
-        let results = vfs.ls(sample_path.join(&Path::new("B/D/E")).as_path());
-
-        assert!(!results.is_empty());
-        assert!(results.contains(&LsResult::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))), false)));
+        match vfs.ls(sample_path.join(&Path::new("B/D/E")).as_path()) {
+            Some(results) => {
+                assert!(!results.is_empty());
+                assert!(results.contains(&LsResult::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))), false)));
+            },
+            None => { panic!("No results"); }
+        }
     }
 }
