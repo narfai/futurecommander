@@ -2,11 +2,11 @@
 
 ## Feature
 
-* gérer le move
-* mkdir
-* touch
+* gérer le move OK
+* mkdir OK
+* touch OK
 * tree
-* create ( store created files into tmp space )
+* edit ( store file modification files into tmp space )
 * apply des opérations ( déduire les opérations des delta )
 
 ## Tests

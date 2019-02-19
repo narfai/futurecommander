@@ -55,10 +55,10 @@ impl VirtualDelta {
                 Some(children) => {
                     match children.get(&virtual_path) {
                         Some(_) => { children.remove(&virtual_path); },
-                        None => {/*TODO should log debug : there is no such file defined in btree childs*/}
+                        None => { println!("Detach : there is no such file defined in btree childs"); }
                     }
                 },
-                None => {/*TODO should log debug : the parent dir is empty*/}
+                None => { println!("Detach : the parent dir is empty"); }
             }
         }
 

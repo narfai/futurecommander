@@ -14,7 +14,7 @@ pub struct LsResult {
 
 impl PartialEq for LsResult {
     fn eq(&self, other: &LsResult) -> bool {
-        self.path.eq(&other.path)
+        self.path.eq(&other.path) && self.is_directory.eq(&other.is_directory)
     }
 }
 
@@ -172,6 +172,34 @@ impl VirtualFileSystem {
         }
     }
 
+    pub fn mv(&mut self, source_identity: &Path, destination_identity: &Path) {
+        self.copy(source_identity, destination_identity);
+        self.rm(source_identity);
+    }
+
+    fn create(&mut self, identity: &Path, is_directory: bool) {
+        self.read_virtual(identity);
+        let state = self.get_state();
+        match state.get(identity) {
+            Some(virtual_existing) => { println!("Already exists {:?}", virtual_existing); },
+            None => {
+                self.add.attach(
+                    identity,
+                    None,
+                    is_directory
+                );
+            }
+        }
+    }
+
+    pub fn mkdir(&mut self, identity: &Path) {
+        self.create(identity, true)
+    }
+
+    pub fn touch(&mut self, identity: &Path) {
+        self.create(identity, false)
+    }
+
     pub fn ls(&mut self, identity: &Path) -> Option<Vec<LsResult>>{
         self.read_virtual(identity);
 
@@ -287,6 +315,73 @@ mod virtual_file_system_tests {
             Some(results) => {
                 assert!(!results.is_empty());
                 assert!(results.contains(&LsResult::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))), false)));
+            },
+            None => { panic!("No results"); }
+        }
+    }
+
+    #[test]
+    fn virtual_file_system_mv(){
+        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
+        let mut vfs = VirtualFileSystem::new();
+        vfs.read_virtual(sample_path.as_path());
+
+        let real_source = VirtualPath::from_path_buf(sample_path.join(&Path::new("F")));
+
+        vfs.mv(
+            real_source.as_identity(),
+            sample_path.join(&Path::new("A")).as_path()
+        );
+        vfs.mv(
+            sample_path.join(&Path::new("A/F")).as_path(),
+            sample_path.join(&Path::new("B")).as_path()
+        );
+        vfs.mv(
+            sample_path.join(&Path::new("B/F")).as_path(),
+            sample_path.join(&Path::new("B/D/E")).as_path()
+        );
+
+        match vfs.ls(sample_path.join(&Path::new("B/D/E")).as_path()) {
+            Some(results) => {
+                assert!(!results.is_empty());
+                assert!(results.contains(&LsResult::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))), false)));
+            },
+            None => { panic!("No results"); }
+        }
+
+        assert!(vfs.ls(sample_path.join(&Path::new("F")).as_path()).is_none());
+        assert!(vfs.ls(sample_path.join(&Path::new("A/F")).as_path()).is_none());
+        assert!(vfs.ls(sample_path.join(&Path::new("B/F")).as_path()).is_none());
+    }
+
+    #[test]
+    fn virtual_file_system_mkdir(){
+        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
+        let mut vfs = VirtualFileSystem::new();
+        vfs.read_virtual(sample_path.as_path());
+
+        vfs.mkdir(sample_path.join(&Path::new("B/D/E/MKDIRED")).as_path());
+        match vfs.ls(sample_path.join(&Path::new("B/D/E")).as_path()) {
+            Some(results) => {
+                println!("{:?}", results);
+                assert!(!results.is_empty());
+                assert!(results.contains(&LsResult::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/MKDIRED"))), true)));
+            },
+            None => { panic!("No results"); }
+        }
+    }
+
+    #[test]
+    fn virtual_file_system_touch(){
+        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
+        let mut vfs = VirtualFileSystem::new();
+        vfs.read_virtual(sample_path.as_path());
+
+        vfs.touch(sample_path.join(&Path::new("B/D/E/TOUCHED")).as_path());
+        match vfs.ls(sample_path.join(&Path::new("B/D/E")).as_path()) {
+            Some(results) => {
+                assert!(!results.is_empty());
+                assert!(results.contains(&LsResult::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/TOUCHED"))), false)));
             },
             None => { panic!("No results"); }
         }
