@@ -27,6 +27,7 @@
 * Vdelta += Vdelta
 * VirtualPath slices : Actuellement les PathBuf et Vpath sont clonés A CHAQUE FOIS
 * interfaçage propre en Result, Attach, Detach, Read, Rm, Copy, Move
+* Retourner dans l'objet de retour le FS READ COUNT
 * proper logs & errors
 * handle unwrap
 * Gestion de PathId pour indexer les path en sized a travers l'ensemble du vfs ( et plus seulement les deltas )

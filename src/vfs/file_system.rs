@@ -177,27 +177,29 @@ impl VirtualFileSystem {
         self.rm(source_identity);
     }
 
-    fn create(&mut self, identity: &Path, is_directory: bool) {
+    pub fn mkdir(&mut self, identity: &Path) {
         self.read_virtual(identity);
-        let state = self.get_state();
-        match state.get(identity) {
+        match self.get_state().get(identity) {
             Some(virtual_existing) => { println!("Already exists {:?}", virtual_existing); },
             None => {
                 self.add.attach(
                     identity,
                     None,
-                    is_directory
+                    true
                 );
             }
         }
     }
 
-    pub fn mkdir(&mut self, identity: &Path) {
-        self.create(identity, true)
-    }
-
     pub fn touch(&mut self, identity: &Path) {
-        self.create(identity, false)
+        self.read_virtual(identity);
+        if !self.get_state().exists(identity) {
+            self.add.attach(
+                identity,
+                None,
+                false
+            );
+        }
     }
 
     pub fn ls(&mut self, identity: &Path) -> Option<Vec<LsResult>>{
