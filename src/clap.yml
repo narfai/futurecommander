@@ -28,11 +28,32 @@ subcommands:
       - destination:
             help: Destination directory
             takes_value: true
+  - mv:
+      about: Virtually move a file to a directory
+      args:
+      - source:
+            help: Source file or directory to move
+            takes_value: true
+      - destination:
+            help: Destination directory
+            takes_value: true
   - rm:
       about: Virtually delete a file or directory
       args:
       - path:
             help: Source file or directory to delete
+            takes_value: true
+  - mkdir:
+      about: Virtually create an empty directory
+      args:
+      - path:
+            help: Path of the new directory
+            takes_value: true
+  - touch:
+      about: Virtually create an empty file
+      args:
+      - path:
+            help: Path of the new file
             takes_value: true
   - debug_vfs_state:
       about: show vfs current state

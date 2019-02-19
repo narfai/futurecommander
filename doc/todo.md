@@ -8,6 +8,11 @@
 * tree
 * edit ( store file modification files into tmp space )
 * apply des opérations ( déduire les opérations des delta )
+* shell auto-complete
+
+## Bugs
+
+* Dangling virtual cwd
 
 ## Tests
 
@@ -20,7 +25,7 @@
 
 ## Optimization performances and readability
 
-
+* .is_virtual() optimization
 * find a way that vdelta + or += plays with references
 * proper to_state, as_state
 * Vpath.path => Vpath.identity OK

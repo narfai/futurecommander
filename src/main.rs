@@ -2,7 +2,8 @@
 extern crate clap;
 
 use std::path::{ PathBuf, Path };
-use std::io::{stdin};
+use std::io::{stdin, stdout};
+use std::io::Write;
 
 use self::clap::App;
 use std::env;
@@ -16,10 +17,12 @@ fn main() {
     let mut cwd: PathBuf = env::current_dir().unwrap();
     let mut vfs = VirtualFileSystem::new();
 
+    print!("> ");
     loop {
+        stdout().flush();
         let mut input = String::new();
-        print!("> ");
         if let Ok(_) =  stdin().read_line(&mut input) {
+            println!("\n");
             let mut argv = vec!["futurecommander"];
             argv.extend(input.trim().split(" "));
 
@@ -33,15 +36,12 @@ fn main() {
                     } else if let Some(matches) = matches.subcommand_matches("ls") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
 
-                        println!("{:#?}", path);
-
                         match vfs.ls(path.as_path()) {
                             Some(results) => for child in results.into_iter() {
                                 println!("{:?}", child);
                             },
                             None => println!("No children")
                         }
-
                     } else if let Some(matches) = matches.subcommand_matches("cp") {
                         let source = absolute(cwd.as_path(),Path::new(matches.value_of("source").unwrap()));
                         let destination = absolute(cwd.as_path(), Path::new(matches.value_of("destination").unwrap()));
@@ -49,10 +49,23 @@ fn main() {
                             source.as_path(),
                             destination.as_path()
                         );
-
+                    } else if let Some(matches) = matches.subcommand_matches("mv") {
+                        let source = absolute(cwd.as_path(),Path::new(matches.value_of("source").unwrap()));
+                        let destination = absolute(cwd.as_path(), Path::new(matches.value_of("destination").unwrap()));
+                        vfs.mv(
+                            source.as_path(),
+                            destination.as_path()
+                        );
                     } else if let Some(matches) = matches.subcommand_matches("rm") {
                         let path = absolute(cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
                         vfs.rm(path.as_path());
+                    } else if let Some(matches) = matches.subcommand_matches("mkdir") {
+                        let path = absolute(cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
+                        vfs.mkdir(path.as_path());
+
+                    } else if let Some(matches) = matches.subcommand_matches("touch") {
+                        let path = absolute(cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
+                        vfs.touch(path.as_path());
 
                     } else if let Some(matches) = matches.subcommand_matches("cd") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap()));
@@ -66,16 +79,17 @@ fn main() {
                         } else {
                             println!("Target does not exists or is not a directory");
                         }
-
                     } else {
                         println!("Unknown command");
-
                     }
                 },
                 Err(error) => {
                     println!("{}", error);
                 }
             }
+
+            println!("\n");
+            print!("> ");
         }
     }
 }
