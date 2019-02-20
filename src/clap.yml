@@ -4,9 +4,15 @@ author: François Cadeillan <francois@azsystem.fr>
 about: Perform user-delayed filesystem operations
 subcommands:
   - ls:
-      about: List content of a directory AFTER apply
+      about: List content of a directory like it would be AFTER apply
       args:
         - path:
+            help: Directory to display
+            takes_value: true
+  - tree:
+      about: Recursively List content of a directory like it would be AFTER apply
+      args:
+      - path:
             help: Directory to display
             takes_value: true
   - cd:

@@ -8,7 +8,6 @@ pub struct VirtualDelta {
     pub hierarchy: BTreeMap<PathBuf, HashSet<VirtualPath>>
 }
 
-//TODO custom arborescent debug
 impl VirtualDelta {
     pub fn new() -> VirtualDelta {
         VirtualDelta {
@@ -55,10 +54,10 @@ impl VirtualDelta {
                 Some(children) => {
                     match children.get(&virtual_path) {
                         Some(_) => { children.remove(&virtual_path); },
-                        None => { println!("Detach : there is no such file defined in btree childs"); }
+                        None => { /*println!("Detach : there is no such file defined in btree childs");*/ }
                     }
                 },
-                None => { println!("Detach : the parent dir is empty"); }
+                None => { /*println!("Detach : the parent dir is empty");*/ }
             }
         }
 
@@ -90,7 +89,7 @@ impl VirtualDelta {
             for child in children {
                 result.insert(child);
                 let subset = self.walk(child.as_identity());
-                for sub_child in subset {
+                for sub_child in subset { //TODO add an iterator or use recursion elseway
                     result.insert(sub_child);
                 }
             }
@@ -149,76 +148,5 @@ impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
             }
         }
         result
-    }
-}
-
-#[cfg(test)]
-mod virtual_delta_tests {
-    use super::*;
-
-    #[test]
-    fn virtual_delta_attach_child_to_root_then_find_it_in_children() {
-        let mut delta = VirtualDelta::new();
-        let path = VirtualPath::from_str("/virtual/path");
-
-        delta.attach(path.as_identity(), None, true);
-
-        let children= delta.children(&Path::new("/virtual")).unwrap();
-        assert_eq!(&path, children.get(&path).unwrap());
-    }
-
-
-    #[test]
-    fn virtual_delta_is_consistent_over_async() {
-        let mut delta = VirtualDelta::new();
-
-        let child = Path::new("/virtual/path");
-        delta.attach(child, None,false);
-
-        let parent = Path::new("/virtual");
-        delta.attach(parent, None, true);
-
-        let owned_child = delta.children(parent).unwrap().get(&VirtualPath::from_path(child)).unwrap();
-        assert_eq!(child, owned_child.as_identity());
-    }
-
-    #[test]
-    fn virtual_delta_add_a_delta_to_another(){
-        let mut delta_r = VirtualDelta::new();
-        delta_r.attach(Path::new("/R/to_replace"), None, false);
-        delta_r.attach(Path::new("/R/to_not_change"), None,false);
-        delta_r.attach(Path::new("/R/to_complete"), None,true);
-
-        let mut delta_ra = VirtualDelta::new();
-        delta_ra.attach(Path::new("/R/to_replace/A"), None, true);
-        delta_ra.attach(Path::new("/R/to_not_change"), None, false);
-        delta_ra.attach(Path::new("/R/to_complete/B"), None, false);
-
-        let delta_r_prime = &delta_r + &delta_ra;
-        assert!(delta_r_prime.is_directory(&Path::new("/R")));
-        assert!(delta_r_prime.is_directory(&Path::new("/R/to_replace")));
-        assert!(delta_r_prime.is_directory(&Path::new("/R/to_complete")));
-        assert!(!delta_r_prime.is_directory(&Path::new("/R/to_not_change")));
-        assert!(delta_r_prime.exists(&Path::new("/R/to_replace/A")));
-        assert!(delta_r_prime.exists(&Path::new("/R/to_complete/B")));
-    }
-
-    #[test]
-    fn virtual_delta_substract_a_delta_from_another(){
-        let mut delta_r = VirtualDelta::new();
-        delta_r.attach(Path::new("/R/to_remove"),  None,true);
-        delta_r.attach(Path::new("/R/to_not_change"), None, false);
-        delta_r.attach(Path::new("/R/to_not_change_dir/to_remove"), None,false);
-
-        let mut delta_rs = VirtualDelta::new();
-        delta_rs.attach(Path::new("/R/to_remove"), None, true);
-        delta_rs.attach(Path::new("/R/to_not_change_dir/to_remove"), None,false);
-
-        let delta_r_prime = &delta_r - &delta_rs;
-        assert!(delta_r_prime.is_directory(&Path::new("/R")));
-        assert!(!delta_r_prime.is_directory(&Path::new("/R/to_not_change")));
-        assert!(delta_r_prime.is_directory(&Path::new("/R/to_not_change_dir")));
-        assert!(!delta_r_prime.exists(&Path::new("/R/to_remove")));
-        assert!(!delta_r_prime.exists(&Path::new("/R/to_not_change_dir/to_remove")));
     }
 }

@@ -39,7 +39,8 @@
 * split up tests
 * better API
 * makes the shell supports event-based reactions
-
+* there is too much unblocking behaviors
+* stream outputs & reads
 
 ## Known limitations
 

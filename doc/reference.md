@@ -47,3 +47,18 @@ https://github.com/mre/idiomatic-rust
 
 ## Shells
 https://www.joshmcguigan.com/blog/build-your-own-shell-rust/
+
+
+## Iterators
+
+https://burgers.io/wrapped-iterators-in-rust
+https://burgers.io/extending-iterator-trait-in-rust
+https://medium.com/@jordan_98525/reference-iterators-in-rust-5603a51b5192
+https://doc.rust-lang.org/stable/std/iter/
+https://hermanradtke.com/2015/06/22/effectively-using-iterators-in-rust.html
+https://stackoverflow.com/questions/32682876/is-there-any-way-to-return-a-reference-to-a-variable-created-in-a-function
+
+## Referentiation
+
+https://bryce.fisher-fleig.org/blog/strategies-for-returning-references-in-rust/index.html
+https://manishearth.github.io/blog/2015/05/27/wrapper-types-in-rust-choosing-your-guarantees/

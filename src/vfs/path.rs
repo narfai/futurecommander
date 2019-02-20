@@ -2,7 +2,6 @@ use std::cmp::Ordering;
 use std::path::{ PathBuf, Path };
 use std::ffi::{ OsStr };
 use std::hash::{Hash, Hasher};
-use std::collections::hash_map::DefaultHasher;
 
 #[derive(Eq, Clone, Debug)]
 pub struct VirtualPath {
@@ -141,6 +140,10 @@ impl VirtualPath {
             }
         )
     }
+
+    pub fn depth(&self) -> usize{
+        self.identity.components().into_iter().count()
+    }
 }
 
 //Rely on PathBuf implementation for identify & order VirtualPaths over Iterators
@@ -167,43 +170,3 @@ impl Hash for VirtualPath {
         self.identity.hash(state);
     }
 }
-
-#[cfg(test)]
-mod virtual_path_tests {
-    use super::*;
-
-    #[test]
-    fn virtual_path_virtually_equal() {
-        let vpath1 = VirtualPath::from_str("/intentionally/virtual/full/path");
-        let vpath2 = VirtualPath::from_str("/intentionally/virtual/full/path");
-        assert_eq!(vpath1, vpath2);
-    }
-
-    #[test]
-    fn virtual_path_parent_virtually_equal() {
-        let parent = VirtualPath::from_str("/intentionally/virtual/full/");
-        let child = VirtualPath::from_str("/intentionally/virtual/full/path");
-        assert_eq!(parent, VirtualPath::from_path_buf(child.into_parent().unwrap()));
-    }
-
-
-    #[test]
-    fn virtual_path_still_equal_with_source_diff() {
-        let vpath1 = VirtualPath::from(PathBuf::from("/intentionally/virtual/full/path"), None);
-        let vpath2 = VirtualPath::from(PathBuf::from("/intentionally/virtual/full/path"),Some(PathBuf::from("/another/source/path")));
-        assert_eq!(vpath1, vpath2);
-    }
-
-    #[test]
-    fn virtual_path_hash_with_source_equal() {
-        fn calculate_hash<T: Hash>(t: &T) -> u64 {
-            let mut s = DefaultHasher::new();
-            t.hash(&mut s);
-            s.finish()
-        }
-        let vpath1 = VirtualPath::from(PathBuf::from("/intentionally/virtual/full/path"), None);
-        let vpath2 = VirtualPath::from(PathBuf::from("/intentionally/virtual/full/path"),Some(PathBuf::from("/another/source/path")));
-        assert_eq!(calculate_hash(&vpath1), calculate_hash(&vpath2));
-    }
-}
-

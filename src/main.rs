@@ -42,6 +42,9 @@ fn main() {
                             },
                             None => println!("No children")
                         }
+                    } else if let Some(matches) = matches.subcommand_matches("tree") {
+                        let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
+                        vfs.tree(path.as_path());
                     } else if let Some(matches) = matches.subcommand_matches("cp") {
                         let source = absolute(cwd.as_path(),Path::new(matches.value_of("source").unwrap()));
                         let destination = absolute(cwd.as_path(), Path::new(matches.value_of("destination").unwrap()));
