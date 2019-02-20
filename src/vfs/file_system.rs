@@ -43,7 +43,7 @@ impl VirtualFileSystem {
     }
 
     pub fn read(&mut self, identity: &Path, virtual_parent: Option<&Path>){
-        println!("FS READ");
+//        println!("FS READ");
         identity.read_dir().and_then(|results: ReadDir| {
             for result in results {
                 match result {
@@ -52,7 +52,7 @@ impl VirtualFileSystem {
                             Some(parent) => {
                                 let virtual_path = VirtualPath::from_path_buf(result.path())
                                     .with_new_parent(parent);
-                                println!("ADD VIRTUAL CHILD {:?} => {:?}", result.path(), virtual_path);
+//                                println!("ADD VIRTUAL CHILD {:?} => {:?}", result.path(), virtual_path);
                                 self.add.attach_virtual( &virtual_path, result.path().is_dir());
                                 virtual_path
                             },
@@ -81,5 +81,39 @@ impl VirtualFileSystem {
 
     pub fn get_real_state(&self) -> VirtualDelta {
         self.real.clone()
+    }
+
+    pub fn get(identity: &Path) {
+        /*
+            Exists
+                in state
+                in add
+                in sub
+            Is directory
+                Is root
+                    Is empty
+                and is in real fs
+                    Is empty
+                and is virtually
+                    Is empty
+            Is file
+                in real fs
+                virtually
+
+            TODO recursive method to attach directories from bottom to top till it match some existing dir in state
+            TODO / IDEA be able to slice a delta into a subtree
+
+
+            Cache the virtual_state
+            VIRTUALIZATION
+            1. maintain real tree
+
+            2. maintain virtual tree
+
+        */
+    }
+
+    pub fn children(identity: &Path) {
+
     }
 }

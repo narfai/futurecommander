@@ -1,13 +1,14 @@
-use crate::path::VirtualPath;
+use crate::path::{ VirtualPath, VirtualKind };
 use std::collections::{ BTreeMap, HashSet };
 use std::path::{ PathBuf, Path };
 use std::ops::{ Add, Sub };
 
 #[derive(Debug, Clone)]
 pub struct VirtualDelta {
-    pub hierarchy: BTreeMap<PathBuf, HashSet<VirtualPath>>
+    pub hierarchy: BTreeMap<PathBuf, HashSet<VirtualPath>> //TODO transform HashSet into children collection
 }
 
+//IDEA : Iterator with next() as get_state for perform writes from a buffer ( over the delta )
 impl VirtualDelta {
     pub fn new() -> VirtualDelta {
         VirtualDelta {
@@ -19,6 +20,66 @@ impl VirtualDelta {
         self.attach(virtual_path.as_identity(), virtual_path.as_source(), is_directory)
     }
 
+    pub fn exp_attach(&mut self, identity: &Path, source: Option<&Path>, is_directory: bool) {
+       match self.exists(identity) {
+            true => { panic!("ATTACH {:?} already exists", identity) },
+            false => {
+                if is_directory { //Depth N
+                    self.hierarchy.insert(identity.to_path_buf(), HashSet::new());
+                }
+
+                if let Some(parent) = identity.parent() {
+                    self.hierarchy.insert(parent.to_path_buf(), HashSet::new()); //Depth N-1
+                    self.hierarchy
+                        .get_mut(parent)
+                        .unwrap()
+                        .insert(VirtualPath::from_path(identity).with_source(source));
+
+                } //else Root case
+            }
+        }
+    }
+
+    pub fn exp_detach(&mut self, identity: &Path) {
+        match self.exists(identity) {
+            true => {
+                if let Some(parent) = identity.parent() {
+                    self.hierarchy.get_mut(parent)
+                        .unwrap()
+                        .remove(&VirtualPath::from_path(identity));
+                } //else Root case
+
+                if self.is_directory(identity) {
+                    self.hierarchy.remove(identity);
+                }
+            },
+            false => { panic!("DETACH {:?} does not exists", identity)}
+        }
+    }
+
+    pub fn exp_update(&mut self, virtual_path: &VirtualPath, is_directory: bool) {
+        match self.exists(virtual_path.as_identity()) {
+            true => {
+                let is_already_directory = self.is_directory(virtual_path.as_identity());
+                if  is_already_directory && !is_directory {
+                    panic!("UPDATE {:?} as transformed into file", virtual_path)
+                } else if !is_already_directory && is_directory {
+                    panic!("UPDATE {:?} as transformed into directory", virtual_path)
+                }
+
+                if let Some(parent) = virtual_path.as_parent() {
+                    match self.hierarchy.get_mut(parent) {
+                        Some(children) => { children.replace(virtual_path.clone()); },
+                        None => { panic!("UPDATE {:?} parent does not exists", virtual_path) }
+                    }
+                } //else Root case
+            },
+            false => { { panic!("UPDATE {:?} does not exists", virtual_path)} }
+        }
+    }
+
+    //TODO exp_update(vpath kind ...)
+
     //TODO -> Result
     pub fn attach(&mut self, identity: &Path, source: Option<&Path>, is_directory: bool) {
         let is_already_directory = self.is_directory(identity);
@@ -26,6 +87,9 @@ impl VirtualDelta {
             self.hierarchy.remove(identity);
         } else if !is_already_directory && is_directory {
             self.hierarchy.insert(identity.to_path_buf(), HashSet::new());
+            for ancestor in identity.ancestors().skip(1) {
+                self.hierarchy.insert(ancestor.to_path_buf(), HashSet::new());
+            }
         }
 
         if let Some(parent) = identity.parent() {
@@ -118,7 +182,7 @@ impl VirtualDelta {
     }
 
     pub fn exists(&self, identity: &Path) -> bool {
-        self.is_directory(identity) || self.is_file(identity)
+        self.get(identity).is_some()
     }
 }
 

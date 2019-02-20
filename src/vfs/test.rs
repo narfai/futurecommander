@@ -288,4 +288,12 @@ mod virtual_file_system_tests {
             None => { panic!("No results"); }
         }
     }
+
+    #[test]
+    fn path_ancestors_test(){
+        let p = Path::new("/A/B/C/D/E/F/G/H");
+        for a in p.ancestors() {
+            println!("{:?}", a);
+        }
+    }
 }

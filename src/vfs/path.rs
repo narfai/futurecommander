@@ -3,18 +3,33 @@ use std::path::{ PathBuf, Path };
 use std::ffi::{ OsStr };
 use std::hash::{Hash, Hasher};
 
-#[derive(Eq, Clone, Debug)]
+#[derive(Clone, Debug)]
+pub enum VirtualKind {
+    File,
+    Directory
+}
+
+#[derive(Clone, Debug)]
 pub struct VirtualPath {
     pub identity: PathBuf,
-    pub source: Option<PathBuf>
+    pub source: Option<PathBuf>,
+    pub kind: VirtualKind
+}
+
+impl Eq for VirtualPath {}
+
+impl PartialEq for VirtualKind {
+    fn eq(&self, other: &VirtualKind) -> bool {
+        self.eq(&other)
+    }
 }
 
 //TODO proper Error / Results implementation
 //TODO proper [test] & main -> Result bubbling
-/**
+/*
 Virtual wrapper of PathBuf for keeping control over type & behaviors
 PathBuf implementation will do the job for path components manipulation.
-**/
+*/
 impl VirtualPath {
     //Slices / Refs
     pub fn as_identity(&self) -> &Path {
@@ -77,7 +92,8 @@ impl VirtualPath {
         }
         VirtualPath {
             identity,
-            source
+            source,
+            kind: VirtualKind::Directory
         }
     }
 
