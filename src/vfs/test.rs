@@ -7,7 +7,15 @@ use std::collections::hash_map::DefaultHasher;
 
 use crate::path::VirtualPath;
 use crate::delta::VirtualDelta;
-use crate::file_system::{VirtualFileSystem, LsItem};
+use crate::file_system::VirtualFileSystem;
+
+use crate::operation::ls::LsItem;
+use crate::operation::ls::ls;
+use crate::operation::rm::rm;
+use crate::operation::cp::cp;
+use crate::operation::mv::mv;
+use crate::operation::mkdir::mkdir;
+use crate::operation::touch::touch;
 
 #[cfg(test)]
 mod virtual_path_tests {
@@ -153,7 +161,7 @@ mod virtual_file_system_tests {
         vfs.read_virtual(sample_path.join(&Path::new("B/D/E")).as_path());
         vfs.read_virtual(sample_path.join(&Path::new("B/D/G")).as_path());
 
-        vfs.rm(sample_path.join(&Path::new("B")).as_path());
+        rm(&mut vfs, sample_path.join(&Path::new("B")).as_path());
 
         let state = vfs.get_state();
         assert!(!state.exists(sample_path.join(&Path::new("B")).as_path()));
@@ -163,18 +171,18 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_copy(){
+    fn virtual_file_system_cp(){
         let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
         let mut vfs = VirtualFileSystem::new();
 
         vfs.read_virtual(sample_path.as_path());
 
-        vfs.copy(
+        cp(&mut vfs,
             sample_path.join(&Path::new("B")).as_path(),
             sample_path.join(&Path::new("A")).as_path()
         );
 
-        match vfs.ls(sample_path.join(&Path::new("A/B/D")).as_path()) {
+        match ls(&mut vfs, sample_path.join(&Path::new("A/B/D")).as_path()) {
             Some(results) => {
                 assert!(!results.is_empty());
                 assert!(results.contains(&LsItem::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/E"))), true)));
@@ -186,27 +194,27 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_copy_preserve_source_and_node_kind(){
+    fn virtual_file_system_cp_preserve_source_and_node_kind(){
         let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
         let mut vfs = VirtualFileSystem::new();
         vfs.read_virtual(sample_path.as_path());
 
         let real_source = VirtualPath::from_path_buf(sample_path.join(&Path::new("F")));
 
-        vfs.copy(
+        cp(&mut vfs,
             real_source.as_identity(),
             sample_path.join(&Path::new("A")).as_path()
         );
-        vfs.copy(
+        cp(&mut vfs,
             sample_path.join(&Path::new("A/F")).as_path(),
             sample_path.join(&Path::new("B")).as_path()
         );
-        vfs.copy(
+        cp(&mut vfs,
             sample_path.join(&Path::new("B/F")).as_path(),
             sample_path.join(&Path::new("B/D/E")).as_path()
         );
 
-        match vfs.ls(sample_path.join(&Path::new("B/D/E")).as_path()) {
+        match ls(&mut vfs, sample_path.join(&Path::new("B/D/E")).as_path()) {
             Some(results) => {
                 assert!(!results.is_empty());
                 assert!(results.contains(&LsItem::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))), false)));
@@ -223,20 +231,20 @@ mod virtual_file_system_tests {
 
         let real_source = VirtualPath::from_path_buf(sample_path.join(&Path::new("F")));
 
-        vfs.mv(
+        mv( &mut vfs,
             real_source.as_identity(),
             sample_path.join(&Path::new("A")).as_path()
         );
-        vfs.mv(
+        mv( &mut vfs,
             sample_path.join(&Path::new("A/F")).as_path(),
             sample_path.join(&Path::new("B")).as_path()
         );
-        vfs.mv(
+        mv( &mut vfs,
             sample_path.join(&Path::new("B/F")).as_path(),
             sample_path.join(&Path::new("B/D/E")).as_path()
         );
 
-        match vfs.ls(sample_path.join(&Path::new("B/D/E")).as_path()) {
+        match ls(&mut vfs, sample_path.join(&Path::new("B/D/E")).as_path()) {
             Some(results) => {
                 assert!(!results.is_empty());
                 assert!(results.contains(&LsItem::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))), false)));
@@ -244,9 +252,9 @@ mod virtual_file_system_tests {
             None => { panic!("No results"); }
         }
 
-        assert!(vfs.ls(sample_path.join(&Path::new("F")).as_path()).is_none());
-        assert!(vfs.ls(sample_path.join(&Path::new("A/F")).as_path()).is_none());
-        assert!(vfs.ls(sample_path.join(&Path::new("B/F")).as_path()).is_none());
+        assert!(ls(&mut vfs, sample_path.join(&Path::new("F")).as_path()).is_none());
+        assert!(ls(&mut vfs, sample_path.join(&Path::new("A/F")).as_path()).is_none());
+        assert!(ls(&mut vfs, sample_path.join(&Path::new("B/F")).as_path()).is_none());
     }
 
     #[test]
@@ -255,8 +263,8 @@ mod virtual_file_system_tests {
         let mut vfs = VirtualFileSystem::new();
         vfs.read_virtual(sample_path.as_path());
 
-        vfs.mkdir(sample_path.join(&Path::new("B/D/E/MKDIRED")).as_path());
-        match vfs.ls(sample_path.join(&Path::new("B/D/E")).as_path()) {
+        mkdir(&mut vfs, sample_path.join(&Path::new("B/D/E/MKDIRED")).as_path());
+        match ls(&mut vfs, sample_path.join(&Path::new("B/D/E")).as_path()) {
             Some(results) => {
                 assert!(!results.is_empty());
                 assert!(results.contains(&LsItem::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/MKDIRED"))), true)));
@@ -271,8 +279,8 @@ mod virtual_file_system_tests {
         let mut vfs = VirtualFileSystem::new();
         vfs.read_virtual(sample_path.as_path());
 
-        vfs.touch(sample_path.join(&Path::new("B/D/E/TOUCHED")).as_path());
-        match vfs.ls(sample_path.join(&Path::new("B/D/E")).as_path()) {
+        touch(&mut vfs, sample_path.join(&Path::new("B/D/E/TOUCHED")).as_path());
+        match ls(&mut vfs,sample_path.join(&Path::new("B/D/E")).as_path()) {
             Some(results) => {
                 assert!(!results.is_empty());
                 assert!(results.contains(&LsItem::from(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/TOUCHED"))), false)));

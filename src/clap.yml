@@ -63,3 +63,9 @@ subcommands:
             takes_value: true
   - debug_vfs_state:
       about: show vfs current state
+  - debug_add_state:
+      about: show add delta current state
+  - debug_sub_state:
+      about: show sub delta current state
+  - debug_real_state:
+      about: show real delta current state

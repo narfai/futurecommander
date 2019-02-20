@@ -10,6 +10,13 @@ use std::env;
 mod path;
 use path::absolute;
 use vfs::{VirtualFileSystem};
+use vfs::cp;
+use vfs::rm;
+use vfs::touch;
+use vfs::mkdir;
+use vfs::ls;
+use vfs::mv;
+use vfs::tree;
 
 //TODO proper shell / file ui representation
 fn main() {
@@ -33,10 +40,16 @@ fn main() {
                     }
                     if let Some(_matches) = matches.subcommand_matches("debug_vfs_state") {
                         println!("{:#?}", vfs.get_state());
+                    } else if let Some(_matches) = matches.subcommand_matches("debug_add_state") {
+                        println!("{:#?}", vfs.get_add_state());
+                    } else if let Some(_matches) = matches.subcommand_matches("debug_sub_state") {
+                        println!("{:#?}", vfs.get_sub_state());
+                    } else if let Some(_matches) = matches.subcommand_matches("debug_real_state") {
+                        println!("{:#?}", vfs.get_real_state());
                     } else if let Some(matches) = matches.subcommand_matches("ls") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
 
-                        match vfs.ls(path.as_path()) {
+                        match ls(&mut vfs, path.as_path()) {
                             Some(results) => for child in results.into_iter() {
                                 println!("{:?}", child);
                             },
@@ -44,31 +57,33 @@ fn main() {
                         }
                     } else if let Some(matches) = matches.subcommand_matches("tree") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
-                        vfs.tree(path.as_path());
+                        tree(&mut vfs,path.as_path());
                     } else if let Some(matches) = matches.subcommand_matches("cp") {
                         let source = absolute(cwd.as_path(),Path::new(matches.value_of("source").unwrap()));
                         let destination = absolute(cwd.as_path(), Path::new(matches.value_of("destination").unwrap()));
-                        vfs.copy(
+                        cp(
+                            &mut vfs,
                             source.as_path(),
                             destination.as_path()
                         );
                     } else if let Some(matches) = matches.subcommand_matches("mv") {
                         let source = absolute(cwd.as_path(),Path::new(matches.value_of("source").unwrap()));
                         let destination = absolute(cwd.as_path(), Path::new(matches.value_of("destination").unwrap()));
-                        vfs.mv(
+                        mv(
+                            &mut vfs,
                             source.as_path(),
                             destination.as_path()
                         );
                     } else if let Some(matches) = matches.subcommand_matches("rm") {
                         let path = absolute(cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
-                        vfs.rm(path.as_path());
+                        rm(&mut vfs, path.as_path());
                     } else if let Some(matches) = matches.subcommand_matches("mkdir") {
                         let path = absolute(cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
-                        vfs.mkdir(path.as_path());
+                        mkdir(&mut vfs, path.as_path());
 
                     } else if let Some(matches) = matches.subcommand_matches("touch") {
                         let path = absolute(cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
-                        vfs.touch(path.as_path());
+                        touch(&mut vfs, path.as_path());
 
                     } else if let Some(matches) = matches.subcommand_matches("cd") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap()));

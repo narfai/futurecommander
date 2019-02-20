@@ -13,6 +13,8 @@
 ## Bugs
 
 * Dangling virtual cwd
+* tree / mv A B / tree
+
 
 ## Tests
 
