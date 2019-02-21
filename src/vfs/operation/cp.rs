@@ -28,7 +28,7 @@ pub fn cp(vfs: &mut VirtualFileSystem, source_identity: &Path, destination_ident
                         state.is_directory(virtual_source.as_identity())
                     );
 
-                    for virtual_child in state.walk(virtual_source.as_identity()) {
+                    for virtual_child in state.walk(virtual_source.as_identity()).iter() {
                         let virtual_new_child = virtual_child.clone()
                             .with_new_parent(virtual_new.as_identity())
                             .with_source(Some(virtual_child.as_referent_source()));

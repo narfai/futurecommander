@@ -10,7 +10,7 @@ pub fn rm(vfs: &mut VirtualFileSystem, identity: &Path) {
     match state.get(identity) {
         Some(virtual_existing) => {
             let mut sub_delta = VirtualDelta::new();
-            for virtual_child in state.walk(identity) {
+            for virtual_child in state.walk(identity).iter() {
                 sub_delta.attach_virtual(
                     virtual_child,
                     state.is_directory(virtual_child.as_identity())

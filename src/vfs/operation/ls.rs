@@ -31,7 +31,7 @@ pub fn ls(vfs: &mut VirtualFileSystem, identity: &Path) -> Option<Vec<LsItem>>{
 
     if state.is_directory(identity) {
         if let Some(children) = state.children(identity) {
-            for child in children {
+            for child in children.iter() {
                 result_set.push(LsItem::from(&child, state.is_directory(child.as_identity())));
             }
         }

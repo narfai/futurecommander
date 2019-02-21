@@ -6,7 +6,8 @@ use std::hash::{Hash, Hasher};
 #[derive(Clone, Debug)]
 pub enum VirtualKind {
     File,
-    Directory
+    Directory,
+    Unknown
 }
 
 #[derive(Clone, Debug)]
@@ -20,7 +21,23 @@ impl Eq for VirtualPath {}
 
 impl PartialEq for VirtualKind {
     fn eq(&self, other: &VirtualKind) -> bool {
-        self.eq(&other)
+        match &self {
+            VirtualKind::File => match other {
+                VirtualKind::File => true,
+                VirtualKind::Directory => false,
+                VirtualKind::Unknown => false
+            },
+            VirtualKind::Directory => match other {
+                VirtualKind::File => false,
+                VirtualKind::Directory => true,
+                VirtualKind::Unknown => false
+            }
+            VirtualKind::Unknown => match other {
+                VirtualKind::File => false,
+                VirtualKind::Directory => false,
+                VirtualKind::Unknown => true
+            }
+        }
     }
 }
 
@@ -50,6 +67,10 @@ impl VirtualPath {
         }
     }
 
+    pub fn as_kind(&self) -> &VirtualKind {
+        &self.kind
+    }
+
     //Casts / Move
     pub fn into_identity(self) -> PathBuf {
         self.identity
@@ -57,6 +78,10 @@ impl VirtualPath {
 
     pub fn into_source(self) -> Option<PathBuf> {
         self.source
+    }
+
+    pub fn into_kind(self) -> VirtualKind {
+        self.kind
     }
 
     pub fn into_referent_source(self) -> PathBuf {
@@ -85,29 +110,41 @@ impl VirtualPath {
         }
     }
 
+    pub fn to_kind(&self) -> VirtualKind {
+        self.kind.clone()
+    }
+
     //Constructors
-    pub fn from(identity: PathBuf, source: Option<PathBuf>) -> VirtualPath {
-        if identity.is_relative() {
+    pub fn root() -> VirtualPath {
+        VirtualPath::from(VirtualPath::root_identity(), None, VirtualKind::Directory)
+    }
+
+    pub fn root_identity() -> PathBuf {
+        PathBuf::from("/") //TODO may be a compatibility issue
+    }
+
+    pub fn from(identity: PathBuf, source: Option<PathBuf>, kind: VirtualKind) -> VirtualPath {
+        if identity.is_relative() && (identity != PathBuf::new()) {
             panic!("Does not supports relative paths");
         }
         VirtualPath {
             identity,
             source,
-            kind: VirtualKind::Directory
+            kind
         }
     }
 
     pub fn from_path(path: &Path) -> VirtualPath {
-        VirtualPath::from(path.to_path_buf(), None)
+        VirtualPath::from(path.to_path_buf(), None, VirtualKind::Unknown)
     }
 
     pub fn from_path_buf(path: PathBuf) -> VirtualPath {
-        VirtualPath::from(path, None)
+        VirtualPath::from(path, None, VirtualKind::Unknown)
     }
 
     pub fn from_str(path: &str) -> VirtualPath {
         let identity = PathBuf::from(path);
-        VirtualPath::from(identity, None)
+        VirtualPath::from(identity, None, VirtualKind::Unknown)
     }
 
     //Domain
@@ -141,7 +178,7 @@ impl VirtualPath {
         match self.identity.parent() {
             Some(parent) => {
                 let stripped = self.identity.as_path().strip_prefix(parent).unwrap(); //Do not handle ".." file names
-                VirtualPath::from(new_parent.join(stripped).to_path_buf(), None)
+                VirtualPath::from(new_parent.join(stripped).to_path_buf(), None, self.into_kind())
             },
             None => self
         }
@@ -149,11 +186,20 @@ impl VirtualPath {
 
     pub fn with_source(self, new_source: Option<&Path>) -> VirtualPath {
         VirtualPath::from(
-            self.into_identity(),
+            self.to_identity(),
             match new_source {
                 Some(source) => Some(source.to_path_buf()),
                 None => None
-            }
+            },
+            self.into_kind()
+        )
+    }
+
+    pub fn with_kind(self, kind: VirtualKind) -> VirtualPath {
+        VirtualPath::from(
+            self.to_identity(),
+            self.into_source(),
+            kind
         )
     }
 
