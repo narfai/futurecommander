@@ -111,7 +111,11 @@ impl VirtualPath {
     }
 
     pub fn to_kind(&self) -> VirtualKind {
-        self.kind.clone()
+        match self.kind {
+            VirtualKind::File => VirtualKind::File,
+            VirtualKind::Directory => VirtualKind::Directory,
+            VirtualKind::Unknown => VirtualKind::Unknown
+        }
     }
 
     //Constructors

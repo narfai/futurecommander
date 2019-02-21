@@ -45,6 +45,14 @@ impl VirtualChildren {
     pub fn iter <'a>(&self) -> VirtualChildrenIterator {
         VirtualChildrenIterator::new(self.set.iter())
     }
+
+    pub fn into_delta(self) -> VirtualDelta {
+        let mut delta = VirtualDelta::new();
+        for virtual_identity in self.iter() {
+            delta.exp_attach_virtual(&virtual_identity);
+        }
+        delta
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -77,6 +85,11 @@ impl IntoIterator for VirtualChildren {
     }
 }
 
+//TODO After + - refacto : (self - other).is_empty()
+//impl PartialEq for VirtualDelta {
+//    fn eq(&self, other: &VirtualDelta) -> bool {}
+//}
+
 #[derive(Debug, Clone)]
 pub struct VirtualDelta {
     pub hierarchy: BTreeMap<PathBuf, VirtualChildren> //TODO transform HashSet into children collection
@@ -92,6 +105,14 @@ impl VirtualDelta {
 
     pub fn attach_virtual(&mut self, virtual_path: &VirtualPath, is_directory: bool) {
         self.attach(virtual_path.as_identity(), virtual_path.as_source(), is_directory)
+    }
+
+    pub fn exp_attach_virtual(&mut self, virtual_path: &VirtualPath) {
+        self.exp_attach(
+            virtual_path.as_identity(),
+            virtual_path.as_source(),
+            virtual_path.to_kind() == VirtualKind::Directory
+        )
     }
 
     pub fn exp_attach(&mut self, identity: &Path, source: Option<&Path>, is_directory: bool) {
@@ -118,7 +139,6 @@ impl VirtualDelta {
                                 false => VirtualKind::File
                             })
                     );
-
             }
         }
     }
@@ -205,11 +225,24 @@ impl VirtualDelta {
         }
     }
 
-    pub fn exp_walk(&self, collection: &mut VirtualChildren, virtual_identity: &VirtualPath){
+    pub fn exp_walk(&self, collection: &mut VirtualChildren, identity: &Path){
+        match self.get(identity) {
+            Some(virtual_identity) => {
+                if self.is_directory(identity) {
+                    self._exp_walk(collection, virtual_identity)
+                } else {
+                    panic!("WALK {:?} is not a directory", identity)
+                }
+            },
+            None => { panic!("WALK {:?} does not exists", identity) }
+        }
+    }
+
+    fn _exp_walk(&self, collection: &mut VirtualChildren, virtual_identity: &VirtualPath){
         collection.insert(virtual_identity.clone());
         if let Some(children) = self.exp_children(virtual_identity.as_identity()) {
             for child in children {
-                self.exp_walk(collection, child);
+                self._exp_walk(collection, child);
             }
         };
     }
@@ -248,6 +281,17 @@ impl VirtualDelta {
         match identity.parent() {
             Some(parent) => parent.to_path_buf(),
             None => VirtualPath::root_identity()
+        }
+    }
+
+    pub fn sub_delta(&self, identity: &Path) -> Option<VirtualDelta> {
+        match self.exists(identity) {
+            true => {
+                let mut collection = VirtualChildren::new();
+                self.exp_walk(&mut collection, identity);
+                Some(collection.into_delta())
+            },
+            false => None
         }
     }
 

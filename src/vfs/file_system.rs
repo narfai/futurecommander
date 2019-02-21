@@ -83,35 +83,7 @@ impl VirtualFileSystem {
         self.real.clone()
     }
 
-    pub fn get(identity: &Path) {
-        /*
-            Exists
-                in state
-                in add
-                in sub
-            Is directory
-                Is root
-                    Is empty
-                and is in real fs
-                    Is empty
-                and is virtually
-                    Is empty
-            Is file
-                in real fs
-                virtually
 
-            TODO recursive method to attach directories from bottom to top till it match some existing dir in state
-            TODO / IDEA be able to slice a delta into a subtree
-
-
-            Cache the virtual_state
-            VIRTUALIZATION
-            1. maintain real tree
-
-            2. maintain virtual tree
-
-        */
-    }
 
     pub fn children(identity: &Path) {
 

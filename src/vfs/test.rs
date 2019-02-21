@@ -137,7 +137,7 @@ mod virtual_delta_tests {
         delta.exp_attach(Path::new("/R/to_complete/E"), None,true);
 
         let mut collection = VirtualChildren::new();
-        delta.exp_walk(&mut collection, &VirtualPath::from_str("/R"));
+        delta.exp_walk(&mut collection, &Path::new("/R"));
         assert!(collection.contains(&VirtualPath::from_str("/R")));
         assert!(collection.contains(&VirtualPath::from_str("/R/to_replace")));
         assert!(collection.contains(&VirtualPath::from_str("/R/to_not_change")));
@@ -199,6 +199,23 @@ mod virtual_delta_tests {
         assert_eq!(delta.get(Path::new("/A")).unwrap().to_kind(), VirtualKind::File);
         assert_eq!(delta.get(Path::new("/B")).unwrap().to_kind(), VirtualKind::Directory);
         assert!(!delta.exists(Path::new("/C")));
+    }
+
+    #[test]
+    fn virtual_delta_sub_delta(){
+        let mut delta = VirtualDelta::new();
+        delta.exp_attach(Path::new("/A"), None, true);
+        delta.exp_attach(Path::new("/B"), None, true);
+        delta.exp_attach(Path::new("/B/C"), None, true);
+        delta.exp_attach(Path::new("/B/D"), None, false);
+
+        let sub_delta = delta.sub_delta(Path::new("/B")).unwrap();
+
+        assert!(sub_delta.exists(Path::new("/B/C")));
+        assert_eq!(sub_delta.get(Path::new("/B/C")).unwrap().to_kind(), VirtualKind::Directory);
+        assert!(sub_delta.exists(Path::new("/B/D")));
+        assert_eq!(sub_delta.get(Path::new("/B/D")).unwrap().to_kind(), VirtualKind::File);
+        assert!(!sub_delta.exists(Path::new("/A")));
     }
 }
 

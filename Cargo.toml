@@ -5,7 +5,8 @@ authors = ["François Cadeillan <francois@azsystem.fr>"]
 edition = "2018"
 
 [dependencies]
-clap = { features = ["yaml"] }
+clap = { version =  "2.32.0", features = ["yaml"] }
+itertools = "0.8.0"
 
 [lib]
 name = "vfs"
