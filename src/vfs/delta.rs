@@ -120,12 +120,15 @@ impl VirtualDelta {
             true => { panic!("ATTACH {:?} already exists", identity) },
             false => {
 
-                let parent = self.get_parent_or_root(identity);
+                let parent = VirtualPath::get_parent_or_root(identity);
 
                 if !self.hierarchy.contains_key(parent.as_path()) {
                     self.hierarchy.insert(parent.to_path_buf(), VirtualChildren::new());
-                } else if self.exp_is_file(parent.as_path()).unwrap() {
-                    panic!("ATTACH {:?}/{:?} virtual parent is a file", identity, parent);
+                }
+
+                match self.exp_is_file(parent.as_path()) {
+                    Some(true) => panic!("ATTACH {:?}/{:?} virtual parent is a file", identity, parent),
+                    _ => {}
                 }
 
                 self.hierarchy
@@ -146,7 +149,7 @@ impl VirtualDelta {
     pub fn exp_detach(&mut self, identity: &Path) {
         match self.exists(identity) {
             true => {
-                let parent = self.get_parent_or_root(identity);
+                let parent = VirtualPath::get_parent_or_root(identity);
 
                 self.hierarchy.get_mut(&parent)
                     .unwrap()
@@ -209,10 +212,10 @@ impl VirtualDelta {
         }
     }
 
-    pub fn exp_children(&self, parent: &Path) -> Option<VirtualChildrenIterator> {
+    pub fn exp_children(&self, parent: &Path) -> Option<&VirtualChildren> {
         match self.hierarchy.get(parent) {
             Some(children) => {
-                Some(children.iter())
+                Some(&children)
             },
             None => None //No key parent
         }
@@ -241,14 +244,14 @@ impl VirtualDelta {
     fn _exp_walk(&self, collection: &mut VirtualChildren, virtual_identity: &VirtualPath){
         collection.insert(virtual_identity.clone());
         if let Some(children) = self.exp_children(virtual_identity.as_identity()) {
-            for child in children {
-                self._exp_walk(collection, child);
+            for child in children.iter() {
+                self._exp_walk(collection, &child);
             }
         };
     }
 
     pub fn get(&self, identity: &Path) -> Option<&VirtualPath> {
-        match self.hierarchy.get(self.get_parent_or_root(identity).as_path()) {
+        match self.hierarchy.get(VirtualPath::get_parent_or_root(identity).as_path()) {
             Some(children) => {
                 match children.get(&VirtualPath::from_path(identity)) {
                     Some(child) => {
@@ -266,7 +269,7 @@ impl VirtualDelta {
     }
 
     pub fn is_directory_empty(&self, identity: &Path) -> bool {
-        let dir = self.get_parent_or_root(identity);
+        let dir = VirtualPath::get_parent_or_root(identity);
         match self.children(dir.as_path()) {
             Some(children) => children.len() == 0,
             None => false
@@ -275,13 +278,6 @@ impl VirtualDelta {
 
     pub fn is_empty(&self) -> bool {
         self.hierarchy.len() == 0
-    }
-
-    fn get_parent_or_root(&self, identity: &Path) -> PathBuf {
-        match identity.parent() {
-            Some(parent) => parent.to_path_buf(),
-            None => VirtualPath::root_identity()
-        }
     }
 
     pub fn sub_delta(&self, identity: &Path) -> Option<VirtualDelta> {

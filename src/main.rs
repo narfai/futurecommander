@@ -47,13 +47,12 @@ fn main() {
                     } else if let Some(_matches) = matches.subcommand_matches("debug_real_state") {
                         println!("{:#?}", vfs.get_real_state());
                     } else if let Some(matches) = matches.subcommand_matches("ls") {
-                        let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
-
-                        match ls(&mut vfs, path.as_path()) {
-                            Some(results) => for child in results.into_iter() {
+                        let identity = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
+                        match vfs.virtualize(identity.as_path()).exp_children(identity.as_path()) {
+                            Some(children) => for child in children.iter() {
                                 println!("{:?}", child);
                             },
-                            None => println!("No children")
+                            None => { println!("Empty"); }
                         }
                     } else if let Some(matches) = matches.subcommand_matches("tree") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
@@ -88,14 +87,10 @@ fn main() {
                     } else if let Some(matches) = matches.subcommand_matches("cd") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap()));
 
-                        vfs.read_virtual(path.as_path());
-
-                        let state = vfs.get_state();
-
-                        if state.is_directory(path.as_path()) {
-                            cwd = path;
-                        } else {
-                            println!("Target does not exists or is not a directory");
+                        match vfs.virtualize(path.as_path()).exp_is_directory(path.as_path()) {
+                            Some(true) => cwd = path,
+                            Some(false) => { println!("Is not a directory") }
+                            None => { println!("Does not exists") }
                         }
                     } else {
                         println!("Unknown command");

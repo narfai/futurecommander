@@ -210,6 +210,13 @@ impl VirtualPath {
     pub fn depth(&self) -> usize{
         self.identity.components().into_iter().count()
     }
+
+    pub fn get_parent_or_root(identity: &Path) -> PathBuf {
+        match identity.parent() {
+            Some(parent) => parent.to_path_buf(),
+            None => VirtualPath::root_identity()
+        }
+    }
 }
 
 //Rely on PathBuf implementation for identify & order VirtualPaths over Iterators
