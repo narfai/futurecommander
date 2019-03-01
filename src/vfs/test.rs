@@ -7,7 +7,7 @@ use std::collections::hash_map::DefaultHasher;
 
 use crate::path::{ VirtualPath, VirtualKind };
 use crate::delta::{ VirtualDelta, VirtualChildren };
-use crate::file_system::VirtualFileSystem;
+use crate::file_system::{ VirtualFileSystem, VirtualNodeState };
 
 use crate::operation::ls::LsItem;
 use crate::operation::ls::ls;
@@ -381,10 +381,22 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn path_ancestors_test(){
-        let p = Path::new("/A/B/C/D/E/F/G/H");
-        for a in p.ancestors() {
-            println!("{:?}", a);
+    fn virtual_file_system_get_node_state(){
+        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
+        let mut vfs = VirtualFileSystem::new();
+
+        match vfs.get_node_state(sample_path.join(&Path::new("B/D/E")).as_path()) {
+            VirtualNodeState::Unknown => assert!(true),
+            (virtual_node_state) => panic!("NODE STATE {:?}", virtual_node_state)
         }
+
+        vfs.virtualize(sample_path.join(&Path::new("B/D/E")).as_path());
+
+//        println!("VFS {:#?} {:?}", vfs, vfs.get_state().get(sample_path.join(&Path::new("B/D/E")).as_path()));
+        match vfs.get_node_state(sample_path.join(&Path::new("B/D/E")).as_path()) {
+            VirtualNodeState::Real => assert!(true),
+            (virtual_node_state) => panic!("NODE STATE {:?}", virtual_node_state)
+        }
+
     }
 }

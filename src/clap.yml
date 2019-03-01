@@ -69,3 +69,9 @@ subcommands:
       about: show sub delta current state
   - debug_real_state:
       about: show real delta current state
+  - debug_node_state:
+      about: Show node status
+      args:
+      - path:
+            help: Path of the node to check
+            takes_value: true

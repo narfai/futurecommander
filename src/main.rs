@@ -46,6 +46,9 @@ fn main() {
                         println!("{:#?}", vfs.get_sub_state());
                     } else if let Some(_matches) = matches.subcommand_matches("debug_real_state") {
                         println!("{:#?}", vfs.get_real_state());
+                    } else if let Some(_matches) = matches.subcommand_matches("debug_node_state") {
+                        let identity = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
+                        println!("{:?}", vfs.get_node_state(identity.as_path()));
                     } else if let Some(matches) = matches.subcommand_matches("ls") {
                         let identity = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
                         match vfs.virtualize(identity.as_path()).exp_children(identity.as_path()) {
@@ -54,6 +57,7 @@ fn main() {
                             },
                             None => { println!("Empty"); }
                         }
+//                        println!("{:#?}", vfs);
                     } else if let Some(matches) = matches.subcommand_matches("tree") {
                         let path = absolute(cwd.as_path(), Path::new(matches.value_of("path").unwrap_or(cwd.to_str().unwrap())));
                         tree(&mut vfs,path.as_path());

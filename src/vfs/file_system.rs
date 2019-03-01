@@ -85,12 +85,12 @@ impl VirtualFileSystem {
     pub fn virtualize(&mut self, identity: &Path) -> VirtualDelta {
         match self.get_node_state(identity) {
             VirtualNodeState::Added => {
+                let state = self.get_state();
                 let mut matching_identity = match identity.is_file() {
                     true => VirtualPath::get_parent_or_root(identity),
                     false => identity.to_path_buf()
                 };
 
-                let state = self.get_state();
                 if state.is_directory_empty(matching_identity.as_path()) && !self.real.is_directory_empty(matching_identity.as_path()) {
                     match state.get(matching_identity.as_path()) {
                         Some(virtual_identity) => self.exp_read_dir(virtual_identity.as_referent_source(), Some(virtual_identity.as_identity())),
@@ -100,11 +100,24 @@ impl VirtualFileSystem {
             },
             VirtualNodeState::Removed => {},
             VirtualNodeState::Real => {},
-            VirtualNodeState::Unknown => { self.exp_read_dir(identity, None); },
-            VirtualNodeState::SubDangling => { self.sub.detach(identity); println!("VIRTUALIZE Detached dangling {:?}", identity); },
+            VirtualNodeState::Unknown => {
+                if identity.exists() {
+                    for ancestor in identity.ancestors() {
+                        match self.get_node_state(ancestor) {
+                            VirtualNodeState::Unknown => { self.real.exp_attach(ancestor, None, true); }
+                            _ => {}
+                        };
+                    }
+                } else {
+                    panic!("{:?} does not exists", identity);
+                }
+
+                self.exp_read_dir(identity, None);
+            },
+            VirtualNodeState::SubDangling => { self.sub.exp_detach(identity); println!("VIRTUALIZE Detached dangling {:?}", identity); },
             VirtualNodeState::AddSubDangling => {
-                self.sub.detach(identity);
-                self.add.detach(identity);
+                self.sub.exp_detach(identity);
+                self.add.exp_detach(identity);
                 println!("VIRTUALIZE Detached dangling {:?}", identity);
             },
             VirtualNodeState::Override => panic!("VIRTUALIZE OVERRIDE {:?}", identity)
@@ -117,21 +130,30 @@ impl VirtualFileSystem {
             for result in results {
                 match result {
                     Ok(result) => {
+                        let kind = match result.path().is_dir() {
+                            true => VirtualKind::Directory,
+                            false => VirtualKind::File
+                        };
                         let virtual_path = match virtual_parent {
-                            Some(parent) => {                                ;
+                            Some(parent) => {
                                 let virtual_path = VirtualPath::from_path_buf(result.path())
                                     .with_new_parent(parent)
-                                    .with_kind(match result.path().is_dir() {
-                                        true => VirtualKind::Directory,
-                                        false => VirtualKind::File
-                                    });
+                                    .with_kind(kind);
 
-                                self.add.exp_attach_virtual( &virtual_path );
+                                self.add.exp_attach_virtual(&virtual_path);
                                 virtual_path
                             },
-                            None => VirtualPath::from_path_buf(result.path())
+                            None => VirtualPath::from_path_buf(result.path()).with_kind(kind)
                         };
+
                         self.real.exp_attach_virtual(&virtual_path);
+
+                        match self.get_node_state(result.path().as_path()) {
+                            VirtualNodeState::Unknown => {
+
+                            },
+                            state => { println!("STATE {:?}", state); }
+                        }
                     },
                     Err(error) => { println!("{:?}", error); }
                 };
@@ -144,6 +166,7 @@ impl VirtualFileSystem {
     //pub fn exp_remove()
     //pub fn exp_rename() ?
 
+    //TODO rename STATE -> STATUS
     pub fn get_node_state(&self, identity: &Path) -> VirtualNodeState {
         match self.add.exists(identity) {
             true => match self.sub.exists(identity) {

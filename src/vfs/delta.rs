@@ -131,17 +131,19 @@ impl VirtualDelta {
                     _ => {}
                 }
 
-                self.hierarchy
-                    .get_mut(parent.as_path())
-                    .unwrap()
-                    .insert(
-                        VirtualPath::from_path(identity)
-                            .with_source(source)
-                            .with_kind(match is_directory {
-                                true => VirtualKind::Directory,
-                                false => VirtualKind::File
-                            })
-                    );
+                if identity != VirtualPath::root_identity().as_path() {
+                    self.hierarchy
+                        .get_mut(parent.as_path())
+                        .unwrap()
+                        .insert(
+                            VirtualPath::from_path(identity)
+                                .with_source(source)
+                                .with_kind(match is_directory {
+                                    true => VirtualKind::Directory,
+                                    false => VirtualKind::File
+                                })
+                        );
+                }
             }
         }
     }
