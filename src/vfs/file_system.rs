@@ -1,22 +1,47 @@
 use std::path::{ Path, PathBuf };
 use std::fs::{ ReadDir };
-use crate::delta::VirtualDelta;
-use crate::path::{ VirtualPath, VirtualKind };
+use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind };
+use std::{ error, fmt };
+use std::io;
 
 #[derive(Debug)]
-pub enum VirtualNodeState {
-    Real,
-    Added,
-    Removed,
-    SubDangling,
-    AddSubDangling,
-    Override,
-    Unknown
+pub enum VfsError {
+    IoError(io::Error),
+    ReadDirNoSource(PathBuf),
+    ReadDirIsNotADirectory(PathBuf),
+    ReadDirDoesNotExists(PathBuf)
+}
+
+impl From<io::Error> for VfsError {
+    fn from(error: io::Error) -> Self {
+        VfsError::IoError(error)
+    }
+}
+
+impl fmt::Display for VfsError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            VfsError::IoError(ref err) => write!(f, "IO error: {}", err),
+            VfsError::ReadDirNoSource(err) => write!(f, "Read dir {} : No source defined", err.as_os_str().to_string_lossy()),
+            VfsError::ReadDirIsNotADirectory(err) => write!(f, "Read dir {} : Is not a directory", err.as_os_str().to_string_lossy()),
+            VfsError::ReadDirDoesNotExists(err) => write!(f, "Read dir {} : Does not exists", err.as_os_str().to_string_lossy()),
+        }
+    }
+}
+
+impl error::Error for VfsError {
+    fn cause(&self) -> Option<&error::Error> {
+        match self {
+            VfsError::IoError(err) => Some(err),
+            VfsError::ReadDirNoSource(_) => None,
+            VfsError::ReadDirIsNotADirectory(_) => None,
+            VfsError::ReadDirDoesNotExists(_) => None,
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct VirtualFileSystem {
-    pub real: VirtualDelta,
     pub add: VirtualDelta,
     pub sub: VirtualDelta
 }
@@ -24,173 +49,44 @@ pub struct VirtualFileSystem {
 impl VirtualFileSystem {
     pub fn new() -> VirtualFileSystem {
         VirtualFileSystem {
-            real: VirtualDelta::new(),
             add: VirtualDelta::new(),
             sub: VirtualDelta::new()
         }
     }
 
-    pub fn convert_to_real_path(&self, identity: &Path) -> Option<PathBuf> {
-        match self.get_state().get(identity) {
-            Some(virtual_identity) => Some(virtual_identity.to_referent_source()),
-            None => None
-        }
-    }
-
-    //TODO -> Result ?
-    //Find a way for async
-    pub fn read_virtual(&mut self, identity: &Path) {
-        if let Some(real_identity) = self.convert_to_real_path(identity) {
-            if identity != real_identity {
-                if real_identity.as_path().is_dir() {
-                    self.read(real_identity.as_path(), Some(identity));
-                }
-            }
-        }
-
-        if identity.is_dir() {
-            self.read(identity, None);
-        }
-    }
-
-    pub fn read(&mut self, identity: &Path, virtual_parent: Option<&Path>){
-//        println!("FS READ");
-        identity.read_dir().and_then(|results: ReadDir| {
-            for result in results {
-                match result {
-                    Ok(result) => {
-                        let virtual_path = match virtual_parent {
-                            Some(parent) => {                                ;
-                                let virtual_path = VirtualPath::from_path_buf(result.path())
-                                    .with_new_parent(parent)
-                                    .with_kind(match result.path().is_dir() {
-                                        true => VirtualKind::Directory,
-                                        false => VirtualKind::File
-                                    });
-
-                                self.add.exp_attach_virtual( &virtual_path );
-                                virtual_path
-                            },
-                            None => VirtualPath::from_path_buf(result.path())
-                        };
-                        self.real.exp_attach_virtual(&virtual_path);
+    pub fn read_dir(&self, path: &Path) -> Result<VirtualChildren, VfsError> {
+        let virtual_state = self.get_virtual_state();
+        match self.exists_virtually(path) {
+            true => match virtual_state.is_directory(path) {
+                Some(true) => match virtual_state.get(path) {
+                    Some(virtual_identity) => match virtual_identity.as_source() {
+                        Some(source_path) => match VirtualChildren::from_file_system(source_path) {
+                            Ok(virtual_children) => Ok(
+                                &(&virtual_children - &self.sub.children(path).unwrap())
+                                + &self.add.children(path).unwrap()
+                            ),
+                            Err(error) => Err(VfsError::from(error))
+                        },
+                        None => Err(VfsError::ReadDirNoSource(path.to_path_buf()))
                     },
-                    Err(error) => { println!("{:?}", error); }
-                };
+                    None => Err(VfsError::ReadDirDoesNotExists(path.to_path_buf()))
+                },
+                Some(false) => Err(VfsError::ReadDirIsNotADirectory(path.to_path_buf())),
+                None => Err(VfsError::ReadDirDoesNotExists(path.to_path_buf()))
+            },
+            false => match VirtualChildren::from_file_system(path) {
+                Ok(virtual_children) => Ok(virtual_children),
+                Err(error) => Err(VfsError::from(error))
             }
-            Ok(())
-        }).unwrap();
-    }
-
-    pub fn virtualize(&mut self, identity: &Path) -> VirtualDelta {
-        match self.get_node_state(identity) {
-            VirtualNodeState::Added => {
-                let state = self.get_state();
-                let mut matching_identity = match identity.is_file() {
-                    true => VirtualPath::get_parent_or_root(identity),
-                    false => identity.to_path_buf()
-                };
-
-                if state.is_directory_empty(matching_identity.as_path()) && !self.real.is_directory_empty(matching_identity.as_path()) {
-                    match state.get(matching_identity.as_path()) {
-                        Some(virtual_identity) => self.exp_read_dir(virtual_identity.as_referent_source(), Some(virtual_identity.as_identity())),
-                        None => {}
-                    }
-                }
-            },
-            VirtualNodeState::Removed => {},
-            VirtualNodeState::Real => {},
-            VirtualNodeState::Unknown => {
-                if identity.exists() {
-                    for ancestor in identity.ancestors() {
-                        match self.get_node_state(ancestor) {
-                            VirtualNodeState::Unknown => { self.real.exp_attach(ancestor, None, true); }
-                            _ => {}
-                        };
-                    }
-                } else {
-                    panic!("{:?} does not exists", identity);
-                }
-
-                self.exp_read_dir(identity, None);
-            },
-            VirtualNodeState::SubDangling => { self.sub.exp_detach(identity); println!("VIRTUALIZE Detached dangling {:?}", identity); },
-            VirtualNodeState::AddSubDangling => {
-                self.sub.exp_detach(identity);
-                self.add.exp_detach(identity);
-                println!("VIRTUALIZE Detached dangling {:?}", identity);
-            },
-            VirtualNodeState::Override => panic!("VIRTUALIZE OVERRIDE {:?}", identity)
-        };
-        self.get_state()
-    }
-
-    pub fn exp_read_dir(&mut self, identity: &Path, virtual_parent: Option<&Path>)  {
-        identity.read_dir().and_then(|results: ReadDir| {
-            for result in results {
-                match result {
-                    Ok(result) => {
-                        let kind = match result.path().is_dir() {
-                            true => VirtualKind::Directory,
-                            false => VirtualKind::File
-                        };
-                        let virtual_path = match virtual_parent {
-                            Some(parent) => {
-                                let virtual_path = VirtualPath::from_path_buf(result.path())
-                                    .with_new_parent(parent)
-                                    .with_kind(kind);
-
-                                self.add.exp_attach_virtual(&virtual_path);
-                                virtual_path
-                            },
-                            None => VirtualPath::from_path_buf(result.path()).with_kind(kind)
-                        };
-
-                        self.real.exp_attach_virtual(&virtual_path);
-
-                        match self.get_node_state(result.path().as_path()) {
-                            VirtualNodeState::Unknown => {
-
-                            },
-                            state => { println!("STATE {:?}", state); }
-                        }
-                    },
-                    Err(error) => { println!("{:?}", error); }
-                };
-            }
-            Ok(())
-        }).unwrap();
-    }
-
-    //pub fn exp_add()
-    //pub fn exp_remove()
-    //pub fn exp_rename() ?
-
-    //TODO rename STATE -> STATUS
-    pub fn get_node_state(&self, identity: &Path) -> VirtualNodeState {
-        match self.add.exists(identity) {
-            true => match self.sub.exists(identity) {
-                true => VirtualNodeState::AddSubDangling,
-                false => match self.real.exists(identity) {
-                    true => VirtualNodeState::Override,
-                    false => VirtualNodeState::Added
-                },
-            },
-            false => match self.sub.exists(identity) {
-                true => match self.real.exists(identity) {
-                    true => VirtualNodeState::Removed,
-                    false => VirtualNodeState::SubDangling
-                },
-                false => match self.real.exists(identity) {
-                    true => VirtualNodeState::Real,
-                    false => VirtualNodeState::Unknown
-                },
-            },
         }
     }
 
-    pub fn get_state(&self) -> VirtualDelta {
-        &(&self.real - &self.sub) + &self.add
+    pub fn exists_virtually(&self, path: &Path) -> bool {
+        self.get_virtual_state().exists(path)
+    }
+
+    pub fn is_directory_virtually(&self, path: &Path) -> Option<bool> {
+        self.get_virtual_state().is_directory(path)
     }
 
     pub fn get_add_state(&self) -> VirtualDelta {
@@ -201,13 +97,7 @@ impl VirtualFileSystem {
         self.sub.clone()
     }
 
-    pub fn get_real_state(&self) -> VirtualDelta {
-        self.real.clone()
-    }
-
-
-
-    pub fn children(identity: &Path) {
-
+    pub fn get_virtual_state(&self) -> VirtualDelta {
+        &self.add - &self.sub
     }
 }
