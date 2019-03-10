@@ -61,17 +61,9 @@ subcommands:
       - path:
             help: Path of the new file
             takes_value: true
-  - debug_vfs_state:
+  - debug_virtual_state:
       about: show vfs current state
   - debug_add_state:
       about: show add delta current state
   - debug_sub_state:
       about: show sub delta current state
-  - debug_real_state:
-      about: show real delta current state
-  - debug_node_state:
-      about: Show node status
-      args:
-      - path:
-            help: Path of the node to check
-            takes_value: true

@@ -22,7 +22,7 @@ impl VirtualChildren {
         }
     }
 
-    pub fn from_file_system(path: &Path) -> io::Result<VirtualChildren> {
+    pub fn from_file_system(path: &Path, parent: Option<&Path>) -> io::Result<VirtualChildren> {
         let mut virtual_children = VirtualChildren::new();
         path.read_dir().and_then(|results: ReadDir| {
             for result in results {
@@ -30,6 +30,7 @@ impl VirtualChildren {
                     Ok(result) => {
                         virtual_children.insert(
                             VirtualPath::from_path(result.path().as_path())
+                                .with_source(parent)
                                 .with_kind(match result.path().is_dir() {
                                     true => VirtualKind::Directory,
                                     false => VirtualKind::File
@@ -99,7 +100,9 @@ impl <'a, 'b> Sub<&'b VirtualChildren> for &'a VirtualChildren {
     fn sub(self, right_collection: &'b VirtualChildren) -> VirtualChildren {
         let mut result = self.clone();
         for virtual_identity in right_collection.iter() {
-            result.remove(virtual_identity);
+            if self.contains(virtual_identity) {
+                result.remove(virtual_identity);
+            }
         }
         result
     }

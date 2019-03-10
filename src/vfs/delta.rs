@@ -215,11 +215,15 @@ impl <'a, 'b> Add<&'b VirtualDelta> for &'a VirtualDelta {
         for (_parent, children) in &right_vfs.hierarchy {
             for child in children.iter() {
                 match right_vfs.is_directory(child.as_identity()) {
-                    Some(is_directory) => result.attach(
-                        child.as_identity(),
-                        child.as_source(),
-                        is_directory
-                    ),
+                    Some(is_directory) => match self.exists(child.as_identity()) {
+                        true => result.update(child, is_directory),
+                        false =>
+                            result.attach(
+                                child.as_identity(),
+                                child.as_source(),
+                                is_directory
+                            )
+                    },
                     None => {}
                 }
             }
@@ -235,7 +239,9 @@ impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
         let mut result = self.clone();
         for (_parent, children) in &right_vfs.hierarchy {
             for child in children.iter() {
-                result.detach(child.as_identity());
+                if result.exists(child.as_identity()) {
+                    result.detach(child.as_identity());
+                }
             }
         }
         result
