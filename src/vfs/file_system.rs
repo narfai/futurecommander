@@ -1,4 +1,4 @@
-use std::path::{ Path };
+use std::path::{ Path, PathBuf };
 use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VfsError };
 
 #[derive(Debug)]
@@ -154,6 +154,45 @@ impl VirtualFileSystem {
         let result = self.copy(source, destination);
         self.remove(source);
         result
+    }
+
+    pub fn resolve(&self, path: &Path) -> PathBuf {
+        match self.first_virtual_ancestor_source(path) {
+            Some((depth, ancestor_source)) => {
+                ancestor_source.join(
+                    path.strip_prefix(
+                        Self::remove_nth_parents(path, depth)
+                    ).unwrap()
+                )
+            },
+            None => path.to_path_buf()
+        }
+    }
+
+    pub fn remove_nth_parents(path: &Path, depth: usize) -> PathBuf {
+        for (index, ancestor) in path.ancestors().enumerate() {
+            if index == depth {
+                return ancestor.to_path_buf();
+            }
+        }
+        return path.to_path_buf();
+    }
+
+    pub fn first_virtual_ancestor_source(&self, path: &Path) -> Option<(usize, PathBuf)>{
+        let virtual_state = self.get_virtual_state();
+        for (index, ancestor) in path.ancestors().enumerate() {
+            if virtual_state.exists(ancestor) {
+                match virtual_state.get(ancestor) {
+                    Some(virtual_identity) =>
+                        match virtual_identity.to_source() {
+                            Some(source) => return Some((index, source)),
+                            None => panic!("Virtual ancestor has not sources")
+                        }
+                    None => panic!("Virtual ancestor does not exists")
+                }
+            }
+        }
+        None
     }
 
     pub fn exists(&self, path: &Path) -> bool {

@@ -188,6 +188,7 @@ impl VirtualPath {
         }
     }
 
+
     pub fn with_source(self, new_source: Option<&Path>) -> VirtualPath {
         VirtualPath::from(
             self.to_identity(),

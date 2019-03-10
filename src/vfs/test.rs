@@ -247,13 +247,20 @@ mod virtual_file_system_tests {
             sample_path.join(&Path::new("A")).as_path()
         );
 
+        cp(&mut vfs,
+            sample_path.join(&Path::new("A/B")).as_path(),
+            sample_path.join(&Path::new("A/B/D")).as_path()
+        );
+
+        println!("{:#?}", vfs);
+
         match vfs.read_dir(sample_path.join(&Path::new("A/B/D")).as_path()) {
             Ok(virtual_children) => {
-                assert!(!(virtual_children.len() > 0));
+                assert!(virtual_children.len() > 0);
                 virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/E"))));
                 virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/G"))));
             },
-            Err(error) => println!("Error : {}", error)
+            Err(error) => panic!("Error : {}", error)
         }
 
     }
@@ -284,7 +291,7 @@ mod virtual_file_system_tests {
                 virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))));
 
             },
-            Err(error) => println!("Error : {}", error)
+            Err(error) => panic!("Error : {}", error)
         }
     }
 
@@ -299,10 +306,16 @@ mod virtual_file_system_tests {
             real_source.as_identity(),
             sample_path.join(&Path::new("A")).as_path()
         );
+
+        println!("{:#?}", vfs);
+
         mv( &mut vfs,
             sample_path.join(&Path::new("A/F")).as_path(),
             sample_path.join(&Path::new("B")).as_path()
         );
+
+        println!("{:#?}", vfs);
+
         mv( &mut vfs,
             sample_path.join(&Path::new("B/F")).as_path(),
             sample_path.join(&Path::new("B/D/E")).as_path()
@@ -327,7 +340,7 @@ mod virtual_file_system_tests {
                 virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/MKDIRED"))));
 
             },
-            Err(error) => println!("Error : {}", error)
+            Err(error) => panic!("Error : {}", error)
         }
     }
 
@@ -343,7 +356,23 @@ mod virtual_file_system_tests {
                 virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/TOUCHED"))));
 
             },
-            Err(error) => println!("Error : {}", error)
+            Err(error) => panic!("Error : {}", error)
         }
+    }
+
+    #[test]
+    fn virtual_file_system_resolve(){
+        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
+        let mut vfs = VirtualFileSystem::new();
+
+        let a = sample_path.join(&Path::new("A"));
+        let b = sample_path.join(&Path::new("B"));
+        let ab = sample_path.join(&Path::new("A/B"));
+
+        vfs.add.attach(a.as_path(), None,true);
+        vfs.add.attach(b.as_path(), None, true);
+        vfs.copy(b.as_path(), a.as_path());
+
+        assert_eq!(b.as_path(), vfs.resolve(ab.as_path()));
     }
 }
