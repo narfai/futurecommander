@@ -252,8 +252,6 @@ mod virtual_file_system_tests {
             sample_path.join(&Path::new("A/B/D")).as_path()
         );
 
-        println!("{:#?}", vfs);
-
         match vfs.read_dir(sample_path.join(&Path::new("A/B/D")).as_path()) {
             Ok(virtual_children) => {
                 assert!(virtual_children.len() > 0);
@@ -307,21 +305,15 @@ mod virtual_file_system_tests {
             sample_path.join(&Path::new("A")).as_path()
         );
 
-        println!("{:#?}", vfs);
-
         mv( &mut vfs,
             sample_path.join(&Path::new("A/F")).as_path(),
             sample_path.join(&Path::new("B")).as_path()
         );
 
-        println!("{:#?}", vfs);
-
         mv( &mut vfs,
             sample_path.join(&Path::new("B/F")).as_path(),
             sample_path.join(&Path::new("B/D/E")).as_path()
         );
-
-        println!("{:#?}", vfs);
 
         assert!(vfs.read_dir(sample_path.join(&Path::new("B/D/E")).as_path()).unwrap().contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F")))));
         assert!(!vfs.read_dir(sample_path.join(&Path::new("A/")).as_path()).unwrap().contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/F")))));
@@ -368,11 +360,16 @@ mod virtual_file_system_tests {
         let a = sample_path.join(&Path::new("A"));
         let b = sample_path.join(&Path::new("B"));
         let ab = sample_path.join(&Path::new("A/B"));
+        let abcdef = sample_path.join(&Path::new("A/B/C/D/E/F"));
 
         vfs.add.attach(a.as_path(), None,true);
         vfs.add.attach(b.as_path(), None, true);
         vfs.copy(b.as_path(), a.as_path());
 
-        assert_eq!(b.as_path(), vfs.resolve(ab.as_path()));
+        let virtual_state = vfs.get_virtual_state();
+
+        assert_eq!(b.as_path(), virtual_state.resolve(ab.as_path()));
+        assert_eq!(b.join(&Path::new("C/D/E/F")).as_path(), virtual_state.resolve(abcdef.as_path()));
+
     }
 }

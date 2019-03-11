@@ -204,6 +204,49 @@ impl VirtualDelta {
             false => None
         }
     }
+
+    pub fn resolve(&self, path: &Path) -> PathBuf {
+        match self.first_virtual_ancestor(path) {
+            Some((depth, ancestor)) =>
+                match ancestor.to_source() {
+                    Some(ancestor_source) => ancestor_source.join(
+                        path.strip_prefix(
+                            Self::remove_nth_parents(path, depth)
+                        ).unwrap()
+                    ),
+                    None => panic!("Ancestor has no source !")
+                }
+            None => path.to_path_buf()
+        }
+    }
+
+    pub fn remove_nth_parents(path: &Path, depth: usize) -> PathBuf {
+        for (index, ancestor) in path.ancestors().enumerate() {
+            if index == depth {
+                return ancestor.to_path_buf();
+            }
+        }
+        return path.to_path_buf();
+    }
+
+    pub fn first_virtual_ancestor(&self, path: &Path) -> Option<(usize, VirtualPath)>{
+        for (index, ancestor) in path.ancestors().enumerate() {
+            if self.exists(ancestor) {
+                match self.get(ancestor) {
+                    Some(virtual_identity) => return Some((index, virtual_identity.clone())),
+                    None => panic!("Virtual ancestor does not exists")
+                }
+            }
+        }
+        None
+    }
+
+    pub fn is_virtual(&self, path: &Path) -> bool {
+        match self.first_virtual_ancestor(path) {
+            Some(_) => true,
+            None => false
+        }
+    }
 }
 
 
