@@ -81,6 +81,12 @@ impl Shell {
                     }
 
                     return;
+                } else if matches.subcommand_matches("debug_virtual_state").is_some() {
+                    println!("{:#?}", self.vfs.get_virtual_state());
+                } else if matches.subcommand_matches("debug_add_state").is_some() {
+                    println!("{:#?}", self.vfs.get_add_state());
+                } else if matches.subcommand_matches("debug_sub_state").is_some() {
+                    println!("{:#?}", self.vfs.get_sub_state());
                 } else if let Some(matches) = matches.subcommand_matches("cp") {
                     CopyOperation::from_context(self.cwd.as_path(), &matches)
                         .execute(&mut self.vfs);

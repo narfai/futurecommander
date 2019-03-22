@@ -9,12 +9,12 @@
 * edit ( store file modification files into tmp space )
 * apply des opérations ( déduire les opérations des delta )
 * shell auto-complete
+* handle file renaming
 
 ## Bugs
 
 * Dangling virtual cwd
 * tree / mv A B / tree
-
 
 ## Tests
 

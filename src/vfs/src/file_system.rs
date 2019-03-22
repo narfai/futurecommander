@@ -145,7 +145,7 @@ impl VirtualFileSystem {
     pub fn get(&self, path: &Path) -> Result<VirtualPath, VfsError> {
         let state = self.get_virtual_state();
         match state.first_virtual_ancestor(path) {
-            Some(ancestor) => match state.get(path) {
+            Some(_ancestor) => match state.get(path) {
                 Some(virtual_identity) => Ok(virtual_identity.clone()),
                 None => {
                     let resolved = state.resolve(path);
