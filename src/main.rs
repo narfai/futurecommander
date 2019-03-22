@@ -17,17 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-extern crate futurecommandervfs as vfs;
-
-use std::path::{ PathBuf, Path };
-use std::io::{stdin, stdout};
-use std::io::Write;
-
-use vfs::{VirtualFileSystem};
 use shell::Shell;
 
 fn main() {
-    let mut vfs = VirtualFileSystem::new();
     let mut shell = Shell::new();
     shell.run()
 }
