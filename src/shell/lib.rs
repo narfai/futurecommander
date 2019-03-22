@@ -17,17 +17,17 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::VirtualPath;
-use crate::VirtualFileSystem;
-use std::path::Path;
+#[macro_use]
+extern crate clap;
 
-pub fn ls(vfs: &mut VirtualFileSystem, identity: &Path){
-    match vfs.read_dir(identity) {
-        Ok(virtual_children) => {
-            for child in virtual_children {
-                println!("{:?}", child);
-            }
-        },
-        Err(error) => println!("Error : {}", error)
-    }
-}
+mod path;
+mod operation;
+mod shell;
+
+pub use self::shell::Shell;
+pub use operation::copy::CopyOperation;
+pub use operation::list::ListOperation;
+pub use operation::new_directory::NewDirectoryOperation;
+pub use operation::mov::MoveOperation;
+pub use operation::new_file::NewFileOperation;
+pub use operation::remove::RemoveOperation;

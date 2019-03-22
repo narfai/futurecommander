@@ -17,11 +17,23 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::VirtualDelta;
-use crate::VirtualFileSystem;
-use std::path::Path;
+use futurecommandervfs::VirtualFileSystem;
+use std::path::{ Path, PathBuf };
+use clap::ArgMatches;
+use crate::path::absolute;
 
-//TODO -> Result
-pub fn cp(vfs: &mut VirtualFileSystem, source_identity: &Path, destination_identity: &Path) {
-   vfs.copy(source_identity, destination_identity);
+pub struct RemoveOperation {
+    path: PathBuf
+}
+
+impl crate::operation::Operation for RemoveOperation {
+    fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
+        Self {
+            path: absolute(cwd, Path::new(args.value_of("path").unwrap())),
+        }
+    }
+
+    fn execute(&self, vfs: &mut VirtualFileSystem) {
+        vfs.remove(self.path.as_path()).unwrap();
+    }
 }

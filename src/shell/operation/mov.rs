@@ -17,10 +17,28 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::VirtualPath;
-use crate::VirtualFileSystem;
-use std::path::Path;
+use futurecommandervfs::VirtualFileSystem;
+use std::path::{ Path, PathBuf };
+use clap::ArgMatches;
+use crate::path::absolute;
 
-pub fn mkdir(vfs: &mut VirtualFileSystem, identity: &Path) {
-    vfs.mkdir(identity);
+pub struct MoveOperation {
+    source: PathBuf,
+    destination: PathBuf
+}
+
+impl crate::operation::Operation for MoveOperation {
+    fn from_context(cwd: &Path, args: &ArgMatches) -> Self {
+        Self {
+            source: absolute(cwd, Path::new(args.value_of("source").unwrap())),
+            destination: absolute(cwd, Path::new(args.value_of("destination").unwrap())),
+        }
+    }
+
+    fn execute(&self, vfs: &mut VirtualFileSystem) {
+        vfs.mv(
+            self.source.as_path(),
+            self.destination.as_path()
+        ).unwrap();
+    }
 }

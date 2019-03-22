@@ -5,10 +5,12 @@ authors = ["François Cadeillan <francois@azsystem.fr>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
 
+[workspace]
+
 [dependencies]
 clap = { version =  "2.32.0", features = ["yaml"] }
-itertools = "0.8.0"
+futurecommandervfs = { version = "0.1.0", path = "vfs" }
 
 [lib]
-name = "vfs"
-path = "src/vfs/lib.rs"
+name = "shell"
+path = "src/shell/lib.rs"

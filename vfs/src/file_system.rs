@@ -1,23 +1,23 @@
 /*
  * Copyright 2019 François CADEILLAN
  *
- * This file is part of FutureCommander.
+ * This file is part of FutureCommanderVfs.
  *
- * FutureCommander is free software: you can redistribute it and/or modify
+ * FutureCommanderVfs is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * FutureCommander is distributed in the hope that it will be useful,
+ * FutureCommanderVfs is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
+ * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::{ Path, PathBuf };
+use std::path::{ Path };
 use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VfsError };
 
 #[derive(Debug)]
@@ -35,6 +35,10 @@ impl VirtualFileSystem {
     }
 
     pub fn read_dir(&self, path: &Path) -> Result<VirtualChildren, VfsError> {
+        if !self.exists(path) {
+            return Err(VfsError::VirtuallyDoesNotExists(path.to_path_buf()));
+        }
+
         let resolved_path = self.get_virtual_state().resolve(path);
 
         let mut real_children = match VirtualChildren::from_file_system(resolved_path.as_path(), None) {
@@ -132,8 +136,10 @@ impl VirtualFileSystem {
 
     pub fn mv(&mut self, source: &Path, destination: &Path) -> Result<VirtualPath, VfsError>{
         let result = self.copy(source, destination);
-        self.remove(source);
-        result
+        match self.remove(source) {
+            Ok(_) => result,
+            Err(error) => Err(error)
+        }
     }
 
     pub fn get(&self, path: &Path) -> Result<VirtualPath, VfsError> {
@@ -166,7 +172,7 @@ impl VirtualFileSystem {
     }
 
     pub fn exists(&self, path: &Path) -> bool {
-        self.exists_virtually(path) || path.exists()
+        !self.sub.exists(path) && (self.add.exists(path) || path.exists())
     }
 
     pub fn exists_virtually(&self, path: &Path) -> bool {

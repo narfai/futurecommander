@@ -62,3 +62,7 @@ https://stackoverflow.com/questions/32682876/is-there-any-way-to-return-a-refere
 
 https://bryce.fisher-fleig.org/blog/strategies-for-returning-references-in-rust/index.html
 https://manishearth.github.io/blog/2015/05/27/wrapper-types-in-rust-choosing-your-guarantees/
+
+## TUI / GUI
+
+https://crates.io/crates/cursive

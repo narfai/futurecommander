@@ -17,10 +17,29 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::VirtualFileSystem;
+pub mod copy;
+pub use self::copy::CopyOperation;
+
+pub mod list;
+pub use self::list::ListOperation;
+
+pub mod mov;
+pub use self::mov::MoveOperation;
+
+pub mod new_directory;
+pub use self::new_directory::NewDirectoryOperation;
+
+pub mod new_file;
+pub use self::new_file::NewFileOperation;
+
+pub mod remove;
+pub use self::remove::RemoveOperation;
+
+use futurecommandervfs::VirtualFileSystem;
+use clap::ArgMatches;
 use std::path::Path;
 
-pub fn rm(vfs: &mut VirtualFileSystem, identity: &Path) {
-    vfs.remove(identity);
+pub trait Operation {
+    fn from_context(cwd: &Path, args: &ArgMatches) -> Self;
+    fn execute(&self, vfs: &mut VirtualFileSystem);
 }
-

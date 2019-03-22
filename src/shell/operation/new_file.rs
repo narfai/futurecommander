@@ -17,10 +17,23 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod cp;
-pub mod ls;
-pub mod mkdir;
-pub mod rm;
-pub mod mv;
-pub mod touch;
-//pub mod tree;
+use futurecommandervfs::VirtualFileSystem;
+use std::path::{ Path, PathBuf };
+use clap::ArgMatches;
+use crate::path::absolute;
+
+pub struct NewFileOperation {
+    path: PathBuf
+}
+
+impl crate::operation::Operation for NewFileOperation {
+    fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
+        Self {
+            path: absolute(cwd, Path::new(args.value_of("path").unwrap())),
+        }
+    }
+
+    fn execute(&self, vfs: &mut VirtualFileSystem) {
+        vfs.touch(self.path.as_path()).unwrap();
+    }
+}
