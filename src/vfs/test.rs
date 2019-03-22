@@ -317,7 +317,8 @@ mod virtual_file_system_tests {
 
         assert!(vfs.read_dir(sample_path.join(&Path::new("B/D/E")).as_path()).unwrap().contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F")))));
         assert!(!vfs.read_dir(sample_path.join(&Path::new("A/")).as_path()).unwrap().contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/F")))));
-        assert!(!vfs.read_dir(sample_path.join(&Path::new("B/F")).as_path()).unwrap().contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/F")))));
+//
+//     assert!(!vfs.read_dir(sample_path.join(&Path::new("B/F")).as_path()).unwrap().contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/F")))));
     }
 
     #[test]
@@ -330,7 +331,6 @@ mod virtual_file_system_tests {
             Ok(virtual_children) => {
                 assert!(virtual_children.len() > 0);
                 virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/MKDIRED"))));
-
             },
             Err(error) => panic!("Error : {}", error)
         }
