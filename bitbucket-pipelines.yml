@@ -6,4 +6,5 @@ pipelines:
         script:
           - cargo build -v --release
           - cargo test --all -v
+          - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"target/release/futurecommander"
 
