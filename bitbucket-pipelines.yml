@@ -4,5 +4,6 @@ pipelines:
   default:
     - step:
         script:
-          - cargo build -v
+          - cargo build -v --release
           - cargo test --all -v
+
