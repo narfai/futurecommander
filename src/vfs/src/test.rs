@@ -356,19 +356,6 @@ mod virtual_file_system_tests {
         );
     }
 
-
-//    CopyOperation::new(
-    //    sample_path.join("B").as_path(),
-    //    sample_path.join("A").as_path(),
-//    ).execute(&mut vfs);
-//
-//    let path = sample_path.join("A/B/D/B");
-//    CopyOperation::new(
-    //    sample_path.join("A/B").as_path(),
-    //    sample_path.join("A/B/D").as_path(),//TODO this kind of operation shouldn't be possible with move / remove
-//    ).execute(&mut vfs);
-
-
     #[test]
     fn virtual_file_system_resolve_through_inside(){
         let sample_path = get_sample_path();

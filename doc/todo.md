@@ -24,6 +24,9 @@
 * tree / mv A B / tree
 * mv B A / mv A/B/D A ( file_system.rs ligne 177 ) OK
 * mkdir E / mv E A / ls E OK
+* cp A A/B => shouldn't be allowed
+* mv B B/D => shouldn't be allowed
+* remove cwd or ancestors shouldn't be allowed
 
 ## Tests
 

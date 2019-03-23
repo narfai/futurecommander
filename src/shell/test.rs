@@ -54,22 +54,19 @@ mod virtual_shell_tests {
             sample_path.join("A").as_path(),
         ).execute(&mut vfs);
 
-        let path = sample_path.join("A/B/D/B");
         CopyOperation::new(
             sample_path.join("A/B").as_path(),
-            sample_path.join("A/B/D").as_path(),//TODO this kind of operation shouldn't be possible with move / remove
+            sample_path.join("A/B/D").as_path(),
         ).execute(&mut vfs);
 
-
-
-//        match vfs.read_dir(sample_path.join(&Path::new("A/B/D")).as_path()) {
-//            Ok(virtual_children) => {
-//                assert!(virtual_children.len() > 0);
-//                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/E"))));
-//                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/G"))));
-//            },
-//            Err(error) => panic!("Error : {}", error)
-//        }
+        match vfs.read_dir(sample_path.join(&Path::new("A/B/D")).as_path()) {
+            Ok(virtual_children) => {
+                assert!(virtual_children.len() > 0);
+                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/E"))));
+                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/G"))));
+            },
+            Err(error) => panic!("Error : {}", error)
+        }
 
     }
 
