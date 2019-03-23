@@ -4,10 +4,11 @@ pipelines:
   default:
     - step:
         script:
+          - apt-get install mingw-w64
           - rustup target add x86_64-pc-windows-gnu
           - cargo build -v --release
-          - cargo build -v --target=x86_64-pc-windows-gnu
-          - cargo test --all -v
           - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"target/release/futurecommander_x86_64-unknown-linux-gnu"
+          - cargo build -v --target=x86_64-pc-windows-gnu
           - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"target/release/futurecommander_x86_64-pc-windows-gnu"
+          - cargo test --all -v
 
