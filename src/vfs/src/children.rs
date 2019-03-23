@@ -53,18 +53,17 @@ impl VirtualChildren {
             for result in results {
                 match result {
                     Ok(result) => {
+                        let result_path = result.path();
                         let mut path = VirtualPath::from_path(result.path().as_path())
-                            .with_kind(match result.path().is_dir() {
-                                true => VirtualKind::Directory,
-                                false => VirtualKind::File
-                            });
+                            .with_source(Some(result_path.as_path()))
+                            .with_kind(VirtualKind::from_path(result_path.as_path()));
 
                         if let Some(source) = source {
                             path = path.with_new_source_parent(source);
                         }
 
                         if let Some(parent) = parent {
-                            path = path.with_new_parent(parent);
+                            path = path.with_new_identity_parent(parent);
                         }
 
                         virtual_children.insert(path);

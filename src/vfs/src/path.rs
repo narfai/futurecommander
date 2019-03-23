@@ -30,6 +30,23 @@ pub enum VirtualKind {
     Unknown
 }
 
+impl VirtualKind {
+    pub fn from_path(path: &Path) -> VirtualKind {
+        match path.is_dir() {
+            true => VirtualKind::Directory,
+            false =>
+                match path.is_file() {
+                    true => VirtualKind::File,
+                    false => VirtualKind::Unknown
+                }
+        }
+    }
+
+    pub fn from_path_buf(path: PathBuf) -> VirtualKind {
+        Self::from_path(path.as_path())
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct VirtualPath {
     pub identity: PathBuf,
@@ -104,13 +121,6 @@ impl VirtualPath {
         self.kind
     }
 
-    pub fn into_referent_source(self) -> PathBuf {
-        match self.source {
-            Some(source) => source,
-            None => self.identity
-        }
-    }
-
     //Conversions / Copy
     pub fn to_identity(&self) -> PathBuf {
         self.identity.to_path_buf()
@@ -120,13 +130,6 @@ impl VirtualPath {
         match &self.source {
             Some(source) => Some(source.to_path_buf()),
             None => None
-        }
-    }
-
-    pub fn to_referent_source(&self) -> PathBuf {
-        match &self.source {
-            Some(source) => source.to_path_buf(),
-            None => self.to_identity()
         }
     }
 
@@ -198,34 +201,51 @@ impl VirtualPath {
         VirtualPath::from_path_buf(self.identity.join(node_name))
     }
 
-    pub fn with_new_parent(self, new_parent: &Path) -> VirtualPath {
-        match self.identity.parent() {
+    pub fn replace_parent(path: &Path, new_parent: &Path) -> PathBuf {
+        match path.parent(){
             Some(parent) => {
-                let stripped = self.identity.as_path().strip_prefix(parent).unwrap(); //Do not handle ".." file names
-                VirtualPath::from(new_parent.join(stripped).to_path_buf(), self.to_source(), self.to_kind())
+                let stripped = path.strip_prefix(parent).unwrap(); //Do not handle ".." file names
+                new_parent.join(stripped).to_path_buf()
             },
-            None => self
+            None => new_parent.join(path).to_path_buf()
         }
     }
 
-    pub fn with_new_source_parent(self, new_parent: &Path) -> VirtualPath {
-        let source = match self.to_referent_source().parent() {
-            Some(parent) => {
-                let stripped = self.as_referent_source().strip_prefix(parent).unwrap(); //Do not handle ".." file names
-                Some(new_parent.join(stripped).to_path_buf())
-            },
-            None => None
-        };
-
-        VirtualPath::from(self.to_identity(), source, self.into_kind())
+    pub fn with_new_identity_parent(self, new_parent: &Path) -> VirtualPath {
+        VirtualPath::from(
+            Self::replace_parent(self.as_identity(), new_parent),
+            self.to_source(),
+            self.into_kind()
+        )
     }
 
+    pub fn with_new_source_parent(self, new_parent: &Path) -> VirtualPath {
+        VirtualPath::from(
+            self.to_identity(),
+            match self.as_source() {
+                Some(source) => Some(Self::replace_parent(source, new_parent)),
+                None => None
+            },
+            self.into_kind()
+        )
+    }
 
     pub fn with_source(self, new_source: Option<&Path>) -> VirtualPath {
         VirtualPath::from(
             self.to_identity(),
             match new_source {
                 Some(source) => Some(source.to_path_buf()),
+                None => None
+            },
+            self.into_kind()
+        )
+    }
+
+    pub fn with_owned_source(self, new_source: Option<PathBuf>) -> VirtualPath {
+        VirtualPath::from(
+            self.to_identity(),
+            match new_source {
+                Some(source) => Some(source),
                 None => None
             },
             self.into_kind()

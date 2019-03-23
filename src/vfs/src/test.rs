@@ -29,6 +29,10 @@ use crate::delta::{ VirtualDelta };
 use crate::file_system::{ VirtualFileSystem };
 use crate::children::{VirtualChildren };
 
+pub fn get_sample_path() -> PathBuf {
+    current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples")
+}
+
 #[cfg(test)]
 mod virtual_path_tests {
     use super::*;
@@ -204,7 +208,7 @@ mod virtual_delta_tests {
     }
 
     #[test]
-    fn virtual_delta_update_file_dir_commutation(){
+    fn virtual_delta_commute_file_into_dir(){
         let mut delta = VirtualDelta::new();
         delta.attach(Path::new("/A"), None, VirtualKind::Directory);
         delta.attach(Path::new("/B"), None, VirtualKind::File);
@@ -253,7 +257,7 @@ mod virtual_delta_tests {
     }
 
     #[test]
-    fn virtual_delta_sub_delta(){
+    fn virtual_delta_generate_sub_delta(){
         let mut delta = VirtualDelta::new();
         delta.attach(Path::new("/A"), None, VirtualKind::Directory);
         delta.attach(Path::new("/B"), None, VirtualKind::Directory);
@@ -284,35 +288,8 @@ mod virtual_file_system_tests {
     use super::*;
 
     #[test]
-    fn virtual_file_system_resolve(){
-        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
-        let mut vfs = VirtualFileSystem::new();
-
-        let a = sample_path.join(&Path::new("A"));
-        let b = sample_path.join(&Path::new("B"));
-        let ab = sample_path.join(&Path::new("A/B"));
-        let abcdef = sample_path.join(&Path::new("A/B/C/D/E/F"));
-
-        vfs.add.attach(a.as_path(), None,VirtualKind::Directory);
-        vfs.add.attach(b.as_path(), None, VirtualKind::Directory);
-        vfs.copy(b.as_path(), a.as_path()).unwrap();
-
-        let virtual_state = vfs.get_virtual_state();
-
-        assert_eq!(
-            b.as_path(),
-            virtual_state.resolve(ab.as_path()).unwrap()
-        );
-        assert_eq!(
-            b.join(&Path::new("C/D/E/F")).as_path(),
-            virtual_state.resolve(abcdef.as_path()).unwrap()
-        );
-
-    }
-
-    #[test]
     fn virtual_file_system_test_samples_ok(){
-        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
+        let sample_path = get_sample_path();
         assert!(sample_path.join(Path::new("A")).exists());
         assert!(sample_path.join(Path::new("B")).exists());
         assert!(sample_path.join(Path::new("F")).exists());
@@ -327,4 +304,198 @@ mod virtual_file_system_tests {
         assert!(sample_path.join(Path::new("B/D/E")).is_dir());
         assert!(sample_path.join(Path::new("B/D/G")).is_dir());
     }
+
+    #[test]
+    fn virtual_file_system_resolve(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+
+        let a = sample_path.join(&Path::new("A"));
+        let b = sample_path.join(&Path::new("B"));
+        let ab = sample_path.join(&Path::new("A/B"));
+        let abcdef = sample_path.join(&Path::new("A/B/C/D/E/F"));
+
+        vfs.copy(b.as_path(), a.as_path()).unwrap();
+
+        let virtual_state = vfs.get_virtual_state();
+
+        assert_eq!(
+            b.as_path(),
+            virtual_state.resolve(ab.as_path()).unwrap()
+        );
+        assert_eq!(
+            b.join(&Path::new("C/D/E/F")).as_path(),
+            virtual_state.resolve(abcdef.as_path()).unwrap()
+        );
+    }
+
+    #[test]
+    fn virtual_file_system_resolve_through(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+
+        let a = sample_path.join(&Path::new("A"));
+        let b = sample_path.join(&Path::new("B"));
+
+        let ab = sample_path.join(&Path::new("A/B"));
+        let bd = sample_path.join(&Path::new("B/D"));
+
+        vfs.copy(b.as_path(), a.as_path()).unwrap();
+        vfs.copy(ab.as_path(), bd.as_path()).unwrap();
+
+        let virtual_state = vfs.get_virtual_state();
+
+        assert_eq!(
+            b.as_path(),
+            virtual_state.resolve(ab.as_path()).unwrap()
+        );
+
+        assert_eq!(
+            b.as_path(),
+            virtual_state.resolve(bd.join(&Path::new("B")).as_path()).unwrap()
+        );
+    }
+
+
+//    CopyOperation::new(
+    //    sample_path.join("B").as_path(),
+    //    sample_path.join("A").as_path(),
+//    ).execute(&mut vfs);
+//
+//    let path = sample_path.join("A/B/D/B");
+//    CopyOperation::new(
+    //    sample_path.join("A/B").as_path(),
+    //    sample_path.join("A/B/D").as_path(),//TODO this kind of operation shouldn't be possible with move / remove
+//    ).execute(&mut vfs);
+
+
+    #[test]
+    fn virtual_file_system_resolve_through_inside(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+
+        let a = sample_path.join(&Path::new("A"));
+        let b = sample_path.join(&Path::new("B"));
+
+        let ab = sample_path.join(&Path::new("A/B"));
+        let abd = sample_path.join(&Path::new("A/B/D"));
+
+        let bd = sample_path.join(&Path::new("B/D"));
+
+        vfs.copy(b.as_path(), a.as_path()).unwrap();
+        vfs.copy(ab.as_path(), abd.as_path()).unwrap();
+
+        let virtual_state = vfs.get_virtual_state();
+
+        assert_eq!(
+            b.as_path(),
+            virtual_state.resolve(ab.as_path()).unwrap()
+        );
+
+        assert_eq!(
+            bd.as_path(),
+            virtual_state.resolve(abd.as_path()).unwrap()
+        );
+    }
+
+    #[test]
+    fn virtual_file_system_stat_none_if_deleted(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+        let a = sample_path.join("A");
+
+        assert!(vfs.stat(a.as_path()).is_some());
+
+        vfs.remove(a.as_path()).unwrap();
+
+        assert!(vfs.stat(a.as_path()).is_none())
+    }
+
+    #[test]
+    fn virtual_file_system_stat_virtual(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+        let z = sample_path.join(Path::new("Z"));
+
+        vfs.create(z.as_path(),VirtualKind::Directory).unwrap();
+
+        let stated = vfs.stat(z.as_path()).unwrap();
+        assert_eq!(stated.to_kind(), VirtualKind::Directory);
+        assert_eq!(stated.as_identity(), z);
+        assert!(stated.as_source().is_none())
+    }
+
+    #[test]
+    fn virtual_file_system_stat_real(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+        let a = sample_path.join(Path::new("A"));
+
+        let stated = vfs.stat(a.as_path()).unwrap();
+        assert_eq!(stated.to_kind(), VirtualKind::Directory);
+        assert_eq!(stated.as_identity(), a.as_path());
+        assert_eq!(stated.as_source(), Some(a.as_path()))
+    }
+
+    #[test]
+    fn virtual_file_system_stat_related(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+        let abdg = sample_path.join(Path::new("A/B/D/G"));//Note : should exists in samples
+
+        vfs.copy(
+            sample_path.join(Path::new("B")).as_path(),
+            sample_path.join(Path::new("A")).as_path()
+        ).unwrap();
+
+        let stated = vfs.stat(abdg.as_path());
+
+        assert!(stated.is_some());
+
+        let stated = stated.unwrap();
+
+        assert_eq!(stated.to_kind(), VirtualKind::Directory);
+        assert_eq!(stated.as_identity(), abdg.as_path());
+        assert_eq!(stated.as_source(), Some(sample_path.join(Path::new("B/D/G")).as_path()))
+    }
+
+    #[test]
+    fn virtual_file_system_status_exists(){}
+
+    #[test]
+    fn virtual_file_system_status_exists_virtually(){}
+
+    #[test]
+    fn virtual_file_system_status_exists_through_virtual_parent(){}
+
+    #[test]
+    fn virtual_file_system_status_exists_not_exists(){}
+
+    #[test]
+    fn virtual_file_system_status_exists_deleted(){}
+
+    #[test]
+    fn virtual_file_system_status_exists_removed_virtually(){}
+
+    #[test]
+    fn virtual_file_system_create(){}
+
+    #[test]
+    fn virtual_file_system_create_already_exists(){}
+
+    #[test]
+    fn virtual_file_system_remove(){}
+
+    #[test]
+    fn virtual_file_system_remove_does_not_exists(){}
+
+    #[test]
+    fn virtual_file_system_copy(){}
+
+    #[test]
+    fn virtual_file_system_copy_source_does_not(){}
+
+    #[test]
+    fn virtual_file_system_copy_destination_does_not(){}
+
 }
