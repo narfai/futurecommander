@@ -4,6 +4,7 @@ pipelines:
   default:
     - step:
         script:
+          - cp cargo.target.config ~/cargo/config
           - apt-get install mingw-w64
           - rustup target add x86_64-pc-windows-gnu
           - cargo build -v --release
