@@ -9,7 +9,6 @@ pipelines:
           - cargo build -v --release
           - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"target/release/futurecommander"
           - cargo build -v --release --target=x86_64-pc-windows-gnu
-#          - ls -R target/x86_64-pc-windows-gnu
           - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"target/x86_64-pc-windows-gnu/release/futurecommander.exe"
           - cargo test --all -v
 
