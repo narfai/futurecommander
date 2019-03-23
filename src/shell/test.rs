@@ -67,7 +67,6 @@ mod virtual_shell_tests {
             },
             Err(error) => panic!("Error : {}", error)
         }
-
     }
 
     #[test]
