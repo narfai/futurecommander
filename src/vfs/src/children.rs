@@ -43,20 +43,31 @@ impl VirtualChildren {
         }
     }
 
-    pub fn from_file_system(path: &Path, parent: Option<&Path>) -> io::Result<VirtualChildren> {
+    pub fn from_file_system(path: &Path, source: Option<&Path>, parent: Option<&Path>) -> io::Result<VirtualChildren> {
         let mut virtual_children = VirtualChildren::new();
+        if !path.exists() {
+            return Ok(VirtualChildren::new());
+        }
+
         path.read_dir().and_then(|results: ReadDir| {
             for result in results {
                 match result {
                     Ok(result) => {
-                        virtual_children.insert(
-                            VirtualPath::from_path(result.path().as_path())
-                                .with_source(parent)
-                                .with_kind(match result.path().is_dir() {
-                                    true => VirtualKind::Directory,
-                                    false => VirtualKind::File
-                                })
-                        );
+                        let mut path = VirtualPath::from_path(result.path().as_path())
+                            .with_kind(match result.path().is_dir() {
+                                true => VirtualKind::Directory,
+                                false => VirtualKind::File
+                            });
+
+                        if let Some(source) = source {
+                            path = path.with_new_source_parent(source);
+                        }
+
+                        if let Some(parent) = parent {
+                            path = path.with_new_parent(parent);
+                        }
+
+                        virtual_children.insert(path);
                     },
                     Err(error) => return Err(error)
                 };
@@ -121,7 +132,7 @@ impl <'a, 'b> Sub<&'b VirtualChildren> for &'a VirtualChildren {
     fn sub(self, right_collection: &'b VirtualChildren) -> VirtualChildren {
         let mut result = self.clone();
         for virtual_identity in right_collection.iter() {
-            if self.contains(virtual_identity) {
+            if result.contains(virtual_identity) {
                 result.remove(virtual_identity);
             }
         }

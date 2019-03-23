@@ -17,7 +17,7 @@
  * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::{ Path };
+use std::path::{ Path, PathBuf };
 use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VfsError };
 
 #[derive(Debug)]
@@ -34,153 +34,157 @@ impl VirtualFileSystem {
         }
     }
 
-    pub fn read_dir(&self, path: &Path) -> Result<VirtualChildren, VfsError> {
+    pub fn exists(&self, path: &Path) -> bool {
+        match self.add.resolve(path) {
+            Some(_real_path) =>
+                match self.sub.resolve(path).is_some() {
+                    true =>
+                        match path.exists() {
+                            true => panic!("DANGLING : {:?} EXISTS IN ADD, SUB & FS", path),
+                            false => false
+                        },
+                    false =>
+                        match path.exists() {
+                            true => true,
+                            false => true
+                        },
+                },
+            None =>
+                match self.sub.resolve(path).is_some() {
+                    true => match path.exists() {
+                        true => false,
+                        false => false
+                    },
+                    false =>
+                        match path.exists() {
+                            true => true,
+                            false => false
+                        },
+                },
+        }
+    }
+
+    pub fn stat(&self, path: &Path) -> Option<VirtualPath> {
         if !self.exists(path) {
-            return Err(VfsError::VirtuallyDoesNotExists(path.to_path_buf()));
+            return None;
         }
 
-        let resolved_path = self.get_virtual_state().resolve(path);
+        let state = self.get_virtual_state();
 
-        let mut real_children = match VirtualChildren::from_file_system(resolved_path.as_path(), None) {
+        match state.resolve(path) {
+            Some(resolved) =>
+                match state.get(path) {
+                    Some(virtual_identity) => Some(virtual_identity.clone()),
+                    None =>
+                        match resolved.exists() {
+                            true => Some( //Is virtual but exists in fs
+                                VirtualPath::from_path(path)
+                                    .with_source(Some(resolved.as_path()))
+                                    .with_kind(
+                                        match resolved.is_dir() {
+                                            true => VirtualKind::Directory,
+                                            false => VirtualKind::File
+                                        }
+                                    )
+                            ),
+                            false => None
+                        }
+                }
+            None => match path.exists() {
+                true => Some(
+                    VirtualPath::from_path(path)
+                        .with_kind(
+                            match path.is_dir() {
+                                true => VirtualKind::Directory,
+                                false => VirtualKind::File
+                            }
+                        )
+                ),
+                false => None
+            }
+        }
+    }
+
+    pub fn read_dir(&self, path: &Path) -> Result<VirtualChildren, VfsError> {
+        let directory = match self.stat(path) {
+            Some(virtual_identity) =>
+                match virtual_identity.as_kind() {
+                    VirtualKind::Directory => virtual_identity,
+                    _ => return Err(VfsError::IsNotADirectory(path.to_path_buf()))
+                },
+            None => return Err(VfsError::DoesNotExists(path.to_path_buf()))
+        };
+
+        let mut real_children = match VirtualChildren::from_file_system(
+            directory.as_referent_source(),
+            directory.as_source(),
+            Some(&path)
+        ) {
             Ok(virtual_children) => virtual_children,
             Err(error) => return Err(VfsError::from(error))
         };
 
-        if let Some(to_del_children) = self.sub.children(resolved_path.as_path()) {
-            real_children = &real_children - &to_del_children;
+        if let Some(to_add_children) = self.add.children(directory.as_identity()) {
+            real_children = &real_children + &to_add_children;
         }
 
-        if let Some(to_add_children) = self.add.children(resolved_path.as_path()) {
-            real_children = &real_children + &to_add_children;
+        if let Some(to_del_children) = self.sub.children(directory.as_identity()) {
+            real_children = &real_children - &to_del_children;
         }
 
         Ok(real_children)
     }
 
-    pub fn copy(&mut self, source: &Path, destination: &Path) -> Result<VirtualPath, VfsError>{
-        let virtual_source = match self.get(source) {
-            Ok(virtual_source) => virtual_source,
-            Err(error) => return Err(error)
+    pub fn create(&mut self, identity: &Path, kind: VirtualKind) -> Result<(), VfsError>{
+        match self.stat(identity) {
+            Some(_) => return Err(VfsError::AlreadyExists(identity.to_path_buf())),
+            None => {
+                self.add.attach(identity, None, kind);
+                Ok(())
+            }
+        }
+    }
+
+    pub fn remove(&mut self, identity: &Path) -> Result<(), VfsError>{
+        match self.stat(identity) {
+            Some(virtual_identity) => {
+                self.sub.attach_virtual(&virtual_identity);
+                if self.add.get(virtual_identity.as_identity()).is_some() {
+                    self.add.detach(virtual_identity.as_identity());
+                }
+                Ok(())
+            },
+            None => return Err(VfsError::DoesNotExists(identity.to_path_buf()))
+        }
+    }
+
+    pub fn copy(&mut self, source: &Path, destination: &Path) -> Result<(), VfsError>{
+        let source = match self.stat(source) {
+            Some(virtual_identity) => virtual_identity,
+            None => return Err(VfsError::DoesNotExists(source.to_path_buf()))
         };
 
-        match self.get(destination) {
-            Ok(virtual_destination) => match virtual_destination.to_kind() {
-                VirtualKind::Directory => {},
-                _ => return Err(VfsError::IsNotADirectory(virtual_destination.to_identity()))
-            },
-            Err(error) => return Err(error)
-        }
+        let destination = match self.stat(destination) {
+            Some(virtual_identity) => virtual_identity,
+            None => return Err(VfsError::DoesNotExists(destination.to_path_buf()))
+        };
 
-        let new_identity = &VirtualPath::from_path(source)
-            .with_new_parent(destination)
-            .with_source(Some(virtual_source.as_referent_source()))
-            .with_kind(virtual_source.to_kind());
+        let new_identity = &VirtualPath::from_path(source.as_identity())
+            .with_new_parent(destination.as_identity())
+            .with_source(source.as_source())
+            .with_kind(source.to_kind());
 
-        if self.exists(new_identity.as_identity()) {
-            return Err(VfsError::AlreadyExists(new_identity.to_identity()))
+        if self.stat(new_identity.as_identity()).is_some() {
+            return Err(VfsError::AlreadyExists(new_identity.to_identity())
         }
 
         self.add.attach_virtual(new_identity);
 
-        if self.sub.exists(new_identity.as_identity()) {
+        if self.sub.get(new_identity.as_identity()).is_some() {
             self.sub.detach(new_identity.as_identity())
         }
 
-        Ok(new_identity.clone())
-     }
-
-    pub fn remove(&mut self, path: &Path) -> Result<VirtualPath, VfsError> {
-        let identity = match self.add.get(path) {
-            Some(identity) => {
-                let cloned = identity.clone();
-                self.add.detach(cloned.as_identity());
-                cloned
-            },
-            None => match path.exists() {
-                true => VirtualPath::from_path(path).with_kind(match path.is_dir() {
-                    true => VirtualKind::Directory,
-                    false => VirtualKind::File
-                }),
-                false => return Err(VfsError::DoesNotExists(path.to_path_buf()))
-            }
-        };
-
-        return match self.sub.get(path) {
-            Some(_) => Err(VfsError::DoesNotExists(path.to_path_buf())),
-            None => {
-                self.sub.attach_virtual(&identity);
-                Ok(identity.clone())
-            }
-        }
-    }
-
-    pub fn mkdir(&mut self, path: &Path) -> Result<(), VfsError>{
-        match self.exists(path) {
-            true => Err(VfsError::AlreadyExists(path.to_path_buf())),
-            false => {
-                self.add.attach(path, None, true);
-                Ok(())
-            }
-        }
-    }
-
-    pub fn touch(&mut self, path: &Path) -> Result<(), VfsError>{
-        match self.exists(path) {
-            true => Err(VfsError::AlreadyExists(path.to_path_buf())),
-            false => {
-                self.add.attach(path, None, false);
-                Ok(())
-            }
-        }
-    }
-
-    pub fn mv(&mut self, source: &Path, destination: &Path) -> Result<VirtualPath, VfsError>{
-        let result = self.copy(source, destination);
-        match self.remove(source) {
-            Ok(_) => result,
-            Err(error) => Err(error)
-        }
-    }
-
-    pub fn get(&self, path: &Path) -> Result<VirtualPath, VfsError> {
-        let state = self.get_virtual_state();
-        match state.first_virtual_ancestor(path) {
-            Some(_ancestor) => match state.get(path) {
-                Some(virtual_identity) => Ok(virtual_identity.clone()),
-                None => {
-                    let resolved = state.resolve(path);
-                    Ok(VirtualPath::from_path(path)
-                        .with_kind(match resolved.is_dir() {
-                            true => VirtualKind::Directory,
-                            false => VirtualKind::File
-                        })
-                        .with_source(Some(resolved.as_path()))
-                    )
-                }
-            },
-            None => match path.exists() {
-                true => Ok(VirtualPath::from_path(path)
-                    .with_kind(
-                        match path.is_dir() {
-                            true => VirtualKind::Directory,
-                            false => VirtualKind::File
-                        }
-                    )),
-                false => Err(VfsError::DoesNotExists(path.to_path_buf()))
-            }
-        }
-    }
-
-    pub fn exists(&self, path: &Path) -> bool {
-        !self.sub.exists(path) && (self.add.exists(path) || path.exists())
-    }
-
-    pub fn exists_virtually(&self, path: &Path) -> bool {
-        self.get_virtual_state().exists(path)
-    }
-
-    pub fn is_directory_virtually(&self, path: &Path) -> Option<bool> {
-        self.get_virtual_state().is_directory(path)
+        Ok(())
     }
 
     pub fn get_add_state(&self) -> VirtualDelta {

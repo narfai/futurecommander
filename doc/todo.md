@@ -10,11 +10,17 @@
 * apply des opérations ( déduire les opérations des delta )
 * shell auto-complete
 * handle file renaming
+* shell errors
+* handle real vfserrors instead of panic!
+* support des .. et .
+* symlink guard
+* trim les inputs
 
 ## Bugs
 
 * Dangling virtual cwd
 * tree / mv A B / tree
+* mv B A / mv A/B/D A ( file_system.rs ligne 177 )
 
 ## Tests
 

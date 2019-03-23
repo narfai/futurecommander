@@ -96,7 +96,7 @@ mod virtual_delta_tests {
         let mut delta = VirtualDelta::new();
         let path = VirtualPath::from_str("/virtual/path");
 
-        delta.attach(path.as_identity(), None, true);
+        delta.attach(path.as_identity(), None, VirtualKind::Directory);
 
         let children= delta.children(&Path::new("/virtual")).unwrap();
         assert_eq!(
@@ -111,10 +111,10 @@ mod virtual_delta_tests {
         let mut delta = VirtualDelta::new();
 
         let child = Path::new("/virtual/path");
-        delta.attach(child, None,false);
+        delta.attach(child, None,VirtualKind::File);
 
         let parent = Path::new("/virtual");
-        delta.attach(parent, None, true);
+        delta.attach(parent, None, VirtualKind::Directory);
 
         let owned_child = delta.children(parent).unwrap().get(&VirtualPath::from_path(child)).unwrap();
         assert_eq!(
@@ -126,52 +126,52 @@ mod virtual_delta_tests {
     #[test]
     fn virtual_delta_add_a_delta_to_another(){
         let mut delta_r = VirtualDelta::new();
-        delta_r.attach(Path::new("/R/to_replace"), None, true);
-        delta_r.attach(Path::new("/R/to_not_change"), None,false);
-        delta_r.attach(Path::new("/R/to_complete"), None,true);
+        delta_r.attach(Path::new("/R/to_replace"), None, VirtualKind::Directory);
+        delta_r.attach(Path::new("/R/to_not_change"), None,VirtualKind::File);
+        delta_r.attach(Path::new("/R/to_complete"), None,VirtualKind::Directory);
 
         let mut delta_ra = VirtualDelta::new();
-        delta_ra.attach(Path::new("/R/to_replace/A"), None, true);
-        delta_ra.attach(Path::new("/R/to_not_change"), None, false);
-        delta_ra.attach(Path::new("/R/to_complete/B"), None, false);
+        delta_ra.attach(Path::new("/R/to_replace/A"), None, VirtualKind::Directory);
+        delta_ra.attach(Path::new("/R/to_not_change"), None, VirtualKind::File);
+        delta_ra.attach(Path::new("/R/to_complete/B"), None, VirtualKind::File);
 
         let delta_r_prime = &delta_r + &delta_ra;
-        assert!(delta_r_prime.is_directory(&Path::new("/R/to_replace")).unwrap());
-        assert!(delta_r_prime.is_directory(&Path::new("/R/to_complete")).unwrap());
-        assert!(!delta_r_prime.is_directory(&Path::new("/R/to_not_change")).unwrap());
-        assert!(delta_r_prime.exists(&Path::new("/R/to_replace/A")));
-        assert!(delta_r_prime.exists(&Path::new("/R/to_complete/B")));
+        assert!(delta_r_prime.is_directory(&Path::new("/R/to_replace")));
+        assert!(delta_r_prime.is_directory(&Path::new("/R/to_complete")));
+        assert!(!delta_r_prime.is_directory(&Path::new("/R/to_not_change")));
+        assert!(delta_r_prime.get(&Path::new("/R/to_replace/A")).is_some());
+        assert!(delta_r_prime.get(&Path::new("/R/to_complete/B")).is_some());
     }
 
     #[test]
     fn virtual_delta_substract_a_delta_from_another(){
         let mut delta_r = VirtualDelta::new();
-        delta_r.attach(Path::new("/R/to_remove"),  None,true);
-        delta_r.attach(Path::new("/R/to_not_change"), None, false);
-        delta_r.attach(Path::new("/R/to_not_change_dir"), None, true);
-        delta_r.attach(Path::new("/R/to_not_change_dir/to_remove"), None,false);
+        delta_r.attach(Path::new("/R/to_remove"),  None,VirtualKind::Directory);
+        delta_r.attach(Path::new("/R/to_not_change"), None, VirtualKind::File);
+        delta_r.attach(Path::new("/R/to_not_change_dir"), None, VirtualKind::Directory);
+        delta_r.attach(Path::new("/R/to_not_change_dir/to_remove"), None,VirtualKind::File);
 
         let mut delta_rs = VirtualDelta::new();
-        delta_rs.attach(Path::new("/R/to_remove"), None, true);
-        delta_rs.attach(Path::new("/R/to_not_change_dir/to_remove"), None,false);
+        delta_rs.attach(Path::new("/R/to_remove"), None, VirtualKind::Directory);
+        delta_rs.attach(Path::new("/R/to_not_change_dir/to_remove"), None,VirtualKind::File);
 
         let delta_r_prime = &delta_r - &delta_rs;
 
-        assert!(!delta_r_prime.is_directory(&Path::new("/R/to_not_change")).unwrap());
-        assert!(delta_r_prime.is_directory(&Path::new("/R/to_not_change_dir")).unwrap());
-        assert!(!delta_r_prime.exists(&Path::new("/R/to_remove")));
-        assert!(!delta_r_prime.exists(&Path::new("/R/to_not_change_dir/to_remove")));
+        assert!(!delta_r_prime.is_directory(&Path::new("/R/to_not_change")));
+        assert!(delta_r_prime.is_directory(&Path::new("/R/to_not_change_dir")));
+        assert!(!delta_r_prime.get(&Path::new("/R/to_remove")).is_some());
+        assert!(!delta_r_prime.get(&Path::new("/R/to_not_change_dir/to_remove")).is_some());
     }
 
     #[test]
     fn virtual_delta_walk(){
         let mut delta = VirtualDelta::new();
-        delta.attach(Path::new("/R"), None, true);
-        delta.attach(Path::new("/R/to_replace"), None, true);
-        delta.attach(Path::new("/R/to_not_change"), None,false);
-        delta.attach(Path::new("/R/to_complete"), None,true);
-        delta.attach(Path::new("/R/to_complete/D"), None,true);
-        delta.attach(Path::new("/R/to_complete/E"), None,true);
+        delta.attach(Path::new("/R"), None, VirtualKind::Directory);
+        delta.attach(Path::new("/R/to_replace"), None, VirtualKind::Directory);
+        delta.attach(Path::new("/R/to_not_change"), None,VirtualKind::File);
+        delta.attach(Path::new("/R/to_complete"), None,VirtualKind::Directory);
+        delta.attach(Path::new("/R/to_complete/D"), None,VirtualKind::Directory);
+        delta.attach(Path::new("/R/to_complete/E"), None,VirtualKind::Directory);
 
         let mut collection = VirtualChildren::new();
         delta.walk(&mut collection, &Path::new("/R"));
@@ -186,12 +186,12 @@ mod virtual_delta_tests {
     #[test]
     fn virtual_delta_attach_detach_idempotent(){
         let mut delta = VirtualDelta::new();
-        delta.attach(Path::new("/R"), None, true);
-        delta.attach(Path::new("/R/to_replace"), None, true);
-        delta.attach(Path::new("/R/to_not_change"), None,false);
-        delta.attach(Path::new("/R/to_complete"), None,true);
-        delta.attach(Path::new("/R/to_complete/D"), None,true);
-        delta.attach(Path::new("/R/to_complete/E"), None,true);
+        delta.attach(Path::new("/R"), None, VirtualKind::Directory);
+        delta.attach(Path::new("/R/to_replace"), None, VirtualKind::Directory);
+        delta.attach(Path::new("/R/to_not_change"), None,VirtualKind::File);
+        delta.attach(Path::new("/R/to_complete"), None,VirtualKind::Directory);
+        delta.attach(Path::new("/R/to_complete/D"), None,VirtualKind::Directory);
+        delta.attach(Path::new("/R/to_complete/E"), None,VirtualKind::Directory);
 
         delta.detach(&Path::new("/R/to_complete/E"));
         delta.detach(&Path::new("/R/to_complete/D"));
@@ -206,8 +206,8 @@ mod virtual_delta_tests {
     #[test]
     fn virtual_delta_update_file_dir_commutation(){
         let mut delta = VirtualDelta::new();
-        delta.attach(Path::new("/A"), None, true);
-        delta.attach(Path::new("/B"), None, false);
+        delta.attach(Path::new("/A"), None, VirtualKind::Directory);
+        delta.attach(Path::new("/B"), None, VirtualKind::File);
 
         assert_eq!(
             delta.get(Path::new("/A")).unwrap().to_kind(),
@@ -220,21 +220,21 @@ mod virtual_delta_tests {
 
         //RENAME Ad to Cd
         //Add a new directory C
-        delta.attach(Path::new("/C"), None, true);
+        delta.attach(Path::new("/C"), None, VirtualKind::Directory);
 
         //Delete old dir Af
         delta.detach(Path::new("/A"));
 
         //RENAME Bf TO Af
         //Add new file A
-        delta.attach(Path::new("/A"), None, false);
+        delta.attach(Path::new("/A"), None, VirtualKind::Directory);
 
         //Delete old file Bf
         delta.detach(Path::new("/B"));
 
         //RENAME Cd TO Bd
         //Add a new directory Bd
-        delta.attach(Path::new("/B"), None, true);
+        delta.attach(Path::new("/B"), None, VirtualKind::Directory);
 
         //Delete old dir Cd
         delta.detach(Path::new("/C"));
@@ -249,32 +249,32 @@ mod virtual_delta_tests {
             VirtualKind::Directory
         );
 
-        assert!(!delta.exists(Path::new("/C")));
+        assert!(delta.get(Path::new("/C")).is_none());
     }
 
     #[test]
     fn virtual_delta_sub_delta(){
         let mut delta = VirtualDelta::new();
-        delta.attach(Path::new("/A"), None, true);
-        delta.attach(Path::new("/B"), None, true);
-        delta.attach(Path::new("/B/C"), None, true);
-        delta.attach(Path::new("/B/D"), None, false);
+        delta.attach(Path::new("/A"), None, VirtualKind::Directory);
+        delta.attach(Path::new("/B"), None, VirtualKind::Directory);
+        delta.attach(Path::new("/B/C"), None, VirtualKind::Directory);
+        delta.attach(Path::new("/B/D"), None, VirtualKind::File);
 
         let sub_delta = delta.sub_delta(Path::new("/B")).unwrap();
 
-        assert!(sub_delta.exists(Path::new("/B/C")));
+        assert!(sub_delta.get(Path::new("/B/C")).is_some());
         assert_eq!(
             sub_delta.get(Path::new("/B/C")).unwrap().to_kind(),
             VirtualKind::Directory
         );
 
-        assert!(sub_delta.exists(Path::new("/B/D")));
+        assert!(sub_delta.get(Path::new("/B/D")).is_some());
         assert_eq!(
             sub_delta.get(Path::new("/B/D")).unwrap().to_kind(),
             VirtualKind::File
         );
 
-        assert!(!sub_delta.exists(Path::new("/A")));
+        assert!(sub_delta.get(Path::new("/A")).is_none());
     }
 }
 
@@ -293,8 +293,8 @@ mod virtual_file_system_tests {
         let ab = sample_path.join(&Path::new("A/B"));
         let abcdef = sample_path.join(&Path::new("A/B/C/D/E/F"));
 
-        vfs.add.attach(a.as_path(), None,true);
-        vfs.add.attach(b.as_path(), None, true);
+        vfs.add.attach(a.as_path(), None,VirtualKind::Directory);
+        vfs.add.attach(b.as_path(), None, VirtualKind::Directory);
         vfs.copy(b.as_path(), a.as_path()).unwrap();
 
         let virtual_state = vfs.get_virtual_state();
@@ -337,7 +337,7 @@ mod virtual_file_system_tests {
 
         vfs.remove(b_path.as_path());
 
-        assert!(!vfs.exists(b_path.as_path()));
+        assert!(vfs.stat(b_path.as_path()).is_none());
     }
 
     #[test]

@@ -28,7 +28,6 @@ pub enum VfsError {
     HasNoSource(PathBuf),
     IsNotADirectory(PathBuf),
     DoesNotExists(PathBuf),
-    VirtuallyDoesNotExists(PathBuf),
     AlreadyExists(PathBuf),
 }
 
@@ -45,7 +44,6 @@ impl fmt::Display for VfsError {
             VfsError::HasNoSource(err) => write!(f, "Path {} : Has no source defined virtually", err.as_os_str().to_string_lossy()),
             VfsError::IsNotADirectory(err) => write!(f, "Path {} is not a directory", err.as_os_str().to_string_lossy()),
             VfsError::DoesNotExists(err) => write!(f, "Path {} does not exists", err.as_os_str().to_string_lossy()),
-            VfsError::VirtuallyDoesNotExists(err) => write!(f, "Path {} : Virtually does not exists", err.as_os_str().to_string_lossy()),
             VfsError::AlreadyExists(err) => write!(f, "Path {} : Already exists", err.as_os_str().to_string_lossy()),
         }
     }

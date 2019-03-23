@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use futurecommandervfs::VirtualFileSystem;
+use futurecommandervfs::{ VirtualFileSystem, VirtualKind };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::path::absolute;
@@ -34,6 +34,6 @@ impl crate::operation::Operation for NewFileOperation {
     }
 
     fn execute(&self, vfs: &mut VirtualFileSystem) {
-        vfs.touch(self.path.as_path()).unwrap();
+        vfs.create(self.path.as_path(), VirtualKind::File).unwrap();
     }
 }

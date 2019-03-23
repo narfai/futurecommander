@@ -24,7 +24,7 @@ use std::path::{ Path, PathBuf };
 
 use clap::{App};
 
-use futurecommandervfs::{VirtualFileSystem};
+use futurecommandervfs::{VirtualFileSystem, VirtualKind};
 
 use crate::path::absolute;
 use crate::operation::{ Operation, CopyOperation, ListOperation, MoveOperation, NewDirectoryOperation, NewFileOperation, RemoveOperation };
@@ -69,15 +69,15 @@ impl Shell {
                     return;
                 } else if let Some(matches) = matches.subcommand_matches("cd") {
                     let path = absolute(self.cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
-
-                    if (
-                        self.vfs.exists_virtually(path.as_path())
-                            && self.vfs.is_directory_virtually(path.as_path()).unwrap_or(false))
-                            || (path.exists() && path.is_dir()
-                    ) {
-                        self.cwd = path;
+                    let state = self.vfs.get_virtual_state();
+                    if let Some(virtual_identity) = self.vfs.stat(path.as_path()) {
+                        if virtual_identity.as_kind() == &VirtualKind::Directory {
+                            self.cwd = path;
+                        } else {
+                            println!("Error : {:?} is not a directory", path)
+                        }
                     } else {
-                        println!("Error : invalid path")
+                        println!("Error : {:?} does not exists", path)
                     }
 
                     return;

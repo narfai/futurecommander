@@ -201,10 +201,22 @@ impl VirtualPath {
         match self.identity.parent() {
             Some(parent) => {
                 let stripped = self.identity.as_path().strip_prefix(parent).unwrap(); //Do not handle ".." file names
-                VirtualPath::from(new_parent.join(stripped).to_path_buf(), None, self.into_kind())
+                VirtualPath::from(new_parent.join(stripped).to_path_buf(), self.to_source(), self.to_kind())
             },
             None => self
         }
+    }
+
+    pub fn with_new_source_parent(self, new_parent: &Path) -> VirtualPath {
+        let source = match self.to_referent_source().parent() {
+            Some(parent) => {
+                let stripped = self.as_referent_source().strip_prefix(parent).unwrap(); //Do not handle ".." file names
+                Some(new_parent.join(stripped).to_path_buf())
+            },
+            None => None
+        };
+
+        VirtualPath::from(self.to_identity(), source, self.into_kind())
     }
 
 
@@ -224,6 +236,14 @@ impl VirtualPath {
             self.to_identity(),
             self.into_source(),
             kind
+        )
+    }
+
+    pub fn with_file_name(self, filename: &OsStr) -> VirtualPath {
+        VirtualPath::from(
+            self.to_identity().with_file_name(filename),
+            self.to_source(),
+            self.into_kind()
         )
     }
 

@@ -326,3 +326,121 @@ impl <I>Iterator for DummyWrapperIterator<I> where I: Iterator {
 //        }
 //    }
 //}
+//
+//
+//
+//pub fn old_copy(&mut self, source: &Path, destination: &Path ) -> Result<VirtualPath, VfsError>{
+//    let virtual_source = match self.get(source) {
+//        Ok(virtual_source) => virtual_source,
+//        Err(error) => return Err(error)
+//    };
+//
+//    match self.get(destination) {
+//        Ok(virtual_destination) =>
+//            match virtual_destination.to_kind() {
+//                VirtualKind::Directory => {},
+//                _ => return Err(VfsError::IsNotADirectory(virtual_destination.to_identity()))
+//            },
+//        Err(error) => return Err(error)
+//    }
+//
+//    let new_identity = &VirtualPath::from_path(source)
+//        .with_new_parent(destination)
+//        .with_source(Some(virtual_source.as_referent_source()))
+//        .with_kind(virtual_source.to_kind());
+//
+//
+//
+//    if self.exists(new_identity.as_identity()) {
+//        return Err(VfsError::AlreadyExists(new_identity.to_identity()))
+//    }
+//
+//    self.add.attach_virtual(new_identity);
+//
+//    if self.sub.exists(new_identity.as_identity()) {
+//        self.sub.detach(new_identity.as_identity())
+//    }
+//
+//    Ok(new_identity.clone())
+//}
+//
+//pub fn old_remove(&mut self, path: &Path) -> Result<VirtualPath, VfsError> {
+//    let identity = match self.add.get(path) {
+//        Some(identity) => {
+//            let cloned = identity.clone();
+//            self.add.detach(cloned.as_identity());
+//            cloned
+//        },
+//        None => match self.get(path) {
+//            Ok(virtual_path) => virtual_path,
+//            Err(error) => return Err(error)
+//        }
+//    };
+//
+//    return match self.sub.get(path) {
+//        Some(_) => Err(VfsError::DoesNotExists(path.to_path_buf())),
+//        None => {
+//            self.sub.attach_virtual(&identity);
+//            Ok(identity.clone())
+//        }
+//    }
+//}
+//
+//pub fn old_mkdir(&mut self, path: &Path) -> Result<(), VfsError>{
+//    match self.exists(path) {
+//        true => Err(VfsError::AlreadyExists(path.to_path_buf())),
+//        false => {
+//            self.add.attach(path, None, true);
+//            Ok(())
+//        }
+//    }
+//}
+//
+//pub fn old_touch(&mut self, path: &Path) -> Result<(), VfsError>{
+//    match self.exists(path) {
+//        true => Err(VfsError::AlreadyExists(path.to_path_buf())),
+//        false => {
+//            self.add.attach(path, None, false);
+//            Ok(())
+//        }
+//    }
+//}
+//
+//pub fn old_mv(&mut self, source: &Path, destination: &Path) -> Result<VirtualPath, VfsError>{
+//    let result = self.copy(source, destination);
+//    match self.remove(source) {
+//        Ok(_) => result,
+//        Err(error) => Err(error)
+//    }
+//}
+//
+//pub fn old_get(&self, path: &Path) -> Result<VirtualPath, VfsError> {
+//    let state = self.get_virtual_state();
+//    match state.first_virtual_ancestor(path) {
+//        Some(_ancestor) =>
+//            match state.get(path) {
+//                Some(virtual_identity) => Ok(virtual_identity.clone()),
+//                None => {
+//                    let resolved = state.resolve(path);
+//                    Ok(VirtualPath::from_path(path)
+//                        .with_kind(match resolved.is_dir() {
+//                            true => VirtualKind::Directory,
+//                            false => VirtualKind::File
+//                        })
+//                        .with_source(Some(resolved.as_path()))
+//                    )
+//                }
+//            },
+//        None =>
+//            match path.exists() {
+//                true => Ok(VirtualPath::from_path(path)
+//                    .with_kind(
+//                        match path.is_dir() {
+//                            true => VirtualKind::Directory,
+//                            false => VirtualKind::File
+//                        }
+//                    )),
+//                false => Err(VfsError::DoesNotExists(path.to_path_buf()))
+//            }
+//    }
+//}

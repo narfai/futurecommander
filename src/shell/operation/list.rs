@@ -28,7 +28,6 @@ pub struct ListOperation {
 
 impl crate::operation::Operation for ListOperation {
     fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
-        println!("{:?} {:?}", cwd, args);
         Self {
             path: absolute(cwd, Path::new(args.value_of("path").unwrap_or(cwd.to_str().unwrap()))),
         }
@@ -37,9 +36,14 @@ impl crate::operation::Operation for ListOperation {
     fn execute(&self, vfs: &mut VirtualFileSystem) {
         match vfs.read_dir(self.path.as_path()) {
             Ok(virtual_children) => {
-                for child in virtual_children {
-                    println!("{:?}", child);
+                if virtual_children.len() != 0 {
+                    for child in virtual_children {
+                        println!("{:?} {:?}", child, vfs.exists(child.as_identity()));
+                    }
+                } else {
+                    println!("Directory is empty");
                 }
+
             },
             Err(error) => println!("Error : {}", error)
         }

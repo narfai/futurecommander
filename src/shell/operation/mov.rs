@@ -17,6 +17,10 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+renommer un dossier c'est : create dst, copy source destination, remove source
+*/
+
 use futurecommandervfs::VirtualFileSystem;
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
@@ -36,9 +40,15 @@ impl crate::operation::Operation for MoveOperation {
     }
 
     fn execute(&self, vfs: &mut VirtualFileSystem) {
-        vfs.mv(
+        match vfs.copy(
             self.source.as_path(),
             self.destination.as_path()
-        ).unwrap();
+        ) {
+            Ok(_) => match vfs.remove(self.source.as_path()) {
+                Ok(_) => { println!("MOVE {:?} to {:?}", self.source, self.destination); },
+                Err(error) => println!("MOVE::REMOVE {:?}", error)
+            },
+            Err(error) => println!("MOVE::COPY {:?}", error)
+        };
     }
 }
