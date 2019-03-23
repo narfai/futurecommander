@@ -12,15 +12,18 @@
 * handle file renaming
 * shell errors
 * handle real vfserrors instead of panic!
-* support des .. et .
+* support des .. et
 * symlink guard
 * trim les inputs
+* handle mes misuse et afficher l'usage au lieu de crash
+* chaos monkey which generates *a lot* of random operations to makes some errors bubblings
 
 ## Bugs
 
 * Dangling virtual cwd
 * tree / mv A B / tree
-* mv B A / mv A/B/D A ( file_system.rs ligne 177 )
+* mv B A / mv A/B/D A ( file_system.rs ligne 177 ) OK
+* mkdir E / mv E A / ls E OK
 
 ## Tests
 
@@ -30,6 +33,7 @@
 * tests dir / file interversion Af->Cf / Bd -> Ad / Cf -> Bf
 * windows testing
 * benchmarks
+* tests sur le support de la root
 
 ## Optimization performances and readability
 

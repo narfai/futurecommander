@@ -20,10 +20,18 @@
 use futurecommandervfs::VirtualFileSystem;
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
-use crate::path::absolute;
+use crate::path::{ absolute, normalize };
 
 pub struct RemoveOperation {
     path: PathBuf
+}
+
+impl RemoveOperation {
+    pub fn new(path: &Path) -> Self {
+        RemoveOperation {
+            path: normalize(path)
+        }
+    }
 }
 
 impl crate::operation::Operation for RemoveOperation {

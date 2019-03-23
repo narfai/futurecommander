@@ -52,7 +52,9 @@ impl Shell {
                 let mut argv = vec!["futurecommander"];
                 argv.extend(input.trim().split(" "));
 
-                self.send(argv);
+                if self.send(argv).is_none() {
+                    break;
+                }
 
                 println!("\n");
                 print!("> ");
@@ -60,13 +62,13 @@ impl Shell {
         }
     }
 
-    pub fn send(&mut self, argv: Vec<&str>) {
+    pub fn send(&mut self, argv: Vec<&str>) -> Option<()> {
         let yaml = load_yaml!("clap.yml");
 
         match App::from_yaml(yaml).get_matches_from_safe(argv) {
             Ok(matches) => {
                 if let Some(_) = matches.subcommand_matches("exit") {
-                    return;
+                    return None;
                 } else if let Some(matches) = matches.subcommand_matches("cd") {
                     let path = absolute(self.cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
                     let state = self.vfs.get_virtual_state();
@@ -79,8 +81,6 @@ impl Shell {
                     } else {
                         println!("Error : {:?} does not exists", path)
                     }
-
-                    return;
                 } else if matches.subcommand_matches("debug_virtual_state").is_some() {
                     println!("{:#?}", self.vfs.get_virtual_state());
                 } else if matches.subcommand_matches("debug_add_state").is_some() {
@@ -114,6 +114,7 @@ impl Shell {
                 println!("{}", error);
             }
         }
+        Some(())
     }
 }
 

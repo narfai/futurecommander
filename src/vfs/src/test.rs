@@ -227,7 +227,7 @@ mod virtual_delta_tests {
 
         //RENAME Bf TO Af
         //Add new file A
-        delta.attach(Path::new("/A"), None, VirtualKind::Directory);
+        delta.attach(Path::new("/A"), None, VirtualKind::File);
 
         //Delete old file Bf
         delta.detach(Path::new("/B"));
@@ -301,11 +301,11 @@ mod virtual_file_system_tests {
 
         assert_eq!(
             b.as_path(),
-            virtual_state.resolve(ab.as_path())
+            virtual_state.resolve(ab.as_path()).unwrap()
         );
         assert_eq!(
             b.join(&Path::new("C/D/E/F")).as_path(),
-            virtual_state.resolve(abcdef.as_path())
+            virtual_state.resolve(abcdef.as_path()).unwrap()
         );
 
     }
@@ -326,145 +326,5 @@ mod virtual_file_system_tests {
         assert!(sample_path.join(Path::new("B/D")).is_dir());
         assert!(sample_path.join(Path::new("B/D/E")).is_dir());
         assert!(sample_path.join(Path::new("B/D/G")).is_dir());
-    }
-
-    #[test]
-    fn virtual_file_system_rm(){
-        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
-        let mut vfs = VirtualFileSystem::new();
-
-        let b_path = sample_path.join(&Path::new("B"));
-
-        vfs.remove(b_path.as_path());
-
-        assert!(vfs.stat(b_path.as_path()).is_none());
-    }
-
-    #[test]
-    fn virtual_file_system_cp(){
-        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
-        let mut vfs = VirtualFileSystem::new();
-
-        vfs.copy(
-            sample_path.join(&Path::new("B")).as_path(),
-           sample_path.join(&Path::new("A")).as_path()
-        );
-
-        vfs.copy(
-            sample_path.join(&Path::new("A/B")).as_path(),
-           sample_path.join(&Path::new("A/B/D")).as_path()
-        );
-
-        match vfs.read_dir(sample_path.join(&Path::new("A/B/D")).as_path()) {
-            Ok(virtual_children) => {
-                assert!(virtual_children.len() > 0);
-                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/E"))));
-                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/G"))));
-            },
-            Err(error) => panic!("Error : {}", error)
-        }
-
-    }
-
-    #[test]
-    fn virtual_file_system_cp_preserve_source_and_node_kind(){
-        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
-        let mut vfs = VirtualFileSystem::new();
-
-        let real_source = VirtualPath::from_path_buf(sample_path.join(&Path::new("F")));
-
-        vfs.copy(
-           real_source.as_identity(),
-           sample_path.join(&Path::new("A")).as_path()
-        );
-        vfs.copy(sample_path.join(&Path::new("A/F")).as_path(),
-           sample_path.join(&Path::new("B")).as_path()
-        );
-        vfs.copy(sample_path.join(&Path::new("B/F")).as_path(),
-           sample_path.join(&Path::new("B/D/E")).as_path()
-        );
-
-        match vfs.read_dir(sample_path.join(&Path::new("B/D/E")).as_path()) {
-            Ok(virtual_children) => {
-                assert!(virtual_children.len() > 0);
-                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))));
-
-            },
-            Err(error) => panic!("Error : {}", error)
-        }
-    }
-
-    #[test]
-    fn virtual_file_system_mv(){
-        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
-        let mut vfs = VirtualFileSystem::new();
-
-        let real_source = VirtualPath::from_path_buf(sample_path.join(&Path::new("F")));
-
-        vfs.mv(
-            real_source.as_identity(),
-            sample_path.join(&Path::new("A")).as_path()
-        );
-
-        vfs.mv(
-            sample_path.join(&Path::new("A/F")).as_path(),
-            sample_path.join(&Path::new("B")).as_path()
-        );
-
-        vfs.mv( sample_path.join(&Path::new("B/F")).as_path(),
-            sample_path.join(&Path::new("B/D/E")).as_path()
-        );
-
-        assert!(
-            vfs.read_dir(sample_path.join(&Path::new("B/D/E")).as_path()).unwrap()
-                .contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))))
-        );
-        assert!(
-            !vfs.read_dir(sample_path.join(&Path::new("A/")).as_path()).unwrap()
-                .contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/F")))) //Parent
-        );
-        assert!(
-            !vfs.read_dir(sample_path.join(&Path::new("B")).as_path()).unwrap()
-                .contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("B/F"))))
-        );
-    }
-
-    #[test]
-    fn virtual_file_system_mkdir(){
-        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
-        let mut vfs = VirtualFileSystem::new();
-
-        vfs.mkdir(sample_path.join(&Path::new("B/D/E/MKDIRED")).as_path());
-        match vfs.read_dir(sample_path.join(&Path::new("B/D/E")).as_path()) {
-            Ok(virtual_children) => {
-                assert!(virtual_children.len() > 0);
-                assert!(
-                    virtual_children.contains(
-                        &VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/MKDIRED")))
-                    )
-                );
-            },
-            Err(error) => panic!("Error : {}", error)
-        }
-    }
-
-    #[test]
-    fn virtual_file_system_touch(){
-        let sample_path = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples");
-        let mut vfs = VirtualFileSystem::new();
-
-        vfs.touch(sample_path.join(&Path::new("B/D/E/TOUCHED")).as_path());
-        match vfs.read_dir(sample_path.join(&Path::new("B/D/E")).as_path()) {
-            Ok(virtual_children) => {
-                assert!(virtual_children.len() > 0);
-                assert!(
-                    virtual_children.contains(
-                        &VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/TOUCHED")))
-                    )
-                );
-
-            },
-            Err(error) => panic!("Error : {}", error)
-        }
     }
 }

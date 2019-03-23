@@ -21,25 +21,34 @@ use futurecommandervfs::VirtualFileSystem;
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
-use crate::path::absolute;
+use crate::path::{ absolute, normalize };
 
 pub struct CopyOperation {
    source: PathBuf,
    destination: PathBuf
 }
 
-impl crate::operation::Operation for CopyOperation {
-   fn from_context(cwd: &Path, args: &ArgMatches) -> Self {
+impl CopyOperation {
+    pub fn new(source: &Path, destination: &Path) -> Self {
         Self {
-            source: absolute(cwd, Path::new(args.value_of("source").unwrap())),
-            destination: absolute(cwd, Path::new(args.value_of("destination").unwrap())),
+            source: normalize(source),
+            destination: normalize(destination),
         }
-   }
+    }
+}
 
-   fn execute(&self, vfs: &mut VirtualFileSystem) {
-      vfs.copy(
-         self.source.as_path(),
-         self.destination.as_path()
-      ).unwrap();
-   }
+impl crate::operation::Operation for CopyOperation {
+    fn from_context(cwd: &Path, args: &ArgMatches) -> Self {
+         Self {
+             source: absolute(cwd, Path::new(args.value_of("source").unwrap())),
+             destination: absolute(cwd, Path::new(args.value_of("destination").unwrap())),
+         }
+    }
+
+    fn execute(&self, vfs: &mut VirtualFileSystem) {
+       vfs.copy(
+          self.source.as_path(),
+          self.destination.as_path()
+       ).unwrap();
+    }
 }

@@ -20,7 +20,8 @@
 use std::cmp::Ordering;
 use std::path::{ PathBuf, Path };
 use std::ffi::{ OsStr };
-use std::hash::{Hash, Hasher};
+use std::hash::{ Hash, Hasher};
+use std::path::MAIN_SEPARATOR;
 
 #[derive(Clone, Debug)]
 pub enum VirtualKind {
@@ -143,7 +144,7 @@ impl VirtualPath {
     }
 
     pub fn root_identity() -> PathBuf {
-        PathBuf::from("/") //TODO may be a compatibility issue
+        PathBuf::from(MAIN_SEPARATOR.to_string())
     }
 
     pub fn from(identity: PathBuf, source: Option<PathBuf>, kind: VirtualKind) -> VirtualPath {

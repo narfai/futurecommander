@@ -20,10 +20,18 @@
 use futurecommandervfs::{ VirtualFileSystem, VirtualKind };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
-use crate::path::absolute;
+use crate::path::{ absolute, normalize };
 
 pub struct NewDirectoryOperation {
     path: PathBuf
+}
+
+impl NewDirectoryOperation {
+    pub fn new(path: &Path) -> Self {
+        NewDirectoryOperation {
+            path: normalize(path)
+        }
+    }
 }
 
 impl crate::operation::Operation for NewDirectoryOperation {

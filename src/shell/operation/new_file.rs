@@ -20,11 +20,20 @@
 use futurecommandervfs::{ VirtualFileSystem, VirtualKind };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
-use crate::path::absolute;
+use crate::path::{ absolute, normalize };
 
 pub struct NewFileOperation {
     path: PathBuf
 }
+
+impl NewFileOperation {
+    pub fn new(path: &Path) -> Self {
+        NewFileOperation {
+            path: normalize(path)
+        }
+    }
+}
+
 
 impl crate::operation::Operation for NewFileOperation {
     fn from_context(cwd : &Path, args: &ArgMatches) -> Self {

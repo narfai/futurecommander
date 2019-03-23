@@ -65,10 +65,6 @@ impl VirtualFileSystem {
     }
 
     pub fn stat(&self, path: &Path) -> Option<VirtualPath> {
-        if !self.exists(path) {
-            return None;
-        }
-
         let state = self.get_virtual_state();
 
         match state.resolve(path) {
@@ -171,11 +167,11 @@ impl VirtualFileSystem {
 
         let new_identity = &VirtualPath::from_path(source.as_identity())
             .with_new_parent(destination.as_identity())
-            .with_source(source.as_source())
+            .with_source(Some(source.as_referent_source()))
             .with_kind(source.to_kind());
 
         if self.stat(new_identity.as_identity()).is_some() {
-            return Err(VfsError::AlreadyExists(new_identity.to_identity())
+            return Err(VfsError::AlreadyExists(new_identity.to_identity()));
         }
 
         self.add.attach_virtual(new_identity);

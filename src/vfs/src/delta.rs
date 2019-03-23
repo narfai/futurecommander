@@ -46,7 +46,7 @@ impl VirtualDelta {
         self.attach(
             virtual_path.as_identity(),
             virtual_path.as_source(),
-            VirtualKind::Directory
+            virtual_path.to_kind()
         )
     }
 
@@ -237,11 +237,11 @@ impl VirtualDelta {
 impl <'a, 'b> Add<&'b VirtualDelta> for &'a VirtualDelta {
     type Output = VirtualDelta;
 
-    fn add(self, right_vfs: &'b VirtualDelta) -> VirtualDelta {
+    fn add(self, right_delta: &'b VirtualDelta) -> VirtualDelta {
         let mut result = self.clone();
-        for (_parent, children) in &right_vfs.hierarchy {
+        for (_parent, children) in &right_delta.hierarchy {
             for child in children.iter() {
-                if result.get(child.as_identity()).is_some() {
+                if right_delta.get(child.as_identity()).is_some() {
                     if result.get(child.as_identity()).is_some() {
                         result.detach(child.as_identity());
                     }
@@ -261,9 +261,9 @@ impl <'a, 'b> Add<&'b VirtualDelta> for &'a VirtualDelta {
 impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
     type Output = VirtualDelta;
 
-    fn sub(self, right_vfs: &'b VirtualDelta) -> VirtualDelta {
+    fn sub(self, right_delta: &'b VirtualDelta) -> VirtualDelta {
         let mut result = self.clone();
-        for (_parent, children) in &right_vfs.hierarchy {
+        for (_parent, children) in &right_delta.hierarchy {
             for child in children.iter() {
                 if result.get(child.as_identity()).is_some() {
                     result.detach(child.as_identity());
@@ -273,3 +273,21 @@ impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
         result
     }
 }
+
+/*
+impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
+    type Output = VirtualDelta;
+
+    fn sub(self, right_vfs: &'b VirtualDelta) -> VirtualDelta {
+        let mut result = self.clone();
+        for (_parent, children) in &right_vfs.hierarchy {
+            for child in children.iter() {
+                if result.exists(child.as_identity()) {
+                    result.detach(child.as_identity());
+                }
+            }
+        }
+        result
+    }
+}
+*/
