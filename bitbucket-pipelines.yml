@@ -8,7 +8,7 @@ pipelines:
           - rustup target add x86_64-pc-windows-gnu
           - cargo build -v --release
           - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads/futurecommander_x86_64-unknown-linux-gnu" --form files=@"target/release/futurecommander"
-          - cargo build -v --target=x86_64-pc-windows-gnu
-          - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads/futurecommander_x86_64-pc-windows-gnu" --form files=@"target/x86_64-pc-windows-gnu/futurecommander"
+          - cargo build -v --release --target=x86_64-pc-windows-gnu
+          - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads/futurecommander_x86_64-pc-windows-gnu" --form files=@"target/x86_64-pc-windows-gnu/release/futurecommander"
           - cargo test --all -v
 
