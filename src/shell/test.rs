@@ -21,7 +21,7 @@ use std::env::current_exe;
 
 use std::path::{ PathBuf, Path };
 
-use vfs::{ VirtualPath, VirtualKind, VirtualDelta, VirtualFileSystem, VirtualChildren };
+use vfs::{ VirtualPath, VirtualFileSystem };
 use crate::command::{ Command, CopyCommand, MoveCommand, NewDirectoryCommand, NewFileCommand };
 
 pub fn get_sample_path() -> PathBuf {
@@ -39,7 +39,7 @@ mod virtual_shell_tests {
 
         let b_path = sample_path.join(&Path::new("B"));
 
-        vfs.remove(b_path.as_path());
+        vfs.remove(b_path.as_path()).unwrap();
 
         assert!(!vfs.exists(b_path.as_path()));
     }

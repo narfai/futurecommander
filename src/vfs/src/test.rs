@@ -446,6 +446,8 @@ mod virtual_file_system_tests {
         assert_eq!(stated.as_source(), Some(sample_path.join(Path::new("B/D/G")).as_path()))
     }
 
+    // No-Backwards tests
+
     #[test]
     fn virtual_file_system_status_exists(){}
 
@@ -480,9 +482,9 @@ mod virtual_file_system_tests {
     fn virtual_file_system_copy(){}
 
     #[test]
-    fn virtual_file_system_copy_source_does_not(){}
+    fn virtual_file_system_copy_source_does_not_exists(){}
 
     #[test]
-    fn virtual_file_system_copy_destination_does_not(){}
+    fn virtual_file_system_copy_destination_does_not_exists(){}
 
 }

@@ -20,18 +20,10 @@
 use vfs::{ VirtualFileSystem, VfsError };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
-use crate::path::{ absolute, normalize };
+use crate::path::{ absolute };
 
 pub struct TreeCommand {
     path: PathBuf
-}
-
-impl TreeCommand {
-    pub fn new(path: &Path) -> Self {
-        TreeCommand {
-            path: normalize(path)
-        }
-    }
 }
 
 impl crate::command::Command for TreeCommand {

@@ -20,7 +20,7 @@
 use std::cmp::Ordering;
 use std::path::{ PathBuf, Path };
 use std::ffi::{ OsStr };
-use std::hash::{ Hash, Hasher};
+use std::hash::{ Hash, Hasher };
 use std::path::MAIN_SEPARATOR;
 
 #[derive(Clone, Debug)]
@@ -94,13 +94,6 @@ impl VirtualPath {
         match &self.source {
             Some(source) => Some(source.as_path()),
             None => None
-        }
-    }
-
-    pub fn as_referent_source(&self) -> &Path {
-        match &self.source {
-            Some(source) => source.as_path(),
-            None => self.identity.as_path()
         }
     }
 

@@ -192,7 +192,7 @@ impl VirtualDelta {
         }
     }
 
-    pub fn resolve(&self, path: &Path) -> Option<PathBuf> { //TODO Think about refactor it to upper fs level in order to follow depth diff properly ?
+    pub fn resolve(&self, path: &Path) -> Option<PathBuf> {
         match self.first_virtual_ancestor(path) {
             Some((depth, ancestor)) =>
                 match ancestor.to_source() {

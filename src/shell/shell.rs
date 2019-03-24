@@ -71,7 +71,6 @@ impl Shell {
                     return None;
                 } else if let Some(matches) = matches.subcommand_matches("cd") {
                     let path = absolute(self.cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
-                    let state = self.vfs.get_virtual_state();
                     if let Some(virtual_identity) = self.vfs.stat(path.as_path()) {
                         if virtual_identity.as_kind() == &VirtualKind::Directory {
                             self.cwd = path;
