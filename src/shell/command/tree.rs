@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::VirtualFileSystem;
+use vfs::{ VirtualFileSystem, VfsError };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::path::{ absolute, normalize };
@@ -42,6 +42,66 @@ impl crate::command::Command for TreeCommand {
     }
 
     fn execute(&self, vfs: &mut VirtualFileSystem) {
-        vfs.remove(self.path.as_path()).unwrap();
+        _tree(vfs, self.path.as_path(), None, false, true);
+    }
+}
+
+fn _tree(vfs: &VirtualFileSystem, identity: &Path, depth_list: Option<Vec<(bool,bool)>>, parent_first: bool, parent_last: bool){
+    let file_name = match identity.file_name() {
+        Some(file_name) => file_name.to_string_lossy().to_string(),
+        None => "/".to_string()
+    };
+
+
+    if let Some(depth_list) = &depth_list {
+        let mut depth_delimiter = "".to_string();
+        for (first, last) in depth_list {
+            if *last {
+                depth_delimiter += "    ";
+            } else {
+                depth_delimiter += "│   ";
+            }
+        }
+        println!(
+            "{}{}── {}",
+            depth_delimiter,
+            match parent_last {
+                false => "├",
+                true => "└"
+            },
+            file_name
+        );
+    } else {
+        println!("{}", file_name);
+        println!("│");
+    }
+
+    match vfs.read_dir(identity) {
+        Ok(children) => {
+            let new_depth_list = match depth_list {
+                Some(depth_list) => {
+                    let mut new = depth_list.clone();
+                    new.push((parent_first, parent_last));
+                    new
+                },
+                None => vec![]
+            };
+
+            let length = children.len();
+
+            for (index, virtual_child) in children.iter().enumerate() {
+                _tree(
+                    vfs,
+                    virtual_child.as_identity(),
+                    Some(new_depth_list.clone()),
+                    index == 0,
+                    index == (length - 1)
+                );
+            }
+        },
+        Err(error) => match error {
+            VfsError::DoesNotExists(_) | VfsError::IsNotADirectory(_) => {},
+            error => eprintln!("{}", error)
+        }
     }
 }
