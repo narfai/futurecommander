@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::VirtualFileSystem;
+use vfs::{ VirtualFileSystem, VirtualKind };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::path::absolute;
@@ -38,7 +38,15 @@ impl crate::command::Command for ListCommand {
             Ok(virtual_children) => {
                 if virtual_children.len() != 0 {
                     for child in virtual_children {
-                        println!("{:?} {:?}", child, vfs.exists(child.as_identity()));
+                        println!(
+                            "{}    {}",
+                            match child.to_kind() {
+                                VirtualKind::Directory => "Directory",
+                                VirtualKind::File      => "File     ",
+                                VirtualKind::Unknown   => "Unknown  "
+                            },
+                            child.as_identity().file_name().unwrap().to_string_lossy()
+                        );
                     }
                 } else {
                     println!("Directory is empty");
