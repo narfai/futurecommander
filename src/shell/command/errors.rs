@@ -38,7 +38,7 @@ impl fmt::Display for CommandError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             CommandError::VfsError(ref err) => write!(f, "Vfs Error: {}", err),
-            CommandError::PathIsRelative(path) => write!(f, "Path is relative : {}", path),
+            CommandError::PathIsRelative(path) => write!(f, "Path is relative : {:?}", path),
         }
     }
 }
