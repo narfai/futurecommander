@@ -26,6 +26,70 @@ pub struct TreeCommand {
     path: PathBuf
 }
 
+impl TreeCommand {
+    fn display_tree_line(depth_list: &Option<Vec<bool>>, parent_last: bool, file_name: String){
+        if let Some(depth_list) = &depth_list {
+            println!(
+                "{}{}── {}",
+                depth_list.
+                    iter().fold(
+                        "".to_string(),
+                        |depth_delimiter, last|
+                            depth_delimiter + match *last {
+                                true => "    ",
+                                false => "│   "
+                            }
+                    ),
+                match parent_last {
+                    false => "├",
+                    true => "└"
+                },
+                file_name
+            );
+        } else {
+            println!("{}", file_name);
+            println!("│");
+        }
+    }
+
+    fn tree(vfs: &VirtualFileSystem, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool){
+        let file_name = match identity.file_name() {
+            Some(file_name) => file_name.to_string_lossy().to_string(),
+            None => "/".to_string()
+        };
+
+        Self::display_tree_line(&depth_list, parent_last, file_name);
+
+        match vfs.read_dir(identity) {
+            Ok(children) => {
+                let new_depth_list = match depth_list {
+                    Some(depth_list) => {
+                        let mut new = depth_list.clone();
+                        new.push(parent_last);
+                        new
+                    },
+                    None => vec![]
+                };
+                let length = children.len();
+
+                for (index, virtual_child) in children.iter().enumerate() {
+                    Self::tree(
+                        vfs,
+                        virtual_child.as_identity(),
+                        Some(new_depth_list.clone()),
+                        index == (length - 1)
+                    );
+                }
+            },
+            Err(error) => match error {
+                VfsError::DoesNotExists(_) | VfsError::IsNotADirectory(_) => {},
+                error => eprintln!("{}", error)
+            }
+        }
+    }
+
+}
+
 impl crate::command::Command for TreeCommand {
     fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
         Self {
@@ -34,63 +98,7 @@ impl crate::command::Command for TreeCommand {
     }
 
     fn execute(&self, vfs: &mut VirtualFileSystem) {
-        _tree(vfs, self.path.as_path(), None, true);
+        Self::tree(vfs, self.path.as_path(), None, true);
     }
 }
 
-fn _tree(vfs: &VirtualFileSystem, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool){
-    let file_name = match identity.file_name() {
-        Some(file_name) => file_name.to_string_lossy().to_string(),
-        None => "/".to_string()
-    };
-
-    if let Some(depth_list) = &depth_list {
-        let mut depth_delimiter = "".to_string();
-        for last in depth_list {
-            if *last {
-                depth_delimiter += "    ";
-            } else {
-                depth_delimiter += "│   ";
-            }
-        }
-        println!(
-            "{}{}── {}",
-            depth_delimiter,
-            match parent_last {
-                false => "├",
-                true => "└"
-            },
-            file_name
-        );
-    } else {
-        println!("{}", file_name);
-        println!("│");
-    }
-
-    match vfs.read_dir(identity) {
-        Ok(children) => {
-            let new_depth_list = match depth_list {
-                Some(depth_list) => {
-                    let mut new = depth_list.clone();
-                    new.push(parent_last);
-                    new
-                },
-                None => vec![]
-            };
-            let length = children.len();
-
-            for (index, virtual_child) in children.iter().enumerate() {
-                _tree(
-                    vfs,
-                    virtual_child.as_identity(),
-                    Some(new_depth_list.clone()),
-                    index == (length - 1)
-                );
-            }
-        },
-        Err(error) => match error {
-            VfsError::DoesNotExists(_) | VfsError::IsNotADirectory(_) => {},
-            error => eprintln!("{}", error)
-        }
-    }
-}

@@ -78,3 +78,7 @@ Adapter Pattern => https://github.com/jdavis/rust-design-patterns/blob/master/pa
 
 build artifacts : https://confluence.atlassian.com/bitbucket/deploy-build-artifacts-to-bitbucket-downloads-872124574.html
 pipeline yml format : https://confluence.atlassian.com/bitbucket/configure-bitbucket-pipelines-yml-792298910.html
+
+## Generics ( Sized Monomorphisation ) against traits ( Unsized )
+
+https://stackoverflow.com/questions/24635146/can-this-code-be-written-without-generics?rq=1
