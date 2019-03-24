@@ -46,7 +46,9 @@ https://github.com/mre/idiomatic-rust
 
 
 ## Shells
+
 https://www.joshmcguigan.com/blog/build-your-own-shell-rust/
+https://doc.rust-lang.org/std/process/struct.Command.html
 
 
 ## Iterators
@@ -70,3 +72,9 @@ https://crates.io/crates/cursive
 ## OO Pattern
 
 State Pattern => https://doc.rust-lang.org/1.30.0/book/second-edition/ch17-03-oo-design-patterns.html
+Adapter Pattern => https://github.com/jdavis/rust-design-patterns/blob/master/patterns/adapter.rs
+
+## Bitbucket pipelining
+
+build artifacts : https://confluence.atlassian.com/bitbucket/deploy-build-artifacts-to-bitbucket-downloads-872124574.html
+pipeline yml format : https://confluence.atlassian.com/bitbucket/configure-bitbucket-pipelines-yml-792298910.html
