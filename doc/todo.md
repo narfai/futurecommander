@@ -5,6 +5,7 @@
 * gérer le move OK
 * mkdir OK
 * touch OK
+* trim les inputs OK
 * tree
 * edit ( store file modification files into tmp space )
 * apply des opérations ( déduire les opérations des delta )
@@ -12,11 +13,18 @@
 * handle file renaming
 * shell errors
 * handle real vfserrors instead of panic!
-* support des .. et
+* support des .. et .
 * symlink guard
-* trim les inputs
 * handle mes misuse et afficher l'usage au lieu de crash
-* chaos monkey which generates *a lot* of random operations to makes some errors bubblings
+
+## Dev / ops Conveniences
+
+* contributing.md
+    * doc about git branching
+* readme.md
+* doc comments
+* dockerization ( + local build windows )
+* proper taskboard / milestone schema
 
 ## Bugs
 
@@ -30,31 +38,28 @@
 
 ## Tests
 
-* tests add / sub / add / sub
+* tests add / sub / add / sub OK
 * tests sur la lecture fs d'un fichier copié ou déplacé
 * tests sur une arborescence de profondeur 100+
-* tests dir / file interversion Af->Cf / Bd -> Ad / Cf -> Bf
-* windows testing
+* tests dir / file interversion Af->Cf / Bd -> Ad / Cf -> Bf OK
+* windows testing ~OK
 * benchmarks
 * tests sur le support de la root
+* status / create / remove / copy all UC
+* chaos monkey which generates *a lot* of random operations to makes some errors bubblings
 
 ## Optimization performances and readability
 
-* .is_virtual() optimization
-* find a way that vdelta + or += plays with references
-* proper to_state, as_state
+* proper to_state, as_state OK
 * Vpath.path => Vpath.identity OK
 * Vdelta += Vdelta
-* VirtualPath slices : Actuellement les PathBuf et Vpath sont clonés A CHAQUE FOIS
-* interfaçage propre en Result, Attach, Detach, Read, Rm, Copy, Move
+* interfaçage propre en Result, Attach, Detach, Read, Rm, Copy, Move => see State Pattern
 * Retourner dans l'objet de retour le FS READ COUNT
 * proper logs & errors
 * handle unwrap
-* Gestion de PathId pour indexer les path en sized a travers l'ensemble du vfs ( et plus seulement les deltas )
-* split up tests
-* better API
-* makes the shell supports event-based reactions
-* there is too much unblocking behaviors
+* split up tests OK
+* better API OK
+* shell supports piping and sub thread / child
 * stream outputs & reads
 
 ## Known limitations

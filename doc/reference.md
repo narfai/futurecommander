@@ -66,3 +66,7 @@ https://manishearth.github.io/blog/2015/05/27/wrapper-types-in-rust-choosing-you
 ## TUI / GUI
 
 https://crates.io/crates/cursive
+
+## OO Pattern
+
+State Pattern => https://doc.rust-lang.org/1.30.0/book/second-edition/ch17-03-oo-design-patterns.html
