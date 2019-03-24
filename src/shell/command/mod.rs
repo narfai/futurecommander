@@ -47,5 +47,5 @@ use std::path::Path;
 
 pub trait Command {
     fn from_context(cwd: &Path, args: &ArgMatches) -> Self;
-    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError>;
+    fn execute(&self, vfs: &mut VirtualFileSystem);
 }
