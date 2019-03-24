@@ -67,3 +67,5 @@
 * If user modify the actual fs while using this soft, consistency is not preserved => fill the tree with notify, or use optimizer & representations to replay operations with best effort
 * Do NOT supports symlinks ( because compatibility and problem's coming from graph cyclic behaviors )
 
+
+
