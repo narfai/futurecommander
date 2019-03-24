@@ -24,10 +24,10 @@ use std::path::{ Path, PathBuf };
 
 use clap::{App};
 
-use futurecommandervfs::{VirtualFileSystem, VirtualKind};
+use vfs::{VirtualFileSystem, VirtualKind};
 
 use crate::path::absolute;
-use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand };
+use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand };
 
 pub struct Shell {
     cwd: PathBuf,
@@ -104,6 +104,9 @@ impl Shell {
                         .execute(&mut self.vfs);
                 } else if let Some(matches) = matches.subcommand_matches("rm") {
                     RemoveCommand::from_context(self.cwd.as_path(), &matches)
+                        .execute(&mut self.vfs);
+                } else if let Some(matches) = matches.subcommand_matches("tree") {
+                    TreeCommand::from_context(self.cwd.as_path(), &matches)
                         .execute(&mut self.vfs);
                 } else {
                     println!("No such command");

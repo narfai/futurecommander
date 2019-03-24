@@ -1,5 +1,5 @@
 [package]
-name = "futurecommandervfs"
+name = "futurecommander_vfs"
 version = "0.1.0"
 authors = ["François Cadeillan <francois@azsystem.fr>"]
 edition = "2018"

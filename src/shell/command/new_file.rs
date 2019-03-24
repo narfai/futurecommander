@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use futurecommandervfs::{ VirtualFileSystem, VirtualKind };
+use vfs::{ VirtualFileSystem, VirtualKind };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::path::{ absolute, normalize };

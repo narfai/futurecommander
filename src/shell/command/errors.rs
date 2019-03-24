@@ -17,31 +17,37 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::VirtualFileSystem;
-use std::path::{ Path, PathBuf };
-use clap::ArgMatches;
-use crate::path::{ absolute, normalize };
 
-pub struct RemoveCommand {
-    path: PathBuf
+use std::path::{ PathBuf };
+use std::{ error, fmt };
+use vfs::VfsError;
+
+#[derive(Debug)]
+pub enum CommandError {
+    VfsError(VfsError),
+    PathIsRelative(PathBuf),
 }
 
-impl RemoveCommand {
-    pub fn new(path: &Path) -> Self {
-        RemoveCommand {
-            path: normalize(path)
+impl From<VfsError> for CommandError {
+    fn from(error: VfsError) -> Self {
+        CommandError::VfsError(error)
+    }
+}
+
+impl fmt::Display for CommandError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            CommandError::VfsError(ref err) => write!(f, "Vfs Error: {}", err),
+            CommandError::PathIsRelative(path) => write!(f, "Path is relative : {}", path),
         }
     }
 }
 
-impl crate::command::Command for RemoveCommand {
-    fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
-        Self {
-            path: absolute(cwd, Path::new(args.value_of("path").unwrap().trim())),
+impl error::Error for CommandError {
+    fn cause(&self) -> Option<&error::Error> {
+        match self {
+            CommandError::VfsError(err) => Some(err),
+            _ => None
         }
-    }
-
-    fn execute(&self, vfs: &mut VirtualFileSystem) {
-        vfs.remove(self.path.as_path()).unwrap();
     }
 }

@@ -17,11 +17,14 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use futurecommandervfs::VirtualFileSystem;
+use vfs::VirtualFileSystem;
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
 use crate::path::{ absolute, normalize };
+use crate::command::Command;
+use crate::command::errors::CommandError;
+
 
 pub struct CopyCommand {
    source: PathBuf,
@@ -30,14 +33,25 @@ pub struct CopyCommand {
 
 impl CopyCommand {
     pub fn new(source: &Path, destination: &Path) -> Self {
+        let source = normalize(source);
+        if source.is_relative() {
+            panic!(CommandError::PathIsRelative(source));
+        }
+
+        let destination = normalize(destination);
+        if destination.is_relative() {
+            panic!(CommandError::PathIsRelative(destination));
+        }
+
+
         Self {
-            source: normalize(source),
-            destination: normalize(destination),
+            source,
+            destination,
         }
     }
 }
 
-impl crate::command::Command for CopyCommand {
+impl Command for CopyCommand {
     fn from_context(cwd: &Path, args: &ArgMatches) -> Self {
          Self {
              source: absolute(cwd, Path::new(args.value_of("source").unwrap().trim())),

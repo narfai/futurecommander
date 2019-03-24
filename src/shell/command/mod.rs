@@ -17,6 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+pub mod errors;
+pub use self::errors::CommandError;
+
 pub mod copy;
 pub use self::copy::CopyCommand;
 
@@ -35,11 +38,14 @@ pub use self::new_file::NewFileCommand;
 pub mod remove;
 pub use self::remove::RemoveCommand;
 
-use futurecommandervfs::VirtualFileSystem;
+pub mod tree;
+pub use self::tree::TreeCommand;
+
+use vfs::VirtualFileSystem;
 use clap::ArgMatches;
 use std::path::Path;
 
 pub trait Command {
     fn from_context(cwd: &Path, args: &ArgMatches) -> Self;
-    fn execute(&self, vfs: &mut VirtualFileSystem);
+    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError>;
 }

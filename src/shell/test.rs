@@ -21,7 +21,7 @@ use std::env::current_exe;
 
 use std::path::{ PathBuf, Path };
 
-use futurecommandervfs::{ VirtualPath, VirtualKind, VirtualDelta, VirtualFileSystem, VirtualChildren };
+use vfs::{ VirtualPath, VirtualKind, VirtualDelta, VirtualFileSystem, VirtualChildren };
 use crate::command::{ Command, CopyCommand, MoveCommand, NewDirectoryCommand, NewFileCommand };
 
 pub fn get_sample_path() -> PathBuf {

@@ -19,7 +19,7 @@
 
 #[macro_use]
 extern crate clap;
-extern crate futurecommandervfs as vfs;
+extern crate vfs as vfs;
 
 use std::path::{ PathBuf, Path };
 use std::io::{stdin, stdout};

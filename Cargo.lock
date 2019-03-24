@@ -43,11 +43,11 @@ name = "futurecommander"
 version = "0.1.0"
 dependencies = [
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "futurecommandervfs 0.1.0",
+ "futurecommander_vfs 0.1.0",
 ]
 
 [[package]]
-name = "futurecommandervfs"
+name = "futurecommander_vfs"
 version = "0.1.0"
 
 [[package]]

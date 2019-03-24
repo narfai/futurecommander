@@ -21,7 +21,7 @@
 renommer un dossier c'est : create dst, copy source destination, remove source
 */
 
-use futurecommandervfs::VirtualFileSystem;
+use vfs::VirtualFileSystem;
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::path::{ absolute, normalize };
