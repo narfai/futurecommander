@@ -23,12 +23,12 @@ use clap::ArgMatches;
 use std::path::PathBuf;
 use crate::path::{ absolute, normalize };
 
-pub struct CopyOperation {
+pub struct CopyCommand {
    source: PathBuf,
    destination: PathBuf
 }
 
-impl CopyOperation {
+impl CopyCommand {
     pub fn new(source: &Path, destination: &Path) -> Self {
         Self {
             source: normalize(source),
@@ -37,18 +37,21 @@ impl CopyOperation {
     }
 }
 
-impl crate::operation::Operation for CopyOperation {
+impl crate::command::Command for CopyCommand {
     fn from_context(cwd: &Path, args: &ArgMatches) -> Self {
          Self {
-             source: absolute(cwd, Path::new(args.value_of("source").unwrap())),
-             destination: absolute(cwd, Path::new(args.value_of("destination").unwrap())),
+             source: absolute(cwd, Path::new(args.value_of("source").unwrap().trim())),
+             destination: absolute(cwd, Path::new(args.value_of("destination").unwrap().trim())),
          }
     }
 
     fn execute(&self, vfs: &mut VirtualFileSystem) {
-       vfs.copy(
+       match vfs.copy(
           self.source.as_path(),
           self.destination.as_path()
-       ).unwrap();
+       ) {
+           Ok(_) => {},
+           Err(e) => eprintln!("{:?}", e)
+       };
     }
 }

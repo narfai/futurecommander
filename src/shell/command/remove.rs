@@ -17,32 +17,31 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use futurecommandervfs::{ VirtualFileSystem, VirtualKind };
+use futurecommandervfs::VirtualFileSystem;
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::path::{ absolute, normalize };
 
-pub struct NewFileOperation {
+pub struct RemoveCommand {
     path: PathBuf
 }
 
-impl NewFileOperation {
+impl RemoveCommand {
     pub fn new(path: &Path) -> Self {
-        NewFileOperation {
+        RemoveCommand {
             path: normalize(path)
         }
     }
 }
 
-
-impl crate::operation::Operation for NewFileOperation {
+impl crate::command::Command for RemoveCommand {
     fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
         Self {
-            path: absolute(cwd, Path::new(args.value_of("path").unwrap())),
+            path: absolute(cwd, Path::new(args.value_of("path").unwrap().trim())),
         }
     }
 
     fn execute(&self, vfs: &mut VirtualFileSystem) {
-        vfs.create(self.path.as_path(), VirtualKind::File).unwrap();
+        vfs.remove(self.path.as_path()).unwrap();
     }
 }

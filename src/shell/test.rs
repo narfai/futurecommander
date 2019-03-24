@@ -22,7 +22,7 @@ use std::env::current_exe;
 use std::path::{ PathBuf, Path };
 
 use futurecommandervfs::{ VirtualPath, VirtualKind, VirtualDelta, VirtualFileSystem, VirtualChildren };
-use crate::operation::{ Operation, CopyOperation, MoveOperation, NewDirectoryOperation, NewFileOperation };
+use crate::command::{ Command, CopyCommand, MoveCommand, NewDirectoryCommand, NewFileCommand };
 
 pub fn get_sample_path() -> PathBuf {
     current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples")
@@ -49,12 +49,12 @@ mod virtual_shell_tests {
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
-        CopyOperation::new(
+        CopyCommand::new(
             sample_path.join("B").as_path(),
             sample_path.join("A").as_path(),
         ).execute(&mut vfs);
 
-        CopyOperation::new(
+        CopyCommand::new(
             sample_path.join("A/B").as_path(),
             sample_path.join("A/B/D").as_path(),
         ).execute(&mut vfs);
@@ -74,17 +74,17 @@ mod virtual_shell_tests {
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
-        CopyOperation::new(
+        CopyCommand::new(
             sample_path.join("B").as_path(),
             sample_path.join("A").as_path(),
         ).execute(&mut vfs);
 
-        CopyOperation::new(
+        CopyCommand::new(
             sample_path.join("F").as_path(),
             sample_path.join("B").as_path(),
         ).execute(&mut vfs);
 
-        CopyOperation::new(
+        CopyCommand::new(
             sample_path.join("B/F").as_path(),
             sample_path.join("B/D/E").as_path(),
         ).execute(&mut vfs);
@@ -106,17 +106,17 @@ mod virtual_shell_tests {
 
         let real_source = VirtualPath::from_path_buf(sample_path.join(&Path::new("F")));
 
-        MoveOperation::new(
+        MoveCommand::new(
             real_source.as_identity(),
             sample_path.join(&Path::new("A")).as_path()
         ).execute(&mut vfs);
 
-        MoveOperation::new(
+        MoveCommand::new(
             sample_path.join(&Path::new("A/F")).as_path(),
             sample_path.join(&Path::new("B")).as_path()
         ).execute(&mut vfs);
 
-        MoveOperation::new(
+        MoveCommand::new(
             sample_path.join(&Path::new("B/F")).as_path(),
             sample_path.join(&Path::new("B/D/E")).as_path()
         ).execute(&mut vfs);
@@ -140,7 +140,7 @@ mod virtual_shell_tests {
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
-        NewDirectoryOperation::new(
+        NewDirectoryCommand::new(
             sample_path.join(&Path::new("B/D/E/MKDIRED")).as_path()
         ).execute(&mut vfs);
 
@@ -159,7 +159,7 @@ mod virtual_shell_tests {
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
-        NewFileOperation::new(
+        NewFileCommand::new(
             sample_path.join(&Path::new("B/D/E/TOUCHED")).as_path()
         ).execute(&mut vfs);
 

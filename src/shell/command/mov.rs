@@ -26,25 +26,25 @@ use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::path::{ absolute, normalize };
 
-pub struct MoveOperation {
+pub struct MoveCommand {
     source: PathBuf,
     destination: PathBuf
 }
 
-impl MoveOperation {
+impl MoveCommand {
     pub fn new(source: &Path, destination: &Path) -> Self {
-        MoveOperation {
+        MoveCommand {
             source: normalize(source),
             destination: normalize(destination)
         }
     }
 }
 
-impl crate::operation::Operation for MoveOperation {
+impl crate::command::Command for MoveCommand {
     fn from_context(cwd: &Path, args: &ArgMatches) -> Self {
         Self {
-            source: absolute(cwd, Path::new(args.value_of("source").unwrap())),
-            destination: absolute(cwd, Path::new(args.value_of("destination").unwrap())),
+            source: absolute(cwd, Path::new(args.value_of("source").unwrap().trim())),
+            destination: absolute(cwd, Path::new(args.value_of("destination").unwrap().trim())),
         }
     }
 

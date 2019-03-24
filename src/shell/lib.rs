@@ -21,16 +21,16 @@
 extern crate clap;
 
 mod path;
-mod operation;
+mod command;
 mod shell;
 
 #[cfg(test)]
 mod test;
 
 pub use self::shell::Shell;
-pub use operation::copy::CopyOperation;
-pub use operation::list::ListOperation;
-pub use operation::new_directory::NewDirectoryOperation;
-pub use operation::mov::MoveOperation;
-pub use operation::new_file::NewFileOperation;
-pub use operation::remove::RemoveOperation;
+pub use command::copy::CopyCommand;
+pub use command::list::ListCommand;
+pub use command::new_directory::NewDirectoryCommand;
+pub use command::mov::MoveCommand;
+pub use command::new_file::NewFileCommand;
+pub use command::remove::RemoveCommand;

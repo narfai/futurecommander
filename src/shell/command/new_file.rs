@@ -17,35 +17,32 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use futurecommandervfs::VirtualFileSystem;
+use futurecommandervfs::{ VirtualFileSystem, VirtualKind };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
-use crate::path::absolute;
+use crate::path::{ absolute, normalize };
 
-pub struct ListOperation {
+pub struct NewFileCommand {
     path: PathBuf
 }
 
-impl crate::operation::Operation for ListOperation {
+impl NewFileCommand {
+    pub fn new(path: &Path) -> Self {
+        NewFileCommand {
+            path: normalize(path)
+        }
+    }
+}
+
+
+impl crate::command::Command for NewFileCommand {
     fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
         Self {
-            path: absolute(cwd, Path::new(args.value_of("path").unwrap_or(cwd.to_str().unwrap()))),
+            path: absolute(cwd, Path::new(args.value_of("path").unwrap().trim())),
         }
     }
 
     fn execute(&self, vfs: &mut VirtualFileSystem) {
-        match vfs.read_dir(self.path.as_path()) {
-            Ok(virtual_children) => {
-                if virtual_children.len() != 0 {
-                    for child in virtual_children {
-                        println!("{:?} {:?}", child, vfs.exists(child.as_identity()));
-                    }
-                } else {
-                    println!("Directory is empty");
-                }
-
-            },
-            Err(error) => println!("Error : {}", error)
-        }
+        vfs.create(self.path.as_path(), VirtualKind::File).unwrap();
     }
 }

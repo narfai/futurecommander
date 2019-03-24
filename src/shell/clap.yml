@@ -2,6 +2,9 @@ name: FutureCommander
 version: "0.1.0"
 author: François Cadeillan <francois@azsystem.fr>
 about: Perform user-delayed filesystem operations
+settings:
+  - ArgRequiredElseHelp
+  - NoBinaryName
 subcommands:
   - ls:
       about: List content of a directory like it would be AFTER apply

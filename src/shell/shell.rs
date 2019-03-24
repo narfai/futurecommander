@@ -27,7 +27,7 @@ use clap::{App};
 use futurecommandervfs::{VirtualFileSystem, VirtualKind};
 
 use crate::path::absolute;
-use crate::operation::{ Operation, CopyOperation, ListOperation, MoveOperation, NewDirectoryOperation, NewFileOperation, RemoveOperation };
+use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand };
 
 pub struct Shell {
     cwd: PathBuf,
@@ -49,7 +49,7 @@ impl Shell {
             let mut input = String::new();
             if let Ok(_) = stdin().read_line(&mut input) {
                 println!("\n");
-                let mut argv = vec!["futurecommander"];
+                let mut argv = Vec::new();
                 argv.extend(input.trim().split(" "));
 
                 if self.send(argv).is_none() {
@@ -88,22 +88,22 @@ impl Shell {
                 } else if matches.subcommand_matches("debug_sub_state").is_some() {
                     println!("{:#?}", self.vfs.get_sub_state());
                 } else if let Some(matches) = matches.subcommand_matches("cp") {
-                    CopyOperation::from_context(self.cwd.as_path(), &matches)
+                    CopyCommand::from_context(self.cwd.as_path(), &matches)
                         .execute(&mut self.vfs);
                 } else if let Some(matches) = matches.subcommand_matches("ls") {
-                    ListOperation::from_context(self.cwd.as_path(), &matches)
+                    ListCommand::from_context(self.cwd.as_path(), &matches)
                         .execute(&mut self.vfs);
                 } else if let Some(matches) = matches.subcommand_matches("mv") {
-                    MoveOperation::from_context(self.cwd.as_path(), &matches)
+                    MoveCommand::from_context(self.cwd.as_path(), &matches)
                         .execute(&mut self.vfs);
                 } else if let Some(matches) = matches.subcommand_matches("mkdir") {
-                    NewDirectoryOperation::from_context(self.cwd.as_path(), &matches)
+                    NewDirectoryCommand::from_context(self.cwd.as_path(), &matches)
                         .execute(&mut self.vfs);
                 } else if let Some(matches) = matches.subcommand_matches("touch") {
-                    NewFileOperation::from_context(self.cwd.as_path(), &matches)
+                    NewFileCommand::from_context(self.cwd.as_path(), &matches)
                         .execute(&mut self.vfs);
                 } else if let Some(matches) = matches.subcommand_matches("rm") {
-                    RemoveOperation::from_context(self.cwd.as_path(), &matches)
+                    RemoveCommand::from_context(self.cwd.as_path(), &matches)
                         .execute(&mut self.vfs);
                 } else {
                     println!("No such command");
