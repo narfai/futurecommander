@@ -42,20 +42,19 @@ impl crate::command::Command for TreeCommand {
     }
 
     fn execute(&self, vfs: &mut VirtualFileSystem) {
-        _tree(vfs, self.path.as_path(), None, false, true);
+        _tree(vfs, self.path.as_path(), None, true);
     }
 }
 
-fn _tree(vfs: &VirtualFileSystem, identity: &Path, depth_list: Option<Vec<(bool,bool)>>, parent_first: bool, parent_last: bool){
+fn _tree(vfs: &VirtualFileSystem, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool){
     let file_name = match identity.file_name() {
         Some(file_name) => file_name.to_string_lossy().to_string(),
         None => "/".to_string()
     };
 
-
     if let Some(depth_list) = &depth_list {
         let mut depth_delimiter = "".to_string();
-        for (first, last) in depth_list {
+        for last in depth_list {
             if *last {
                 depth_delimiter += "    ";
             } else {
@@ -81,12 +80,11 @@ fn _tree(vfs: &VirtualFileSystem, identity: &Path, depth_list: Option<Vec<(bool,
             let new_depth_list = match depth_list {
                 Some(depth_list) => {
                     let mut new = depth_list.clone();
-                    new.push((parent_first, parent_last));
+                    new.push(parent_last);
                     new
                 },
                 None => vec![]
             };
-
             let length = children.len();
 
             for (index, virtual_child) in children.iter().enumerate() {
@@ -94,7 +92,6 @@ fn _tree(vfs: &VirtualFileSystem, identity: &Path, depth_list: Option<Vec<(bool,
                     vfs,
                     virtual_child.as_identity(),
                     Some(new_depth_list.clone()),
-                    index == 0,
                     index == (length - 1)
                 );
             }
