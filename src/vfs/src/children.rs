@@ -17,19 +17,16 @@
  * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
-
 use std::path::{ Path };
 use std::ops::{ Add, Sub };
 
-use std::io;
 use std::fs::ReadDir;
 
 use std::collections::hash_set::Iter as HashSetIter;
 use std::collections::hash_set::IntoIter as HashSetIntoIter;
 use std::collections::{ HashSet };
 
-use crate::{ VirtualPath, VirtualKind, VirtualDelta };
+use crate::{ VirtualPath, VirtualKind, VirtualDelta, VfsError };
 
 #[derive(Debug, Clone)]
 pub struct VirtualChildren {
@@ -43,45 +40,43 @@ impl VirtualChildren {
         }
     }
 
-    pub fn from_file_system(path: &Path, source: Option<&Path>, parent: Option<&Path>) -> io::Result<VirtualChildren> {
+    pub fn from_file_system(path: &Path, source: Option<&Path>, parent: Option<&Path>) -> Result<VirtualChildren, VfsError> {
         let mut virtual_children = VirtualChildren::new();
         if !path.exists() {
             return Ok(VirtualChildren::new());
         }
 
-        path.read_dir().and_then(|results: ReadDir| {
-            for result in results {
-                match result {
-                    Ok(result) => {
-                        let result_path = result.path();
-                        let mut path = VirtualPath::from_path(result.path().as_path())
-                            .with_source(Some(result_path.as_path()))
-                            .with_kind(VirtualKind::from_path(result_path.as_path()));
+        match path.read_dir() {
+            Ok(results) => {
+                for result in results {
+                    match result {
+                        Ok(result) => {
+                            let result_path = result.path();
+                            let mut path = VirtualPath::from_path(result.path().as_path())?
+                                .with_source(Some(result_path.as_path()))
+                                .with_kind(VirtualKind::from_path(result_path.as_path()));
 
-                        if let Some(source) = source {
-                            path = path.with_new_source_parent(source);
-                        }
+                            if let Some(source) = source {
+                                path = path.with_new_source_parent(source);
+                            }
 
-                        if let Some(parent) = parent {
-                            path = path.with_new_identity_parent(parent);
-                        }
+                            if let Some(parent) = parent {
+                                path = path.with_new_identity_parent(parent);
+                            }
 
-                        virtual_children.insert(path);
-                    },
-                    Err(error) => return Err(error)
-                };
-            }
-            Ok(virtual_children)
-        })
-
+                            virtual_children.insert(path);
+                        },
+                        Err(error) => return Err(VfsError::from(error))
+                    };
+                }
+                Ok(virtual_children)
+            },
+            Err(error) => Err(VfsError::from(error))
+        }
     }
 
     pub fn insert(&mut self, virtual_identity: VirtualPath) -> bool {
         self.set.insert(virtual_identity)
-    }
-
-    pub fn replace(&mut self, virtual_identity: VirtualPath) -> Option<VirtualPath> {
-        self.set.replace(virtual_identity)
     }
 
     pub fn remove(&mut self, virtual_identity: &VirtualPath) -> bool {
@@ -104,12 +99,13 @@ impl VirtualChildren {
         VirtualChildrenIterator::new(self.set.iter())
     }
 
-    pub fn into_delta(self) -> VirtualDelta {
+    //TODO unused yet but seems useful at least for debugging
+    pub fn into_delta(self) -> Result<VirtualDelta, VfsError> {
         let mut delta = VirtualDelta::new();
         for virtual_identity in self.iter() {
-            delta.attach_virtual(&virtual_identity);
+            delta.attach_virtual(&virtual_identity)?;
         }
-        delta
+        Ok(delta)
     }
 }
 

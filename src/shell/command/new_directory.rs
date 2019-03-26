@@ -41,7 +41,7 @@ impl Command for NewDirectoryCommand {
 }
 
 pub struct InitializedNewDirectoryCommand {
-    path: PathBuf
+    pub path: PathBuf
 }
 
 impl InitializedCommand for InitializedNewDirectoryCommand {

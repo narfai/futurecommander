@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualKind, VirtualFileSystem };
+use vfs::{ VirtualFileSystem };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -41,7 +41,7 @@ impl Command for RemoveCommand {
 }
 
 pub struct InitializedRemoveCommand {
-    path: PathBuf
+    pub path: PathBuf
 }
 
 impl InitializedCommand for InitializedRemoveCommand {

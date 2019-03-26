@@ -42,8 +42,8 @@ impl Command for CopyCommand {
 }
 
 pub struct InitializedCopyCommand {
-    source: PathBuf,
-    destination: PathBuf
+    pub source: PathBuf,
+    pub destination: PathBuf
 }
 
 impl InitializedCommand for InitializedCopyCommand {

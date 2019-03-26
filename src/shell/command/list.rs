@@ -43,7 +43,7 @@ impl Command for ListCommand {
 }
 
 pub struct InitializedListCommand {
-    path: PathBuf
+    pub path: PathBuf
 }
 
 impl InitializedCommand for InitializedListCommand {
@@ -59,7 +59,7 @@ impl InitializedCommand for InitializedListCommand {
                                 VirtualKind::File      => "File     ",
                                 VirtualKind::Unknown   => "Unknown  "
                             },
-                            child.as_identity().file_name().unwrap().to_string_lossy()
+                            child.file_name().to_string_lossy()
                         );
                     }
                 } else {

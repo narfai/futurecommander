@@ -17,6 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[cfg(test)]
+mod test;
+
 pub mod command;
 pub use self::command::{ Command, InitializedCommand };
 
@@ -43,6 +46,8 @@ pub use self::remove::RemoveCommand;
 
 pub mod tree;
 pub use self::tree::TreeCommand;
+
+
 
 /*
 TODO Safety : avoid mutable vfs reference for read commands

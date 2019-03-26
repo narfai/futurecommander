@@ -17,6 +17,7 @@
  * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::VfsError;
 use std::cmp::Ordering;
 use std::path::{ PathBuf, Path };
 use std::ffi::{ OsStr };
@@ -78,8 +79,6 @@ impl PartialEq for VirtualKind {
     }
 }
 
-//TODO proper Error / Results implementation
-//TODO proper [test] & main -> Result bubbling
 /*
 Virtual wrapper of PathBuf for keeping control over type & behaviors
 PathBuf implementation will do the job for path components manipulation.
@@ -135,7 +134,7 @@ impl VirtualPath {
     }
 
     //Constructors
-    pub fn root() -> VirtualPath {
+    pub fn root() -> Result<VirtualPath, VfsError> {
         VirtualPath::from(VirtualPath::root_identity(), None, VirtualKind::Directory)
     }
 
@@ -143,10 +142,14 @@ impl VirtualPath {
         PathBuf::from(MAIN_SEPARATOR.to_string())
     }
 
-    pub fn from(identity: PathBuf, source: Option<PathBuf>, kind: VirtualKind) -> VirtualPath {
-        if identity.is_relative() && (identity != PathBuf::new()) {
-            panic!("Does not supports relative paths");
+    pub fn from(identity: PathBuf, source: Option<PathBuf>, kind: VirtualKind) -> Result<VirtualPath, VfsError> {
+        match identity.is_relative() && (identity != PathBuf::new()) {
+            true => return Err(VfsError::IsRelativePath(identity.to_path_buf())),
+            false => Ok(Self::_from(identity, source, kind))
         }
+    }
+
+    fn _from(identity: PathBuf, source: Option<PathBuf>, kind: VirtualKind) -> VirtualPath {
         VirtualPath {
             identity,
             source,
@@ -154,17 +157,16 @@ impl VirtualPath {
         }
     }
 
-    pub fn from_path(path: &Path) -> VirtualPath {
+    pub fn from_path(path: &Path) -> Result<VirtualPath, VfsError> {
         VirtualPath::from(path.to_path_buf(), None, VirtualKind::Unknown)
     }
 
-    pub fn from_path_buf(path: PathBuf) -> VirtualPath {
+    pub fn from_path_buf(path: PathBuf) -> Result<VirtualPath, VfsError> {
         VirtualPath::from(path, None, VirtualKind::Unknown)
     }
 
-    pub fn from_str(path: &str) -> VirtualPath {
-        let identity = PathBuf::from(path);
-        VirtualPath::from(identity, None, VirtualKind::Unknown)
+    pub fn from_str(path: &str) -> Result<VirtualPath, VfsError> {
+        VirtualPath::from(PathBuf::from(path), None, VirtualKind::Unknown)
     }
 
     //Domain
@@ -190,7 +192,7 @@ impl VirtualPath {
         self.identity.file_name().unwrap() //Do not handle ".." file names
     }
 
-    pub fn join(&self, node_name: &OsStr) -> VirtualPath {
+    pub fn join(&self, node_name: &OsStr) -> Result<VirtualPath, VfsError>  {
         VirtualPath::from_path_buf(self.identity.join(node_name))
     }
 
@@ -204,16 +206,16 @@ impl VirtualPath {
         }
     }
 
-    pub fn with_new_identity_parent(self, new_parent: &Path) -> VirtualPath {
-        VirtualPath::from(
+    pub fn with_new_identity_parent(self, new_parent: &Path) -> VirtualPath  {
+        Self::_from(
             Self::replace_parent(self.as_identity(), new_parent),
             self.to_source(),
             self.into_kind()
         )
     }
 
-    pub fn with_new_source_parent(self, new_parent: &Path) -> VirtualPath {
-        VirtualPath::from(
+    pub fn with_new_source_parent(self, new_parent: &Path) -> VirtualPath  {
+        Self::_from(
             self.to_identity(),
             match self.as_source() {
                 Some(source) => Some(Self::replace_parent(source, new_parent)),
@@ -223,8 +225,8 @@ impl VirtualPath {
         )
     }
 
-    pub fn with_source(self, new_source: Option<&Path>) -> VirtualPath {
-        VirtualPath::from(
+    pub fn with_source(self, new_source: Option<&Path>) -> VirtualPath  {
+        Self::_from(
             self.to_identity(),
             match new_source {
                 Some(source) => Some(source.to_path_buf()),
@@ -235,7 +237,7 @@ impl VirtualPath {
     }
 
     pub fn with_owned_source(self, new_source: Option<PathBuf>) -> VirtualPath {
-        VirtualPath::from(
+        Self::_from(
             self.to_identity(),
             match new_source {
                 Some(source) => Some(source),
@@ -245,16 +247,16 @@ impl VirtualPath {
         )
     }
 
-    pub fn with_kind(self, kind: VirtualKind) -> VirtualPath {
-        VirtualPath::from(
+    pub fn with_kind(self, kind: VirtualKind) -> VirtualPath  {
+        Self::_from(
             self.to_identity(),
             self.into_source(),
             kind
         )
     }
 
-    pub fn with_file_name(self, filename: &OsStr) -> VirtualPath {
-        VirtualPath::from(
+    pub fn with_file_name(self, filename: &OsStr) -> VirtualPath  {
+        Self::_from(
             self.to_identity().with_file_name(filename),
             self.to_source(),
             self.into_kind()

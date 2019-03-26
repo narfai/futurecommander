@@ -25,9 +25,10 @@ use vfs::VfsError;
 #[derive(Debug)]
 pub enum CommandError {
     VfsError(VfsError),
-    PathIsRelative(String, PathBuf),
     ArgumentMissing(String, String, String),
-    InvalidCommand
+    InvalidCommand,
+    IsNotADirectory(PathBuf),
+    DoesNotExists(PathBuf),
 }
 
 impl From<VfsError> for CommandError {
@@ -40,9 +41,10 @@ impl fmt::Display for CommandError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             CommandError::VfsError(error) => write!(f, "Vfs Error: {}", error),
-            CommandError::PathIsRelative(key, path) => write!(f, "{} path is relative : {:?}", key, path),
-            CommandError::ArgumentMissing(command, argument, usage) => write!(f, "{} : Missing {} argument \n {}", command, argument, usage),
+            CommandError::ArgumentMissing(command, argument, usage) => write!(f, "{} missing {} argument \n {}", command, argument, usage),
             CommandError::InvalidCommand => write!(f, "Invalid command"),
+            CommandError::IsNotADirectory(path) => write!(f, "{} is not a directory", path.as_os_str().to_string_lossy()),
+            CommandError::DoesNotExists(path) => write!(f, "{} does not exists", path.as_os_str().to_string_lossy()),
         }
     }
 }

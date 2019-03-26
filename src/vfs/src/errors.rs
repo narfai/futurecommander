@@ -29,6 +29,9 @@ pub enum VfsError {
     IsNotADirectory(PathBuf),
     DoesNotExists(PathBuf),
     AlreadyExists(PathBuf),
+    VirtualParentIsAFile(PathBuf),
+    DanglingVirtualPath(PathBuf),
+    IsRelativePath(PathBuf)
 }
 
 impl From<io::Error> for VfsError {
@@ -40,11 +43,14 @@ impl From<io::Error> for VfsError {
 impl fmt::Display for VfsError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            VfsError::IoError(ref err) => write!(f, "IO error: {}", err),
-            VfsError::HasNoSource(err) => write!(f, "Path {} : Has no source defined virtually", err.as_os_str().to_string_lossy()),
-            VfsError::IsNotADirectory(err) => write!(f, "Path {} is not a directory", err.as_os_str().to_string_lossy()),
-            VfsError::DoesNotExists(err) => write!(f, "Path {} does not exists", err.as_os_str().to_string_lossy()),
-            VfsError::AlreadyExists(err) => write!(f, "Path {} : Already exists", err.as_os_str().to_string_lossy()),
+            VfsError::IoError(ref err)                  => write!(f, "IO error: {}", err),
+            VfsError::HasNoSource(identity)             => write!(f, "Path {} has no source defined virtually", identity.as_os_str().to_string_lossy()),
+            VfsError::IsNotADirectory(identity)         => write!(f, "Path {} is not a directory", identity.as_os_str().to_string_lossy()),
+            VfsError::DoesNotExists(identity)           => write!(f, "Path {} does not exists", identity.as_os_str().to_string_lossy()),
+            VfsError::AlreadyExists(identity)           => write!(f, "Path {} already exists", identity.as_os_str().to_string_lossy()),
+            VfsError::VirtualParentIsAFile(identity)    => write!(f, "Path {} virtual parent is a file", identity.as_os_str().to_string_lossy()),
+            VfsError::DanglingVirtualPath(identity)     => write!(f, "Path {} dangling virtual path", identity.as_os_str().to_string_lossy()),
+            VfsError::IsRelativePath(identity)          => write!(f, "Path {} is relative", identity.as_os_str().to_string_lossy())
         }
     }
 }

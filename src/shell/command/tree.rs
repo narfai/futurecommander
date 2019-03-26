@@ -39,7 +39,7 @@ impl Command for TreeCommand {
 }
 
 pub struct InitializedTreeCommand {
-    path: PathBuf
+    pub path: PathBuf
 }
 
 impl InitializedTreeCommand {

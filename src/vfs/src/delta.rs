@@ -17,7 +17,7 @@
  * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{ VirtualPath, VirtualKind };
+use crate::{ VirtualPath, VirtualKind, VfsError };
 use crate::VirtualChildren;
 use std::collections::{ BTreeMap };
 
@@ -34,7 +34,6 @@ pub struct VirtualDelta {
     pub hierarchy: BTreeMap<PathBuf, VirtualChildren>
 }
 
-//TODO check if last modifications are passing tests
 impl VirtualDelta {
     pub fn new() -> VirtualDelta {
         VirtualDelta {
@@ -42,7 +41,7 @@ impl VirtualDelta {
         }
     }
 
-    pub fn attach_virtual(&mut self, virtual_path: &VirtualPath) {
+    pub fn attach_virtual(&mut self, virtual_path: &VirtualPath) -> Result<(), VfsError>{
         self.attach(
             virtual_path.as_identity(),
             virtual_path.as_source(),
@@ -50,9 +49,9 @@ impl VirtualDelta {
         )
     }
 
-    pub fn attach(&mut self, identity: &Path, source: Option<&Path>, kind: VirtualKind) {
-       match self.get(identity).is_some() {
-            true => { panic!("ATTACH {:?} already exists", identity) },
+    pub fn attach(&mut self, identity: &Path, source: Option<&Path>, kind: VirtualKind) -> Result<(), VfsError> {
+       match self.get(identity)?.is_some() {
+            true => Err(VfsError::AlreadyExists(identity.to_path_buf())),
             false => {
                 let parent = VirtualPath::get_parent_or_root(identity);
 
@@ -60,8 +59,8 @@ impl VirtualDelta {
                     self.hierarchy.insert(parent.to_path_buf(), VirtualChildren::new());
                 }
 
-                if self.is_file(parent.as_path()) {
-                    panic!("ATTACH {:?}/{:?} virtual parent is a file", identity, parent)
+                if self.is_file(parent.as_path())? {
+                    return Err(VfsError::VirtualParentIsAFile(identity.to_path_buf()));
                 }
 
                 if identity != VirtualPath::root_identity().as_path() {
@@ -69,23 +68,26 @@ impl VirtualDelta {
                         .get_mut(parent.as_path())
                         .unwrap()
                         .insert(
-                            VirtualPath::from_path(identity)
+                            VirtualPath::from_path(identity)?
                                 .with_source(source)
                                 .with_kind(kind)
                         );
                 }
+
+                Ok(())
+
             }
         }
     }
 
-    pub fn detach(&mut self, identity: &Path) {
-        match self.get(identity).is_some() {
+    pub fn detach(&mut self, identity: &Path) -> Result<(), VfsError> {
+        match self.get(identity)?.is_some() {
             true => {
                 let parent = VirtualPath::get_parent_or_root(identity);
 
                 self.hierarchy.get_mut(&parent)
                     .unwrap()
-                    .remove(&VirtualPath::from_path(identity));
+                    .remove(&VirtualPath::from_path(identity)?);
 
                 match self.is_directory_empty(parent.as_path()) {
                     true => { self.hierarchy.remove(&parent); },
@@ -95,30 +97,31 @@ impl VirtualDelta {
                 if self.hierarchy.contains_key(&identity.to_path_buf()) {
                     self.hierarchy.remove(identity);
                 }
+                Ok(())
             },
-            false => { panic!("DETACH {:?} does not exists", identity)}
+            false => Err(VfsError::DoesNotExists(identity.to_path_buf()))
         }
     }
 
-    pub fn is_directory(&self, identity: &Path) -> bool {
+    pub fn is_directory(&self, identity: &Path) -> Result<bool, VfsError> {
         if identity == VirtualPath::root_identity().as_path() {
-            return true;
+            return Ok(true);
         }
 
-        match self.get(identity) {
-            Some(virtual_identity) => virtual_identity.kind == VirtualKind::Directory,
-            None => false //Do not exists
+        match self.get(identity)? {
+            Some(virtual_identity) => Ok(virtual_identity.kind == VirtualKind::Directory),
+            None => Ok(false) //Do not exists
         }
     }
 
-    pub fn is_file(&self, identity: &Path) -> bool {
+    pub fn is_file(&self, identity: &Path) -> Result<bool, VfsError> {
         if identity == VirtualPath::root_identity().as_path() {
-            return false;
+            return Ok(false);
         }
 
-        match self.get(identity) {
-            Some(virtual_identity) => virtual_identity.kind == VirtualKind::File,
-            None => false //Do not exists
+        match self.get(identity)? {
+            Some(virtual_identity) => Ok(virtual_identity.kind == VirtualKind::File),
+            None => Ok(false) //Do not exists
         }
     }
 
@@ -136,16 +139,19 @@ impl VirtualDelta {
         }
     }
 
-    pub fn walk(&self, collection: &mut VirtualChildren, identity: &Path){
-        match self.get(identity) {
+    //TODO unused but could be usefull
+    pub fn walk(&self, collection: &mut VirtualChildren, identity: &Path) -> Result<(), VfsError>{
+        match self.get(identity)? {
             Some(virtual_identity) => match self.is_directory(identity) {
-                true => self._walk(collection, virtual_identity),
-                false => panic!("WALK {:?} is not a directory", identity)
+                Ok(true)   => { self._walk(collection, virtual_identity); Ok(()) },
+                Ok(false)  => Err(VfsError::IsNotADirectory(identity.to_path_buf())),
+                Err(error) => Err(error)
             },
-            None => { panic!("WALK {:?} does not exists", identity) }
+            None => Err(VfsError::DoesNotExists(identity.to_path_buf()))
         }
     }
 
+    //TODO unused but could be usefull
     fn _walk(&self, collection: &mut VirtualChildren, virtual_identity: &VirtualPath){
         collection.insert(virtual_identity.clone());
         if let Some(children) = self.children(virtual_identity.as_identity()) {
@@ -155,17 +161,15 @@ impl VirtualDelta {
         };
     }
 
-    pub fn get(&self, identity: &Path) -> Option<&VirtualPath> {
+    pub fn get(&self, identity: &Path) -> Result<Option<&VirtualPath>, VfsError> {
         match self.hierarchy.get(VirtualPath::get_parent_or_root(identity).as_path()) {
             Some(children) => {
-                match children.get(&VirtualPath::from_path(identity)) {
-                    Some(child) => {
-                        Some(&child)
-                    },
-                    None => None //No matching child
+                match children.get(&VirtualPath::from_path(identity)?) {
+                    Some(child) => Ok(Some(&child)),
+                    None => Ok(None) //No matching child
                 }
             }
-            None => None //No key parent
+            None => Ok(None) //No key parent
         }
     }
 
@@ -181,31 +185,35 @@ impl VirtualDelta {
         self.hierarchy.len() == 0
     }
 
-    pub fn sub_delta(&self, identity: &Path) -> Option<VirtualDelta> {
-        match self.get(identity).is_some() {
+    //TODO unused yet but seems useful at least for debugging
+    pub fn sub_delta(&self, identity: &Path) -> Result<Option<VirtualDelta>, VfsError> {
+        match self.get(identity)?.is_some() {
             true => {
                 let mut collection = VirtualChildren::new();
-                self.walk(&mut collection, identity);
-                Some(collection.into_delta())
+                self.walk(&mut collection, identity)?;
+                Ok(Some(collection.into_delta()?))
             },
-            false => None
+            false => Ok(None)
         }
     }
 
-    pub fn resolve(&self, path: &Path) -> Option<PathBuf> {
-        match self.first_virtual_ancestor(path) {
+    pub fn resolve(&self, path: &Path) -> Result<Option<PathBuf>, VfsError> {
+        match self.first_virtual_ancestor(path)? {
             Some((depth, ancestor)) =>
                 match ancestor.to_source() {
-                    Some(source) => Some(
-                        source.join(
-                            path.strip_prefix(
-                                Self::remove_nth_parents(path, depth)
-                            ).unwrap()
-                        )
-                    ),
-                    None => None //Has no source
+                    Some(source) =>
+                        Ok(
+                            Some(
+                                source.join(
+                                    path.strip_prefix(
+                                        Self::remove_nth_parents(path, depth)
+                                    ).unwrap()
+                                )
+                            )
+                        ),
+                    None => Ok(None) //Has no source
                 }
-            None => None //Is not virtual
+            None => Ok(None) //Is not virtual
         }
     }
 
@@ -218,20 +226,20 @@ impl VirtualDelta {
         return path.to_path_buf();
     }
 
-    pub fn first_virtual_ancestor(&self, path: &Path) -> Option<(usize, VirtualPath)>{
+    pub fn first_virtual_ancestor(&self, path: &Path) -> Result<Option<(usize, VirtualPath)>, VfsError>{
         for (index, ancestor) in path.ancestors().enumerate() {
-            match self.get(ancestor) {
-                Some(virtual_identity) => return Some((index, virtual_identity.clone())),
+            match self.get(ancestor)? {
+                Some(virtual_identity) => return Ok(Some((index, virtual_identity.clone()))),
                 None => {}
             }
         }
-        None
+        Ok(None)
     }
 
-    pub fn is_virtual(&self, path: &Path) -> bool {
-        match self.first_virtual_ancestor(path) {
-            Some(_) => true,
-            None => false
+    pub fn is_virtual(&self, path: &Path) -> Result<bool, VfsError> {
+        match self.first_virtual_ancestor(path)? {
+            Some(_) => Ok(true),
+            None => Ok(false),
         }
     }
 }
@@ -244,16 +252,16 @@ impl <'a, 'b> Add<&'b VirtualDelta> for &'a VirtualDelta {
         let mut result = self.clone();
         for (_parent, children) in &right_delta.hierarchy {
             for child in children.iter() {
-                if right_delta.get(child.as_identity()).is_some() {
-                    if result.get(child.as_identity()).is_some() {
-                        result.detach(child.as_identity());
+                if right_delta.get(child.as_identity()).unwrap().is_some() {
+                    if result.get(child.as_identity()).unwrap().is_some() {
+                        result.detach(child.as_identity()).unwrap();
                     }
 
                     result.attach(
                         child.as_identity(),
                         child.as_source(),
                         child.to_kind()
-                    )
+                    ).unwrap();
                 }
             }
         }
@@ -268,29 +276,11 @@ impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
         let mut result = self.clone();
         for (_parent, children) in &right_delta.hierarchy {
             for child in children.iter() {
-                if result.get(child.as_identity()).is_some() {
-                    result.detach(child.as_identity());
+                if result.get(child.as_identity()).unwrap().is_some() {
+                    result.detach(child.as_identity()).unwrap();
                 }
             }
         }
         result
     }
 }
-
-/*
-impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
-    type Output = VirtualDelta;
-
-    fn sub(self, right_vfs: &'b VirtualDelta) -> VirtualDelta {
-        let mut result = self.clone();
-        for (_parent, children) in &right_vfs.hierarchy {
-            for child in children.iter() {
-                if result.exists(child.as_identity()) {
-                    result.detach(child.as_identity());
-                }
-            }
-        }
-        result
-    }
-}
-*/

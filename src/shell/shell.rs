@@ -22,7 +22,7 @@ use std::io::Write;
 use std::env;
 use std::path::{ Path, PathBuf };
 
-use clap::{App};
+use clap::{ App, ArgMatches };
 
 use vfs::{ VirtualFileSystem, VirtualKind };
 
@@ -58,36 +58,25 @@ impl Shell {
                         match
                             match matches.subcommand() {
                                 ("exit", Some(_matches)) => break,
-                                ("cd", Some(matches))   => {
-                                    if matches.is_present("path") {
-                                        self.cd(Path::new(matches.value_of("path").unwrap()))
-                                    }
-                                    Ok(())
-                                },
-                                ("debug_virtual_state", Some(_matches))  => { println!("{:#?}", self.vfs.get_virtual_state()); Ok(()) },
-                                ("debug_add_state",     Some(_matches))  => { println!("{:#?}", self.vfs.get_add_state()); Ok(()) },
-                                ("debug_sub_state",     Some(_matches))  => { println!("{:#?}", self.vfs.get_sub_state()); Ok(()) }
-                                (ListCommand::NAME,     Some(matches))  =>
-                                    ListCommand::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.vfs)),
-                                (CopyCommand::NAME,     Some(matches))  =>
-                                    CopyCommand::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.vfs)),
-                                (MoveCommand::NAME,     Some(matches))  =>
-                                    MoveCommand::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.vfs)),
-                                (RemoveCommand::NAME,    Some(matches))  =>
-                                    RemoveCommand::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.vfs)),
-                                (NewDirectoryCommand::NAME, Some(matches))  =>
-                                    NewDirectoryCommand::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.vfs)),
-                                (NewFileCommand::NAME, Some(matches))  =>
-                                    NewFileCommand::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.vfs)),
-                                (TreeCommand::NAME, Some(matches))  =>
-                                    TreeCommand::new(&self.cwd, matches)
-                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                ("cd",   Some(matches))  => self.cd(matches),
+                                ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.vfs.get_virtual_state()); Ok(()) },
+                                ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_add_state()); Ok(()) },
+                                ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_sub_state()); Ok(()) }
+                                ("ls",          Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
+                                ("cp",          Some(matches)) => CopyCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
+                                ("mv",          Some(matches)) => MoveCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
+                                ("rm",          Some(matches)) => RemoveCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
+                                ("mkdir",       Some(matches)) => NewDirectoryCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
+                                ("touch",       Some(matches)) => NewFileCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
+                                ("tree",        Some(matches)) => TreeCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
+                                //Find out why this const / match syntax is invalid for webstorm
+//                                (ListCommand::NAME,         Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)), //TODO create command!(MyCommand)
+//                                (CopyCommand::NAME,         Some(matches)) => CopyCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
+//                                (MoveCommand::NAME,         Some(matches)) => MoveCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
+//                                (RemoveCommand::NAME,       Some(matches)) => RemoveCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
+//                                (NewDirectoryCommand::NAME, Some(matches)) => NewDirectoryCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
+//                                (NewFileCommand::NAME,      Some(matches)) => NewFileCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
+//                                (TreeCommand::NAME,         Some(matches)) => TreeCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs))
                                 _ => Err(CommandError::InvalidCommand)
                             }
                             {
@@ -114,16 +103,23 @@ impl Shell {
         }
     }
 
-    fn cd(&mut self, path: &Path) {
-        let path = absolute(self.cwd.as_path(), path);
-        if let Some(virtual_identity) = self.vfs.stat(path.as_path()) {
-            if virtual_identity.as_kind() == &VirtualKind::Directory {
-                self.cwd = path;
-            } else {
-                eprintln!("Error : {:?} is not a directory", path)
-            }
-        } else {
-            eprintln!("Error : {:?} does not exists", path)
+    fn cd(&mut self, matches: &ArgMatches) -> Result<(), CommandError> {
+        match matches.value_of("path") {
+            Some(string_path) => {
+                let path = absolute(self.cwd.as_path(), Path::new(string_path));
+                match self.vfs.stat(path.as_path()) {
+                    Ok(Some(virtual_identity)) =>
+                        if virtual_identity.as_kind() == &VirtualKind::Directory {
+                            self.cwd = path;
+                            Ok(())
+                        } else {
+                            Err(CommandError::IsNotADirectory(path.to_path_buf()))
+                        },
+                    Ok(None) => Err(CommandError::DoesNotExists(path.to_path_buf())),
+                    Err(error) => Err(CommandError::from(error))
+                }
+            },
+            None => Ok(())//TODO go to home directory ?
         }
     }
 }

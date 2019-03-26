@@ -24,9 +24,6 @@ mod path;
 mod command;
 mod shell;
 
-#[cfg(test)]
-mod test;
-
 pub use self::shell::Shell;
 pub use self::command::copy::CopyCommand;
 pub use self::command::list::ListCommand;

@@ -46,8 +46,8 @@ impl Command for MoveCommand {
 }
 
 pub struct InitializedMoveCommand {
-    source: PathBuf,
-    destination: PathBuf
+    pub source: PathBuf,
+    pub destination: PathBuf
 }
 
 impl InitializedCommand for InitializedMoveCommand {
