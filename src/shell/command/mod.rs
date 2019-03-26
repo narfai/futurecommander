@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-#![feature(try_trait)]
+
 pub mod command;
 pub use self::command::{ Command, InitializedCommand };
 
