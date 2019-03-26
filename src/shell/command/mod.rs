@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
+#![feature(try_trait)]
+pub mod command;
+pub use self::command::{ Command, InitializedCommand };
 
 pub mod errors;
 pub use self::errors::CommandError;
@@ -41,11 +44,6 @@ pub use self::remove::RemoveCommand;
 pub mod tree;
 pub use self::tree::TreeCommand;
 
-use vfs::VirtualFileSystem;
-use clap::ArgMatches;
-use std::path::Path;
-
-pub trait Command {
-    fn from_context(cwd: &Path, args: &ArgMatches) -> Self;
-    fn execute(&self, vfs: &mut VirtualFileSystem);
-}
+/*
+TODO Safety : avoid mutable vfs reference for read commands
+*/

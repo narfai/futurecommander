@@ -24,10 +24,10 @@ use std::path::{ Path, PathBuf };
 
 use clap::{App};
 
-use vfs::{VirtualFileSystem, VirtualKind};
+use vfs::{ VirtualFileSystem, VirtualKind };
 
 use crate::path::absolute;
-use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand };
+use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
 
 pub struct Shell {
     cwd: PathBuf,
@@ -43,6 +43,7 @@ impl Shell {
     }
 
     pub fn run(&mut self) {
+        let yaml = load_yaml!("clap.yml");
         print!("> ");
         loop {
             stdout().flush().unwrap();
@@ -52,8 +53,59 @@ impl Shell {
                 let mut argv = Vec::new();
                 argv.extend(input.trim().split(" "));
 
-                if self.send(argv).is_none() {
-                    break;
+                match App::from_yaml(yaml).get_matches_from_safe(argv) {
+                    Ok(matches) =>
+                        match
+                            match matches.subcommand() {
+                                ("exit", Some(_matches)) => break,
+                                ("cd", Some(matches))   => {
+                                    if matches.is_present("path") {
+                                        self.cd(Path::new(matches.value_of("path").unwrap()))
+                                    }
+                                    Ok(())
+                                },
+                                ("debug_virtual_state", Some(_matches))  => { println!("{:#?}", self.vfs.get_virtual_state()); Ok(()) },
+                                ("debug_add_state",     Some(_matches))  => { println!("{:#?}", self.vfs.get_add_state()); Ok(()) },
+                                ("debug_sub_state",     Some(_matches))  => { println!("{:#?}", self.vfs.get_sub_state()); Ok(()) }
+                                (ListCommand::NAME,     Some(matches))  =>
+                                    ListCommand::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                (CopyCommand::NAME,     Some(matches))  =>
+                                    CopyCommand::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                (MoveCommand::NAME,     Some(matches))  =>
+                                    MoveCommand::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                (RemoveCommand::NAME,    Some(matches))  =>
+                                    RemoveCommand::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                (NewDirectoryCommand::NAME, Some(matches))  =>
+                                    NewDirectoryCommand::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                (NewFileCommand::NAME, Some(matches))  =>
+                                    NewFileCommand::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                (TreeCommand::NAME, Some(matches))  =>
+                                    TreeCommand::new(&self.cwd, matches)
+                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                _ => Err(CommandError::InvalidCommand)
+                            }
+                            {
+                                Ok(_)      => {/*SUCCESS*/},
+                                Err(error) =>
+                                    match error {
+                                        CommandError::InvalidCommand => eprintln!("{} {}", error, matches.usage()),
+                                        CommandError::ArgumentMissing(command, _, _) => {
+                                            //Trick to get proper subcommand help
+                                            match App::from_yaml(yaml).get_matches_from_safe(vec![command, "--help".to_string()]) {
+                                                Ok(_) => {},
+                                                Err(error) => eprintln!("{}", error)
+                                            };
+                                        },
+                                        error => { eprintln!("{}", error) }
+                                    }
+                            }
+                    Err(error) => eprintln!("{}", error)
                 }
 
                 println!("\n");
@@ -62,61 +114,18 @@ impl Shell {
         }
     }
 
-    pub fn send(&mut self, argv: Vec<&str>) -> Option<()> {
-        let yaml = load_yaml!("clap.yml");
-
-        match App::from_yaml(yaml).get_matches_from_safe(argv) {
-            Ok(matches) => {
-                if let Some(_) = matches.subcommand_matches("exit") {
-                    return None;
-                } else if let Some(matches) = matches.subcommand_matches("cd") {
-                    let path = absolute(self.cwd.as_path(),Path::new(matches.value_of("path").unwrap()));
-                    if let Some(virtual_identity) = self.vfs.stat(path.as_path()) {
-                        if virtual_identity.as_kind() == &VirtualKind::Directory {
-                            self.cwd = path;
-                        } else {
-                            println!("Error : {:?} is not a directory", path)
-                        }
-                    } else {
-                        println!("Error : {:?} does not exists", path)
-                    }
-                } else if matches.subcommand_matches("debug_virtual_state").is_some() {
-                    println!("{:#?}", self.vfs.get_virtual_state());
-                } else if matches.subcommand_matches("debug_add_state").is_some() {
-                    println!("{:#?}", self.vfs.get_add_state());
-                } else if matches.subcommand_matches("debug_sub_state").is_some() {
-                    println!("{:#?}", self.vfs.get_sub_state());
-                } else if let Some(matches) = matches.subcommand_matches("cp") {
-                    CopyCommand::from_context(self.cwd.as_path(), &matches)
-                        .execute(&mut self.vfs);
-                } else if let Some(matches) = matches.subcommand_matches("ls") {
-                    ListCommand::from_context(self.cwd.as_path(), &matches)
-                        .execute(&mut self.vfs);
-                } else if let Some(matches) = matches.subcommand_matches("mv") {
-                    MoveCommand::from_context(self.cwd.as_path(), &matches)
-                        .execute(&mut self.vfs);
-                } else if let Some(matches) = matches.subcommand_matches("mkdir") {
-                    NewDirectoryCommand::from_context(self.cwd.as_path(), &matches)
-                        .execute(&mut self.vfs);
-                } else if let Some(matches) = matches.subcommand_matches("touch") {
-                    NewFileCommand::from_context(self.cwd.as_path(), &matches)
-                        .execute(&mut self.vfs);
-                } else if let Some(matches) = matches.subcommand_matches("rm") {
-                    RemoveCommand::from_context(self.cwd.as_path(), &matches)
-                        .execute(&mut self.vfs);
-                } else if let Some(matches) = matches.subcommand_matches("tree") {
-                    TreeCommand::from_context(self.cwd.as_path(), &matches)
-                        .execute(&mut self.vfs);
-                } else {
-                    println!("No such command");
-                }
-                //TODO rename ? tree ?
-            },
-            Err(error) => {
-                println!("{}", error);
+    fn cd(&mut self, path: &Path) {
+        let path = absolute(self.cwd.as_path(), path);
+        if let Some(virtual_identity) = self.vfs.stat(path.as_path()) {
+            if virtual_identity.as_kind() == &VirtualKind::Directory {
+                self.cwd = path;
+            } else {
+                eprintln!("Error : {:?} is not a directory", path)
             }
+        } else {
+            eprintln!("Error : {:?} does not exists", path)
         }
-        Some(())
     }
 }
+
 

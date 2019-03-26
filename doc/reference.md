@@ -82,3 +82,7 @@ pipeline yml format : https://confluence.atlassian.com/bitbucket/configure-bitbu
 ## Generics ( Sized Monomorphisation ) against traits ( Unsized )
 
 https://stackoverflow.com/questions/24635146/can-this-code-be-written-without-generics?rq=1
+
+## crates
+
+CLI testing :  https://crates.io/crates/assert_cmd

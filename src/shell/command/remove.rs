@@ -17,31 +17,38 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::VirtualFileSystem;
-use std::path::{ Path, PathBuf };
+use vfs::{ VirtualKind, VirtualFileSystem };
+use std::path::Path;
 use clap::ArgMatches;
-use crate::path::{ absolute, normalize };
+use std::path::PathBuf;
+use crate::command::{ Command, InitializedCommand };
+use crate::command::errors::CommandError;
 
-pub struct RemoveCommand {
+pub struct RemoveCommand {}
+
+impl Command for RemoveCommand {
+    const NAME : &'static str = "rm";
+
+    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+        Ok(
+            Box::new(
+                InitializedRemoveCommand {
+                    path: Self::extract_path_from_args(cwd, args, "path")?
+                }
+            )
+        )
+    }
+}
+
+pub struct InitializedRemoveCommand {
     path: PathBuf
 }
 
-impl RemoveCommand {
-    pub fn new(path: &Path) -> Self {
-        RemoveCommand {
-            path: normalize(path)
+impl InitializedCommand for InitializedRemoveCommand {
+    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        match vfs.remove(self.path.as_path()) {
+            Ok(_)       => Ok(()),
+            Err(error)  => Err(CommandError::from(error))
         }
-    }
-}
-
-impl crate::command::Command for RemoveCommand {
-    fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
-        Self {
-            path: absolute(cwd, Path::new(args.value_of("path").unwrap().trim())),
-        }
-    }
-
-    fn execute(&self, vfs: &mut VirtualFileSystem) {
-        vfs.remove(self.path.as_path()).unwrap();
     }
 }

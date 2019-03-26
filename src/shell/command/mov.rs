@@ -17,47 +17,51 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/**
-renommer un dossier c'est : create dst, copy source destination, remove source
-*/
-
 use vfs::VirtualFileSystem;
-use std::path::{ Path, PathBuf };
+use std::path::Path;
 use clap::ArgMatches;
-use crate::path::{ absolute, normalize };
+use std::path::PathBuf;
+use crate::command::{ Command, InitializedCommand };
+use crate::command::errors::CommandError;
 
-pub struct MoveCommand {
+
+pub struct MoveCommand {}
+
+impl Command for MoveCommand {
+    const NAME : &'static str = "mv";
+
+    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+        let source = Self::extract_path_from_args(cwd, args, "source")?;
+        let destination = Self::extract_path_from_args(cwd, args, "destination")?;
+
+        Ok(
+            Box::new(
+                InitializedMoveCommand {
+                    source,
+                    destination,
+                }
+            )
+        )
+    }
+}
+
+pub struct InitializedMoveCommand {
     source: PathBuf,
     destination: PathBuf
 }
 
-impl MoveCommand {
-    pub fn new(source: &Path, destination: &Path) -> Self {
-        MoveCommand {
-            source: normalize(source),
-            destination: normalize(destination)
-        }
-    }
-}
-
-impl crate::command::Command for MoveCommand {
-    fn from_context(cwd: &Path, args: &ArgMatches) -> Self {
-        Self {
-            source: absolute(cwd, Path::new(args.value_of("source").unwrap().trim())),
-            destination: absolute(cwd, Path::new(args.value_of("destination").unwrap().trim())),
-        }
-    }
-
-    fn execute(&self, vfs: &mut VirtualFileSystem) {
+impl InitializedCommand for InitializedMoveCommand {
+    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
         match vfs.copy(
             self.source.as_path(),
             self.destination.as_path()
         ) {
-            Ok(_) => match vfs.remove(self.source.as_path()) {
-                Ok(_) => { println!("MOVE {:?} to {:?}", self.source, self.destination); },
-                Err(error) => println!("MOVE::REMOVE {:?}", error)
-            },
-            Err(error) => println!("MOVE::COPY {:?}", error)
-        };
+            Ok(_) =>
+                match vfs.remove(self.source.as_path()) {
+                    Ok(_) => { println!("MOVE {:?} to {:?}", self.source, self.destination); Ok(()) },
+                    Err(error) => Err(CommandError::from(error))
+                },
+            Err(error) => Err(CommandError::from(error))
+        }
     }
 }

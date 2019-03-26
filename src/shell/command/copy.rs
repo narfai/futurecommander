@@ -21,51 +21,39 @@ use vfs::VirtualFileSystem;
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
-use crate::path::{ absolute, normalize };
-use crate::command::Command;
+use crate::command::{ Command, InitializedCommand };
 use crate::command::errors::CommandError;
 
-
-pub struct CopyCommand {
-   source: PathBuf,
-   destination: PathBuf
-}
-
-impl CopyCommand {
-    pub fn new(source: &Path, destination: &Path) -> Self {
-        let source = normalize(source);
-        if source.is_relative() {
-            panic!(CommandError::PathIsRelative(source));
-        }
-
-        let destination = normalize(destination);
-        if destination.is_relative() {
-            panic!(CommandError::PathIsRelative(destination));
-        }
-
-
-        Self {
-            source,
-            destination,
-        }
-    }
-}
+pub struct CopyCommand {}
 
 impl Command for CopyCommand {
-    fn from_context(cwd: &Path, args: &ArgMatches) -> Self {
-         Self {
-             source: absolute(cwd, Path::new(args.value_of("source").unwrap().trim())),
-             destination: absolute(cwd, Path::new(args.value_of("destination").unwrap().trim())),
-         }
-    }
+    const NAME : &'static str = "copy";
 
-    fn execute(&self, vfs: &mut VirtualFileSystem) {
+    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+        Ok(
+            Box::new(
+                InitializedCopyCommand {
+                    source: Self::extract_path_from_args(cwd, args, "source")?,
+                    destination: Self::extract_path_from_args(cwd, args, "destination")?
+                }
+            )
+        )
+    }
+}
+
+pub struct InitializedCopyCommand {
+    source: PathBuf,
+    destination: PathBuf
+}
+
+impl InitializedCommand for InitializedCopyCommand {
+    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
        match vfs.copy(
           self.source.as_path(),
           self.destination.as_path()
        ) {
-           Ok(_) => {},
-           Err(e) => eprintln!("{:?}", e)
-       };
+           Ok(_) => Ok(()),
+           Err(error) => Err(CommandError::from(error))
+       }
     }
 }

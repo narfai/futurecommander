@@ -17,32 +17,38 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualFileSystem, VirtualKind };
-use std::path::{ Path, PathBuf };
+use vfs::{ VirtualKind, VirtualFileSystem };
+use std::path::Path;
 use clap::ArgMatches;
-use crate::path::{ absolute, normalize };
+use std::path::PathBuf;
+use crate::command::{ Command, InitializedCommand };
+use crate::command::errors::CommandError;
 
-pub struct NewFileCommand {
+pub struct NewFileCommand {}
+
+impl Command for NewFileCommand {
+    const NAME : &'static str = "touch";
+
+    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+        Ok(
+            Box::new(
+                InitializedNewFileCommand {
+                    path: Self::extract_path_from_args(cwd, args, "path")?
+                }
+            )
+        )
+    }
+}
+
+pub struct InitializedNewFileCommand {
     path: PathBuf
 }
 
-impl NewFileCommand {
-    pub fn new(path: &Path) -> Self {
-        NewFileCommand {
-            path: normalize(path)
+impl InitializedCommand for InitializedNewFileCommand {
+    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        match vfs.create(self.path.as_path(), VirtualKind::File) {
+            Ok(_)       => Ok(()),
+            Err(error)  => Err(CommandError::from(error))
         }
-    }
-}
-
-
-impl crate::command::Command for NewFileCommand {
-    fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
-        Self {
-            path: absolute(cwd, Path::new(args.value_of("path").unwrap().trim())),
-        }
-    }
-
-    fn execute(&self, vfs: &mut VirtualFileSystem) {
-        vfs.create(self.path.as_path(), VirtualKind::File).unwrap();
     }
 }

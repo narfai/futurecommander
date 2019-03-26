@@ -1,48 +1,64 @@
 /*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+* This file is part of FutureCommander.
+*
+* FutureCommander is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* FutureCommander is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
 use vfs::{ VirtualFileSystem, VfsError };
-use std::path::{ Path, PathBuf };
+use std::path::Path;
 use clap::ArgMatches;
-use crate::path::{ absolute };
+use std::path::PathBuf;
+use crate::command::{ Command, InitializedCommand };
+use crate::command::errors::CommandError;
 
-pub struct TreeCommand {
+pub struct TreeCommand {}
+
+impl Command for TreeCommand {
+    const NAME : &'static str = "tree";
+
+    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+        Ok(
+            Box::new(
+                InitializedTreeCommand {
+                    path: Self::extract_path_from_args(cwd, args, "path").unwrap_or(cwd.to_path_buf())
+                }
+            )
+        )
+    }
+}
+
+pub struct InitializedTreeCommand {
     path: PathBuf
 }
 
-impl TreeCommand {
+impl InitializedTreeCommand {
     fn display_tree_line(depth_list: &Option<Vec<bool>>, parent_last: bool, file_name: String){
         if let Some(depth_list) = &depth_list {
             println!(
                 "{}{}── {}",
                 depth_list.
                     iter().fold(
-                        "".to_string(),
-                        |depth_delimiter, last|
-                            depth_delimiter + match *last {
-                                true => "    ",
-                                false => "│   "
-                            }
-                    ),
+                    "".to_string(),
+                    |depth_delimiter, last|
+                        depth_delimiter + match *last {
+                            true  => "    ",
+                            false => "│   "
+                        }
+                ),
                 match parent_last {
                     false => "├",
-                    true => "└"
+                    true  => "└"
                 },
                 file_name
             );
@@ -52,7 +68,7 @@ impl TreeCommand {
         }
     }
 
-    fn tree(vfs: &VirtualFileSystem, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool){
+    fn tree(vfs: &VirtualFileSystem, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(),VfsError>{
         let file_name = match identity.file_name() {
             Some(file_name) => file_name.to_string_lossy().to_string(),
             None => "/".to_string()
@@ -70,35 +86,36 @@ impl TreeCommand {
                     },
                     None => vec![]
                 };
-                let length = children.len();
 
+                let length = children.len();
                 for (index, virtual_child) in children.iter().enumerate() {
-                    Self::tree(
+                    if let Err(error) = Self::tree(
                         vfs,
                         virtual_child.as_identity(),
                         Some(new_depth_list.clone()),
                         index == (length - 1)
-                    );
+                    ) {
+                        return Err(error);
+                    }
                 }
             },
             Err(error) => match error {
                 VfsError::DoesNotExists(_) | VfsError::IsNotADirectory(_) => {},
-                error => eprintln!("{}", error)
+                error => return Err(error)
             }
         }
+        Ok(())
     }
-
 }
 
-impl crate::command::Command for TreeCommand {
-    fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
-        Self {
-            path: absolute(cwd, Path::new(args.value_of("path").unwrap_or(cwd.to_str().unwrap()).trim())),
+impl InitializedCommand for InitializedTreeCommand {
+    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        match Self::tree(vfs, self.path.as_path(), None, true) {
+            Ok(_)       => Ok(()),
+            Err(error)  => Err(CommandError::from(error))
         }
     }
-
-    fn execute(&self, vfs: &mut VirtualFileSystem) {
-        Self::tree(vfs, self.path.as_path(), None, true);
-    }
 }
+
+
 

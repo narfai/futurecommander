@@ -18,22 +18,36 @@
  */
 
 use vfs::{ VirtualFileSystem, VirtualKind };
-use std::path::{ Path, PathBuf };
+use std::path::Path;
 use clap::ArgMatches;
-use crate::path::absolute;
+use std::path::PathBuf;
+use crate::command::{ Command, InitializedCommand };
+use crate::command::errors::CommandError;
 
-pub struct ListCommand {
+
+pub struct ListCommand {}
+
+impl Command for ListCommand {
+    const NAME : &'static str = "ls";
+
+    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+        Ok(
+            Box::new(
+                InitializedListCommand {
+                    path:
+                        Self::extract_path_from_args(cwd, args, "path").unwrap_or(cwd.to_path_buf())
+                }
+            )
+        )
+    }
+}
+
+pub struct InitializedListCommand {
     path: PathBuf
 }
 
-impl crate::command::Command for ListCommand {
-    fn from_context(cwd : &Path, args: &ArgMatches) -> Self {
-        Self {
-            path: absolute(cwd, Path::new(args.value_of("path").unwrap_or(cwd.to_str().unwrap()).trim())),
-        }
-    }
-
-    fn execute(&self, vfs: &mut VirtualFileSystem) {
+impl InitializedCommand for InitializedListCommand {
+    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
         match vfs.read_dir(self.path.as_path()) {
             Ok(virtual_children) => {
                 if virtual_children.len() != 0 {
@@ -51,9 +65,10 @@ impl crate::command::Command for ListCommand {
                 } else {
                     println!("Directory is empty");
                 }
-
+                Ok(())
             },
-            Err(error) => println!("Error : {}", error)
+            Err(error) => Err(CommandError::from(error))
         }
     }
 }
+

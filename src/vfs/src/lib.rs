@@ -26,14 +26,14 @@ mod file_system;
 mod children;
 mod errors;
 
-pub use errors::VfsError;
-pub use path::VirtualPath;
-pub use path::VirtualKind;
-pub use delta::VirtualDelta;
-pub use children::VirtualChildrenIterator;
-pub use children::VirtualChildren;
-pub use file_system::VirtualFileSystem;
-pub use file_system::IdentityStatus;
+pub use self::errors::VfsError;
+pub use self::path::VirtualPath;
+pub use self::path::VirtualKind;
+pub use self::delta::VirtualDelta;
+pub use self::children::VirtualChildrenIterator;
+pub use self::children::VirtualChildren;
+pub use self::file_system::VirtualFileSystem;
+pub use self::file_system::IdentityStatus;
 
 
 
