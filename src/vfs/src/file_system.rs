@@ -179,17 +179,7 @@ impl VirtualFileSystem {
         }
     }
 
-    pub fn copy(&mut self, source: &Path, destination: &Path, with_name: Option<OsString>) -> Result<(), VfsError>{
-        let source = match self.stat(source)? {
-            Some(virtual_identity) => virtual_identity,
-            None => return Err(VfsError::DoesNotExists(source.to_path_buf()))
-        };
-
-        let destination = match self.stat(destination)? {
-            Some(virtual_identity) => virtual_identity,
-            None => return Err(VfsError::DoesNotExists(destination.to_path_buf()))
-        };
-
+    fn create_new_virtual_identity(&self, source: &VirtualPath, destination: &VirtualPath, with_name: Option<OsString>) -> Result<VirtualPath, VfsError>{
         if destination.is_contained_by(&source) {
             return Err(VfsError::CopyIntoItSelft(source.to_identity(), destination.to_identity()));
         }
@@ -204,6 +194,49 @@ impl VirtualFileSystem {
             new_identity = new_identity.with_file_name(name.as_os_str());
         }
 
+        Ok(new_identity)
+    }
+
+    pub fn copy_virtual_children(&mut self, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError>{
+        match identity.to_kind() {
+            VirtualKind::Directory => {
+                for child in self.read_dir(source.as_identity())? {
+                    match self.status(child.as_identity())? {
+                        IdentityStatus::ExistsVirtually(_) =>
+                            self.copy(
+                                child.as_identity(),
+                                identity.as_identity(),
+                                None
+                            )?,
+                        _ => {}
+                    };
+                }
+                Ok(())
+            },
+            _ => Ok(())
+        }
+    }
+
+    pub fn copy(&mut self, source: &Path, destination: &Path, with_name: Option<OsString>) -> Result<(), VfsError>{
+        let source = match self.stat(source)? {
+            Some(virtual_identity) => virtual_identity,
+            None => return Err(VfsError::DoesNotExists(source.to_path_buf()))
+        };
+
+        let destination = match self.stat(destination)? {
+            Some(virtual_identity) => match virtual_identity.to_kind() {
+                VirtualKind::Directory => virtual_identity,
+                _ => return Err(VfsError::IsNotADirectory(destination.to_path_buf()))
+            },
+            None => return Err(VfsError::DoesNotExists(destination.to_path_buf()))
+        };
+
+        let new_identity = self.create_new_virtual_identity(
+            &source,
+            &destination,
+            with_name
+        )?;
+
         if self.exists(new_identity.as_identity())? {
             return Err(VfsError::AlreadyExists(new_identity.to_identity()));
         }
@@ -214,27 +247,7 @@ impl VirtualFileSystem {
             self.sub.detach(new_identity.as_identity())?
         }
 
-        if with_name.is_some() {
-            match new_identity.to_kind() {
-                VirtualKind::Directory => {
-                    for child in self.read_dir(source.as_identity())? {
-                        match self.status(child.as_identity())? {
-                            IdentityStatus::ExistsVirtually(_) => {
-                                self.copy(
-                                    child.as_identity(),
-                                    new_identity.as_identity(),
-                                    None
-                                )?;
-                            },
-                            _ => {}
-                        }
-                    }
-                },
-                _ => {}
-            };
-        }
-
-        Ok(())
+        self.copy_virtual_children(&source, &new_identity)
     }
 
     pub fn get_add_state(&self) -> VirtualDelta {

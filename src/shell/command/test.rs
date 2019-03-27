@@ -246,4 +246,5 @@ mod virtual_shell_tests {
     //TODO test mkdir Z / touch TEST / cp TEST Z/ / tree
     //TODO test cp B A/ / cp A APRIME / tree
     //TODO test mv B A/ / mv A APRIME / tree
+    //TODO test mv B A/ / cp A APRIME / cp APRIME ABETA / cp ABETA A/
 }
