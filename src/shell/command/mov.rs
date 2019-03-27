@@ -34,6 +34,12 @@ impl Command for MoveCommand {
         let source = Self::extract_path_from_args(cwd, args, "source")?;
         let destination = Self::extract_path_from_args(cwd, args, "destination")?;
 
+        for ancestor in cwd.ancestors() {
+            if source.as_path() == ancestor {
+                return Err(CommandError::CwdIsInside(source.to_path_buf()))
+            }
+        }
+
         Ok(
             Box::new(
                 InitializedMoveCommand {

@@ -24,7 +24,7 @@ subcommands:
         - path:
             help: Target directory
             takes_value: true
-  - cwd:
+  - pwd:
       about: Show current directory
   - exit:
       about: Exit program

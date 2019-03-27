@@ -22,12 +22,12 @@ use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VfsError }
 
 #[derive(Debug)]
 pub enum IdentityStatus {
-    Exists(VirtualPath),
-    ExistsVirtually(VirtualPath),
-    ExistsThroughVirtualParent(VirtualPath),
-    NotExists,
-    Deleted,
-    RemovedVirtually,
+    Exists(VirtualPath), //Exists only in real FS
+    ExistsVirtually(VirtualPath), //Directly added
+    ExistsThroughVirtualParent(VirtualPath), //Indirectly added
+    NotExists, //Does not exists in virtual fs or real, indirectly or not
+    Deleted, //Does exists in real fs and should be deleted
+    RemovedVirtually, //Does exists in virtual but is also virtually deleted
 }
 
 #[derive(Debug)]
@@ -104,6 +104,7 @@ impl VirtualFileSystem {
             false =>self.status_real(path),
         }
     }
+
     pub fn exists(&self, path: &Path) -> Result<bool, VfsError> {
         match self.status(path)? {
             IdentityStatus::Exists(_)

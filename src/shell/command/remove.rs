@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualFileSystem };
+use vfs::{ VirtualFileSystem, VirtualPath };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -30,10 +30,17 @@ impl Command for RemoveCommand {
     const NAME : &'static str = "rm";
 
     fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+        let path = Self::extract_path_from_args(cwd, args, "path")?;
+        for ancestor in cwd.ancestors() {
+            if path == ancestor {
+                return Err(CommandError::CwdIsInside(path.to_path_buf()))
+            }
+        }
+
         Ok(
             Box::new(
                 InitializedRemoveCommand {
-                    path: Self::extract_path_from_args(cwd, args, "path")?
+                    path
                 }
             )
         )

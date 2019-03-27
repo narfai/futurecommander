@@ -61,7 +61,8 @@ impl Shell {
                                 ("cd",   Some(matches))  => self.cd(matches),
                                 ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.vfs.get_virtual_state().unwrap()); Ok(()) },
                                 ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_add_state()); Ok(()) },
-                                ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_sub_state()); Ok(()) }
+                                ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_sub_state()); Ok(()) },
+                                ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
                                 ("ls",          Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
                                 ("cp",          Some(matches)) => CopyCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
                                 ("mv",          Some(matches)) => MoveCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
@@ -91,10 +92,10 @@ impl Shell {
                                                 Err(error) => eprintln!("{}", error)
                                             };
                                         },
-                                        error => { eprintln!("{}", error) }
+                                        error => { eprintln!("Error : {}", error) }
                                     }
                             }
-                    Err(error) => eprintln!("{}", error)
+                    Err(error) => eprintln!("Error: {}", error)
                 }
 
                 println!("\n");
