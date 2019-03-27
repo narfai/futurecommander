@@ -143,7 +143,7 @@ impl VirtualFileSystem {
         }
 
         let mut real_children = match directory.as_source() {
-            Some(source) => VirtualChildren::from_file_system(
+            Some(_source) => VirtualChildren::from_file_system(
                 directory.as_source().unwrap(),
                 directory.as_source(),
                 Some(&path)
@@ -194,6 +194,10 @@ impl VirtualFileSystem {
             Some(virtual_identity) => virtual_identity,
             None => return Err(VfsError::DoesNotExists(destination.to_path_buf()))
         };
+
+        if destination.is_contained_by(&source) {
+            return Err(VfsError::CopyIntoItSelft(source.to_identity(), destination.to_identity()));
+        }
 
         let new_identity = &VirtualPath::from(
             source.to_identity(),

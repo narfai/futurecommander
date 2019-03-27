@@ -21,8 +21,9 @@ use std::env::current_exe;
 
 use std::path::{ PathBuf, Path };
 
-use vfs::{ VirtualPath, VirtualFileSystem };
-use crate::command::{ Command, InitializedCommand };
+use vfs::{ VirtualPath, VirtualFileSystem, VfsError };
+use crate::command::{ InitializedCommand };
+use crate::command::CommandError;
 use crate::command::copy::{ InitializedCopyCommand };
 use crate::command::mov::InitializedMoveCommand;
 use crate::command::new_directory::InitializedNewDirectoryCommand;
@@ -69,17 +70,17 @@ mod virtual_shell_tests {
         copy_a_to_b.execute(&mut vfs).unwrap();
 
         let copy_ab_to_abd = InitializedCopyCommand {
-            source: sample_path.join("A/B"),
-            destination: sample_path.join("A/B/D")
+            source: sample_path.join("A/B/D"),
+            destination: sample_path.join("A")
         };
 
         copy_ab_to_abd.execute(&mut vfs).unwrap();
 
-        match vfs.read_dir(sample_path.join(&Path::new("A/B/D")).as_path()) {
+        match vfs.read_dir(sample_path.join(&Path::new("A/D")).as_path()) {
             Ok(virtual_children) => {
                 assert!(virtual_children.len() > 0);
-                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/E"))).unwrap());
-                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/B/D/G"))).unwrap());
+                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/D/G"))).unwrap());
+                virtual_children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/D/E"))).unwrap());
             },
             Err(error) => panic!("Error : {}", error)
         }
@@ -206,5 +207,30 @@ mod virtual_shell_tests {
             },
             Err(error) => panic!("Error : {}", error)
         }
+    }
+
+    //Error testing
+
+    #[test]
+    fn virtual_shell_copy_or_move_directory_into_itself_must_not_be_allowed(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+
+        let source = sample_path.join(&Path::new("B"));
+        let destination = sample_path.join("B/D");
+
+        let move_b_to_bd = InitializedMoveCommand {
+            source: source.clone(),
+            destination: destination.clone()
+        };
+
+        match move_b_to_bd.execute(&mut vfs){
+            Err(CommandError::VfsError(VfsError::CopyIntoItSelft(err_source, err_destination))) => {
+                assert_eq!(source, err_source);
+                assert_eq!(destination, err_destination);
+            },
+            Err(unwanted_error) => panic!("{}", unwanted_error),
+            Ok(_) => panic!("Should not be able to move into itself")
+        };
     }
 }

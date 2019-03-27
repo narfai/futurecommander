@@ -28,6 +28,7 @@ use crate::path::{ VirtualPath, VirtualKind };
 use crate::delta::{ VirtualDelta };
 use crate::file_system::{ VirtualFileSystem };
 use crate::children::{VirtualChildren };
+use crate::errors::VfsError;
 
 pub fn get_sample_path() -> PathBuf {
     current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples")
@@ -359,35 +360,6 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_resolve_through_inside(){
-        let sample_path = get_sample_path();
-        let mut vfs = VirtualFileSystem::new();
-
-        let a = sample_path.join(&Path::new("A"));
-        let b = sample_path.join(&Path::new("B"));
-
-        let ab = sample_path.join(&Path::new("A/B"));
-        let abd = sample_path.join(&Path::new("A/B/D"));
-
-        let bd = sample_path.join(&Path::new("B/D"));
-
-        vfs.copy(b.as_path(), a.as_path()).unwrap();
-        vfs.copy(ab.as_path(), abd.as_path()).unwrap();
-
-        let virtual_state = vfs.get_virtual_state().unwrap();
-
-        assert_eq!(
-            b.as_path(),
-            virtual_state.resolve(ab.as_path()).unwrap().unwrap()
-        );
-
-        assert_eq!(
-            bd.as_path(),
-            virtual_state.resolve(abd.as_path()).unwrap().unwrap()
-        );
-    }
-
-    #[test]
     fn virtual_file_system_stat_none_if_deleted(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
@@ -448,6 +420,29 @@ mod virtual_file_system_tests {
         assert_eq!(stated.as_source(), Some(sample_path.join(Path::new("B/D/G")).as_path()))
     }
 
+    //Error testing
+
+    #[test]
+    fn virtual_file_system_copy_or_move_directory_into_itself_must_not_be_allowed(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+
+        let source = sample_path.join(Path::new("B"));
+        let destination = sample_path.join(Path::new("B/D"));
+
+        match vfs.copy(
+            source.as_path(),
+            destination.as_path()
+        ) {
+            Err(VfsError::CopyIntoItSelft(err_source, err_destination)) => {
+                assert_eq!(source.as_path(), err_source.as_path());
+                assert_eq!(destination.as_path(), err_destination.as_path());
+            }
+            Err(error) => panic!("{}", error),
+            Ok(_) => panic!("Should not be able to copy into itself")
+        };
+    }
+
     // No-Backwards tests
 
     #[test]
@@ -488,5 +483,4 @@ mod virtual_file_system_tests {
 
     #[test]
     fn virtual_file_system_copy_destination_does_not_exists(){}
-
 }
