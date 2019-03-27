@@ -59,7 +59,7 @@ impl InitializedCommand for InitializedListCommand {
                                 VirtualKind::File      => "File     ",
                                 VirtualKind::Unknown   => "Unknown  "
                             },
-                            child.file_name().to_string_lossy()
+                            child.file_name()?.to_string_lossy()
                         );
                     }
                 } else {

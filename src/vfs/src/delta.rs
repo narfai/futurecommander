@@ -66,7 +66,7 @@ impl VirtualDelta {
                 if identity != VirtualPath::root_identity().as_path() {
                     self.hierarchy
                         .get_mut(parent.as_path())
-                        .unwrap()
+                        .unwrap() //Assumed
                         .insert(
                             VirtualPath::from_path(identity)?
                                 .with_source(source)
@@ -86,7 +86,7 @@ impl VirtualDelta {
                 let parent = VirtualPath::get_parent_or_root(identity);
 
                 self.hierarchy.get_mut(&parent)
-                    .unwrap()
+                    .unwrap()//Assumed ? self.get has not the same behavior as hierarchy.get_mut
                     .remove(&VirtualPath::from_path(identity)?);
 
                 match self.is_directory_empty(parent.as_path()) {
@@ -207,7 +207,7 @@ impl VirtualDelta {
                                 source.join(
                                     path.strip_prefix(
                                         Self::remove_nth_parents(path, depth)
-                                    ).unwrap()
+                                    ).unwrap()//Assumed
                                 )
                             )
                         ),
@@ -246,41 +246,41 @@ impl VirtualDelta {
 
 
 impl <'a, 'b> Add<&'b VirtualDelta> for &'a VirtualDelta {
-    type Output = VirtualDelta;
+    type Output = Result<VirtualDelta, VfsError>;
 
-    fn add(self, right_delta: &'b VirtualDelta) -> VirtualDelta {
+    fn add(self, right_delta: &'b VirtualDelta) -> Result<VirtualDelta, VfsError> {
         let mut result = self.clone();
         for (_parent, children) in &right_delta.hierarchy {
             for child in children.iter() {
-                if right_delta.get(child.as_identity()).unwrap().is_some() {
-                    if result.get(child.as_identity()).unwrap().is_some() {
-                        result.detach(child.as_identity()).unwrap();
+                if right_delta.get(child.as_identity())?.is_some() {
+                    if result.get(child.as_identity())?.is_some() {
+                        result.detach(child.as_identity())?;
                     }
 
                     result.attach(
                         child.as_identity(),
                         child.as_source(),
                         child.to_kind()
-                    ).unwrap();
+                    )?;
                 }
             }
         }
-        result
+        Ok(result)
     }
 }
 
 impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
-    type Output = VirtualDelta;
+    type Output = Result<VirtualDelta, VfsError>;
 
-    fn sub(self, right_delta: &'b VirtualDelta) -> VirtualDelta {
+    fn sub(self, right_delta: &'b VirtualDelta) -> Result<VirtualDelta, VfsError> {
         let mut result = self.clone();
         for (_parent, children) in &right_delta.hierarchy {
             for child in children.iter() {
-                if result.get(child.as_identity()).unwrap().is_some() {
-                    result.detach(child.as_identity()).unwrap();
+                if result.get(child.as_identity())?.is_some() {
+                    result.detach(child.as_identity())?;
                 }
             }
         }
-        result
+        Ok(result)
     }
 }

@@ -59,7 +59,7 @@ impl Shell {
                             match matches.subcommand() {
                                 ("exit", Some(_matches)) => break,
                                 ("cd",   Some(matches))  => self.cd(matches),
-                                ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.vfs.get_virtual_state()); Ok(()) },
+                                ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.vfs.get_virtual_state().unwrap()); Ok(()) },
                                 ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_add_state()); Ok(()) },
                                 ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_sub_state()); Ok(()) }
                                 ("ls",          Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),

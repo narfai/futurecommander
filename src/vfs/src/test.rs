@@ -141,7 +141,7 @@ mod virtual_delta_tests {
         delta_ra.attach(Path::new("/R/to_not_change"), None, VirtualKind::File).unwrap();
         delta_ra.attach(Path::new("/R/to_complete/B"), None, VirtualKind::File).unwrap();
 
-        let delta_r_prime = &delta_r + &delta_ra;
+        let delta_r_prime = (&delta_r + &delta_ra).unwrap();
         assert!(delta_r_prime.is_directory(&Path::new("/R/to_replace")).unwrap());
         assert!(delta_r_prime.is_directory(&Path::new("/R/to_complete")).unwrap());
         assert!(!delta_r_prime.is_directory(&Path::new("/R/to_not_change")).unwrap());
@@ -161,7 +161,7 @@ mod virtual_delta_tests {
         delta_rs.attach(Path::new("/R/to_remove"), None, VirtualKind::Directory).unwrap();
         delta_rs.attach(Path::new("/R/to_not_change_dir/to_remove"), None,VirtualKind::File).unwrap();
 
-        let delta_r_prime = &delta_r - &delta_rs;
+        let delta_r_prime = (&delta_r - &delta_rs).unwrap();
 
         assert!(!delta_r_prime.is_directory(&Path::new("/R/to_not_change")).unwrap());
         assert!(delta_r_prime.is_directory(&Path::new("/R/to_not_change_dir")).unwrap());
@@ -319,7 +319,7 @@ mod virtual_file_system_tests {
 
         vfs.copy(b.as_path(), a.as_path()).unwrap();
 
-        let virtual_state = vfs.get_virtual_state();
+        let virtual_state = vfs.get_virtual_state().unwrap();
 
         assert_eq!(
             b.as_path(),
@@ -345,7 +345,7 @@ mod virtual_file_system_tests {
         vfs.copy(b.as_path(), a.as_path()).unwrap();
         vfs.copy(ab.as_path(), bd.as_path()).unwrap();
 
-        let virtual_state = vfs.get_virtual_state();
+        let virtual_state = vfs.get_virtual_state().unwrap();
 
         assert_eq!(
             b.as_path(),
@@ -374,7 +374,7 @@ mod virtual_file_system_tests {
         vfs.copy(b.as_path(), a.as_path()).unwrap();
         vfs.copy(ab.as_path(), abd.as_path()).unwrap();
 
-        let virtual_state = vfs.get_virtual_state();
+        let virtual_state = vfs.get_virtual_state().unwrap();
 
         assert_eq!(
             b.as_path(),

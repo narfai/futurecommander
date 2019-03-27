@@ -53,7 +53,7 @@ impl VirtualFileSystem {
                 },
             false => match self.add.get(path)? {//IN ADD AND NOT IN SUB
                 Some(virtual_identity) => Ok(IdentityStatus::ExistsVirtually(virtual_identity.clone())),
-                None => match self.get_virtual_state().resolve(path)? {
+                None => match self.get_virtual_state()?.resolve(path)? {
                     Some(real_path) => {
                         match real_path.exists() {
                             true =>
@@ -142,19 +142,18 @@ impl VirtualFileSystem {
             return Err(VfsError::HasNoSource(directory.to_identity()));
         }
 
-        let mut real_children = match VirtualChildren::from_file_system(
-            directory.as_source().unwrap(),
-            directory.as_source(),
-            Some(&path)
-        ) {
-            Ok(virtual_children) => virtual_children,
-            Err(error) => return Err(error)
+        let mut real_children = match directory.as_source() {
+            Some(source) => VirtualChildren::from_file_system(
+                directory.as_source().unwrap(),
+                directory.as_source(),
+                Some(&path)
+            )?,
+            None => return Err(VfsError::HasNoSource(directory.to_identity()))
         };
 
         if let Some(to_add_children) = self.add.children(directory.as_identity()) {
             real_children = &real_children + &to_add_children;
         }
-
         if let Some(to_del_children) = self.sub.children(directory.as_identity()) {
             real_children = &real_children - &to_del_children;
         }
@@ -223,7 +222,5 @@ impl VirtualFileSystem {
         self.sub.clone()
     }
 
-    pub fn get_virtual_state(&self) -> VirtualDelta {
-        &self.add - &self.sub
-    }
+    pub fn get_virtual_state(&self) -> Result<VirtualDelta, VfsError> { &self.add - &self.sub }
 }

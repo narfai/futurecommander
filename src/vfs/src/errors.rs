@@ -31,7 +31,8 @@ pub enum VfsError {
     AlreadyExists(PathBuf),
     VirtualParentIsAFile(PathBuf),
     DanglingVirtualPath(PathBuf),
-    IsRelativePath(PathBuf)
+    IsRelativePath(PathBuf),
+    IsDotFileName(PathBuf)
 }
 
 impl From<io::Error> for VfsError {
@@ -50,7 +51,8 @@ impl fmt::Display for VfsError {
             VfsError::AlreadyExists(identity)           => write!(f, "Path {} already exists", identity.as_os_str().to_string_lossy()),
             VfsError::VirtualParentIsAFile(identity)    => write!(f, "Path {} virtual parent is a file", identity.as_os_str().to_string_lossy()),
             VfsError::DanglingVirtualPath(identity)     => write!(f, "Path {} dangling virtual path", identity.as_os_str().to_string_lossy()),
-            VfsError::IsRelativePath(identity)          => write!(f, "Path {} is relative", identity.as_os_str().to_string_lossy())
+            VfsError::IsRelativePath(identity)          => write!(f, "Path {} is relative", identity.as_os_str().to_string_lossy()),
+            VfsError::IsDotFileName(identity)          =>  write!(f, "Path {} has a file name with dots", identity.as_os_str().to_string_lossy()),
         }
     }
 }

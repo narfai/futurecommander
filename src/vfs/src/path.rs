@@ -188,8 +188,11 @@ impl VirtualPath {
         }
     }
 
-    pub fn file_name(&self) -> &OsStr {
-        self.identity.file_name().unwrap() //Do not handle ".." file names
+    pub fn file_name(&self) -> Result<&OsStr, VfsError> {
+        match self.identity.file_name() {
+            Some(filename) => Ok(filename),
+            None => Err(VfsError::IsDotFileName(self.identity.to_path_buf()))
+        }
     }
 
     pub fn join(&self, node_name: &OsStr) -> Result<VirtualPath, VfsError>  {
