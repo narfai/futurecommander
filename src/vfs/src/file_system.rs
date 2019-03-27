@@ -236,8 +236,8 @@ Deleted, => Do nothing
 RemovedVirtually, => Do nothing ?
 
 walk over subs virtual path which have a source. for each of them, sorted by path depth asc :
-ExistsVirtually(VirtualPath), => copy recursively source path to identity path ( with handling of name change ) then remove childs from add
-Exists(VirtualPath), => Delete recursively the source path, then remove childs from sub
+ExistsVirtually(VirtualPath), => copy recursively source path to identity path ( with handling of name change ) then remove vpath with are childs by source from add
+Exists(VirtualPath), => Delete recursively the source path, then remove vpath with are childs by source from sub
 ExistsThroughVirtualParent(VirtualPath), => Do nothing
 NotExists, => Do nothing
 Deleted, => Do nothing
