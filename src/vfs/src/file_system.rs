@@ -219,7 +219,7 @@ impl VirtualFileSystem {
                 VirtualKind::Directory => {
                     for child in self.read_dir(source.as_identity())? {
                         match self.status(child.as_identity())? {
-                            IdentityStatus::ExistsVirtually(_) | IdentityStatus::ExistsThroughVirtualParent(_) => {
+                            IdentityStatus::ExistsVirtually(_) => {
                                 self.copy(
                                     child.as_identity(),
                                     new_identity.as_identity(),
