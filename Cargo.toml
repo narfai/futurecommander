@@ -1,6 +1,6 @@
 [package]
 name = "futurecommander"
-version = "0.1.1"
+version = "0.2.5"
 authors = ["François Cadeillan <francois@azsystem.fr>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
@@ -9,7 +9,7 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 clap = { version =  "2.32.0", features = ["yaml"] }
-vfs = { package = "futurecommander_vfs", version = "0.1.0", path = "src/vfs" }
+vfs = { package = "futurecommander_vfs", version = "0.2.5", path = "src/vfs" }
 
 [lib]
 name = "shell"
