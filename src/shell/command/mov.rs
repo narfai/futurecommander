@@ -65,3 +65,12 @@ impl InitializedCommand for InitializedMoveCommand {
         }
     }
 }
+
+/*
+TODO https://trello.com/c/GVGBLNK6/10-as-human-i-can-virtually-rename-a-virtual-file-or-directory
+2 problems :
+ 1/ detect wether we should consider destination as new parent or new node
+ 2/ renaming ( destination as new node ) is virtually nothing less than :
+      for directorie => create destination -> copy all the children of source in destination -> remove source
+      for file => create destination -> remove source
+*/

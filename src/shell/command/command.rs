@@ -42,7 +42,6 @@ pub trait Command {
 
 pub trait InitializedCommand {
     fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<()/*ReversableCommand*/, CommandError>;
-
 }
 
 //TODO https://trello.com/c/53teSBkz/38-as-human-im-able-to-roll-back-any-operations-performed-over-the-virtual-fs

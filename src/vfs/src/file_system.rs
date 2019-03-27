@@ -224,3 +224,23 @@ impl VirtualFileSystem {
 
     pub fn get_virtual_state(&self) -> Result<VirtualDelta, VfsError> { &self.add - &self.sub }
 }
+
+/*
+TODO : https://trello.com/c/ocihsIuv/29-as-human-i-can-apply-virtual-file-system-to-real-file-system-in-order-to-get-them-both-into-the-closer-possible-state
+walk over vfs virtual path which have a source. for each of them, sorted by path depth asc :
+ExistsVirtually(VirtualPath), => copy recursively source path to identity path ( with handling of name change ) then remove childs from add
+Exists(VirtualPath), => Do nothing
+ExistsThroughVirtualParent(VirtualPath), => Do nothing
+NotExists, => Do nothing
+Deleted, => Do nothing
+RemovedVirtually, => Do nothing ?
+
+walk over subs virtual path which have a source. for each of them, sorted by path depth asc :
+ExistsVirtually(VirtualPath), => copy recursively source path to identity path ( with handling of name change ) then remove childs from add
+Exists(VirtualPath), => Delete recursively the source path, then remove childs from sub
+ExistsThroughVirtualParent(VirtualPath), => Do nothing
+NotExists, => Do nothing
+Deleted, => Do nothing
+RemovedVirtually, => Do nothing ?
+
+*/
