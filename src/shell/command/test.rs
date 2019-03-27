@@ -20,8 +20,8 @@
 use std::env::current_exe;
 
 use std::path::{ PathBuf, Path };
-
-use vfs::{ VirtualPath, VirtualFileSystem, VfsError };
+use std::ffi::{ OsString, OsStr };
+use vfs::{ VirtualPath, VirtualFileSystem, VfsError, VirtualKind };
 use crate::command::{ InitializedCommand };
 use crate::command::CommandError;
 use crate::command::copy::{ InitializedCopyCommand };
@@ -34,7 +34,7 @@ use crate::command::remove::InitializedRemoveCommand;
 //use crate::command::tree::InitializedTreeCommand;
 
 pub fn get_sample_path() -> PathBuf {
-    current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("examples")
+    current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("samples")
 }
 
 #[cfg(test)]
@@ -217,6 +217,157 @@ mod virtual_shell_tests {
         }
     }
 
+    #[test]
+    fn virtual_shell_reference_virtual_children(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+
+        let mkdir_z = InitializedNewDirectoryCommand {
+            path: sample_path.join(&Path::new("Z"))
+        };
+        mkdir_z.execute(&mut vfs).unwrap();
+
+        let touch_test = InitializedNewFileCommand {
+            path: sample_path.join(&Path::new("TEST"))
+        };
+        touch_test.execute(&mut vfs).unwrap();
+
+        let copy_test_to_z = InitializedCopyCommand {
+            source: sample_path.join("TEST"),
+            destination: sample_path.join("Z"),
+            name: None
+        };
+        copy_test_to_z.execute(&mut vfs).unwrap();
+
+        match vfs.read_dir(sample_path.join("Z").as_path()) {
+            Ok(children) => assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("Z/TEST"))).unwrap())),
+            Err(error) => panic!("{}", error)
+        }
+    }
+
+    #[test]
+    fn virtual_shell_copy_nested_virtual_identity(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+
+        let copy_b_to_a = InitializedCopyCommand {
+            source: sample_path.join("B"),
+            destination: sample_path.join("A"),
+            name: None
+        };
+        copy_b_to_a.execute(&mut vfs).unwrap();
+
+        let copy_a_as_aprime = InitializedCopyCommand {
+            source: sample_path.join("A"),
+            destination: sample_path.clone(),
+            name: Some(OsString::from("APRIME"))
+        };
+        copy_a_as_aprime.execute(&mut vfs).unwrap();
+
+        match vfs.read_dir(sample_path.join("APRIME").as_path()) {
+            Ok(children) => {
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/C"))).unwrap())); //Real file
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B"))).unwrap())); //Virtual directory
+            },
+            Err(error) => panic!("{}", error)
+        }
+
+        match vfs.read_dir(sample_path.join("APRIME/B/D").as_path()) {
+            Ok(children) => {
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B/D/E"))).unwrap())); //Nested virtual
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B/D/G"))).unwrap())); //Nested virtual
+            },
+            Err(error) => panic!("{}", error)
+        }
+    }
+
+    #[test]
+    fn virtual_shell_move_nested_virtual_identity(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+
+        let move_b_to_a = InitializedCopyCommand {
+            source: sample_path.join("B"),
+            destination: sample_path.join("A"),
+            name: None
+        };
+        move_b_to_a.execute(&mut vfs).unwrap();
+
+        let move_a_as_aprime = InitializedMoveCommand {
+            source: sample_path.join("A"),
+            destination: sample_path.clone(),
+            name: Some(OsString::from("APRIME"))
+        };
+        move_a_as_aprime.execute(&mut vfs).unwrap();
+
+        match vfs.read_dir(sample_path.join("APRIME").as_path()) {
+            Ok(children) => {
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/C"))).unwrap())); //Real file
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B"))).unwrap())); //Virtual directory
+            },
+            Err(error) => panic!("{}", error)
+        }
+
+        match vfs.read_dir(sample_path.join("APRIME/B/D").as_path()) {
+            Ok(children) => {
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B/D/E"))).unwrap())); //Nested virtual
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B/D/G"))).unwrap())); //Nested virtual
+            },
+            Err(error) => panic!("{}", error)
+        }
+    }
+
+
+    #[test]
+    fn virtual_shell_copy_nested_virtual_identity_deep_through(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+
+        let copy_b_to_a = InitializedCopyCommand {
+            source: sample_path.join("B"),
+            destination: sample_path.join("A"),
+            name: None
+        };
+        copy_b_to_a.execute(&mut vfs).unwrap();
+
+        let copy_a_as_aprime = InitializedCopyCommand {
+            source: sample_path.join("A"),
+            destination: sample_path.clone(),
+            name: Some(OsString::from("APRIME"))
+        };
+        copy_a_as_aprime.execute(&mut vfs).unwrap();
+
+        let copy_aprime_as_abeta = InitializedCopyCommand {
+            source: sample_path.join("APRIME"),
+            destination: sample_path.clone(),
+            name: Some(OsString::from("ABETA"))
+        };
+        copy_aprime_as_abeta.execute(&mut vfs).unwrap();
+
+        let copy_abeta_to_a = InitializedCopyCommand {
+            source: sample_path.join("ABETA"),
+            destination: sample_path.join("A"),
+            name: None
+        };
+        copy_abeta_to_a.execute(&mut vfs).unwrap();
+
+        match vfs.read_dir(sample_path.join("A/ABETA").as_path()) {
+            Ok(children) => {
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join("A/ABETA/C")).unwrap())); //Real file
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join("A/ABETA/B")).unwrap())); //Virtual directory
+            },
+            Err(error) => panic!("{}", error)
+        }
+
+        match vfs.read_dir(sample_path.join("A/ABETA/B/D").as_path()) {
+            Ok(children) => {
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/ABETA/B/D/E"))).unwrap())); //Nested virtual
+                assert!(children.contains(&VirtualPath::from_path_buf(sample_path.join(&Path::new("A/ABETA/B/D/G"))).unwrap())); //Nested virtual
+            },
+            Err(error) => panic!("{}", error)
+        }
+    }
+
     //Error testing
 
     #[test]
@@ -242,9 +393,4 @@ mod virtual_shell_tests {
             Ok(_) => panic!("Should not be able to move into itself")
         };
     }
-
-    //TODO test mkdir Z / touch TEST / cp TEST Z/ / tree
-    //TODO test cp B A/ / cp A APRIME / tree
-    //TODO test mv B A/ / mv A APRIME / tree
-    //TODO test mv B A/ / cp A APRIME / cp APRIME ABETA / cp ABETA A/
 }
