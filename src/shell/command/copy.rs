@@ -17,12 +17,13 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::VirtualFileSystem;
-use std::path::Path;
+use vfs::{ VirtualFileSystem, VirtualPath, VfsError, VirtualKind, IdentityStatus };
+use std::path::{ Path, PathBuf, MAIN_SEPARATOR };
 use clap::ArgMatches;
-use std::path::PathBuf;
 use crate::command::{ Command, InitializedCommand };
 use crate::command::errors::CommandError;
+use crate::path::normalize;
+use std::ffi::{ OsStr, OsString };
 
 pub struct CopyCommand {}
 
@@ -30,11 +31,30 @@ impl Command for CopyCommand {
     const NAME : &'static str = "copy";
 
     fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+        let source = Self::extract_path_from_args(cwd, args, "source")?;
+        let mut name = None;
+        let destination =  match args.value_of("destination") {
+            Some(str_path) =>
+                match str_path.chars().last().unwrap() == MAIN_SEPARATOR {
+                    false => {
+                        let destination = normalize(&cwd.join(Path::new(str_path.trim())));
+                        name = match destination.file_name() {
+                            None => return Err(CommandError::from(VfsError::IsDotName(destination.to_path_buf()))),
+                            Some(name) => Some(name.to_os_string())
+                        };
+                        VirtualPath::get_parent_or_root(destination.as_path())
+                    },
+                    true => normalize(&cwd.join(Path::new(str_path.trim())))
+                },
+            None => return Err(CommandError::ArgumentMissing((&Self::NAME).to_string(), "destination".to_string(), args.usage().to_string()))
+        };
+
         Ok(
             Box::new(
                 InitializedCopyCommand {
-                    source: Self::extract_path_from_args(cwd, args, "source")?,
-                    destination: Self::extract_path_from_args(cwd, args, "destination")?
+                    source,
+                    destination,
+                    name
                 }
             )
         )
@@ -43,17 +63,19 @@ impl Command for CopyCommand {
 
 pub struct InitializedCopyCommand {
     pub source: PathBuf,
-    pub destination: PathBuf
+    pub destination: PathBuf,
+    pub name: Option<OsString>
 }
 
 impl InitializedCommand for InitializedCopyCommand {
     fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-       match vfs.copy(
-          self.source.as_path(),
-          self.destination.as_path()
-       ) {
-           Ok(_) => Ok(()),
-           Err(error) => Err(CommandError::from(error))
-       }
+        match vfs.copy(
+            self.source.as_path(),
+            self.destination.as_path(),
+            self.name.clone()
+        ) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(CommandError::from(error))
+        }
     }
 }

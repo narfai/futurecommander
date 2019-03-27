@@ -18,6 +18,7 @@
  */
 
 use std::path::{ Path };
+use std::ffi::{ OsStr, OsString };
 use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VfsError };
 
 #[derive(Debug)]
@@ -139,18 +140,11 @@ impl VirtualFileSystem {
             None => return Err(VfsError::DoesNotExists(path.to_path_buf()))
         };
 
-        if directory.as_source().is_none() {
-            return Err(VfsError::HasNoSource(directory.to_identity()));
-        }
-
-        let mut real_children = match directory.as_source() {
-            Some(_source) => VirtualChildren::from_file_system(
-                directory.as_source().unwrap(),
+        let mut real_children = VirtualChildren::from_file_system(
+                directory.as_source().unwrap_or(directory.as_identity()),
                 directory.as_source(),
                 Some(&path)
-            )?,
-            None => return Err(VfsError::HasNoSource(directory.to_identity()))
-        };
+        )?;
 
         if let Some(to_add_children) = self.add.children(directory.as_identity()) {
             real_children = &real_children + &to_add_children;
@@ -185,7 +179,7 @@ impl VirtualFileSystem {
         }
     }
 
-    pub fn copy(&mut self, source: &Path, destination: &Path) -> Result<(), VfsError>{
+    pub fn copy(&mut self, source: &Path, destination: &Path, with_name: Option<OsString>) -> Result<(), VfsError>{
         let source = match self.stat(source)? {
             Some(virtual_identity) => virtual_identity,
             None => return Err(VfsError::DoesNotExists(source.to_path_buf()))
@@ -200,20 +194,44 @@ impl VirtualFileSystem {
             return Err(VfsError::CopyIntoItSelft(source.to_identity(), destination.to_identity()));
         }
 
-        let new_identity = &VirtualPath::from(
+        let mut new_identity = VirtualPath::from(
             source.to_identity(),
             source.to_source(),
             source.to_kind()
         )?.with_new_identity_parent(destination.as_identity());
 
+        if let Some(name) = &with_name {
+            new_identity = new_identity.with_file_name(name.as_os_str());
+        }
+
         if self.exists(new_identity.as_identity())? {
             return Err(VfsError::AlreadyExists(new_identity.to_identity()));
         }
 
-        self.add.attach_virtual(new_identity)?;
+        self.add.attach_virtual(&new_identity)?;
 
         if self.sub.get(new_identity.as_identity())?.is_some() {
             self.sub.detach(new_identity.as_identity())?
+        }
+
+        if with_name.is_some() {
+            match new_identity.to_kind() {
+                VirtualKind::Directory => {
+                    for child in self.read_dir(source.as_identity())? {
+                        match self.status(child.as_identity())? {
+                            IdentityStatus::ExistsVirtually(_) | IdentityStatus::ExistsThroughVirtualParent(_) => {
+                                self.copy(
+                                    child.as_identity(),
+                                    new_identity.as_identity(),
+                                    None
+                                )?;
+                            },
+                            _ => {}
+                        }
+                    }
+                },
+                _ => {}
+            };
         }
 
         Ok(())

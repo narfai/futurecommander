@@ -64,14 +64,16 @@ mod virtual_shell_tests {
 
         let copy_a_to_b = InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            name: None
         };
 
         copy_a_to_b.execute(&mut vfs).unwrap();
 
         let copy_ab_to_abd = InitializedCopyCommand {
             source: sample_path.join("A/B/D"),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            name: None
         };
 
         copy_ab_to_abd.execute(&mut vfs).unwrap();
@@ -93,21 +95,24 @@ mod virtual_shell_tests {
 
         let copy_b_to_a = InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            name: None
         };
 
         copy_b_to_a.execute(&mut vfs).unwrap();
 
         let copy_f_to_b = InitializedCopyCommand {
             source: sample_path.join("F"),
-            destination: sample_path.join("B")
+            destination: sample_path.join("B"),
+            name: None
         };
 
         copy_f_to_b.execute(&mut vfs).unwrap();
 
         let copy_bf_to_bde = InitializedCopyCommand {
             source: sample_path.join("B/F"),
-            destination: sample_path.join("B/D/E")
+            destination: sample_path.join("B/D/E"),
+            name: None
         };
 
         copy_bf_to_bde.execute(&mut vfs).unwrap();
@@ -129,21 +134,24 @@ mod virtual_shell_tests {
 
         let move_f_to_a = InitializedMoveCommand {
             source: sample_path.join(&Path::new("F")),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            name: None
         };
 
         move_f_to_a.execute(&mut vfs).unwrap();
 
         let move_af_to_b = InitializedMoveCommand {
             source: sample_path.join("A/F"),
-            destination: sample_path.join("B")
+            destination: sample_path.join("B"),
+            name: None
         };
 
         move_af_to_b.execute(&mut vfs).unwrap();
 
         let move_bf_to_bde = InitializedMoveCommand {
             source: sample_path.join("B/F"),
-            destination: sample_path.join("B/D/E")
+            destination: sample_path.join("B/D/E"),
+            name: None
         };
 
         move_bf_to_bde.execute(&mut vfs).unwrap();
@@ -221,7 +229,8 @@ mod virtual_shell_tests {
 
         let move_b_to_bd = InitializedMoveCommand {
             source: source.clone(),
-            destination: destination.clone()
+            destination: destination.clone(),
+            name: None
         };
 
         match move_b_to_bd.execute(&mut vfs){
@@ -233,4 +242,8 @@ mod virtual_shell_tests {
             Ok(_) => panic!("Should not be able to move into itself")
         };
     }
+
+    //TODO test mkdir Z / touch TEST / cp TEST Z/ / tree
+    //TODO test cp B A/ / cp A APRIME / tree
+    //TODO test mv B A/ / mv A APRIME / tree
 }

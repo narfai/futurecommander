@@ -318,7 +318,7 @@ mod virtual_file_system_tests {
         let ab = sample_path.join(&Path::new("A/B"));
         let abcdef = sample_path.join(&Path::new("A/B/C/D/E/F"));
 
-        vfs.copy(b.as_path(), a.as_path()).unwrap();
+        vfs.copy(b.as_path(), a.as_path(), None).unwrap();
 
         let virtual_state = vfs.get_virtual_state().unwrap();
 
@@ -343,8 +343,8 @@ mod virtual_file_system_tests {
         let ab = sample_path.join(&Path::new("A/B"));
         let bd = sample_path.join(&Path::new("B/D"));
 
-        vfs.copy(b.as_path(), a.as_path()).unwrap();
-        vfs.copy(ab.as_path(), bd.as_path()).unwrap();
+        vfs.copy(b.as_path(), a.as_path(), None).unwrap();
+        vfs.copy(ab.as_path(), bd.as_path(), None).unwrap();
 
         let virtual_state = vfs.get_virtual_state().unwrap();
 
@@ -406,7 +406,8 @@ mod virtual_file_system_tests {
 
         vfs.copy(
             sample_path.join(Path::new("B")).as_path(),
-            sample_path.join(Path::new("A")).as_path()
+            sample_path.join(Path::new("A")).as_path(),
+            None
         ).unwrap();
 
         let stated = vfs.stat(abdg.as_path()).unwrap();
@@ -432,7 +433,8 @@ mod virtual_file_system_tests {
 
         match vfs.copy(
             source.as_path(),
-            destination.as_path()
+            destination.as_path(),
+            None
         ) {
             Err(VfsError::CopyIntoItSelft(err_source, err_destination)) => {
                 assert_eq!(source.as_path(), err_source.as_path());
@@ -483,4 +485,8 @@ mod virtual_file_system_tests {
 
     #[test]
     fn virtual_file_system_copy_destination_does_not_exists(){}
+
+
+    //TODO test copy with name
+    //TODO test mv with name
 }

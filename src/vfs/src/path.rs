@@ -191,7 +191,7 @@ impl VirtualPath {
     pub fn file_name(&self) -> Result<&OsStr, VfsError> {
         match self.identity.file_name() {
             Some(filename) => Ok(filename),
-            None => Err(VfsError::IsDotFileName(self.identity.to_path_buf()))
+            None => Err(VfsError::IsDotName(self.identity.to_path_buf()))
         }
     }
 
