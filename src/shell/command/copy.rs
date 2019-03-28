@@ -32,22 +32,7 @@ impl Command for CopyCommand {
 
     fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
         let source = Self::extract_path_from_args(cwd, args, "source")?;
-        let mut name = None;
-        let destination =  match args.value_of("destination") {
-            Some(str_path) =>
-                match str_path.chars().last().unwrap() == MAIN_SEPARATOR {
-                    false => {
-                        let destination = normalize(&cwd.join(Path::new(str_path.trim())));
-                        name = match destination.file_name() {
-                            None => return Err(CommandError::from(VfsError::IsDotName(destination.to_path_buf()))),
-                            Some(name) => Some(name.to_os_string())
-                        };
-                        VirtualPath::get_parent_or_root(destination.as_path())
-                    },
-                    true => normalize(&cwd.join(Path::new(str_path.trim())))
-                },
-            None => return Err(CommandError::ArgumentMissing((&Self::NAME).to_string(), "destination".to_string(), args.usage().to_string()))
-        };
+        let (name, destination) = Self::extract_name_and_destination(cwd, args)?;
 
         Ok(
             Box::new(
