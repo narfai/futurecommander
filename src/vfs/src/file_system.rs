@@ -19,18 +19,10 @@
 
 use std::path::{ Path };
 use std::ffi::{ OsStr, OsString };
-use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VfsError };
-use crate::operation::{ Virtual, Copy, Remove, Create, WriteOperation };
+use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VfsError, IdentityStatus };
+use crate::operation::{ Virtual, Copy, Remove, Create, Status, ReadDir, ReadOperation, WriteOperation };
 
-#[derive(Debug)]
-pub enum IdentityStatus {
-    Exists(VirtualPath), //Exists only in real FS
-    ExistsVirtually(VirtualPath), //Directly added
-    ExistsThroughVirtualParent(VirtualPath), //Indirectly added
-    NotExists, //Does not exists in virtual fs or real, indirectly or not
-    Deleted, //Does exists in real fs and should be deleted
-    RemovedVirtually, //Does exists in virtual but is also virtually deleted
-}
+//TODO Wrapper Historized Vfs
 
 #[derive(Debug)]
 pub struct VirtualFileSystem {
@@ -46,110 +38,33 @@ impl VirtualFileSystem {
         }
     }
 
-    fn status_virtual(&self, path: &Path) -> Result<IdentityStatus, VfsError> {
-        match self.sub.is_virtual(path)? {
-            true =>
-                match path.exists() {
-                    true =>  Err(VfsError::DanglingVirtualPath(path.to_path_buf())), //TODO May happen over system-level concurrency
-                    false => Ok(IdentityStatus::RemovedVirtually)
-                },
-            false => match self.add.get(path)? {//IN ADD AND NOT IN SUB
-                Some(virtual_identity) => Ok(IdentityStatus::ExistsVirtually(virtual_identity.clone())),
-                None => match self.virtual_state()?.resolve(path)? {
-                    Some(real_path) => {
-                        match real_path.exists() {
-                            true =>
-                                Ok(
-                                    IdentityStatus::ExistsThroughVirtualParent(
-                                        VirtualPath::from(
-                                            path.to_path_buf(),
-                                            Some(real_path.clone()),
-                                            VirtualKind::from_path_buf(real_path)
-                                        )?
-                                    )
-                                ),
-                            false => Ok(IdentityStatus::NotExists)
-                        }
-                    },
-                    None => Ok(IdentityStatus::NotExists)//Got a virtual parent but does not exists
-                }
-            }
-        }
-    }
-
-    fn status_real(&self, path: &Path) -> Result<IdentityStatus, VfsError> {
-        match self.sub.is_virtual(path)? {
-            true => Ok(IdentityStatus::Deleted),
-            false =>
-                match path.exists() {
-                    true =>
-                        Ok(
-                            IdentityStatus::Exists(
-                                VirtualPath::from(
-                                    path.to_path_buf(),
-                                    Some(path.to_path_buf()),
-                                    match path.is_dir() {
-                                        true => VirtualKind::Directory,
-                                        false => VirtualKind::File
-                                    }
-                                )?
-                            )
-                        ),
-                    false => Ok(IdentityStatus::NotExists)
-                },
-        }
-    }
-
+    //TODO @deprecated
     pub fn status(&self, path: &Path) -> Result<IdentityStatus, VfsError> {
-        match self.add.is_virtual(path)? {
-            true => self.status_virtual(path),
-            false =>self.status_real(path),
-        }
+        Virtual(Status::new(path)).collect(self)
     }
 
+    //TODO @deprecated
     pub fn stat(&self, path: &Path) -> Result<Option<VirtualPath>, VfsError> {
-        match self.status(path)? {
-            IdentityStatus::Exists(virtual_identity)
-            | IdentityStatus::ExistsVirtually(virtual_identity)
-            | IdentityStatus::ExistsThroughVirtualParent(virtual_identity) => Ok(Some(virtual_identity)),
+        Ok(
+            Virtual(Status::new(path))
+                .collect(self)?
+                .virtual_identity()
+        )
 
-            IdentityStatus::NotExists
-            | IdentityStatus::Deleted
-            | IdentityStatus::RemovedVirtually => Ok(None)
-        }
     }
 
+    //TODO @deprecated
     pub fn exists(&self, path: &Path) -> Result<bool, VfsError> {
-        match self.stat(path)? {
-            Some(_) => Ok(true),
-            None => Ok(false)
-        }
+        Ok(
+            Virtual(Status::new(path))
+                .collect(self)?
+                .exists()
+        )
     }
 
+    //TODO @deprecated
     pub fn read_dir(&self, path: &Path) -> Result<VirtualChildren, VfsError> {
-        let directory = match self.stat(path)? {
-            Some(virtual_identity) =>
-                match virtual_identity.as_kind() {
-                    VirtualKind::Directory => virtual_identity,
-                    _ => return Err(VfsError::IsNotADirectory(path.to_path_buf()))
-                },
-            None => return Err(VfsError::DoesNotExists(path.to_path_buf()))
-        };
-
-        let mut real_children = VirtualChildren::from_file_system(
-                directory.as_source().unwrap_or(directory.as_identity()),
-                directory.as_source(),
-                Some(&path)
-        )?;
-
-        if let Some(to_add_children) = self.add.children(directory.as_identity()) {
-            real_children = &real_children + &to_add_children;
-        }
-        if let Some(to_del_children) = self.sub.children(directory.as_identity()) {
-            real_children = &real_children - &to_del_children;
-        }
-
-        Ok(real_children)
+        Virtual(ReadDir::new(path)).collect(self)
     }
 
     //TODO @deprecated

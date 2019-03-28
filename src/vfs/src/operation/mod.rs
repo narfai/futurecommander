@@ -26,6 +26,12 @@ pub use self::remove::Remove;
 mod create;
 pub use self::create::Create;
 
+mod status;
+pub use self::status::{ IdentityStatus, Status };
+
+mod read_dir;
+pub use self::read_dir::ReadDir;
+
 pub struct Real<O>(pub O);
 pub struct Virtual<O>(pub O);
 
@@ -36,7 +42,6 @@ pub trait WriteOperation <F> {
     fn reverse(&self, fs: &mut F) -> Result<(), VfsError>;
 }
 
-pub trait ReadOperation <F> {
-    fn execute(&self, fs: &F) -> Result<(), VfsError>;
-    fn reverse(&self, fs: &F) -> Result<(), VfsError>;
+pub trait ReadOperation <F, R> {
+    fn collect(&self, fs: &F) -> Result<R, VfsError>;
 }
