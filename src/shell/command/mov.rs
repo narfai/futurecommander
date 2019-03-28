@@ -17,9 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualFileSystem, VirtualPath, VfsError };
+use vfs::{ VirtualFileSystem };
 use clap::ArgMatches;
-use std::path::{ Path, PathBuf, MAIN_SEPARATOR };
+use std::path::{ Path, PathBuf };
 use std::ffi::{ OsString };
 use crate::command::{ Command, InitializedCommand };
 use crate::command::errors::CommandError;

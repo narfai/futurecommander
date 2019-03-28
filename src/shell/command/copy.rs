@@ -17,13 +17,12 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualFileSystem, VirtualPath, VfsError, VirtualKind, IdentityStatus };
-use std::path::{ Path, PathBuf, MAIN_SEPARATOR };
+use vfs::{ VirtualFileSystem };
+use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::command::{ Command, InitializedCommand };
 use crate::command::errors::CommandError;
-use crate::path::normalize;
-use std::ffi::{ OsStr, OsString };
+use std::ffi::{ OsString };
 
 pub struct CopyCommand {}
 
