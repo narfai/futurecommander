@@ -68,6 +68,7 @@ https://manishearth.github.io/blog/2015/05/27/wrapper-types-in-rust-choosing-you
 ## TUI / GUI
 
 https://crates.io/crates/cursive
+https://github.com/maps4print/azul
 
 ## OO Pattern
 
@@ -86,3 +87,11 @@ https://stackoverflow.com/questions/24635146/can-this-code-be-written-without-ge
 ## crates
 
 CLI testing :  https://crates.io/crates/assert_cmd
+
+## Rendering ( & gaming )
+
+http://arewegameyet.com/
+
+## Threading
+
+https://blog.softwaremill.com/multithreading-in-rust-with-mpsc-multi-producer-single-consumer-channels-db0fc91ae3fa
