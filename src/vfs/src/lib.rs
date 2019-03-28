@@ -20,18 +20,13 @@
 #[cfg(test)]
 mod test;
 
-mod path;
-mod delta;
+mod representation;
+
 mod file_system;
-mod children;
 mod errors;
 
 pub use self::errors::VfsError;
-pub use self::path::VirtualPath;
-pub use self::path::VirtualKind;
-pub use self::delta::VirtualDelta;
-pub use self::children::VirtualChildrenIterator;
-pub use self::children::VirtualChildren;
+pub use self::representation::{ VirtualPath, VirtualKind, VirtualDelta, VirtualChildren, VirtualChildrenIterator };
 pub use self::file_system::VirtualFileSystem;
 pub use self::file_system::IdentityStatus;
 
