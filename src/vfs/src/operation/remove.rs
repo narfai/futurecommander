@@ -34,7 +34,7 @@ impl Remove {
 }
 
 impl WriteOperation<VirtualFileSystem> for Virtual<Remove>{
-    fn execute(&self, mut fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
+    fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         match fs.stat(self.0.path.as_path())? {
             Some(virtual_identity) => {
                 fs.mut_sub_state().attach_virtual(&virtual_identity)?;

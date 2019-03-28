@@ -23,11 +23,13 @@ mod test;
 mod representation;
 mod operation;
 
-mod file_system;
+mod real_fs;
+mod virtual_fs;
 mod errors;
 
 pub use self::errors::VfsError;
 pub use self::representation::{ VirtualPath, VirtualKind, VirtualDelta, VirtualChildren, VirtualChildrenIterator };
-pub use self::file_system::VirtualFileSystem;
+pub use self::virtual_fs::VirtualFileSystem;
+pub use self::real_fs::RealFileSystem;
 pub use self::operation::{ Copy, Create, Remove, ReadDir, Status, IdentityStatus };
 

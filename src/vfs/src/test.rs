@@ -21,8 +21,7 @@ use std::env::current_exe;
 
 use std::path::{ PathBuf };
 
-use crate::representation::{ VirtualKind };
-use crate::file_system::{ VirtualFileSystem };
+use crate::{ VirtualFileSystem, VirtualKind };
 use crate::errors::VfsError;
 
 pub fn get_sample_path() -> PathBuf {

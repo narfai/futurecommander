@@ -19,8 +19,8 @@
 
 use std::path::{ PathBuf, Path };
 use std::ffi::OsString;
-use crate::{ VirtualFileSystem, VfsError, VirtualKind, IdentityStatus, VirtualPath };
-use crate::operation::{ WriteOperation, Virtual };
+use crate::{ RealFileSystem, VirtualFileSystem, VfsError, VirtualKind, IdentityStatus, VirtualPath };
+use crate::operation::{ WriteOperation, Virtual, Real };
 
 pub struct Copy {
     source: PathBuf,
