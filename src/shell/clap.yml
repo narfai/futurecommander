@@ -64,6 +64,8 @@ subcommands:
       - path:
             help: Path of the new file
             takes_value: true
+  - reset:
+      about: Reset virtual state
   - debug_virtual_state:
       about: show vfs current state
   - debug_add_state:

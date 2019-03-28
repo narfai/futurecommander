@@ -63,6 +63,7 @@ impl Shell {
                                 ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_add_state()); Ok(()) },
                                 ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_sub_state()); Ok(()) },
                                 ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
+                                ("reset",       Some(_matches)) => { self.vfs.reset(); println!("Virtual state is now empty");  Ok(()) },
                                 ("ls",          Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
                                 ("cp",          Some(matches)) => CopyCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
                                 ("mv",          Some(matches)) => MoveCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),

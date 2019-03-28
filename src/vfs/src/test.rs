@@ -460,6 +460,20 @@ mod virtual_file_system_tests {
     // No-Backwards tests
 
     #[test]
+    fn virtual_file_system_reset_empty(){
+        let sample_path = get_sample_path();
+        let mut vfs = VirtualFileSystem::new();
+        vfs.create(sample_path.join("VIRTUALA").as_path(), VirtualKind::File).unwrap();
+        vfs.create(sample_path.join("VIRTUALB").as_path(), VirtualKind::Directory).unwrap();
+
+        assert!(!vfs.is_empty());
+
+        vfs.reset();
+
+        assert!(vfs.is_empty());
+    }
+
+    #[test]
     fn virtual_file_system_status_exists(){}
 
     #[test]
