@@ -31,7 +31,7 @@ use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VfsError, 
 use crate::operation::{ Virtual, Copy, Remove, Create, Status, ReadDir, ReadOperation, WriteOperation };
 
 pub struct RealFileSystem {
-    count: usize,
+    count: i128,
     dry: bool
 }
 
@@ -48,7 +48,7 @@ impl RealFileSystem {
     }
 
     pub fn increment(&mut self){
-        self.count = self.count + 1;
+        self.count += 1;
     }
 
     pub fn remove_file(&mut self, path: &Path) -> Result<(), IoError> {
@@ -138,7 +138,6 @@ impl RealFileSystem {
                 writer.flush();
                 self.increment();
                 Ok(())
-//                    .and(Ok(read))
             })
     }
 }
