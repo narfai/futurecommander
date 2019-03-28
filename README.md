@@ -10,13 +10,13 @@ https://trello.com/b/A2BvQdR9/futurecommander
 
 ## Latest release
 
-### Windows x86_64 ( mingw-w64 )
-
-https://bitbucket.org/kathreon/futurecommander/downloads/futurecommander.exe
-
 ### Linux x86_64
 
-https://bitbucket.org/kathreon/futurecommander/downloads/futurecommander
+https://bitbucket.org/kathreon/futurecommander/downloads/futurecommander_linux64_release_latest
+
+### Windows x86_64 ( mingw-w64 )
+
+https://bitbucket.org/kathreon/futurecommander/downloads/futurecommander_win64_release_latest.exe
 
 
 ## Note : Generate dependency graph
