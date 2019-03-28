@@ -106,18 +106,6 @@ impl VirtualFileSystem {
         }
     }
 
-    pub fn exists(&self, path: &Path) -> Result<bool, VfsError> {
-        match self.status(path)? {
-            IdentityStatus::Exists(_)
-            | IdentityStatus::ExistsVirtually(_)
-            | IdentityStatus::ExistsThroughVirtualParent(_) => Ok(true),
-
-            IdentityStatus::NotExists
-            | IdentityStatus::Deleted
-            | IdentityStatus::RemovedVirtually => Ok(false)
-        }
-    }
-
     pub fn stat(&self, path: &Path) -> Result<Option<VirtualPath>, VfsError> {
         match self.status(path)? {
             IdentityStatus::Exists(virtual_identity)
@@ -127,6 +115,13 @@ impl VirtualFileSystem {
             IdentityStatus::NotExists
             | IdentityStatus::Deleted
             | IdentityStatus::RemovedVirtually => Ok(None)
+        }
+    }
+
+    pub fn exists(&self, path: &Path) -> Result<bool, VfsError> {
+        match self.stat(path)? {
+            Some(_) => Ok(true),
+            None => Ok(false)
         }
     }
 
