@@ -36,6 +36,10 @@
 * mv B B/D => shouldn't be allowed
 * remove cwd or ancestors shouldn't be allowed
 
+## GUI
+
+neon + nwjs + mithril + bulma ? makes it easily remote server file explorer on web through an API ?
+
 ## Tests
 
 * tests add / sub / add / sub OK

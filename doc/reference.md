@@ -95,3 +95,9 @@ http://arewegameyet.com/
 ## Threading
 
 https://blog.softwaremill.com/multithreading-in-rust-with-mpsc-multi-producer-single-consumer-channels-db0fc91ae3fa
+
+## Rust and nodejs
+
+https://neon-bindings.com/
+https://nwjs.io/
+https://proton-native.js.org/#/
