@@ -101,3 +101,11 @@ https://blog.softwaremill.com/multithreading-in-rust-with-mpsc-multi-producer-si
 https://neon-bindings.com/
 https://nwjs.io/
 https://proton-native.js.org/#/
+
+## QA
+
+https://github.com/rust-lang/miri#bugs-found-by-miri
+
+## Functional programming
+
+https://www.amazon.com/Hands-Functional-Programming-Rust-applications/dp/1788839358/ref=as_li_ss_tl?ie=UTF8&linkCode=sl1&tag=tutorialedge-20&linkId=3664a43d9e5e1a441704bdce071983df

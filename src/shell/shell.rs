@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::io::{stdin, stdout};
+use std::io::{ stdin, stdout };
 use std::io::Write;
 use std::env;
 use std::path::{ Path, PathBuf };
@@ -59,9 +59,9 @@ impl Shell {
                             match matches.subcommand() {
                                 ("exit", Some(_matches)) => break,
                                 ("cd",   Some(matches))  => self.cd(matches),
-                                ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.vfs.get_virtual_state().unwrap()); Ok(()) },
-                                ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_add_state()); Ok(()) },
-                                ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.vfs.get_sub_state()); Ok(()) },
+                                ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.vfs.virtual_state().unwrap()); Ok(()) },
+                                ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.vfs.add_state()); Ok(()) },
+                                ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.vfs.sub_state()); Ok(()) },
                                 ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
                                 ("reset",       Some(_matches)) => { self.vfs.reset(); println!("Virtual state is now empty");  Ok(()) },
                                 ("ls",          Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),

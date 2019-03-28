@@ -21,14 +21,15 @@
 mod test;
 
 mod representation;
+mod operation;
 
 mod file_system;
 mod errors;
 
 pub use self::errors::VfsError;
 pub use self::representation::{ VirtualPath, VirtualKind, VirtualDelta, VirtualChildren, VirtualChildrenIterator };
-pub use self::file_system::VirtualFileSystem;
-pub use self::file_system::IdentityStatus;
+pub use self::file_system::{ VirtualFileSystem, IdentityStatus };
+pub use self::operation::{ Copy };
 
 
 

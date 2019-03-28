@@ -20,6 +20,7 @@
 use std::path::{ Path };
 use std::ffi::{ OsStr, OsString };
 use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VfsError };
+use crate::operation::{ Virtual, Copy, Remove, Create, WriteOperation };
 
 #[derive(Debug)]
 pub enum IdentityStatus {
@@ -54,7 +55,7 @@ impl VirtualFileSystem {
                 },
             false => match self.add.get(path)? {//IN ADD AND NOT IN SUB
                 Some(virtual_identity) => Ok(IdentityStatus::ExistsVirtually(virtual_identity.clone())),
-                None => match self.get_virtual_state()?.resolve(path)? {
+                None => match self.virtual_state()?.resolve(path)? {
                     Some(real_path) => {
                         match real_path.exists() {
                             true =>
@@ -151,98 +152,19 @@ impl VirtualFileSystem {
         Ok(real_children)
     }
 
+    //TODO @deprecated
     pub fn create(&mut self, identity: &Path, kind: VirtualKind) -> Result<(), VfsError>{
-        match self.stat(identity)? {
-            Some(_) => return Err(VfsError::AlreadyExists(identity.to_path_buf())),
-            None => {
-                self.add.attach(identity, None, kind)?;
-                Ok(())
-            }
-        }
+        Virtual(Create::new(identity, kind)).execute(self)
     }
 
+    //TODO @deprecated
     pub fn remove(&mut self, identity: &Path) -> Result<(), VfsError>{
-        match self.stat(identity)? {
-            Some(virtual_identity) => {
-                self.sub.attach_virtual(&virtual_identity)?;
-                if self.add.get(virtual_identity.as_identity())?.is_some() {
-                    self.add.detach(virtual_identity.as_identity())?;
-                }
-                Ok(())
-            },
-            None => return Err(VfsError::DoesNotExists(identity.to_path_buf()))
-        }
+        Virtual(Remove::new(identity)).execute(self)
     }
 
-    fn create_new_virtual_identity(&self, source: &VirtualPath, destination: &VirtualPath, with_name: Option<OsString>) -> Result<VirtualPath, VfsError>{
-        if destination.is_contained_by(&source) {
-            return Err(VfsError::CopyIntoItSelft(source.to_identity(), destination.to_identity()));
-        }
-
-        let mut new_identity = VirtualPath::from(
-            source.to_identity(),
-            source.to_source(),
-            source.to_kind()
-        )?.with_new_identity_parent(destination.as_identity());
-
-        if let Some(name) = &with_name {
-            new_identity = new_identity.with_file_name(name.as_os_str());
-        }
-
-        Ok(new_identity)
-    }
-
-    pub fn copy_virtual_children(&mut self, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError>{
-        match identity.to_kind() {
-            VirtualKind::Directory => {
-                for child in self.read_dir(source.as_identity())? {
-                    match self.status(child.as_identity())? {
-                        IdentityStatus::ExistsVirtually(_) =>
-                            self.copy(
-                                child.as_identity(),
-                                identity.as_identity(),
-                                None
-                            )?,
-                        _ => {}
-                    };
-                }
-                Ok(())
-            },
-            _ => Ok(())
-        }
-    }
-
+    //TODO @deprecated
     pub fn copy(&mut self, source: &Path, destination: &Path, with_name: Option<OsString>) -> Result<(), VfsError>{
-        let source = match self.stat(source)? {
-            Some(virtual_identity) => virtual_identity,
-            None => return Err(VfsError::DoesNotExists(source.to_path_buf()))
-        };
-
-        let destination = match self.stat(destination)? {
-            Some(virtual_identity) => match virtual_identity.to_kind() {
-                VirtualKind::Directory => virtual_identity,
-                _ => return Err(VfsError::IsNotADirectory(destination.to_path_buf()))
-            },
-            None => return Err(VfsError::DoesNotExists(destination.to_path_buf()))
-        };
-
-        let new_identity = self.create_new_virtual_identity(
-            &source,
-            &destination,
-            with_name
-        )?;
-
-        if self.exists(new_identity.as_identity())? {
-            return Err(VfsError::AlreadyExists(new_identity.to_identity()));
-        }
-
-        self.add.attach_virtual(&new_identity)?;
-
-        if self.sub.get(new_identity.as_identity())?.is_some() {
-            self.sub.detach(new_identity.as_identity())?
-        }
-
-        self.copy_virtual_children(&source, &new_identity)
+        Virtual(Copy::new(source, destination, with_name)).execute(self)
     }
 
     pub fn reset(&mut self) {
@@ -254,15 +176,23 @@ impl VirtualFileSystem {
         self.add.is_empty() && self.sub.is_empty()
     }
 
-    pub fn get_add_state(&self) -> VirtualDelta {
+    pub fn mut_add_state(&mut self) -> &mut VirtualDelta {
+        &mut self.add
+    }
+
+    pub fn mut_sub_state(&mut self) -> &mut VirtualDelta {
+        &mut self.sub
+    }
+
+    pub fn add_state(&self) -> VirtualDelta {
         self.add.clone()
     }
 
-    pub fn get_sub_state(&self) -> VirtualDelta {
+    pub fn sub_state(&self) -> VirtualDelta {
         self.sub.clone()
     }
 
-    pub fn get_virtual_state(&self) -> Result<VirtualDelta, VfsError> { &self.add - &self.sub }
+    pub fn virtual_state(&self) -> Result<VirtualDelta, VfsError> { &self.add - &self.sub }
 }
 
 /*

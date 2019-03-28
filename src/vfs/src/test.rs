@@ -63,7 +63,7 @@ mod virtual_file_system_tests {
 
         vfs.copy(b.as_path(), a.as_path(), None).unwrap();
 
-        let virtual_state = vfs.get_virtual_state().unwrap();
+        let virtual_state = vfs.virtual_state().unwrap();
 
         assert_eq!(
             b.as_path(),
@@ -89,7 +89,7 @@ mod virtual_file_system_tests {
         vfs.copy(b.as_path(), a.as_path(), None).unwrap();
         vfs.copy(ab.as_path(), bd.as_path(), None).unwrap();
 
-        let virtual_state = vfs.get_virtual_state().unwrap();
+        let virtual_state = vfs.virtual_state().unwrap();
 
         assert_eq!(
             b.as_path(),
