@@ -33,8 +33,8 @@ pub enum IdentityStatus {
 
 #[derive(Debug)]
 pub struct VirtualFileSystem {
-    pub add: VirtualDelta,
-    pub sub: VirtualDelta
+    add: VirtualDelta,
+    sub: VirtualDelta
 }
 
 impl VirtualFileSystem {
@@ -248,6 +248,15 @@ impl VirtualFileSystem {
         }
 
         self.copy_virtual_children(&source, &new_identity)
+    }
+
+    pub fn reset(&mut self) {
+        self.add = VirtualDelta::new();
+        self.sub = VirtualDelta::new();
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.add.is_empty() && self.sub.is_empty()
     }
 
     pub fn get_add_state(&self) -> VirtualDelta {
