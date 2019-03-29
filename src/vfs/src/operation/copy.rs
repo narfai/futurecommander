@@ -20,7 +20,7 @@
 use std::path::{ PathBuf, Path };
 use std::ffi::OsString;
 use crate::{ RealFileSystem, VirtualFileSystem, VfsError, VirtualKind, IdentityStatus, VirtualPath };
-use crate::operation::{ WriteOperation, Virtual, Real };
+use crate::operation::{ WriteOperation, Virtual, Real, Entry };
 
 pub struct Copy {
     source: PathBuf,
@@ -61,10 +61,10 @@ impl Virtual<Copy> {
         match identity.to_kind() {
             VirtualKind::Directory => {
                 for child in fs.read_dir(source.as_identity())? {
-                    match fs.status(child.as_identity())? {
+                    match fs.status(child.path().clone())? {
                         IdentityStatus::ExistsVirtually(_) =>
                             Virtual(Copy::new(
-                                child.as_identity(),
+                                child.path(),
                                 identity.as_identity(),
                                 None
                             )).execute(&mut fs)?,
@@ -78,7 +78,7 @@ impl Virtual<Copy> {
     }
 }
 
-impl WriteOperation<VirtualFileSystem> for Virtual<Copy>{
+impl WriteOperation<&mut VirtualFileSystem> for Virtual<Copy>{
     fn execute(&self, mut fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         let source = match fs.stat(self.0.source.as_path())? {
             Some(virtual_identity) => virtual_identity,
@@ -110,9 +110,5 @@ impl WriteOperation<VirtualFileSystem> for Virtual<Copy>{
         }
 
         Self::copy_virtual_children(&mut fs, &source, &new_identity)
-    }
-
-    fn reverse(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        Ok(())
     }
 }

@@ -33,7 +33,7 @@ impl Remove {
     }
 }
 
-impl WriteOperation<VirtualFileSystem> for Virtual<Remove>{
+impl WriteOperation<&mut VirtualFileSystem> for Virtual<Remove>{
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         match fs.stat(self.0.path.as_path())? {
             Some(virtual_identity) => {
@@ -45,9 +45,5 @@ impl WriteOperation<VirtualFileSystem> for Virtual<Remove>{
             },
             None => return Err(VfsError::DoesNotExists(self.0.path.to_path_buf()))
         }
-    }
-
-    fn reverse(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        Ok(())
     }
 }

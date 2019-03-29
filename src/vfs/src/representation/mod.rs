@@ -24,38 +24,9 @@ mod test;
 mod path;
 mod delta;
 mod children;
+mod identity_status;
 
 pub use self::path::{ VirtualKind, VirtualPath };
 pub use self::delta::VirtualDelta;
 pub use self::children::{ VirtualChildren, VirtualChildrenIterator };
-
-//#[cfg(test)]
-//mod test;
-//
-//pub mod command;
-//pub use self::command::{ Command, InitializedCommand };
-//
-//pub mod errors;
-//pub use self::errors::CommandError;
-//
-//pub mod copy;
-//pub use self::copy::CopyCommand;
-//
-//pub mod list;
-//pub use self::list::ListCommand;
-//
-//pub mod mov;
-//pub use self::mov::MoveCommand;
-//
-//pub mod new_directory;
-//pub use self::new_directory::NewDirectoryCommand;
-//
-//pub mod new_file;
-//pub use self::new_file::NewFileCommand;
-//
-//pub mod remove;
-//pub use self::remove::RemoveCommand;
-//
-//pub mod tree;
-//pub use self::tree::TreeCommand;
-
+pub use self::identity_status::IdentityStatus;

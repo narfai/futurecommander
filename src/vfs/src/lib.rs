@@ -28,8 +28,9 @@ mod virtual_fs;
 mod errors;
 
 pub use self::errors::VfsError;
-pub use self::representation::{ VirtualPath, VirtualKind, VirtualDelta, VirtualChildren, VirtualChildrenIterator };
+pub use self::representation::{ VirtualPath, VirtualKind, VirtualDelta, VirtualChildren, VirtualChildrenIterator, IdentityStatus };
+pub use self::operation::{ Copy, Create, Remove, ReadDir, Status };
 pub use self::virtual_fs::VirtualFileSystem;
 pub use self::real_fs::RealFileSystem;
-pub use self::operation::{ Copy, Create, Remove, ReadDir, Status, IdentityStatus };
 
+//TODO type VfsResult = Result<T, VfsError>;

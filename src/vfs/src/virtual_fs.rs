@@ -19,8 +19,9 @@
 
 use std::path::{ Path };
 use std::ffi::{ OsStr, OsString };
-use crate::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VfsError, IdentityStatus };
-use crate::operation::{ Virtual, Copy, Remove, Create, Status, ReadDir, ReadOperation, WriteOperation };
+use crate::{ VirtualDelta, VirtualChildren, VirtualChildrenIterator, VirtualPath, VirtualKind, VfsError, IdentityStatus };
+use crate::operation::{ Virtual, Copy, Remove, Create, Status, ReadDir, ReadOperation, WriteOperation, NodeIterator, Entry };
+use std::collections::hash_set::IntoIter as HashSetIntoIter;
 
 //TODO Wrapper Historized Vfs
 
@@ -40,14 +41,14 @@ impl VirtualFileSystem {
 
     //TODO @deprecated
     pub fn status(&self, path: &Path) -> Result<IdentityStatus, VfsError> {
-        Virtual(Status::new(path)).collect(self)
+        Virtual(Status::new(path)).retrieve(self)
     }
 
     //TODO @deprecated
     pub fn stat(&self, path: &Path) -> Result<Option<VirtualPath>, VfsError> {
         Ok(
             Virtual(Status::new(path))
-                .collect(self)?
+                .retrieve(self)?
                 .virtual_identity()
         )
 
@@ -57,14 +58,14 @@ impl VirtualFileSystem {
     pub fn exists(&self, path: &Path) -> Result<bool, VfsError> {
         Ok(
             Virtual(Status::new(path))
-                .collect(self)?
+                .retrieve(self)?
                 .exists()
         )
     }
 
     //TODO @deprecated
-    pub fn read_dir(&self, path: &Path) -> Result<VirtualChildren, VfsError> {
-        Virtual(ReadDir::new(path)).collect(self)
+    pub fn read_dir(&self, path: &Path) -> Result<NodeIterator<HashSetIntoIter<VirtualPath>>, VfsError> {
+        Virtual(ReadDir::new(path)).retrieve(self)
     }
 
     //TODO @deprecated

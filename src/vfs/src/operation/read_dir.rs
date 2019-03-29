@@ -19,7 +19,8 @@
 
 use std::path::{ PathBuf, Path };
 use crate::{ VirtualFileSystem, VfsError, VirtualKind, VirtualPath, VirtualChildren };
-use crate::operation::{ ReadOperation, Virtual };
+use crate::operation::{ ReadOperation, Virtual, NodeIterator };
+use std::collections::hash_set::IntoIter as HashSetIntoIter;
 
 pub struct ReadDir {
     path: PathBuf
@@ -33,8 +34,8 @@ impl ReadDir {
     }
 }
 
-impl ReadOperation<VirtualFileSystem, VirtualChildren> for Virtual<ReadDir>{
-    fn collect(&self, fs: &VirtualFileSystem) -> Result<VirtualChildren, VfsError> {
+impl ReadOperation<&VirtualFileSystem, NodeIterator<HashSetIntoIter<VirtualPath>>> for Virtual<ReadDir> {
+    fn retrieve(&self, fs: &VirtualFileSystem) -> Result<NodeIterator<HashSetIntoIter<VirtualPath>>, VfsError> {
         let directory = match fs.stat(self.0.path.as_path())? {
             Some(virtual_identity) =>
                 match virtual_identity.as_kind() {
@@ -57,6 +58,6 @@ impl ReadOperation<VirtualFileSystem, VirtualChildren> for Virtual<ReadDir>{
             real_children = &real_children - &to_del_children;
         }
 
-        Ok(real_children)
+        Ok(NodeIterator(real_children.into_iter()))
     }
 }

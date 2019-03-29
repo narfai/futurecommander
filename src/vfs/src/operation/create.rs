@@ -35,7 +35,7 @@ impl Create {
     }
 }
 
-impl WriteOperation<VirtualFileSystem> for Virtual<Create>{
+impl WriteOperation<&mut VirtualFileSystem> for Virtual<Create>{
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         match fs.stat(self.0.path.as_path())? {
             Some(_) => return Err(VfsError::AlreadyExists(self.0.path.to_path_buf())),
@@ -44,9 +44,5 @@ impl WriteOperation<VirtualFileSystem> for Virtual<Create>{
                 Ok(())
             }
         }
-    }
-
-    fn reverse(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        Ok(())
     }
 }
