@@ -19,7 +19,7 @@
 
 use std::path::{ PathBuf, Path };
 use crate::{ VirtualFileSystem, VfsError, VirtualKind, VirtualPath, VirtualChildren };
-use crate::operation::{ ReadOperation, Virtual, Status, NodeIterator };
+use crate::operation::{ReadQuery, Virtual, Status, NodeIterator };
 use std::collections::hash_set::IntoIter as HashSetIntoIter;
 
 pub struct ReadDir {
@@ -34,7 +34,7 @@ impl ReadDir {
     }
 }
 
-impl ReadOperation<&VirtualFileSystem, NodeIterator<HashSetIntoIter<VirtualPath>>> for Virtual<ReadDir> {
+impl ReadQuery<&VirtualFileSystem, NodeIterator<HashSetIntoIter<VirtualPath>>> for Virtual<ReadDir> {
     fn retrieve(&self, fs: &VirtualFileSystem) -> Result<NodeIterator<HashSetIntoIter<VirtualPath>>, VfsError> {
         let stat_directory = Virtual(Status::new(self.0.path.as_path()));
         let directory = match stat_directory.retrieve(&fs)?.virtual_identity() {

@@ -46,6 +46,6 @@ pub trait WriteOperation <F> {
     fn execute(&self, fs: F) -> Result<(), VfsError>;
 }
 
-pub trait ReadOperation <F, T> {
+pub trait ReadQuery<F, T> {
     fn retrieve(&self, fs: F) -> Result<T, VfsError>;
 }

@@ -19,7 +19,7 @@
 
 use std::path::{ PathBuf, Path };
 use crate::{ VirtualFileSystem, VfsError };
-use crate::operation::{ ReadOperation, WriteOperation, Virtual, Status };
+use crate::operation::{ReadQuery, WriteOperation, Virtual, Status };
 
 pub struct Remove {
     path: PathBuf

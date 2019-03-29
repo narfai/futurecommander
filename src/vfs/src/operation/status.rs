@@ -19,7 +19,7 @@
 
 use std::path::{ PathBuf, Path };
 use crate::{ VirtualFileSystem, VfsError, VirtualKind, VirtualPath, IdentityStatus };
-use crate::operation::{ ReadOperation, Virtual };
+use crate::operation::{ReadQuery, Virtual };
 
 
 
@@ -91,7 +91,7 @@ impl Virtual<Status> {
     }
 }
 
-impl ReadOperation<&VirtualFileSystem, IdentityStatus> for Virtual<Status>{
+impl ReadQuery<&VirtualFileSystem, IdentityStatus> for Virtual<Status>{
     fn retrieve(&self, fs: &VirtualFileSystem) -> Result<IdentityStatus, VfsError> {
         match fs.add_state().is_virtual(self.0.path.as_path())? {
             true => self.status_virtual(&fs),

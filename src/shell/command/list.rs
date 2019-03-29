@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualFileSystem, VirtualKind, Node, ReadOperation, Virtual, ReadDir };
+use vfs::{VirtualFileSystem, VirtualKind, Node, ReadQuery, Virtual, ReadDir };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;

@@ -24,7 +24,7 @@ use std::path::{ Path, PathBuf };
 
 use clap::{ App, ArgMatches };
 
-use vfs::{ VirtualFileSystem, VirtualKind, ReadOperation, Virtual, Status, IdentityStatus };
+use vfs::{VirtualFileSystem, VirtualKind, ReadQuery, Virtual, Status, IdentityStatus };
 
 use crate::path::absolute;
 use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };

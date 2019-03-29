@@ -20,7 +20,7 @@
 use std::path::{ PathBuf, Path };
 use std::ffi::OsString;
 use crate::{ RealFileSystem, VirtualFileSystem, VfsError, VirtualKind, IdentityStatus, VirtualPath };
-use crate::operation::{ ReadOperation, WriteOperation, Virtual, Real, Entry, ReadDir, Status };
+use crate::operation::{ReadQuery, WriteOperation, Virtual, Real, Entry, ReadDir, Status };
 
 pub struct Copy {
     source: PathBuf,

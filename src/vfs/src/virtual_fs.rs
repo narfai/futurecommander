@@ -20,7 +20,7 @@
 use std::path::{ Path };
 use std::ffi::{ OsStr, OsString };
 use crate::{ VirtualDelta, VirtualChildren, VirtualChildrenIterator, VirtualPath, VirtualKind, VfsError, IdentityStatus };
-use crate::operation::{ Virtual, Copy, Remove, Create, Status, ReadDir, ReadOperation, WriteOperation, NodeIterator, Entry };
+use crate::operation::{Virtual, Copy, Remove, Create, Status, ReadDir, ReadQuery, WriteOperation, NodeIterator, Entry };
 use std::collections::hash_set::IntoIter as HashSetIntoIter;
 
 //TODO Wrapper Historized Vfs
