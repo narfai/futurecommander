@@ -33,7 +33,7 @@ mod virtual_file_system_tests {
     use super::*;
 
     #[test]
-    fn virtual_file_system_test_samples_ok(){
+    fn test_samples_ok(){
         let sample_path = get_sample_path();
         assert!(sample_path.join("A").exists());
         assert!(sample_path.join("B").exists());
@@ -51,7 +51,7 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_resolve(){
+    fn resolve(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
@@ -79,7 +79,7 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_resolve_through(){
+    fn resolve_through(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
@@ -115,7 +115,7 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_stat_none_if_deleted(){
+    fn stat_none_if_deleted(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
         let a = sample_path.join("A");
@@ -142,7 +142,7 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_stat_virtual(){
+    fn stat_virtual(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
         let z = sample_path.join("Z");
@@ -164,7 +164,7 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_stat_real(){
+    fn stat_real(){
         let sample_path = get_sample_path();
         let vfs = VirtualFileSystem::new();
         let a = sample_path.join("A");
@@ -181,7 +181,7 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_stat_related(){
+    fn stat_related(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
         let abdg = sample_path.join("A/B/D/G");//Note : should exists in samples
@@ -206,7 +206,7 @@ mod virtual_file_system_tests {
     //Error testing
 
     #[test]
-    fn virtual_file_system_copy_or_move_directory_into_itself_must_not_be_allowed(){
+    fn copy_or_move_directory_into_itself_must_not_be_allowed(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
@@ -228,21 +228,21 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_copy_source_does_not_exists(){}
+    fn copy_source_does_not_exists(){}
 
     #[test]
-    fn virtual_file_system_copy_destination_does_not_exists(){}
+    fn copy_destination_does_not_exists(){}
 
     #[test]
-    fn virtual_file_system_create_already_exists(){}
+    fn create_already_exists(){}
 
     #[test]
-    fn virtual_file_system_remove_does_not_exists(){}
+    fn remove_does_not_exists(){}
 
     // No-Backwards tests
 
     #[test]
-    fn virtual_file_system_reset_empty(){
+    fn reset_empty(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
@@ -264,34 +264,34 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn virtual_file_system_status_exists(){}
+    fn status_exists(){}
 
     #[test]
-    fn virtual_file_system_status_exists_virtually(){}
+    fn status_exists_virtually(){}
 
     #[test]
-    fn virtual_file_system_status_exists_through_virtual_parent(){}
+    fn status_exists_through_virtual_parent(){}
 
     #[test]
-    fn virtual_file_system_status_exists_not_exists(){}
+    fn status_exists_not_exists(){}
 
     #[test]
-    fn virtual_file_system_status_exists_deleted(){}
+    fn status_exists_deleted(){}
 
     #[test]
-    fn virtual_file_system_status_exists_removed_virtually(){}
+    fn status_exists_removed_virtually(){}
 
     #[test]
-    fn virtual_file_system_create(){}
+    fn create(){}
 
     #[test]
-    fn virtual_file_system_remove(){}
+    fn remove(){}
 
     #[test]
-    fn virtual_file_system_copy(){}
+    fn copy(){}
 
     #[test]
-    fn virtual_file_system_copy_with_rename(){
+    fn copy_with_rename(){
 
     }
 }

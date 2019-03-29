@@ -29,21 +29,21 @@ mod virtual_path_tests {
     use super::*;
 
     #[test]
-    fn virtual_path_virtually_equal() {
+    fn virtually_equal() {
         let vpath1 = VirtualPath::from_str("/intentionally/virtual/full/path").unwrap();
         let vpath2 = VirtualPath::from_str("/intentionally/virtual/full/path").unwrap();
         assert_eq!(vpath1, vpath2);
     }
 
     #[test]
-    fn virtual_path_parent_virtually_equal() {
+    fn parent_virtually_equal() {
         let parent = VirtualPath::from_str("/intentionally/virtual/full/").unwrap();
         let child = VirtualPath::from_str("/intentionally/virtual/full/path").unwrap();
         assert_eq!(parent, VirtualPath::from_path_buf(child.into_parent().unwrap()).unwrap());
     }
 
     #[test]
-    fn virtual_path_still_equal_with_source_diff() {
+    fn still_equal_with_source_diff() {
         let vpath1 = VirtualPath::from(
             PathBuf::from("/intentionally/virtual/full/path"),
             None,
@@ -58,7 +58,7 @@ mod virtual_path_tests {
     }
 
     #[test]
-    fn virtual_path_hash_with_source_equal() {
+    fn hash_with_source_equal() {
         fn calculate_hash<T: Hash>(t: &T) -> u64 {
             let mut s = DefaultHasher::new();
             t.hash(&mut s);
@@ -87,7 +87,7 @@ mod virtual_delta_tests {
     use super::*;
 
     #[test]
-    fn virtual_delta_attach_child_to_root_then_find_it_in_children() {
+    fn attach_child_to_root_then_find_it_in_children() {
         let mut delta = VirtualDelta::new();
         let path = VirtualPath::from_str("/virtual/path").unwrap();
 
@@ -102,7 +102,7 @@ mod virtual_delta_tests {
 
 
     #[test]
-    fn virtual_delta_is_consistent_over_async() {
+    fn is_consistent_over_async() {
         let mut delta = VirtualDelta::new();
 
         let child = Path::new("/virtual/path");
@@ -121,7 +121,7 @@ mod virtual_delta_tests {
     }
 
     #[test]
-    fn virtual_delta_add_a_delta_to_another(){
+    fn add_a_delta_to_another(){
         let mut delta_r = VirtualDelta::new();
         delta_r.attach(Path::new("/R/to_replace"), None, VirtualKind::Directory).unwrap();
         delta_r.attach(Path::new("/R/to_not_change"), None,VirtualKind::File).unwrap();
@@ -141,7 +141,7 @@ mod virtual_delta_tests {
     }
 
     #[test]
-    fn virtual_delta_substract_a_delta_from_another(){
+    fn substract_a_delta_from_another(){
         let mut delta_r = VirtualDelta::new();
         delta_r.attach(Path::new("/R/to_remove"),  None,VirtualKind::Directory).unwrap();
         delta_r.attach(Path::new("/R/to_not_change"), None, VirtualKind::File).unwrap();
@@ -161,7 +161,7 @@ mod virtual_delta_tests {
     }
 
     #[test]
-    fn virtual_delta_walk(){
+    fn walk(){
         let mut delta = VirtualDelta::new();
         delta.attach(Path::new("/R"), None, VirtualKind::Directory).unwrap();
         delta.attach(Path::new("/R/to_replace"), None, VirtualKind::Directory).unwrap();
@@ -181,7 +181,7 @@ mod virtual_delta_tests {
     }
 
     #[test]
-    fn virtual_delta_attach_detach_idempotent(){
+    fn attach_detach_idempotent(){
         let mut delta = VirtualDelta::new();
         delta.attach(Path::new("/R"), None, VirtualKind::Directory).unwrap();
         delta.attach(Path::new("/R/to_replace"), None, VirtualKind::Directory).unwrap();
@@ -201,7 +201,7 @@ mod virtual_delta_tests {
     }
 
     #[test]
-    fn virtual_delta_commute_file_into_dir(){
+    fn commute_file_into_dir(){
         let mut delta = VirtualDelta::new();
         delta.attach(Path::new("/A"), None, VirtualKind::Directory).unwrap();
         delta.attach(Path::new("/B"), None, VirtualKind::File).unwrap();
@@ -250,7 +250,7 @@ mod virtual_delta_tests {
     }
 
     #[test]
-    fn virtual_delta_generate_sub_delta(){
+    fn generate_sub_delta(){
         let mut delta = VirtualDelta::new();
         delta.attach(Path::new("/A"), None, VirtualKind::Directory).unwrap();
         delta.attach(Path::new("/B"), None, VirtualKind::Directory).unwrap();

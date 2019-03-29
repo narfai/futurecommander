@@ -42,7 +42,7 @@ mod virtual_shell_tests {
     use super::*;
 
     #[test]
-    fn virtual_shell_system_rm(){
+    fn rm(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
@@ -62,7 +62,7 @@ mod virtual_shell_tests {
     }
 
     #[test]
-    fn virtual_shell_system_cp_only(){
+    fn cp_only(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
@@ -96,7 +96,7 @@ mod virtual_shell_tests {
     }
 
     #[test]
-    fn virtual_shell_system_cp_preserve_source_and_node_kind(){
+    fn cp_preserve_source_and_node_kind(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
@@ -138,7 +138,7 @@ mod virtual_shell_tests {
     }
 
     #[test]
-    fn virtual_shell_system_mv(){
+    fn mv(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
@@ -192,7 +192,7 @@ mod virtual_shell_tests {
     }
 
     #[test]
-    fn virtual_shell_system_mkdir(){
+    fn mkdir(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
@@ -212,7 +212,7 @@ mod virtual_shell_tests {
     }
 
     #[test]
-    fn virtual_shell_system_touch(){
+    fn touch(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 

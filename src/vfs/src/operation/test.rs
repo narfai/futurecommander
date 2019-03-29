@@ -29,7 +29,7 @@ mod operation_test {
     use super::*;
 
     #[test]
-    fn operation_virtual_entry_collection(){
+    fn virtual_entry_collection(){
         let mut children = VirtualChildren::new();
         children.insert(VirtualPath::from(PathBuf::from("/A"), None, VirtualKind::File).unwrap());
         children.insert(VirtualPath::from(PathBuf::from("/B"), None, VirtualKind::Directory).unwrap());
