@@ -19,7 +19,7 @@
 
 use std::path::{ PathBuf, Path };
 use crate::{ VirtualFileSystem, VfsError, VirtualKind, VirtualPath };
-use crate::operation::{ WriteOperation, Virtual };
+use crate::operation::{ ReadOperation, WriteOperation, Virtual, Status };
 
 pub struct Create {
     path: PathBuf,
@@ -37,7 +37,7 @@ impl Create {
 
 impl WriteOperation<&mut VirtualFileSystem> for Virtual<Create>{
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        match fs.stat(self.0.path.as_path())? {
+        match Virtual(Status::new(self.0.path.as_path())).retrieve(&fs)?.virtual_identity() {
             Some(_) => return Err(VfsError::AlreadyExists(self.0.path.to_path_buf())),
             None => {
                 fs.mut_add_state().attach(self.0.path.as_path(), None, self.0.kind)?;

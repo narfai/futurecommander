@@ -39,49 +39,49 @@ impl VirtualFileSystem {
         }
     }
 
-    //TODO @deprecated
-    pub fn status(&self, path: &Path) -> Result<IdentityStatus, VfsError> {
-        Virtual(Status::new(path)).retrieve(self)
-    }
-
-    //TODO @deprecated
-    pub fn stat(&self, path: &Path) -> Result<Option<VirtualPath>, VfsError> {
-        Ok(
-            Virtual(Status::new(path))
-                .retrieve(self)?
-                .virtual_identity()
-        )
-
-    }
-
-    //TODO @deprecated
-    pub fn exists(&self, path: &Path) -> Result<bool, VfsError> {
-        Ok(
-            Virtual(Status::new(path))
-                .retrieve(self)?
-                .exists()
-        )
-    }
-
-    //TODO @deprecated
-    pub fn read_dir(&self, path: &Path) -> Result<NodeIterator<HashSetIntoIter<VirtualPath>>, VfsError> {
-        Virtual(ReadDir::new(path)).retrieve(self)
-    }
-
-    //TODO @deprecated
-    pub fn create(&mut self, identity: &Path, kind: VirtualKind) -> Result<(), VfsError>{
-        Virtual(Create::new(identity, kind)).execute(self)
-    }
-
-    //TODO @deprecated
-    pub fn remove(&mut self, identity: &Path) -> Result<(), VfsError>{
-        Virtual(Remove::new(identity)).execute(self)
-    }
-
-    //TODO @deprecated
-    pub fn copy(&mut self, source: &Path, destination: &Path, with_name: Option<OsString>) -> Result<(), VfsError>{
-        Virtual(Copy::new(source, destination, with_name)).execute(self)
-    }
+//    //TODO @deprecated
+//    pub fn status(&self, path: &Path) -> Result<IdentityStatus, VfsError> {
+//        Virtual(Status::new(path)).retrieve(self)
+//    }
+//
+//    //TODO @deprecated
+//    pub fn stat(&self, path: &Path) -> Result<Option<VirtualPath>, VfsError> {
+//        Ok(
+//            Virtual(Status::new(path))
+//                .retrieve(self)?
+//                .virtual_identity()
+//        )
+//
+//    }
+//
+//    //TODO @deprecated
+//    pub fn exists(&self, path: &Path) -> Result<bool, VfsError> {
+//        Ok(
+//            Virtual(Status::new(path))
+//                .retrieve(self)?
+//                .exists()
+//        )
+//    }
+//
+//    //TODO @deprecated
+//    pub fn read_dir(&self, path: &Path) -> Result<NodeIterator<HashSetIntoIter<VirtualPath>>, VfsError> {
+//        Virtual(ReadDir::new(path)).retrieve(self)
+//    }
+//
+//    //TODO @deprecated
+//    pub fn create(&mut self, identity: &Path, kind: VirtualKind) -> Result<(), VfsError>{
+//        Virtual(Create::new(identity, kind)).execute(self)
+//    }
+//
+//    //TODO @deprecated
+//    pub fn remove(&mut self, identity: &Path) -> Result<(), VfsError>{
+//        Virtual(Remove::new(identity)).execute(self)
+//    }
+//
+//    //TODO @deprecated
+//    pub fn copy(&mut self, source: &Path, destination: &Path, with_name: Option<OsString>) -> Result<(), VfsError>{
+//        Virtual(Copy::new(source, destination, with_name)).execute(self)
+//    }
 
     pub fn reset(&mut self) {
         self.add = VirtualDelta::new();

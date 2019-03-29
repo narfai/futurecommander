@@ -21,7 +21,7 @@ use std::env::current_exe;
 
 use std::path::{ PathBuf };
 
-use crate::{ VirtualFileSystem, VirtualKind };
+use crate::*;
 use crate::errors::VfsError;
 
 pub fn get_sample_path() -> PathBuf {
@@ -60,7 +60,11 @@ mod virtual_file_system_tests {
         let ab = sample_path.join("A/B");
         let abcdef = sample_path.join("A/B/C/D/E/F");
 
-        vfs.copy(b.as_path(), a.as_path(), None).unwrap();
+        Virtual(Copy::new(
+            b.as_path(),
+            a.as_path(),
+            None
+        )).execute(&mut vfs).unwrap();
 
         let virtual_state = vfs.virtual_state().unwrap();
 
@@ -85,8 +89,17 @@ mod virtual_file_system_tests {
         let ab = sample_path.join("A/B");
         let bd = sample_path.join("B/D");
 
-        vfs.copy(b.as_path(), a.as_path(), None).unwrap();
-        vfs.copy(ab.as_path(), bd.as_path(), None).unwrap();
+        Virtual(Copy::new(
+            b.as_path(),
+            a.as_path(),
+            None)
+        ).execute(&mut vfs).unwrap();
+
+        Virtual(Copy::new(
+            ab.as_path(),
+            bd.as_path(),
+            None
+        )).execute(&mut vfs).unwrap();
 
         let virtual_state = vfs.virtual_state().unwrap();
 
@@ -107,11 +120,25 @@ mod virtual_file_system_tests {
         let mut vfs = VirtualFileSystem::new();
         let a = sample_path.join("A");
 
-        assert!(vfs.stat(a.as_path()).unwrap().is_some());
+        assert!(
+            Virtual(Status::new(a.as_path()))
+                .retrieve(&vfs)
+                .unwrap()
+                .virtual_identity()
+                .is_some()
+        );
 
-        vfs.remove(a.as_path()).unwrap();
+        Virtual(Remove::new(a.as_path()))
+            .execute(&mut vfs);
 
-        assert!(vfs.stat(a.as_path()).unwrap().is_none())
+
+        assert!(
+            Virtual(Status::new(a.as_path()))
+                .retrieve(&vfs)
+                .unwrap()
+                .virtual_identity()
+                .is_none()
+        );
     }
 
     #[test]
@@ -120,9 +147,17 @@ mod virtual_file_system_tests {
         let mut vfs = VirtualFileSystem::new();
         let z = sample_path.join("Z");
 
-        vfs.create(z.as_path(),VirtualKind::Directory).unwrap();
+        Virtual(Create::new(
+            z.as_path(),
+            VirtualKind::Directory
+        )).execute(&mut vfs);
 
-        let stated = vfs.stat(z.as_path()).unwrap().unwrap();
+        let stated = Virtual(Status::new(z.as_path()))
+            .retrieve(&vfs)
+            .unwrap()
+            .virtual_identity()
+            .unwrap();
+
         assert_eq!(stated.to_kind(), VirtualKind::Directory);
         assert_eq!(stated.as_identity(), z);
         assert!(stated.as_source().is_none())
@@ -134,7 +169,12 @@ mod virtual_file_system_tests {
         let vfs = VirtualFileSystem::new();
         let a = sample_path.join("A");
 
-        let stated = vfs.stat(a.as_path()).unwrap().unwrap();
+        let stated = Virtual(Status::new(a.as_path()))
+            .retrieve(&vfs)
+            .unwrap()
+            .virtual_identity()
+            .unwrap();
+
         assert_eq!(stated.to_kind(), VirtualKind::Directory);
         assert_eq!(stated.as_identity(), a.as_path());
         assert_eq!(stated.as_source(), Some(a.as_path()))
@@ -146,17 +186,17 @@ mod virtual_file_system_tests {
         let mut vfs = VirtualFileSystem::new();
         let abdg = sample_path.join("A/B/D/G");//Note : should exists in samples
 
-        vfs.copy(
+        Virtual(Copy::new(
             sample_path.join("B").as_path(),
             sample_path.join("A").as_path(),
             None
-        ).unwrap();
+        )).execute(&mut vfs).unwrap();
 
-        let stated = vfs.stat(abdg.as_path()).unwrap();
-
-        assert!(stated.is_some());
-
-        let stated = stated.unwrap();
+        let stated = Virtual(Status::new(abdg.as_path()))
+            .retrieve(&vfs)
+            .unwrap()
+            .virtual_identity()
+            .unwrap();
 
         assert_eq!(stated.to_kind(), VirtualKind::Directory);
         assert_eq!(stated.as_identity(), abdg.as_path());
@@ -173,11 +213,11 @@ mod virtual_file_system_tests {
         let source = sample_path.join("B");
         let destination = sample_path.join("B/D");
 
-        match vfs.copy(
+        match Virtual(Copy::new(
             source.as_path(),
             destination.as_path(),
             None
-        ) {
+        )).execute(&mut vfs) {
             Err(VfsError::CopyIntoItSelft(err_source, err_destination)) => {
                 assert_eq!(source.as_path(), err_source.as_path());
                 assert_eq!(destination.as_path(), err_destination.as_path());
@@ -205,8 +245,16 @@ mod virtual_file_system_tests {
     fn virtual_file_system_reset_empty(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
-        vfs.create(sample_path.join("VIRTUALA").as_path(), VirtualKind::File).unwrap();
-        vfs.create(sample_path.join("VIRTUALB").as_path(), VirtualKind::Directory).unwrap();
+
+        Virtual(Create::new(
+            sample_path.join("VIRTUALA").as_path(),
+            VirtualKind::File
+        )).execute(&mut vfs);
+
+        Virtual(Create::new(
+            sample_path.join("VIRTUALB").as_path(),
+            VirtualKind::Directory)
+        ).execute(&mut vfs);
 
         assert!(!vfs.is_empty());
 

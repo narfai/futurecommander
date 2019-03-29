@@ -33,6 +33,7 @@ pub struct VirtualChildren {
     set: HashSet<VirtualPath>
 }
 
+//TODO refactor with generics
 impl VirtualChildren {
     pub fn new() -> VirtualChildren {
         VirtualChildren {

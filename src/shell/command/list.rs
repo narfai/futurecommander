@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualFileSystem, VirtualKind };
+use vfs::{ VirtualFileSystem, VirtualKind, Node };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -50,8 +50,10 @@ impl InitializedCommand for InitializedListCommand {
     fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
         match vfs.read_dir(self.path.as_path()) {
             Ok(virtual_children) => {
-                if virtual_children.len() != 0 {
-                    for child in virtual_children {
+                let collection = virtual_children.collection();
+                let len = collection.len();
+                if len > 0 {
+                    for Node(child) in collection.into_iter() {
                         println!(
                             "{}    {}",
                             match child.to_kind() {

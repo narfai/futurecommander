@@ -20,8 +20,8 @@
 use std::hash::{ Hash, Hasher };
 use std::collections::hash_map::DefaultHasher;
 use std::path::{ Path, PathBuf };
-use std::ffi::OsStr;
-use crate::operation::{ Entry, Node, NodeIterator };
+use std::ffi::{ OsStr, OsString };
+use crate::operation::{ Entry, Node, NodeIterator, NodeCollection };
 use crate::representation::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VirtualChildrenIterator };
 
 #[cfg(test)]
@@ -33,17 +33,18 @@ mod operation_test {
         let mut children = VirtualChildren::new();
         children.insert(VirtualPath::from(PathBuf::from("/A"), None, VirtualKind::File).unwrap());
         children.insert(VirtualPath::from(PathBuf::from("/B"), None, VirtualKind::Directory).unwrap());
-        let mut virtual_collection = NodeIterator(children.into_iter());
 
-        assert!(virtual_collection.any(
-            |entry|
-                entry.name() == Some(&OsStr::new("A")) && entry.is_file()
-            )
+        assert!(NodeIterator(children.clone().into_iter()).any(
+            |entry| {
+                println!("{:?}", entry);
+                entry.name().is_some() && entry.name() == Some(OsStr::new("A")) && entry.is_file()
+            })
         );
-        assert!(virtual_collection.any(
-            |entry|
-                entry.name() == Some(&OsStr::new("B")) && entry.is_dir()
-            )
+        assert!(NodeIterator(children.into_iter()).any(
+            |entry| {
+                println!("{:?}", entry);
+                entry.name().is_some() && entry.name() == Some(OsStr::new("B")) && entry.is_dir()
+            })
         );
     }
 }

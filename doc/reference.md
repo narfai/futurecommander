@@ -60,6 +60,8 @@ https://doc.rust-lang.org/stable/std/iter/
 https://hermanradtke.com/2015/06/22/effectively-using-iterators-in-rust.html
 https://stackoverflow.com/questions/32682876/is-there-any-way-to-return-a-reference-to-a-variable-created-in-a-function
 
+> extending an iterator !! https://beyermatthias.de/blog/2018/02/02/extending-an-iterator-in-rust/
+
 ## Referentiation
 
 https://bryce.fisher-fleig.org/blog/strategies-for-returning-references-in-rust/index.html

@@ -15,7 +15,7 @@
 * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use vfs::{ VirtualFileSystem, VfsError };
+use vfs::{ VirtualFileSystem, VfsError, Node };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -87,8 +87,9 @@ impl InitializedTreeCommand {
                     None => vec![]
                 };
 
-                let length = children.len();
-                for (index, virtual_child) in children.iter().enumerate() {
+                let collection = children.collection();
+                let length = collection.len();
+                for (index, Node(virtual_child)) in collection.into_iter().enumerate() {
                     if let Err(error) = Self::tree(
                         vfs,
                         virtual_child.as_identity(),

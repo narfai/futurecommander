@@ -17,6 +17,10 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::collections::hash_set::IntoIter as HashSetIntoIter;
+use std::slice::Iter;
+use std::vec::IntoIter as VecIntoIter;
+use std::iter::FromIterator;
 use std::path::{ Path, PathBuf };
 use std::ffi::{ OsStr };
 //use std::fs::ReadDir;
@@ -99,5 +103,49 @@ impl <I> Iterator for NodeIterator<I>
         }
     }
 }
+
+impl NodeIterator<HashSetIntoIter<VirtualPath>> {
+    pub fn collection(self) -> NodeCollection<Node<VirtualPath>> {
+        NodeCollection::from_iter(self)
+    }
+}
+
+pub struct NodeCollection<T>(Vec<T>);
+
+impl NodeCollection<Node<VirtualPath>> {
+    pub fn new() -> Self {
+        NodeCollection(Vec::new())
+    }
+
+    pub fn add(&mut self, node: Node<VirtualPath>) {
+        self.0.push(node)
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn into_iter(self) -> VecIntoIter<Node<VirtualPath>> {
+        self.0.into_iter()
+    }
+
+    pub fn iter(&self) -> Iter<Node<VirtualPath>> {
+        self.0.iter()
+    }
+}
+
+impl FromIterator<Node<VirtualPath>> for NodeCollection<Node<VirtualPath>> {
+    fn from_iter<I: IntoIterator<Item=Node<VirtualPath>>>(iter: I) -> Self {
+        let mut collection = NodeCollection::new();
+        for identity in iter {
+            collection.add(identity);
+        }
+        collection
+    }
+}
+
+//TODO Path flavour
+
+
 
 

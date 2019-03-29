@@ -19,7 +19,7 @@
 
 use std::path::{ PathBuf, Path };
 use crate::{ VirtualFileSystem, VfsError };
-use crate::operation::{ WriteOperation, Virtual };
+use crate::operation::{ ReadOperation, WriteOperation, Virtual, Status };
 
 pub struct Remove {
     path: PathBuf
@@ -35,7 +35,7 @@ impl Remove {
 
 impl WriteOperation<&mut VirtualFileSystem> for Virtual<Remove>{
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        match fs.stat(self.0.path.as_path())? {
+        match Virtual(Status::new(self.0.path.as_path())).retrieve(&fs)?.virtual_identity() {
             Some(virtual_identity) => {
                 fs.mut_sub_state().attach_virtual(&virtual_identity)?;
                 if fs.add_state().get(virtual_identity.as_identity())?.is_some() {

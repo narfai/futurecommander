@@ -20,7 +20,7 @@
 use std::path::{ PathBuf, Path };
 use std::ffi::OsString;
 use crate::{ RealFileSystem, VirtualFileSystem, VfsError, VirtualKind, IdentityStatus, VirtualPath };
-use crate::operation::{ WriteOperation, Virtual, Real, Entry };
+use crate::operation::{ ReadOperation, WriteOperation, Virtual, Real, Entry, ReadDir, Status };
 
 pub struct Copy {
     source: PathBuf,
@@ -60,8 +60,9 @@ impl Virtual<Copy> {
     fn copy_virtual_children(mut fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
         match identity.to_kind() {
             VirtualKind::Directory => {
-                for child in fs.read_dir(source.as_identity())? {
-                    match fs.status(child.path().clone())? {
+                let read_dir = Virtual(ReadDir::new(source.as_identity()));
+                for child in read_dir.retrieve(&fs)? {
+                    match Virtual(Status::new(child.path())).retrieve(&fs)? {
                         IdentityStatus::ExistsVirtually(_) =>
                             Virtual(Copy::new(
                                 child.path(),
@@ -80,12 +81,14 @@ impl Virtual<Copy> {
 
 impl WriteOperation<&mut VirtualFileSystem> for Virtual<Copy>{
     fn execute(&self, mut fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        let source = match fs.stat(self.0.source.as_path())? {
+        let stat_source = Virtual(Status::new(self.0.source.as_path()));
+        let source = match stat_source.retrieve(&fs)?.virtual_identity() {
             Some(virtual_identity) => virtual_identity,
             None => return Err(VfsError::DoesNotExists(self.0.source.to_path_buf()))
         };
 
-        let destination = match fs.stat(self.0.destination.as_path())? {
+        let stat_destination = Virtual(Status::new(self.0.destination.as_path()));
+        let destination = match stat_destination.retrieve(&fs)?.virtual_identity() {
             Some(virtual_identity) => match virtual_identity.to_kind() {
                 VirtualKind::Directory => virtual_identity,
                 _ => return Err(VfsError::IsNotADirectory(self.0.destination.to_path_buf()))
@@ -99,7 +102,8 @@ impl WriteOperation<&mut VirtualFileSystem> for Virtual<Copy>{
             &self.0.name
         )?;
 
-        if fs.exists(new_identity.as_identity())? {
+        let stat_new = Virtual(Status::new(new_identity.as_identity()));
+        if stat_new.retrieve(&fs)?.exists() {
             return Err(VfsError::AlreadyExists(new_identity.to_identity()));
         }
 
