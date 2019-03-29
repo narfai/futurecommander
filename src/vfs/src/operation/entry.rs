@@ -110,6 +110,7 @@ impl NodeIterator<HashSetIntoIter<VirtualPath>> {
     }
 }
 
+#[derive(Debug)]
 pub struct NodeCollection<T>(Vec<T>);
 
 impl NodeCollection<Node<VirtualPath>> {
@@ -131,6 +132,15 @@ impl NodeCollection<Node<VirtualPath>> {
 
     pub fn iter(&self) -> Iter<Node<VirtualPath>> {
         self.0.iter()
+    }
+
+    pub fn contains(&self, node: &Node<VirtualPath>) -> bool {
+        for owned_node in self.0.iter() {
+           if(owned_node.path() == node.path()) {
+               return true;
+           }
+        }
+        return false;
     }
 }
 

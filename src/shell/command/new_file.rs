@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualKind, VirtualFileSystem };
+use vfs::{ VirtualKind, VirtualFileSystem, WriteOperation, Virtual, Create };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -45,8 +45,11 @@ pub struct InitializedNewFileCommand {
 }
 
 impl InitializedCommand for InitializedNewFileCommand {
-    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match vfs.create(self.path.as_path(), VirtualKind::File) {
+    fn execute(&self, mut vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        match Virtual(Create::new(
+            self.path.as_path(),
+            VirtualKind::File
+        )).execute(&mut vfs) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }

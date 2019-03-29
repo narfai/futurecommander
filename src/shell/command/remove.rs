@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualFileSystem, VirtualPath };
+use vfs::{ VirtualFileSystem, VirtualPath, Virtual, Remove, WriteOperation };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -52,8 +52,8 @@ pub struct InitializedRemoveCommand {
 }
 
 impl InitializedCommand for InitializedRemoveCommand {
-    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match vfs.remove(self.path.as_path()) {
+    fn execute(&self, mut vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        match Virtual(Remove::new(self.path.as_path())).execute(&mut vfs) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }

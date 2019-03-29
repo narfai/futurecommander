@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualFileSystem };
+use vfs::{ VirtualFileSystem, WriteOperation, Virtual, Copy, Remove };
 use clap::ArgMatches;
 use std::path::{ Path, PathBuf };
 use std::ffi::{ OsString };
@@ -58,14 +58,14 @@ pub struct InitializedMoveCommand {
 }
 
 impl InitializedCommand for InitializedMoveCommand {
-    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match vfs.copy(
+    fn execute(&self, mut vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        match Virtual(Copy::new(
             self.source.as_path(),
             self.destination.as_path(),
             self.name.clone()
-        ) {
+        )).execute(&mut vfs) {
             Ok(_) =>
-                match vfs.remove(self.source.as_path()) {
+                match Virtual(Remove::new(self.source.as_path())).execute(&mut vfs) {
                     Ok(_) => { println!("MOVE {:?} to {:?}", self.source, self.destination); Ok(()) },
                     Err(error) => Err(CommandError::from(error))
                 },

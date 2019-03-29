@@ -15,7 +15,7 @@
 * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use vfs::{ VirtualFileSystem, VfsError, Node };
+use vfs::{ VirtualFileSystem, VfsError, Node, ReadOperation, Virtual, ReadDir };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -76,7 +76,7 @@ impl InitializedTreeCommand {
 
         Self::display_tree_line(&depth_list, parent_last, file_name);
 
-        match vfs.read_dir(identity) {
+        match Virtual(ReadDir::new(identity)).retrieve(&vfs) {
             Ok(children) => {
                 let new_depth_list = match depth_list {
                     Some(depth_list) => {
