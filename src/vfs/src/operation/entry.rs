@@ -105,17 +105,18 @@ impl <I> Iterator for NodeIterator<I>
 }
 
 impl NodeIterator<HashSetIntoIter<VirtualPath>> {
-    pub fn collection(self) -> NodeCollection<Node<VirtualPath>> {
-        NodeCollection::from_iter(self)
+    pub fn collection(self) -> EntryCollection<Node<VirtualPath>> {
+        EntryCollection::from_iter(self)
     }
 }
 
 #[derive(Debug)]
-pub struct NodeCollection<T>(Vec<T>);
+pub struct EntryCollection<T>(Vec<T>)
+    where T: Entry;
 
-impl NodeCollection<Node<VirtualPath>> {
+impl EntryCollection<Node<VirtualPath>> {
     pub fn new() -> Self {
-        NodeCollection(Vec::new())
+        EntryCollection(Vec::new())
     }
 
     pub fn add(&mut self, node: Node<VirtualPath>) {
@@ -136,7 +137,7 @@ impl NodeCollection<Node<VirtualPath>> {
 
     pub fn contains(&self, node: &Node<VirtualPath>) -> bool {
         for owned_node in self.0.iter() {
-           if(owned_node.path() == node.path()) {
+           if owned_node.path() == node.path() {
                return true;
            }
         }
@@ -144,9 +145,9 @@ impl NodeCollection<Node<VirtualPath>> {
     }
 }
 
-impl FromIterator<Node<VirtualPath>> for NodeCollection<Node<VirtualPath>> {
+impl FromIterator<Node<VirtualPath>> for EntryCollection<Node<VirtualPath>> {
     fn from_iter<I: IntoIterator<Item=Node<VirtualPath>>>(iter: I) -> Self {
-        let mut collection = NodeCollection::new();
+        let mut collection = EntryCollection::new();
         for identity in iter {
             collection.add(identity);
         }

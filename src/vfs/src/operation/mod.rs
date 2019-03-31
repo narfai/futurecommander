@@ -35,7 +35,7 @@ mod read_dir;
 pub use self::read_dir::ReadDir;
 
 mod entry;
-pub use self::entry::{ NodeIterator, Entry, Node, NodeCollection };
+pub use self::entry::{ NodeIterator, Entry, Node, EntryCollection };
 
 pub struct Real<O>(pub O);
 pub struct Virtual<O>(pub O);
