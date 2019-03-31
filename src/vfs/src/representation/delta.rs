@@ -17,17 +17,13 @@
  * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{ VirtualPath, VirtualKind, VfsError };
-use crate::VirtualChildren;
 use std::collections::{ BTreeMap };
-
 use std::path::{ PathBuf, Path };
 use std::ops::{ Add, Sub };
 
+use crate::{ VfsError };
 
-//impl PartialEq for VirtualDelta {
-//    fn eq(&self, other: &VirtualDelta) -> bool {}
-//}
+use crate::representation::{ VirtualChildren, VirtualPath, VirtualKind };
 
 #[derive(Debug, Clone)]
 pub struct VirtualDelta {

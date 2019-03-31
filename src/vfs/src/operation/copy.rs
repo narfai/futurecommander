@@ -19,8 +19,13 @@
 
 use std::path::{ PathBuf, Path };
 use std::ffi::OsString;
-use crate::{ RealFileSystem, VirtualFileSystem, VfsError, VirtualKind, IdentityStatus, VirtualPath };
-use crate::operation::{ReadQuery, WriteOperation, Virtual, Real, Entry, ReadDir, Status };
+
+use crate::{ Virtual, Real, VfsError };
+
+use crate::file_system::{ VirtualFileSystem, RealFileSystem };
+use crate::representation::{ VirtualPath, VirtualKind };
+use crate::operation::{ WriteOperation };
+use crate::query::{ ReadQuery, ReadDir, Status, IdentityStatus, Entry };
 
 pub struct Copy {
     source: PathBuf,
@@ -79,7 +84,7 @@ impl Virtual<Copy> {
     }
 }
 
-impl WriteOperation<&mut VirtualFileSystem> for Virtual<Copy>{
+impl WriteOperation<&mut VirtualFileSystem> for Virtual<Copy> {
     fn execute(&self, mut fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         let stat_source = Virtual(Status::new(self.0.source.as_path()));
         let source = match stat_source.retrieve(&fs)?.virtual_identity() {
@@ -114,5 +119,19 @@ impl WriteOperation<&mut VirtualFileSystem> for Virtual<Copy>{
         }
 
         Self::copy_virtual_children(&mut fs, &source, &new_identity)
+    }
+}
+
+impl WriteOperation<&RealFileSystem> for Real<Copy> {
+    fn execute(&self, fs: &RealFileSystem) -> Result<(), VfsError> {
+        let new_destination = match &self.0.name {
+            Some(name) => self.0.destination.join(name),
+            None => self.0.destination.to_path_buf()
+        };
+
+        match fs.copy(self.0.source.as_path(), new_destination.as_path(), &|_read| {}) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(VfsError::from(error))
+        }
     }
 }

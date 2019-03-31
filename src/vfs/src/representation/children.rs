@@ -26,7 +26,8 @@ use std::collections::hash_set::Iter as HashSetIter;
 use std::collections::hash_set::IntoIter as HashSetIntoIter;
 use std::collections::{ HashSet };
 
-use crate::{ VirtualPath, VirtualKind, VirtualDelta, VfsError };
+use crate::{ VfsError };
+use crate::representation::{ VirtualPath, VirtualKind, VirtualDelta };
 
 #[derive(Debug, Clone)]
 pub struct VirtualChildren {

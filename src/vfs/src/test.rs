@@ -23,6 +23,8 @@ use std::path::{ PathBuf };
 
 use crate::*;
 use crate::errors::VfsError;
+use crate::{ Virtual };
+use crate::operation::WriteOperation;
 
 pub fn get_sample_path() -> PathBuf {
     current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("samples")
@@ -261,12 +263,12 @@ mod virtual_file_system_tests {
         )).execute(&mut vfs).unwrap();
 
         assert!(vfs.has_addition());
-        assert!(vfs.has_substraction());
+        assert!(vfs.has_subtraction());
 
         vfs.reset();
 
         assert!(!vfs.has_addition());
-        assert!(!vfs.has_substraction());
+        assert!(!vfs.has_subtraction());
     }
 
     #[test]

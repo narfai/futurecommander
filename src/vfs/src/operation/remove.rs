@@ -18,8 +18,12 @@
  */
 
 use std::path::{ PathBuf, Path };
-use crate::{ VirtualFileSystem, VfsError };
-use crate::operation::{ReadQuery, WriteOperation, Virtual, Status };
+use crate::{ Virtual, Real, VfsError };
+
+use crate::file_system::{ VirtualFileSystem, RealFileSystem };
+//use crate::representation::{ VirtualKind };
+use crate::operation::{ WriteOperation };
+use crate::query::{ ReadQuery, Status };
 
 pub struct Remove {
     path: PathBuf
@@ -44,6 +48,15 @@ impl WriteOperation<&mut VirtualFileSystem> for Virtual<Remove>{
                 Ok(())
             },
             None => return Err(VfsError::DoesNotExists(self.0.path.to_path_buf()))
+        }
+    }
+}
+
+impl WriteOperation<&RealFileSystem> for Real<Remove>{
+    fn execute(&self, fs: &RealFileSystem) -> Result<(), VfsError> {
+        match fs.remove(self.0.path.as_path()) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(VfsError::from(error))
         }
     }
 }

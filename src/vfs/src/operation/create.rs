@@ -18,8 +18,12 @@
  */
 
 use std::path::{ PathBuf, Path };
-use crate::{ VirtualFileSystem, VfsError, VirtualKind, VirtualPath };
-use crate::operation::{ReadQuery, WriteOperation, Virtual, Status };
+use crate::{ Virtual, Real, VfsError };
+//use crate::{ VirtualFileSystem, RealFileSystem, VfsError, VirtualKind, VirtualPath };
+use crate::representation::{ VirtualKind };
+use crate::file_system::{ VirtualFileSystem, RealFileSystem};
+use crate::operation::{ WriteOperation };
+use crate::query::{ ReadQuery, Status };
 
 pub struct Create {
     path: PathBuf,
@@ -43,6 +47,15 @@ impl WriteOperation<&mut VirtualFileSystem> for Virtual<Create>{
                 fs.mut_add_state().attach(self.0.path.as_path(), None, self.0.kind)?;
                 Ok(())
             }
+        }
+    }
+}
+
+impl WriteOperation<&RealFileSystem> for Real<Create>{
+    fn execute(&self, fs: &RealFileSystem) -> Result<(), VfsError> {
+        match fs.create(self.0.path.as_path()) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(VfsError::from(error))
         }
     }
 }

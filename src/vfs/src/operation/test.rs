@@ -21,8 +21,9 @@ use std::hash::{ Hash, Hasher };
 use std::collections::hash_map::DefaultHasher;
 use std::path::{ Path, PathBuf };
 use std::ffi::{ OsStr, OsString };
-use crate::operation::{Entry, Node, NodeIterator, EntryCollection};
+
 use crate::representation::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VirtualChildrenIterator };
+use crate::query::{ Entry, Node, NodeIterator, EntryCollection};
 
 #[cfg(test)]
 mod operation_test {

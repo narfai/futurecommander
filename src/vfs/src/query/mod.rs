@@ -16,20 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-#[cfg(test)]
-mod test;
 
-mod copy;
-pub use self::copy::Copy;
+mod status;
+pub use self::status::{ Status };
 
-mod remove;
-pub use self::remove::Remove;
+mod read_dir;
+pub use self::read_dir::ReadDir;
 
-mod create;
-pub use self::create::Create;
+mod entry;
+pub use self::entry::{ NodeIterator, Entry, Node, EntryCollection };
+
+mod identity_status;
+pub use self::identity_status::{ IdentityStatus };
 
 use crate::errors::VfsError;
 
-pub trait WriteOperation <F> {
-    fn execute(&self, fs: F) -> Result<(), VfsError>;
+pub trait ReadQuery<F, T> {
+    fn retrieve(&self, fs: F) -> Result<T, VfsError>;
 }

@@ -25,7 +25,7 @@ use std::path::{ Path, PathBuf };
 use std::ffi::{ OsStr };
 //use std::fs::ReadDir;
 
-use crate::{ VirtualPath, VirtualKind, VirtualChildrenIterator };
+use crate::representation::{ VirtualPath, VirtualKind };
 
 pub trait Entry {
     fn path(&self) -> &Path;

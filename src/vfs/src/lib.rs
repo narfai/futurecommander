@@ -21,16 +21,17 @@
 mod test;
 
 mod representation;
+mod file_system;
 mod operation;
-
-mod real_fs;
-mod virtual_fs;
+mod query;
 mod errors;
 
 pub use self::errors::VfsError;
-pub use self::representation::*;
-pub use self::operation::*;
-pub use self::virtual_fs::VirtualFileSystem;
-pub use self::real_fs::RealFileSystem;
 
-//TODO type VfsResult = Result<T, VfsError>;
+pub use self::representation::*;
+pub use self::file_system::*;
+pub use self::operation::*;
+pub use self::query::*;
+
+pub struct Real<O>(pub O);
+pub struct Virtual<O>(pub O);

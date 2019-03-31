@@ -20,13 +20,10 @@
 #[cfg(test)]
 mod test;
 
-
 mod path;
 mod delta;
 mod children;
-mod identity_status;
 
 pub use self::path::{ VirtualKind, VirtualPath };
 pub use self::delta::VirtualDelta;
 pub use self::children::{ VirtualChildren, VirtualChildrenIterator };
-pub use self::identity_status::IdentityStatus;

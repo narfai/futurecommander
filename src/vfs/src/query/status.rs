@@ -18,9 +18,11 @@
  */
 
 use std::path::{ PathBuf, Path };
-use crate::{ VirtualFileSystem, VfsError, VirtualKind, VirtualPath, IdentityStatus };
-use crate::operation::{ReadQuery, Virtual };
 
+use crate::{ Virtual, VfsError };
+use crate::representation::{ VirtualPath, VirtualKind, VirtualChildren };
+use crate::file_system::{ VirtualFileSystem };
+use crate::query::{ ReadQuery, IdentityStatus };
 
 
 pub struct Status {

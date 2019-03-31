@@ -16,20 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-#[cfg(test)]
-mod test;
+mod real_fs;
+pub use self::real_fs::RealFileSystem;
 
-mod copy;
-pub use self::copy::Copy;
-
-mod remove;
-pub use self::remove::Remove;
-
-mod create;
-pub use self::create::Create;
+mod virtual_fs;
+pub use self::virtual_fs::VirtualFileSystem;
 
 use crate::errors::VfsError;
-
-pub trait WriteOperation <F> {
-    fn execute(&self, fs: F) -> Result<(), VfsError>;
-}

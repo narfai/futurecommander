@@ -18,8 +18,13 @@
  */
 
 use std::path::{ PathBuf, Path };
-use crate::{ VirtualFileSystem, VfsError, VirtualKind, VirtualPath, VirtualChildren };
-use crate::operation::{ReadQuery, Virtual, Status, NodeIterator };
+
+use crate::{ Virtual, VfsError };
+
+use crate::representation::{ VirtualPath, VirtualKind, VirtualChildren };
+use crate::file_system::{ VirtualFileSystem };
+use crate::query::{ ReadQuery, Status, NodeIterator };
+
 use std::collections::hash_set::IntoIter as HashSetIntoIter;
 
 pub struct ReadDir {
