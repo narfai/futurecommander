@@ -40,6 +40,14 @@ impl RealFileSystem {
         }
     }
 
+    pub fn remove(&self, path: &Path) -> Result<(), IoError> {
+        if path.is_dir() {
+            self.remove_directory(path)
+        } else {
+            self.remove_file(path)
+        }
+    }
+
     pub fn remove_file(&self, path: &Path) -> Result<(), IoError> {
         if self.dry {
             println!("DRY : remove file {:?}", path);
@@ -57,6 +65,14 @@ impl RealFileSystem {
             remove_dir_all(path)?;
         }
         Ok(())
+    }
+
+    pub fn create(&self, path: &Path) -> Result<(), IoError> {
+        if path.is_dir() {
+            self.create(path)
+        } else {
+            self.create(path)
+        }
     }
 
     pub fn create_file(&self, path: &Path) -> Result<(), IoError> {
@@ -83,20 +99,66 @@ impl RealFileSystem {
         Ok(())
     }
 
-//    pub fn copy_directory(&self, src: &PathBuf, dst: &PathBuf, on_read: &Fn(usize)) -> Result<(), IoError> {
-//
-//    }
 
-    pub fn copy_file(&self, src: &PathBuf, dst: &PathBuf, on_read: &Fn(usize)) -> Result<(), IoError>{
-        if self.dry {
-            println!("DRY : copy file from {:?} to {:?}", src.as_path(), dst.as_path());
+    pub fn copy(&self, src: &Path, dst: &Path, on_read: &Fn(usize)) -> Result<usize, IoError> {
+        if src.is_dir() {
+            self.copy_directory(src, dst, on_read)
         } else {
-            self._copy_file(src, dst, on_read)?;
+            self.copy_file(src, dst, on_read)
         }
-        Ok(())
     }
 
-    fn _copy_file(&self, src: &PathBuf, dst: &PathBuf, on_read: &Fn(usize)) -> Result<usize, IoError> {
+    pub fn copy_directory(&self, src: &Path, dst: &Path, on_read: &Fn(usize)) -> Result<usize, IoError> {
+        if src.is_file() {
+            return Err(IoError::new(ErrorKind::InvalidData, "Source is not a directory"));
+        }
+
+        if ! dst.is_dir() {
+            return Err(IoError::new(ErrorKind::InvalidData, "Destination is not a directory"));
+        }
+
+        let mut read : usize = 0;
+
+        for result in src.read_dir()? {
+            let result_path = result?.path();
+            if result_path.is_dir() {
+                self.copy_directory(
+                    result_path.as_path(),
+                    dst.join(result_path.strip_prefix(src).unwrap()).as_path(),
+                    on_read
+                ).and_then(|directory_read| {
+                    read += directory_read;
+                    Ok(())
+                })?;
+            } else {
+                self.copy_file(result_path.as_path(), dst, on_read)
+                    .and_then(|file_read| {
+                        read += file_read;
+                        Ok(())
+                    })?;
+            }
+        }
+
+        Ok(read)
+    }
+
+    pub fn copy_file(&self, src: &Path, dst: &Path, on_read: &Fn(usize)) -> Result<usize, IoError>{
+        if src.is_dir() {
+            return Err(IoError::new(ErrorKind::InvalidData, "Source is not a file"));
+        }
+
+        if ! dst.is_dir() {
+            return Err(IoError::new(ErrorKind::InvalidData, "Destination is not a directory"));
+        }
+
+        if self.dry {
+            println!("DRY : copy file from {:?} to {:?}", &src, &dst); Ok(0 as usize)
+        } else {
+            self._copy_file(src, dst, on_read)
+        }
+    }
+
+    fn _copy_file(&self, src: &Path, dst: &Path, on_read: &Fn(usize)) -> Result<usize, IoError> {
         File::open(src)
             .and_then(|src_file| Ok(BufReader::with_capacity(READ_BUFFER_SIZE,src_file)))
             .and_then(|reader|
