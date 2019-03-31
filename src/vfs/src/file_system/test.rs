@@ -1,30 +1,29 @@
 /*
  * Copyright 2019 François CADEILLAN
  *
- * This file is part of FutureCommanderVfs.
+ * This file is part of FutureCommander.
  *
- * FutureCommanderVfs is free software: you can redistribute it and/or modify
+ * FutureCommander is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * FutureCommanderVfs is distributed in the hope that it will be useful,
+ * FutureCommander is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
+ * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::env::current_exe;
+use std::fs::{ File, create_dir, remove_dir_all, remove_file };
+use std::io::Write;
 
-use std::path::{ PathBuf };
+use std::env::current_exe;
+use std::path::{ PathBuf, Path };
 
 use crate::*;
-use crate::errors::VfsError;
-use crate::{ Virtual };
-use crate::operation::WriteOperation;
 
 pub fn get_sample_path() -> PathBuf {
     current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("samples")
@@ -304,3 +303,128 @@ mod virtual_file_system_tests {
     }
 }
 
+pub fn init_real_samples_idempotently(arbitrary_identifier: &str) -> PathBuf {
+    let chroot = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap()
+        .join(Path::new("samples").join(format!("real_tests_{}", arbitrary_identifier)));
+
+    if chroot.exists() {
+        remove_dir_all(chroot.as_path()).unwrap();
+    }
+
+    create_dir(chroot.as_path()).unwrap();
+    assert!(chroot.exists());
+
+    create_dir(chroot.join("RDIR")).unwrap();
+    assert!(chroot.join("RDIR").exists());
+
+    let mut file = File::create(chroot.join("RDIR").join("RFILEA")).unwrap();
+    file.write_all(b"[A]Gummies candy biscuit jelly cheesecake. Liquorice gingerbread oat cake marzipan gummies muffin. Sweet liquorice dessert. Caramels chupa chups lollipop dragee gummies sesame snaps. Tootsie roll lollipop chocolate cake chocolate jelly jelly-o sesame snaps gummies. Topping topping bear claw candy canes bonbon muffin cupcake. Tart croissant liquorice croissant tootsie roll cupcake powder icing. Dessert souffle cake ice cream pie cookie. Brownie cotton candy pudding ice cream pudding cotton candy gingerbread gummi bears. Dragee biscuit croissant chocolate bar cheesecake marshmallow wafer macaroon. Sweet roll chupa chups gummi bears oat cake halvah marshmallow souffle pie. Jujubes pastry fruitcake macaroon jelly lemon drops chocolate cake chocolate cake."
+    ).unwrap();
+    assert!(chroot.join("RDIR").join("RFILEA").exists());
+
+    let mut file = File::create(chroot.join("RDIR").join("RFILEB")).unwrap();
+
+    file.write_all(b"[B]Gummies candy biscuit jelly cheesecake. Liquorice gingerbread oat cake marzipan gummies muffin. Sweet liquorice dessert. Caramels chupa chups lollipop dragee gummies sesame snaps. Tootsie roll lollipop chocolate cake chocolate jelly jelly-o sesame snaps gummies. Topping topping bear claw candy canes bonbon muffin cupcake. Tart croissant liquorice croissant tootsie roll cupcake powder icing. Dessert souffle cake ice cream pie cookie. Brownie cotton candy pudding ice cream pudding cotton candy gingerbread gummi bears. Dragee biscuit croissant chocolate bar cheesecake marshmallow wafer macaroon. Sweet roll chupa chups gummi bears oat cake halvah marshmallow souffle pie. Jujubes pastry fruitcake macaroon jelly lemon drops chocolate cake chocolate cake."
+    ).unwrap();
+    assert!(chroot.join("RDIR").join("RFILEB").exists());
+
+    chroot
+}
+
+
+#[cfg(test)]
+mod real_file_system_tests {
+    use super::*;
+
+    #[test]
+    pub fn copy_file_to_file(){
+        let chroot = init_real_samples_idempotently("copy_file_to_file");
+        let fs = RealFileSystem::new(false);
+
+        fs.copy_file_to_file(
+            chroot.join("RDIR/RFILEA").as_path(),
+            chroot.join("COPIED").as_path(),
+            &|_read| { /*println!("read {}", read);*/ }
+        ).unwrap();
+
+        assert!(chroot.join("COPIED").exists());
+        assert!(chroot.join("COPIED").is_file());
+        assert!(chroot.join("COPIED").metadata().unwrap().len() > 1);
+    }
+
+    #[test]
+    pub fn copy_file_to_directory(){
+        let chroot = init_real_samples_idempotently("copy_file_to_directory");
+        let fs = RealFileSystem::new(false);
+
+        fs.copy_file_into_directory(
+            chroot.join("RDIR/RFILEA").as_path(),
+            chroot.as_path(),
+            &|_read| { /*println!("read {}", read);*/ }
+        ).unwrap();
+
+        assert!(chroot.join("RFILEA").exists());
+        assert!(chroot.join("RFILEA").is_file());
+    }
+
+    #[test]
+    pub fn copy_directory_to_directory(){
+        let chroot = init_real_samples_idempotently("copy_directory_to_directory");
+        let fs = RealFileSystem::new(false);
+
+        fs.copy_directory_into_directory(
+            chroot.join("RDIR").as_path(),
+            chroot.join("COPIED").as_path(),
+            &|_read| { /*println!("read {}", read);*/ }
+        ).unwrap();
+
+        assert!(chroot.join("COPIED").exists());
+        assert!(chroot.join("COPIED").is_dir());
+        assert!(chroot.join("COPIED/RFILEA").exists());
+        assert!(chroot.join("COPIED/RFILEB").exists());
+    }
+
+    #[test]
+    pub fn create_file(){
+        let chroot = init_real_samples_idempotently("create_file");
+        let fs = RealFileSystem::new(false);
+
+        fs.create_file(chroot.join("FILE").as_path()).unwrap();
+
+        assert!(chroot.join("FILE").exists());
+        assert!(chroot.join("FILE").is_file());
+    }
+
+    #[test]
+    pub fn create_directory(){
+        let chroot = init_real_samples_idempotently("create_directory");
+        let fs = RealFileSystem::new(false);
+
+        fs.create_directory(chroot.join("DIRECTORY").as_path()).unwrap();
+
+        assert!(chroot.join("DIRECTORY").exists());
+        assert!(chroot.join("DIRECTORY").is_dir());
+    }
+
+    #[test]
+    pub fn remove_file(){
+        let chroot = init_real_samples_idempotently("remove_file");
+        let fs = RealFileSystem::new(false);
+
+        fs.remove_file(chroot.join("RDIR/RFILEA").as_path()).unwrap();
+
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+    }
+
+    #[test]
+    pub fn remove_directory(){
+        let chroot = init_real_samples_idempotently("remove_directory");
+        let fs = RealFileSystem::new(false);
+
+        fs.remove_directory(chroot.join("RDIR").as_path()).unwrap();
+
+        assert!(!chroot.join("RDIR").exists());
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+        assert!(!chroot.join("RDIR/RFILEB").exists());
+    }
+}
