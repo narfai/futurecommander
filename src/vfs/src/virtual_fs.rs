@@ -44,9 +44,11 @@ impl VirtualFileSystem {
         self.sub = VirtualDelta::new();
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.add.is_empty() && self.sub.is_empty()
+    pub fn has_addition(&self) -> bool {
+        self.add.is_empty()
     }
+
+    pub fn has_substraction(&self) -> bool { self.sub.is_empty() }
 
     pub fn mut_add_state(&mut self) -> &mut VirtualDelta {
         &mut self.add

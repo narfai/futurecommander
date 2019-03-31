@@ -33,6 +33,8 @@ use crate::command::remove::InitializedRemoveCommand;
 //use crate::command::list::InitializedListCommand;
 //use crate::command::tree::InitializedTreeCommand;
 
+//TODO merge directories with copy
+
 pub fn get_sample_path() -> PathBuf {
     current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("samples")
 }

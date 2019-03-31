@@ -129,7 +129,7 @@ mod virtual_file_system_tests {
         );
 
         Virtual(Remove::new(a.as_path()))
-            .execute(&mut vfs);
+            .execute(&mut vfs).unwrap();
 
 
         assert!(
@@ -150,7 +150,7 @@ mod virtual_file_system_tests {
         Virtual(Create::new(
             z.as_path(),
             VirtualKind::Directory
-        )).execute(&mut vfs);
+        )).execute(&mut vfs).unwrap();
 
         let stated = Virtual(Status::new(z.as_path()))
             .retrieve(&vfs)
@@ -249,18 +249,24 @@ mod virtual_file_system_tests {
         Virtual(Create::new(
             sample_path.join("VIRTUALA").as_path(),
             VirtualKind::File
-        )).execute(&mut vfs);
+        )).execute(&mut vfs).unwrap();
 
         Virtual(Create::new(
             sample_path.join("VIRTUALB").as_path(),
             VirtualKind::Directory)
-        ).execute(&mut vfs);
+        ).execute(&mut vfs).unwrap();
 
-        assert!(!vfs.is_empty());
+        Virtual(Remove::new(
+            sample_path.join("VIRTUALB").as_path()
+        )).execute(&mut vfs).unwrap();
+
+        assert!(vfs.has_addition());
+        assert!(vfs.has_substraction());
 
         vfs.reset();
 
-        assert!(vfs.is_empty());
+        assert!(!vfs.has_addition());
+        assert!(!vfs.has_substraction());
     }
 
     #[test]
@@ -295,3 +301,4 @@ mod virtual_file_system_tests {
 
     }
 }
+
