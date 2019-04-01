@@ -16,23 +16,37 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-#[cfg(test)]
-mod test;
 
-mod copy;
-pub use self::copy::CopyOperation;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
-mod remove;
-pub use self::remove::RemoveOperation;
+static VIRTUAL_VERSION: AtomicUsize = AtomicUsize::new(0);
+static REAL_VERSION: AtomicUsize = AtomicUsize::new(0);
 
-mod create;
-pub use self::create::CreateOperation;
 
-mod apply;
-pub use self::apply::ApplyOperation;
+pub struct VirtualVersion;
 
-pub trait WriteOperation <F: ?Sized> {
-    fn execute(&mut self, fs: &mut F) -> Result<(), crate::errors::VfsError>;
-    fn virtual_version(&self) -> Option<usize>;
-    fn real_version(&self) -> Option<usize>;
+
+impl VirtualVersion {
+    pub fn increment() -> usize {
+        VIRTUAL_VERSION.fetch_add(1, Ordering::SeqCst);
+        VIRTUAL_VERSION.load(Ordering::SeqCst)
+    }
+
+    pub fn get() -> usize {
+        VIRTUAL_VERSION.load(Ordering::SeqCst)
+    }
+}
+
+pub struct RealVersion;
+
+
+impl RealVersion {
+    pub fn increment() -> usize {
+        REAL_VERSION.fetch_add(1, Ordering::SeqCst);
+        VIRTUAL_VERSION.load(Ordering::SeqCst)
+    }
+
+    pub fn get() -> usize {
+        REAL_VERSION.load(Ordering::SeqCst)
+    }
 }

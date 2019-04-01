@@ -24,6 +24,9 @@ use std::ffi::{ OsStr };
 use std::hash::{ Hash, Hasher };
 use std::path::MAIN_SEPARATOR;
 
+use crate::file_system::VirtualVersion;
+
+
 #[derive(Clone, Debug, Copy)]
 pub enum VirtualKind {
     File,
@@ -52,7 +55,8 @@ impl VirtualKind {
 pub struct VirtualPath {
     pub identity: PathBuf,
     pub source: Option<PathBuf>,
-    pub kind: VirtualKind
+    pub kind: VirtualKind,
+    pub version: usize
 }
 
 impl Eq for VirtualPath {}
@@ -153,7 +157,8 @@ impl VirtualPath {
         VirtualPath {
             identity,
             source,
-            kind
+            kind,
+            version: VirtualVersion::get()
         }
     }
 
@@ -284,6 +289,10 @@ impl VirtualPath {
             }
         }
         false
+    }
+
+    pub fn version(&self) -> usize {
+        self.version
     }
 }
 

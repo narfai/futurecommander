@@ -26,4 +26,7 @@ pub use self::real_fs::RealFileSystem;
 mod virtual_fs;
 pub use self::virtual_fs::VirtualFileSystem;
 
+mod version;
+pub use self::version::{ VirtualVersion, RealVersion };
+
 use crate::errors::VfsError;

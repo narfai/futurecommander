@@ -43,7 +43,7 @@ impl RealFileSystem {
     pub fn remove(&self, path: &Path) -> Result<(), IoError> {
         if path.is_dir() {
             self.remove_directory(path)
-        } else {
+        } else { //TODO @symlink
             self.remove_file(path)
         }
     }
@@ -70,7 +70,7 @@ impl RealFileSystem {
     pub fn create(&self, path: &Path, recursively: bool) -> Result<(), IoError> {
         if path.is_dir() {
             self.create_directory(path, recursively)
-        } else {
+        } else { //TODO @symlink
             self.create_file(path)
         }
     }
@@ -116,10 +116,10 @@ impl RealFileSystem {
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source does not exists {:?}", src)))
         }
 
-        match src.is_dir() {
+        match src.is_dir() { //TODO @symlink
             true => self.copy_directory_into_directory(src, dst, on_read, merge, overwrite),
             false =>
-                match dst.is_dir() {
+                match dst.is_dir() { //TODO @symlink
                     true => self.copy_file_into_directory(src, dst, on_read, overwrite),
                     false => self.copy_file_to_file(src, dst, on_read, overwrite)
                 }
@@ -150,12 +150,12 @@ impl RealFileSystem {
     }
 
     pub fn copy_directory_into_directory(&self, src: &Path, dst: &Path, on_read: &Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
-        if ! src.is_dir() {
+        if ! src.is_dir() { //TODO @symlink
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a directory {:?}", src)))
         }
 
         if dst.exists() {
-            if ! dst.is_dir() {
+            if ! dst.is_dir() { //TODO @symlink
                 return Err(IoError::new(ErrorKind::InvalidData, format!("Destination is not a directory {:?}", dst)));
             }
         } else {
@@ -186,12 +186,12 @@ impl RealFileSystem {
     }
 
     pub fn copy_file_to_file(&self, src: &Path, dst: &Path, on_read: &Fn(usize), overwrite: bool) -> Result<usize, IoError>{
-        if ! src.is_file() {
+        if ! src.is_file() { //TODO @symlink
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a file {:?}", src)));
         }
 
         if overwrite {
-            if ! dst.is_file() {
+            if ! dst.is_file() { //TODO @symlink
                 return Err(IoError::new(ErrorKind::InvalidData, format!("Destination is not a file {:?}", dst)));
             }
         } else if dst.exists() {

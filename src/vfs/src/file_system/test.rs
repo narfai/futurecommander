@@ -62,11 +62,11 @@ mod virtual_file_system_tests {
         let ab = sample_path.join("A/B");
         let abcdef = sample_path.join("A/B/C/D/E/F");
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             b.as_path(),
             a.as_path(),
             None
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
         let virtual_state = vfs.virtual_state().unwrap();
 
@@ -91,17 +91,17 @@ mod virtual_file_system_tests {
         let ab = sample_path.join("A/B");
         let bd = sample_path.join("B/D");
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             b.as_path(),
             a.as_path(),
-            None)
+            None
         ).execute(&mut vfs).unwrap();
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             ab.as_path(),
             bd.as_path(),
             None
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
         let virtual_state = vfs.virtual_state().unwrap();
 
@@ -130,7 +130,7 @@ mod virtual_file_system_tests {
                 .is_some()
         );
 
-        Virtual(Remove::new(a.as_path()))
+        Virtual::<RemoveOperation>::new(a.as_path())
             .execute(&mut vfs).unwrap();
 
 
@@ -149,10 +149,10 @@ mod virtual_file_system_tests {
         let mut vfs = VirtualFileSystem::new();
         let z = sample_path.join("Z");
 
-        Virtual(Create::new(
+        Virtual::<CreateOperation>::new(
             z.as_path(),
             VirtualKind::Directory
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
         let stated = Virtual(Status::new(z.as_path()))
             .retrieve(&vfs)
@@ -188,11 +188,11 @@ mod virtual_file_system_tests {
         let mut vfs = VirtualFileSystem::new();
         let abdg = sample_path.join("A/B/D/G");//Note : should exists in samples
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             sample_path.join("B").as_path(),
             sample_path.join("A").as_path(),
             None
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
         let stated = Virtual(Status::new(abdg.as_path()))
             .retrieve(&vfs)
@@ -222,25 +222,25 @@ mod virtual_file_system_tests {
     pub fn _no_dangling(mut vfs: &mut VirtualFileSystem){
         let sample_path = get_sample_path();
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             sample_path.join("A").as_path(),
             sample_path.as_path(),
             Some(OsString::from("APRIME"))
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Remove::new(
+        Virtual::<RemoveOperation>::new(
             sample_path.join("A").as_path()
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             sample_path.join("APRIME").as_path(),
             sample_path.as_path(),
             Some(OsString::from("A"))
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Remove::new(
+        Virtual::<RemoveOperation>::new(
             sample_path.join("APRIME").as_path()
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
         let stated_a = Virtual(Status::new(sample_path.join("A").as_path()))
             .retrieve(&vfs)
@@ -283,45 +283,45 @@ mod virtual_file_system_tests {
         rm Z
         */
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             sample_path.join("A/C").as_path(),
             sample_path.as_path(),
             None
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Remove::new(
+        Virtual::<RemoveOperation>::new(
             sample_path.join("A/C").as_path()
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             sample_path.join("C").as_path(),
             sample_path.as_path(),
             Some(OsString::from("Z"))
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Remove::new(
+        Virtual::<RemoveOperation>::new(
             sample_path.join("C").as_path()
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             sample_path.join("B").as_path(),
             sample_path.as_path(),
             Some(OsString::from("C"))
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Remove::new(
+        Virtual::<RemoveOperation>::new(
             sample_path.join("B").as_path()
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             sample_path.join("Z").as_path(),
             sample_path.as_path(),
             Some(OsString::from("B"))
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Remove::new(
+        Virtual::<RemoveOperation>::new(
             sample_path.join("Z").as_path()
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
         let stated_b = Virtual(Status::new(sample_path.join("B").as_path()))
             .retrieve(&vfs)
@@ -359,21 +359,21 @@ mod virtual_file_system_tests {
     pub fn _some_nesting(mut vfs: &mut VirtualFileSystem){
         let sample_path = get_sample_path();
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             sample_path.join("C").as_path(),
             sample_path.join("A").as_path(),
             None
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Copy::new(
+        Virtual::<CopyOperation>::new(
             sample_path.join("A/C/D").as_path(),
             sample_path.join("A").as_path(),
             None
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
-        Virtual(Remove::new(
+        Virtual::<RemoveOperation>::new(
             sample_path.join("A/D/G").as_path()
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
         let stated_ad = Virtual(Status::new(sample_path.join("A/D").as_path()))
             .retrieve(&vfs)
@@ -428,11 +428,11 @@ mod virtual_file_system_tests {
         let source = sample_path.join("B");
         let destination = sample_path.join("B/D");
 
-        match Virtual(Copy::new(
+        match Virtual::<CopyOperation>::new(
             source.as_path(),
             destination.as_path(),
             None
-        )).execute(&mut vfs) {
+        ).execute(&mut vfs) {
             Err(VfsError::CopyIntoItSelf(err_source, err_destination)) => {
                 assert_eq!(source.as_path(), err_source.as_path());
                 assert_eq!(destination.as_path(), err_destination.as_path());
@@ -461,19 +461,19 @@ mod virtual_file_system_tests {
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
 
-        Virtual(Create::new(
+        Virtual::<CreateOperation>::new(
             sample_path.join("VIRTUALA").as_path(),
             VirtualKind::File
-        )).execute(&mut vfs).unwrap();
-
-        Virtual(Create::new(
-            sample_path.join("VIRTUALB").as_path(),
-            VirtualKind::Directory)
         ).execute(&mut vfs).unwrap();
 
-        Virtual(Remove::new(
+        Virtual::<CreateOperation>::new(
+            sample_path.join("VIRTUALB").as_path(),
+            VirtualKind::Directory
+        ).execute(&mut vfs).unwrap();
+
+        Virtual::<RemoveOperation>::new(
             sample_path.join("A").as_path()
-        )).execute(&mut vfs).unwrap();
+        ).execute(&mut vfs).unwrap();
 
         assert!(vfs.has_addition());
         assert!(vfs.has_subtraction());

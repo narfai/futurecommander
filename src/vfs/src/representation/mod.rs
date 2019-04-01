@@ -25,5 +25,5 @@ mod delta;
 mod children;
 
 pub use self::path::{ VirtualKind, VirtualPath };
-pub use self::delta::VirtualDelta;
+pub use self::delta::{ VirtualDelta };
 pub use self::children::{ VirtualChildren, VirtualChildrenIterator };

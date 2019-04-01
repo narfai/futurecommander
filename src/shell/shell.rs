@@ -24,7 +24,7 @@ use std::path::{ Path, PathBuf };
 
 use clap::{ App, ArgMatches };
 
-use vfs::{VirtualFileSystem, VirtualKind, ReadQuery, Virtual, Status, IdentityStatus };
+use vfs::{ VirtualFileSystem, VirtualKind, ReadQuery, Virtual, Status, IdentityStatus };
 
 use crate::path::absolute;
 use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, ApplyCommand, CommandError };
@@ -63,7 +63,7 @@ impl Shell {
                                     match matches.value_of("path") {
                                         Some(string_path) => {
                                             let path = absolute(self.cwd.as_path(), Path::new(string_path));
-                                            println!("STATUS : {:?}", self.vfs.status(path.as_path()).unwrap());
+                                            println!("STATUS : {:?}", Virtual(Status::new(path.as_path())).retrieve(&self.vfs));
                                             Ok(())
                                         },
                                         None => Err(CommandError::InvalidCommand)

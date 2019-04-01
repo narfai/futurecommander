@@ -22,8 +22,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::path::{ Path, PathBuf };
 use std::ffi::{ OsStr, OsString };
 
-use crate::representation::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind, VirtualChildrenIterator };
-use crate::query::{ Entry, Node, NodeIterator, EntryCollection};
+use crate::*;
 
 #[cfg(test)]
 mod operation_test {
@@ -45,5 +44,16 @@ mod operation_test {
                 entry.name().is_some() && entry.name() == Some(OsStr::new("B")) && entry.is_dir()
             })
         );
+    }
+
+    #[test]
+    fn apply_virtual(){
+        let mut apply : ApplyOperation<Box<WriteOperation<VirtualFileSystem>>> = ApplyOperation::new();
+
+    }
+
+    #[test]
+    fn apply_real(){
+        let mut apply : ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::new();
     }
 }

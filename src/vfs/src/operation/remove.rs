@@ -20,33 +20,37 @@
 use std::path::{ PathBuf, Path };
 use crate::{ Virtual, Real, VfsError };
 
-use crate::file_system::{ VirtualFileSystem, RealFileSystem };
-//use crate::representation::{ VirtualKind };
+use crate::file_system::{ VirtualFileSystem, RealFileSystem, VirtualVersion, RealVersion };
 use crate::operation::{ WriteOperation };
 use crate::query::{ ReadQuery, Status, IdentityStatus };
 
-pub struct Remove {
-    path: PathBuf
+pub struct RemoveOperation {
+    path: PathBuf,
+    virtual_version: Option<usize>,
+    real_version: Option<usize>
 }
 
-impl Remove {
-    pub fn new(path: &Path) -> Remove {
-        Remove {
-            path: path.to_path_buf()
-        }
+impl Virtual<RemoveOperation> {
+    pub fn new(path: &Path) -> Virtual<RemoveOperation> {
+        Virtual(
+            RemoveOperation {
+                path: path.to_path_buf(),
+                virtual_version: None,
+                real_version: None
+            }
+        )
     }
 }
 
-impl WriteOperation<VirtualFileSystem> for Virtual<Remove>{
-    fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
+
+impl WriteOperation<VirtualFileSystem> for Virtual<RemoveOperation>{
+    fn execute(&mut self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         match Virtual(Status::new(self.0.path.as_path())).retrieve(&fs)? {
             IdentityStatus::Exists(virtual_identity)
             | IdentityStatus::Replaced(virtual_identity)
             | IdentityStatus::ExistsThroughVirtualParent(virtual_identity) => {
                 fs.mut_sub_state().attach_virtual(&virtual_identity)?;
-                if fs.add_state().get(virtual_identity.as_identity())?.is_some() {
-                    fs.mut_add_state().attach_virtual(&virtual_identity)?;
-                }
+                self.0.virtual_version = Some(VirtualVersion::increment());
             },
             IdentityStatus::ExistsVirtually(virtual_identity) => {
                 fs.mut_add_state().detach(virtual_identity.as_identity())?;
@@ -67,13 +71,35 @@ impl WriteOperation<VirtualFileSystem> for Virtual<Remove>{
         }
         Ok(())
     }
+
+    fn virtual_version(&self) -> Option<usize> {
+        self.0.virtual_version
+    }
+    fn real_version(&self) -> Option<usize> { None }
 }
 
-impl WriteOperation<RealFileSystem> for Real<Remove>{
-    fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
+impl Real<RemoveOperation> {
+    pub fn new(path: &Path, virtual_version: Option<usize>) -> Real<RemoveOperation> {
+        Real(
+            RemoveOperation {
+                path: path.to_path_buf(),
+                virtual_version,
+                real_version: None
+            }
+        )
+    }
+}
+
+impl WriteOperation<RealFileSystem> for Real<RemoveOperation>{
+    fn execute(&mut self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         match fs.remove(self.0.path.as_path()) {
-            Ok(_) => Ok(()),
+            Ok(_) => { self.0.real_version = Some(RealVersion::increment()); Ok(()) },
             Err(error) => Err(VfsError::from(error))
         }
     }
+
+    fn virtual_version(&self) -> Option<usize> {
+        self.0.virtual_version
+    }
+    fn real_version(&self) -> Option<usize> { self.0.real_version }
 }

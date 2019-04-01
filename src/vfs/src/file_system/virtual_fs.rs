@@ -17,13 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-//TODO remove after refacto
-use crate::{ Real, Virtual, ReadQuery, Status, IdentityStatus };
-use std::path::{ Path };
-
 use crate::{ VfsError };
 use crate::representation::{ VirtualDelta };
-use crate::operation::{ WriteOperation, Apply };
+use crate::operation::{WriteOperation, ApplyOperation};
 
 //TODO Wrapper Historized Vfs
 //TODO vfs should contain realfilesystem in the way that commands could operate over both
@@ -70,14 +66,6 @@ impl VirtualFileSystem {
     pub fn virtual_state(&self) -> Result<VirtualDelta, VfsError> { &self.add - &self.sub }
 
     pub fn reverse_state(&self) -> Result<VirtualDelta, VfsError> { &self.sub - &self.add }
-
-    pub fn to_apply_operation(&self) -> Apply<Box<WriteOperation<VirtualFileSystem>>> {
-        unimplemented!();
-    }
-
-    pub fn status(&self, path: &Path) -> Result<IdentityStatus, VfsError>{
-        Virtual(Status::new(path)).retrieve(&self)
-    }
 }
 
 /*

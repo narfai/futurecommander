@@ -31,4 +31,5 @@ pub use self::operation::*;
 pub use self::query::*;
 
 pub struct Real<O>(pub O);
+
 pub struct Virtual<O>(pub O);

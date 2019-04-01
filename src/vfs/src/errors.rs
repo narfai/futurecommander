@@ -34,7 +34,8 @@ pub enum VfsError {
     AddSubDanglingVirtualPath(PathBuf),
     IsRelativePath(PathBuf),
     IsDotName(PathBuf),
-    CopyIntoItSelf(PathBuf, PathBuf)
+    CopyIntoItSelf(PathBuf, PathBuf),
+    SourceDoesNotExists(PathBuf)
 }
 
 impl From<io::Error> for VfsError {
@@ -57,6 +58,7 @@ impl fmt::Display for VfsError {
             VfsError::IsRelativePath(identity)          => write!(f, "Path {} is relative", identity.as_os_str().to_string_lossy()),
             VfsError::IsDotName(identity)           =>  write!(f, "Path {} has a file name with dots", identity.as_os_str().to_string_lossy()),
             VfsError::CopyIntoItSelf(source, destination) =>  write!(f, "Cannot copy {} into itsef {}", source.as_os_str().to_string_lossy(), destination.as_os_str().to_string_lossy()),
+            VfsError::SourceDoesNotExists(source) =>  write!(f, "Real source does not exists {}", source.as_os_str().to_string_lossy()),
         }
     }
 }
