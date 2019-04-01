@@ -72,3 +72,9 @@ subcommands:
       about: show add delta current state
   - debug_sub_state:
       about: show sub delta current state
+  - debug_status:
+          about: Display virtual status of path
+          args:
+          - path:
+                  help: Path to debug
+                  takes_value: true

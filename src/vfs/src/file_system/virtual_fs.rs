@@ -17,9 +17,16 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{ VirtualDelta, VfsError };
+//TODO remove after refacto
+use crate::{ Real, Virtual, ReadQuery, Status, IdentityStatus };
+use std::path::{ Path };
+
+use crate::{ VfsError };
+use crate::representation::{ VirtualDelta };
+use crate::operation::{ WriteOperation, Apply };
 
 //TODO Wrapper Historized Vfs
+//TODO vfs should contain realfilesystem in the way that commands could operate over both
 
 #[derive(Debug)]
 pub struct VirtualFileSystem {
@@ -61,6 +68,16 @@ impl VirtualFileSystem {
     }
 
     pub fn virtual_state(&self) -> Result<VirtualDelta, VfsError> { &self.add - &self.sub }
+
+    pub fn reverse_state(&self) -> Result<VirtualDelta, VfsError> { &self.sub - &self.add }
+
+    pub fn to_apply_operation(&self) -> Apply<Box<WriteOperation<VirtualFileSystem>>> {
+        unimplemented!();
+    }
+
+    pub fn status(&self, path: &Path) -> Result<IdentityStatus, VfsError>{
+        Virtual(Status::new(path)).retrieve(&self)
+    }
 }
 
 /*
@@ -68,7 +85,7 @@ TODO : https://trello.com/c/ocihsIuv/29-as-human-i-can-apply-virtual-file-system
 walk over vfs virtual path which have a source. for each of them, sorted by path depth asc :
 ExistsVirtually(VirtualPath), => copy recursively source path to identity path ( with handling of name change ) then remove childs from add
 Exists(VirtualPath), => Do nothing
-ExistsThroughVirtualParent(VirtualPath), => Do nothing
+ExistsThroughVirtualParent(VirtualPath), => Do nothing should not happen
 NotExists, => Do nothing
 Deleted, => Do nothing
 RemovedVirtually, => Do nothing ?

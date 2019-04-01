@@ -118,7 +118,9 @@ impl <'a, 'b> Add<&'b VirtualChildren> for &'a VirtualChildren {
     fn add(self, right_collection: &'b VirtualChildren) -> VirtualChildren {
         let mut result = self.clone();
         for virtual_identity in right_collection.iter() {
-            result.insert(virtual_identity.clone());
+            if ! result.contains(virtual_identity) {
+                result.insert(virtual_identity.clone());
+            }
         }
         result
     }

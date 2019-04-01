@@ -39,7 +39,7 @@ impl Create {
     }
 }
 
-impl WriteOperation<&mut VirtualFileSystem> for Virtual<Create>{
+impl WriteOperation<VirtualFileSystem> for Virtual<Create>{
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         match Virtual(Status::new(self.0.path.as_path())).retrieve(&fs)?.virtual_identity() {
             Some(_) => return Err(VfsError::AlreadyExists(self.0.path.to_path_buf())),
@@ -51,9 +51,9 @@ impl WriteOperation<&mut VirtualFileSystem> for Virtual<Create>{
     }
 }
 
-impl WriteOperation<&RealFileSystem> for Real<Create>{
-    fn execute(&self, fs: &RealFileSystem) -> Result<(), VfsError> {
-        match fs.create(self.0.path.as_path()) {
+impl WriteOperation<RealFileSystem> for Real<Create>{
+    fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
+        match fs.create(self.0.path.as_path(), false) {
             Ok(_) => Ok(()),
             Err(error) => Err(VfsError::from(error))
         }

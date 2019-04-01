@@ -30,10 +30,11 @@ pub enum VfsError {
     DoesNotExists(PathBuf),
     AlreadyExists(PathBuf),
     VirtualParentIsAFile(PathBuf),
-    DanglingVirtualPath(PathBuf),
+    SubDanglingVirtualPath(PathBuf),
+    AddSubDanglingVirtualPath(PathBuf),
     IsRelativePath(PathBuf),
     IsDotName(PathBuf),
-    CopyIntoItSelft(PathBuf, PathBuf)
+    CopyIntoItSelf(PathBuf, PathBuf)
 }
 
 impl From<io::Error> for VfsError {
@@ -51,10 +52,11 @@ impl fmt::Display for VfsError {
             VfsError::DoesNotExists(identity)           => write!(f, "Path {} does not exists", identity.as_os_str().to_string_lossy()),
             VfsError::AlreadyExists(identity)           => write!(f, "Path {} already exists", identity.as_os_str().to_string_lossy()),
             VfsError::VirtualParentIsAFile(identity)    => write!(f, "Path {} virtual parent is a file", identity.as_os_str().to_string_lossy()),
-            VfsError::DanglingVirtualPath(identity)     => write!(f, "Path {} dangling virtual path", identity.as_os_str().to_string_lossy()),
+            VfsError::AddSubDanglingVirtualPath(identity)     => write!(f, "Path {} dangling virtual path appears to be deleted but still in add delta", identity.as_os_str().to_string_lossy()),
+            VfsError::SubDanglingVirtualPath(identity)     => write!(f, "Path {} dangling virtual path appears to deleted but does not exists on real fs", identity.as_os_str().to_string_lossy()),
             VfsError::IsRelativePath(identity)          => write!(f, "Path {} is relative", identity.as_os_str().to_string_lossy()),
             VfsError::IsDotName(identity)           =>  write!(f, "Path {} has a file name with dots", identity.as_os_str().to_string_lossy()),
-            VfsError::CopyIntoItSelft(source, destination) =>  write!(f, "Cannot copy {} into itsef {}", source.as_os_str().to_string_lossy(), destination.as_os_str().to_string_lossy()),
+            VfsError::CopyIntoItSelf(source, destination) =>  write!(f, "Cannot copy {} into itsef {}", source.as_os_str().to_string_lossy(), destination.as_os_str().to_string_lossy()),
         }
     }
 }

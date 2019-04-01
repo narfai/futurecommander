@@ -37,13 +37,11 @@ mod operation_test {
 
         assert!(NodeIterator(children.clone().into_iter()).any(
             |entry| {
-                println!("{:?}", entry);
                 entry.name().is_some() && entry.name() == Some(OsStr::new("A")) && entry.is_file()
             })
         );
         assert!(NodeIterator(children.into_iter()).any(
             |entry| {
-                println!("{:?}", entry);
                 entry.name().is_some() && entry.name() == Some(OsStr::new("B")) && entry.is_dir()
             })
         );

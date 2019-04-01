@@ -24,8 +24,9 @@ pub enum IdentityStatus {
     Exists(VirtualPath), //Exists only in real FS
     ExistsVirtually(VirtualPath), //Directly added
     ExistsThroughVirtualParent(VirtualPath), //Indirectly added
+    Replaced(VirtualPath),
     NotExists, //Does not exists in virtual fs or real, indirectly or not
-    Deleted, //Does exists in real fs and should be deleted
+    Removed, //Does exists in real fs and should be deleted
     RemovedVirtually, //Does exists in virtual but is also virtually deleted
 }
 
@@ -34,10 +35,11 @@ impl IdentityStatus {
         match self {
             IdentityStatus::Exists(virtual_identity)
             | IdentityStatus::ExistsVirtually(virtual_identity)
-            | IdentityStatus::ExistsThroughVirtualParent(virtual_identity) => Some(virtual_identity),
+            | IdentityStatus::ExistsThroughVirtualParent(virtual_identity)
+            | IdentityStatus::Replaced(virtual_identity) => Some(virtual_identity),
 
             IdentityStatus::NotExists
-            | IdentityStatus::Deleted
+            | IdentityStatus::Removed
             | IdentityStatus::RemovedVirtually => None
         }
     }

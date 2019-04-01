@@ -16,21 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-#[cfg(test)]
-mod test;
 
-mod copy;
-pub use self::copy::Copy;
+use vfs::{ VirtualFileSystem, Virtual, Copy, WriteOperation };
+use std::path::{ Path, PathBuf };
+use clap::ArgMatches;
+use crate::command::{ Command, InitializedCommand };
+use crate::command::errors::CommandError;
 
-mod remove;
-pub use self::remove::Remove;
+pub struct ApplyCommand;
 
-mod create;
-pub use self::create::Create;
+impl Command for ApplyCommand {
+    const NAME : &'static str = "apply";
 
-mod apply;
-pub use self::apply::Apply;
+    fn new(_cwd: &Path, _args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+        Ok(
+            Box::new(
+                InitializedApplyCommand
+            )
+        )
+    }
+}
 
-pub trait WriteOperation <F: ?Sized> {
-    fn execute(&self, fs: &mut F) -> Result<(), crate::errors::VfsError>;
+pub struct InitializedApplyCommand;
+
+impl InitializedCommand for InitializedApplyCommand {
+    fn execute(&self, mut vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        unimplemented!()
+    }
 }

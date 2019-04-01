@@ -18,12 +18,13 @@
  */
 
 use std::collections::{ BTreeMap };
+use std::collections::btree_map::Iter as BTreeMapIter;
 use std::path::{ PathBuf, Path };
 use std::ops::{ Add, Sub };
 
 use crate::{ VfsError };
 
-use crate::representation::{ VirtualChildren, VirtualPath, VirtualKind };
+use crate::representation::{ VirtualChildren, VirtualPath, VirtualKind, VirtualChildrenIterator };
 
 #[derive(Debug, Clone)]
 pub struct VirtualDelta {
@@ -238,6 +239,23 @@ impl VirtualDelta {
             None => Ok(false),
         }
     }
+
+    pub fn top_unknown_ancestor(&self) -> Option<PathBuf> {
+        let mut min_count = usize::max_value();
+        let mut top = None;
+        for (parent, _children) in &self.hierarchy {
+            let ancestor_count = parent.ancestors().collect::<Vec<&Path>>().len();
+            if ancestor_count < min_count {
+                min_count = ancestor_count;
+                top = Some(VirtualPath::get_parent_or_root(parent));
+            }
+        }
+        top
+    }
+
+    pub fn iter <'a>(&self) -> VirtualDeltaIterator {
+        VirtualDeltaIterator::new(self.hierarchy.iter())
+    }
 }
 
 
@@ -278,5 +296,46 @@ impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
             }
         }
         Ok(result)
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct VirtualDeltaIterator<'a> {
+    iter: BTreeMapIter<'a, PathBuf, VirtualChildren>,
+    current: Option<VirtualChildrenIterator<'a>>
+}
+
+impl <'a>VirtualDeltaIterator<'a> {
+    pub fn new(iter: BTreeMapIter<'a, PathBuf, VirtualChildren>) -> VirtualDeltaIterator {
+        VirtualDeltaIterator {
+            iter,
+            current: None
+        }
+    }
+}
+
+impl <'a>Iterator for VirtualDeltaIterator<'a> {
+    type Item = &'a VirtualPath;
+
+    fn next(&mut self) -> Option<&'a VirtualPath> {
+        match &mut self.current {
+            None =>
+                match self.iter.next() {
+                    Some((_parent, children)) =>  {
+                        self.current = Some(children.iter());
+                        self.next()
+                    },
+                    None => return None
+                }
+            Some(current) =>
+                match current.next() {
+                    Some(path) => Some(path),
+                    None => {
+                        self.current = None;
+                        self.next()
+                    }
+                }
+        }
     }
 }

@@ -46,7 +46,7 @@ impl Copy {
 impl Virtual<Copy> {
     fn create_new_virtual_identity(source: &VirtualPath, destination: &VirtualPath, with_name: &Option<OsString>) -> Result<VirtualPath, VfsError> {
         if destination.is_contained_by(&source) {
-            return Err(VfsError::CopyIntoItSelft(source.to_identity(), destination.to_identity()));
+            return Err(VfsError::CopyIntoItSelf(source.to_identity(), destination.to_identity()));
         }
 
         let mut new_identity = VirtualPath::from(
@@ -84,7 +84,7 @@ impl Virtual<Copy> {
     }
 }
 
-impl WriteOperation<&mut VirtualFileSystem> for Virtual<Copy> {
+impl WriteOperation<VirtualFileSystem> for Virtual<Copy> {
     fn execute(&self, mut fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         let stat_source = Virtual(Status::new(self.0.source.as_path()));
         let source = match stat_source.retrieve(&fs)?.virtual_identity() {
@@ -108,28 +108,33 @@ impl WriteOperation<&mut VirtualFileSystem> for Virtual<Copy> {
         )?;
 
         let stat_new = Virtual(Status::new(new_identity.as_identity()));
-        if stat_new.retrieve(&fs)?.exists() {
-            return Err(VfsError::AlreadyExists(new_identity.to_identity()));
-        }
 
-        fs.mut_add_state().attach_virtual(&new_identity)?;
-
-        if fs.sub_state().get(new_identity.as_identity())?.is_some() {
-            fs.mut_sub_state().detach(new_identity.as_identity())?
+        match stat_new.retrieve(&fs)? {
+            IdentityStatus::Exists(_)
+            | IdentityStatus::ExistsVirtually(_)
+            | IdentityStatus::Replaced(_)
+            | IdentityStatus::ExistsThroughVirtualParent(_) => return Err(VfsError::AlreadyExists(new_identity.to_identity())),
+            IdentityStatus::NotExists => {
+                fs.mut_add_state().attach_virtual(&new_identity)?;
+            },
+            IdentityStatus::Removed | IdentityStatus::RemovedVirtually => {
+                fs.mut_sub_state().detach(new_identity.as_identity())?;
+                fs.mut_add_state().attach_virtual(&new_identity)?;
+            },
         }
 
         Self::copy_virtual_children(&mut fs, &source, &new_identity)
     }
 }
 
-impl WriteOperation<&RealFileSystem> for Real<Copy> {
-    fn execute(&self, fs: &RealFileSystem) -> Result<(), VfsError> {
+impl WriteOperation<RealFileSystem> for Real<Copy> {
+    fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         let new_destination = match &self.0.name {
             Some(name) => self.0.destination.join(name),
             None => self.0.destination.to_path_buf()
         };
 
-        match fs.copy(self.0.source.as_path(), new_destination.as_path(), &|_read| {}) {
+        match fs.copy(self.0.source.as_path(), new_destination.as_path(), &|_read| {}, true, false) {
             Ok(_) => Ok(()),
             Err(error) => Err(VfsError::from(error))
         }

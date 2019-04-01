@@ -16,21 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-#[cfg(test)]
-mod test;
 
-mod copy;
-pub use self::copy::Copy;
+use std::slice::Iter;
+use crate::{ Real, VfsError };
+use crate::file_system::{ VirtualFileSystem, RealFileSystem };
+use crate::operation::WriteOperation;
 
-mod remove;
-pub use self::remove::Remove;
+pub struct Apply<T>(Vec<T>);
 
-mod create;
-pub use self::create::Create;
-
-mod apply;
-pub use self::apply::Apply;
-
-pub trait WriteOperation <F: ?Sized> {
-    fn execute(&self, fs: &mut F) -> Result<(), crate::errors::VfsError>;
+impl <T> Apply<Box<WriteOperation<T>>> {
+    pub fn new() -> Self {
+        Apply(Vec::<Box<WriteOperation<T>>>::new())
+    }
 }
+
+impl <T> WriteOperation<T> for Apply<Box<WriteOperation<T>>> { //TODO Real<Apply<...>> ?
+    fn execute(&self, fs: &mut T) -> Result<(), VfsError> {
+        for operation in self.0.iter() {
+            operation.execute(fs)?;
+        }
+        Ok(())
+    }
+}
+

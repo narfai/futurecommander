@@ -405,7 +405,7 @@ mod virtual_shell_tests {
         };
 
         match move_b_to_bd.execute(&mut vfs){
-            Err(CommandError::VfsError(VfsError::CopyIntoItSelft(err_source, err_destination))) => {
+            Err(CommandError::VfsError(VfsError::CopyIntoItSelf(err_source, err_destination))) => {
                 assert_eq!(source, err_source);
                 assert_eq!(destination, err_destination);
             },

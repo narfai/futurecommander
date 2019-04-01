@@ -27,7 +27,7 @@ use clap::{ App, ArgMatches };
 use vfs::{VirtualFileSystem, VirtualKind, ReadQuery, Virtual, Status, IdentityStatus };
 
 use crate::path::absolute;
-use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
+use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, ApplyCommand, CommandError };
 
 pub struct Shell {
     cwd: PathBuf,
@@ -59,6 +59,15 @@ impl Shell {
                             match matches.subcommand() {
                                 ("exit", Some(_matches)) => break,
                                 ("cd",   Some(matches))  => self.cd(matches),
+                                ("debug_status",   Some(matches))  =>
+                                    match matches.value_of("path") {
+                                        Some(string_path) => {
+                                            let path = absolute(self.cwd.as_path(), Path::new(string_path));
+                                            println!("STATUS : {:?}", self.vfs.status(path.as_path()).unwrap());
+                                            Ok(())
+                                        },
+                                        None => Err(CommandError::InvalidCommand)
+                                    },
                                 ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.vfs.virtual_state().unwrap()); Ok(()) },
                                 ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.vfs.add_state()); Ok(()) },
                                 ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.vfs.sub_state()); Ok(()) },
@@ -71,6 +80,7 @@ impl Shell {
                                 ("mkdir",       Some(matches)) => NewDirectoryCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
                                 ("touch",       Some(matches)) => NewFileCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
                                 ("tree",        Some(matches)) => TreeCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
+                                ("apply",        Some(matches)) => ApplyCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
                                 //Find out why this const / match syntax is invalid for webstorm
 //                                (ListCommand::NAME,         Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)), //TODO create command!(MyCommand)
 //                                (CopyCommand::NAME,         Some(matches)) => CopyCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),

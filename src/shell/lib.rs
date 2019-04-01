@@ -31,3 +31,4 @@ pub use self::command::new_directory::NewDirectoryCommand;
 pub use self::command::mov::MoveCommand;
 pub use self::command::new_file::NewFileCommand;
 pub use self::command::remove::RemoveCommand;
+pub use self::command::apply::ApplyCommand;

@@ -40,38 +40,48 @@ impl Status {
 impl Virtual<Status> {
     fn status_virtual(&self, fs: &VirtualFileSystem) -> Result<IdentityStatus, VfsError> {
         match fs.sub_state().is_virtual(self.0.path.as_path())? {
-            true =>
-                match self.0.path.exists() {
-                    true =>  Err(VfsError::DanglingVirtualPath(self.0.path.to_path_buf())), //TODO May happen over system-level concurrency
-                    false => Ok(IdentityStatus::RemovedVirtually)
-                },
-            false => match fs.add_state().get(self.0.path.as_path())? {//IN ADD AND NOT IN SUB
-                Some(virtual_identity) => Ok(IdentityStatus::ExistsVirtually(virtual_identity.clone())),
-                None => match fs.virtual_state()?.resolve(self.0.path.as_path())? {
-                    Some(real_path) => {
-                        match real_path.exists() {
-                            true =>
-                                Ok(
-                                    IdentityStatus::ExistsThroughVirtualParent(
-                                        VirtualPath::from(
-                                            self.0.path.to_path_buf(),
-                                            Some(real_path.clone()),
-                                            VirtualKind::from_path_buf(real_path)
-                                        )?
-                                    )
-                                ),
-                            false => Ok(IdentityStatus::NotExists)
-                        }
-                    },
-                    None => Ok(IdentityStatus::NotExists)//Got a virtual parent but does not exists
+            true => //Ok(IdentityStatus::RemovedVirtually),
+                match fs.add_state().get(self.0.path.as_path())? {
+                    Some(virtual_state) => Err(VfsError::AddSubDanglingVirtualPath(self.0.path.to_path_buf())),
+                    None => Ok(IdentityStatus::RemovedVirtually),
+//                        match self.0.path.exists() {
+//                            true => Ok(IdentityStatus::RemovedVirtually),
+//                            false => Err(VfsError::SubDanglingVirtualPath(self.0.path.to_path_buf())),
+//                        }
                 }
-            }
+            false =>
+                match fs.add_state().get(self.0.path.as_path())? {//IN ADD AND NOT IN SUB
+                    Some(virtual_identity) =>
+                        match self.0.path.exists() {
+                            true => Ok(IdentityStatus::Replaced(virtual_identity.clone())),
+                            false => Ok(IdentityStatus::ExistsVirtually(virtual_identity.clone()))
+                        }
+                    None =>
+                        match fs.virtual_state()?.resolve(self.0.path.as_path())? {
+                            Some(real_path) => {
+                                match real_path.exists() {
+                                    true =>
+                                        Ok(
+                                            IdentityStatus::ExistsThroughVirtualParent(
+                                                VirtualPath::from(
+                                                    self.0.path.to_path_buf(),
+                                                    Some(real_path.clone()),
+                                                    VirtualKind::from_path_buf(real_path)
+                                                )?
+                                            )
+                                        ),
+                                    false => Ok(IdentityStatus::NotExists)
+                                }
+                            },
+                            None => Ok(IdentityStatus::NotExists)//Got a virtual parent but does not exists
+                        }
+                }
         }
     }
 
     fn status_real(&self, fs: &VirtualFileSystem) -> Result<IdentityStatus, VfsError> {
         match fs.sub_state().is_virtual(self.0.path.as_path())? {
-            true => Ok(IdentityStatus::Deleted),
+            true => Ok(IdentityStatus::Removed),
             false =>
                 match self.0.path.exists() {
                     true =>

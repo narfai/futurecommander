@@ -47,6 +47,9 @@ pub use self::remove::RemoveCommand;
 pub mod tree;
 pub use self::tree::TreeCommand;
 
+pub mod apply;
+pub use self::apply::ApplyCommand;
+
 
 
 /*
