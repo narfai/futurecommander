@@ -25,7 +25,7 @@ use crate::{ Virtual, Real, VfsError };
 use crate::file_system::{ VirtualFileSystem, RealFileSystem, VirtualVersion, RealVersion };
 use crate::representation::{ VirtualPath, VirtualKind };
 use crate::operation::{ WriteOperation };
-use crate::query::{ ReadQuery, ReadDir, Status, IdentityStatus, Entry };
+use crate::query::{ReadQuery, ReadDirQuery, StatusQuery, IdentityStatus, Entry };
 
 pub struct CopyOperation {
     source: PathBuf,
@@ -69,9 +69,9 @@ impl Virtual<CopyOperation> {
     fn copy_virtual_children(mut fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
         match identity.to_kind() {
             VirtualKind::Directory => {
-                let read_dir = Virtual(ReadDir::new(source.as_identity()));
+                let read_dir = Virtual(ReadDirQuery::new(source.as_identity()));
                 for child in read_dir.retrieve(&fs)? {
-                    match Virtual(Status::new(child.path())).retrieve(&fs)? {
+                    match Virtual(StatusQuery::new(child.path())).retrieve(&fs)? {
                         IdentityStatus::ExistsVirtually(_) =>
                             Virtual::<CopyOperation>::new(
                                 child.path(),
@@ -89,7 +89,7 @@ impl Virtual<CopyOperation> {
     }
 
     fn retrieve_virtual_identity(fs: &VirtualFileSystem, path: &Path) -> Result<VirtualPath, VfsError> {
-        let stat = Virtual(Status::new(path));
+        let stat = Virtual(StatusQuery::new(path));
         match stat.retrieve(&fs)?.virtual_identity() {
             Some(virtual_identity) => Ok(virtual_identity),
             None => return Err(VfsError::DoesNotExists(path.to_path_buf()))
@@ -127,7 +127,7 @@ impl WriteOperation<VirtualFileSystem> for Virtual<CopyOperation> {
             &self.0.name
         )?;
 
-        let stat_new = Virtual(Status::new(new_identity.as_identity()));
+        let stat_new = Virtual(StatusQuery::new(new_identity.as_identity()));
 
         match stat_new.retrieve(&fs)? {
             IdentityStatus::Exists(_)

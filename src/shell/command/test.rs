@@ -56,7 +56,7 @@ mod virtual_shell_tests {
 
         remove_b.execute(&mut vfs).unwrap();
 
-        assert!(!Virtual(Status::new(b_path.as_path()))
+        assert!(!Virtual(StatusQuery::new(b_path.as_path()))
             .retrieve(&vfs)
             .unwrap()
             .exists()
@@ -84,7 +84,7 @@ mod virtual_shell_tests {
 
         copy_ab_to_abd.execute(&mut vfs).unwrap();
 
-        let read_dir = Virtual(ReadDir::new(sample_path.join(&Path::new("A/D")).as_path()));
+        let read_dir = Virtual(ReadDirQuery::new(sample_path.join(&Path::new("A/D")).as_path()));
 
         match read_dir.retrieve(&vfs) {
             Ok(virtual_children) => {
@@ -126,7 +126,7 @@ mod virtual_shell_tests {
 
         copy_bf_to_bde.execute(&mut vfs).unwrap();
 
-        let read_dir = Virtual(ReadDir::new(sample_path.join(&Path::new("B/D/E")).as_path()));
+        let read_dir = Virtual(ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path()));
 
         match read_dir.retrieve(&vfs) {
             Ok(virtual_children) => {
@@ -169,7 +169,7 @@ mod virtual_shell_tests {
         move_bf_to_bde.execute(&mut vfs).unwrap();
 
         assert!(
-            Virtual(ReadDir::new(sample_path.join(&Path::new("B/D/E")).as_path()))
+            Virtual(ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path()))
                 .retrieve(&vfs)
                 .unwrap()
                 .collection()
@@ -177,7 +177,7 @@ mod virtual_shell_tests {
         );
 
         assert!(
-            !Virtual(ReadDir::new(sample_path.join(&Path::new("A")).as_path()))
+            !Virtual(ReadDirQuery::new(sample_path.join(&Path::new("A")).as_path()))
                 .retrieve(&vfs)
                 .unwrap()
                 .collection()
@@ -185,7 +185,7 @@ mod virtual_shell_tests {
         );
 
         assert!(
-            !Virtual(ReadDir::new(sample_path.join(&Path::new("B")).as_path()))
+            !Virtual(ReadDirQuery::new(sample_path.join(&Path::new("B")).as_path()))
                 .retrieve(&vfs)
                 .unwrap()
                 .collection()
@@ -205,7 +205,7 @@ mod virtual_shell_tests {
         new_bde_mkdired.execute(&mut vfs).unwrap();
 
         assert!(
-            Virtual(ReadDir::new(sample_path.join(&Path::new("B/D/E")).as_path()))
+            Virtual(ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path()))
                 .retrieve(&vfs)
                 .unwrap()
                 .collection()
@@ -226,7 +226,7 @@ mod virtual_shell_tests {
         new_bde_touched.execute(&mut vfs).unwrap();
 
         assert!(
-            Virtual(ReadDir::new(sample_path.join(&Path::new("B/D/E")).as_path()))
+            Virtual(ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path()))
                 .retrieve(&vfs)
                 .unwrap()
                 .collection()
@@ -257,7 +257,7 @@ mod virtual_shell_tests {
         copy_test_to_z.execute(&mut vfs).unwrap();
 
         assert!(
-            Virtual(ReadDir::new(sample_path.join(&Path::new("Z")).as_path()))
+            Virtual(ReadDirQuery::new(sample_path.join(&Path::new("Z")).as_path()))
                 .retrieve(&vfs)
                 .unwrap()
                 .collection()
@@ -284,7 +284,7 @@ mod virtual_shell_tests {
         };
         copy_a_as_aprime.execute(&mut vfs).unwrap();
 
-        let collection_aprime = Virtual(ReadDir::new(sample_path.join(&Path::new("APRIME")).as_path()))
+        let collection_aprime = Virtual(ReadDirQuery::new(sample_path.join(&Path::new("APRIME")).as_path()))
             .retrieve(&vfs)
             .unwrap()
             .collection();
@@ -292,7 +292,7 @@ mod virtual_shell_tests {
         assert!(collection_aprime.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/C"))).unwrap())));
         assert!(collection_aprime.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B"))).unwrap())));
 
-        let collection_aprime_b_d = Virtual(ReadDir::new(sample_path.join(&Path::new("APRIME/B/D")).as_path()))
+        let collection_aprime_b_d = Virtual(ReadDirQuery::new(sample_path.join(&Path::new("APRIME/B/D")).as_path()))
             .retrieve(&vfs)
             .unwrap()
             .collection();
@@ -320,7 +320,7 @@ mod virtual_shell_tests {
         };
         move_a_as_aprime.execute(&mut vfs).unwrap();
 
-        let collection_aprime = Virtual(ReadDir::new(sample_path.join(&Path::new("APRIME")).as_path()))
+        let collection_aprime = Virtual(ReadDirQuery::new(sample_path.join(&Path::new("APRIME")).as_path()))
             .retrieve(&vfs)
             .unwrap()
             .collection();
@@ -328,7 +328,7 @@ mod virtual_shell_tests {
         assert!(collection_aprime.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/C"))).unwrap())));
         assert!(collection_aprime.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B"))).unwrap())));
 
-        let collection_aprime_b_d = Virtual(ReadDir::new(sample_path.join(&Path::new("APRIME/B/D")).as_path()))
+        let collection_aprime_b_d = Virtual(ReadDirQuery::new(sample_path.join(&Path::new("APRIME/B/D")).as_path()))
             .retrieve(&vfs)
             .unwrap()
             .collection();
@@ -371,7 +371,7 @@ mod virtual_shell_tests {
         };
         copy_abeta_to_a.execute(&mut vfs).unwrap();
 
-        let collection_a_abeta = Virtual(ReadDir::new(sample_path.join(&Path::new("APRIME")).as_path()))
+        let collection_a_abeta = Virtual(ReadDirQuery::new(sample_path.join(&Path::new("APRIME")).as_path()))
             .retrieve(&vfs)
             .unwrap()
             .collection();
@@ -379,7 +379,7 @@ mod virtual_shell_tests {
         assert!(collection_a_abeta.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/C"))).unwrap())));
         assert!(collection_a_abeta.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B"))).unwrap())));
 
-        let collection_aprime_a_abeta_b_d = Virtual(ReadDir::new(sample_path.join(&Path::new("A/ABETA/B/D")).as_path()))
+        let collection_aprime_a_abeta_b_d = Virtual(ReadDirQuery::new(sample_path.join(&Path::new("A/ABETA/B/D")).as_path()))
             .retrieve(&vfs)
             .unwrap()
             .collection();

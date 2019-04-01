@@ -22,7 +22,7 @@ use crate::{ Virtual, Real, VfsError };
 
 use crate::file_system::{ VirtualFileSystem, RealFileSystem, VirtualVersion, RealVersion };
 use crate::operation::{ WriteOperation };
-use crate::query::{ ReadQuery, Status, IdentityStatus };
+use crate::query::{ReadQuery, StatusQuery, IdentityStatus };
 
 pub struct RemoveOperation {
     path: PathBuf,
@@ -45,7 +45,7 @@ impl Virtual<RemoveOperation> {
 
 impl WriteOperation<VirtualFileSystem> for Virtual<RemoveOperation>{
     fn execute(&mut self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        match Virtual(Status::new(self.0.path.as_path())).retrieve(&fs)? {
+        match Virtual(StatusQuery::new(self.0.path.as_path())).retrieve(&fs)? {
             IdentityStatus::Exists(virtual_identity)
             | IdentityStatus::Replaced(virtual_identity)
             | IdentityStatus::ExistsThroughVirtualParent(virtual_identity) => {
@@ -55,7 +55,7 @@ impl WriteOperation<VirtualFileSystem> for Virtual<RemoveOperation>{
             IdentityStatus::ExistsVirtually(virtual_identity) => {
                 fs.mut_add_state().detach(virtual_identity.as_identity())?;
                 if let Some(source) = virtual_identity.as_source() {
-                    match Virtual(Status::new(source)).retrieve(&fs)? {
+                    match Virtual(StatusQuery::new(source)).retrieve(&fs)? {
                         IdentityStatus::Replaced(virtual_path) => {
                             if fs.add_state().is_directory_empty(virtual_path.as_identity()) {
                                 fs.mut_add_state().detach(virtual_path.as_identity())?;

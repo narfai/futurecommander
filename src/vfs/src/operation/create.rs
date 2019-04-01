@@ -23,7 +23,7 @@ use crate::{ Virtual, Real, VfsError };
 use crate::representation::{ VirtualKind };
 use crate::file_system::{ VirtualFileSystem, RealFileSystem, VirtualVersion, RealVersion };
 use crate::operation::{ WriteOperation };
-use crate::query::{ ReadQuery, Status };
+use crate::query::{ReadQuery, StatusQuery};
 
 pub struct CreateOperation {
     path: PathBuf,
@@ -47,7 +47,7 @@ impl Virtual<CreateOperation> {
 
 impl WriteOperation<VirtualFileSystem> for Virtual<CreateOperation>{
     fn execute(&mut self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        match Virtual(Status::new(self.0.path.as_path())).retrieve(&fs)?.virtual_identity() {
+        match Virtual(StatusQuery::new(self.0.path.as_path())).retrieve(&fs)?.virtual_identity() {
             Some(_) => return Err(VfsError::AlreadyExists(self.0.path.to_path_buf())),
             None => {
                 fs.mut_add_state().attach(self.0.path.as_path(), None, self.0.kind)?;

@@ -123,7 +123,7 @@ mod virtual_file_system_tests {
         let a = sample_path.join("A");
 
         assert!(
-            Virtual(Status::new(a.as_path()))
+            Virtual(StatusQuery::new(a.as_path()))
                 .retrieve(&vfs)
                 .unwrap()
                 .virtual_identity()
@@ -135,7 +135,7 @@ mod virtual_file_system_tests {
 
 
         assert!(
-            Virtual(Status::new(a.as_path()))
+            Virtual(StatusQuery::new(a.as_path()))
                 .retrieve(&vfs)
                 .unwrap()
                 .virtual_identity()
@@ -154,7 +154,7 @@ mod virtual_file_system_tests {
             VirtualKind::Directory
         ).execute(&mut vfs).unwrap();
 
-        let stated = Virtual(Status::new(z.as_path()))
+        let stated = Virtual(StatusQuery::new(z.as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
@@ -171,7 +171,7 @@ mod virtual_file_system_tests {
         let vfs = VirtualFileSystem::new();
         let a = sample_path.join("A");
 
-        let stated = Virtual(Status::new(a.as_path()))
+        let stated = Virtual(StatusQuery::new(a.as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
@@ -194,7 +194,7 @@ mod virtual_file_system_tests {
             None
         ).execute(&mut vfs).unwrap();
 
-        let stated = Virtual(Status::new(abdg.as_path()))
+        let stated = Virtual(StatusQuery::new(abdg.as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
@@ -242,7 +242,7 @@ mod virtual_file_system_tests {
             sample_path.join("APRIME").as_path()
         ).execute(&mut vfs).unwrap();
 
-        let stated_a = Virtual(Status::new(sample_path.join("A").as_path()))
+        let stated_a = Virtual(StatusQuery::new(sample_path.join("A").as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
@@ -252,7 +252,7 @@ mod virtual_file_system_tests {
         assert_eq!(stated_a.to_kind(), VirtualKind::Directory);
         assert_eq!(stated_a.as_source().unwrap(), sample_path.join("A"));
 
-        let stated_aprime = Virtual(Status::new(sample_path.join("APRIME").as_path()))
+        let stated_aprime = Virtual(StatusQuery::new(sample_path.join("APRIME").as_path()))
             .retrieve(&vfs)
             .unwrap();
 
@@ -323,7 +323,7 @@ mod virtual_file_system_tests {
             sample_path.join("Z").as_path()
         ).execute(&mut vfs).unwrap();
 
-        let stated_b = Virtual(Status::new(sample_path.join("B").as_path()))
+        let stated_b = Virtual(StatusQuery::new(sample_path.join("B").as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
@@ -333,7 +333,7 @@ mod virtual_file_system_tests {
         assert_eq!(stated_b.to_kind(), VirtualKind::File);
         assert_eq!(stated_b.as_source().unwrap(), sample_path.join("A/C"));
 
-        let stated_c = Virtual(Status::new(sample_path.join("C").as_path()))
+        let stated_c = Virtual(StatusQuery::new(sample_path.join("C").as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
@@ -343,7 +343,7 @@ mod virtual_file_system_tests {
         assert_eq!(stated_c.to_kind(), VirtualKind::Directory);
         assert_eq!(stated_c.as_source().unwrap(), sample_path.join("B"));
 
-        let stated_z = Virtual(Status::new(sample_path.join("Z").as_path()))
+        let stated_z = Virtual(StatusQuery::new(sample_path.join("Z").as_path()))
             .retrieve(&vfs)
             .unwrap();
 
@@ -375,7 +375,7 @@ mod virtual_file_system_tests {
             sample_path.join("A/D/G").as_path()
         ).execute(&mut vfs).unwrap();
 
-        let stated_ad = Virtual(Status::new(sample_path.join("A/D").as_path()))
+        let stated_ad = Virtual(StatusQuery::new(sample_path.join("A/D").as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
@@ -385,7 +385,7 @@ mod virtual_file_system_tests {
         assert_eq!(stated_ad.to_kind(), VirtualKind::Directory);
         assert_eq!(stated_ad.as_source().unwrap(), sample_path.join("B/D"));
 
-        let stated_adg = Virtual(Status::new(sample_path.join("A/D/G").as_path()))
+        let stated_adg = Virtual(StatusQuery::new(sample_path.join("A/D/G").as_path()))
             .retrieve(&vfs)
             .unwrap();
 

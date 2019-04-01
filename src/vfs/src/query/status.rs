@@ -25,19 +25,19 @@ use crate::file_system::{ VirtualFileSystem };
 use crate::query::{ ReadQuery, IdentityStatus };
 
 
-pub struct Status {
+pub struct StatusQuery {
     path: PathBuf
 }
 
-impl Status {
-    pub fn new(path: &Path) -> Status {
-        Status {
+impl StatusQuery {
+    pub fn new(path: &Path) -> StatusQuery {
+        StatusQuery {
             path: path.to_path_buf()
         }
     }
 }
 
-impl Virtual<Status> {
+impl Virtual<StatusQuery> {
     fn status_virtual(&self, fs: &VirtualFileSystem) -> Result<IdentityStatus, VfsError> {
         match fs.sub_state().is_virtual(self.0.path.as_path())? {
             true => //Ok(IdentityStatus::RemovedVirtually),
@@ -103,7 +103,7 @@ impl Virtual<Status> {
     }
 }
 
-impl ReadQuery<&VirtualFileSystem, IdentityStatus> for Virtual<Status>{
+impl ReadQuery<&VirtualFileSystem, IdentityStatus> for Virtual<StatusQuery>{
     fn retrieve(&self, fs: &VirtualFileSystem) -> Result<IdentityStatus, VfsError> {
         match fs.add_state().is_virtual(self.0.path.as_path())? {
             true => self.status_virtual(&fs),

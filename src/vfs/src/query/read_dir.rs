@@ -23,25 +23,25 @@ use crate::{ Virtual, VfsError };
 
 use crate::representation::{ VirtualPath, VirtualKind, VirtualChildren, VirtualDelta };
 use crate::file_system::{ VirtualFileSystem };
-use crate::query::{ ReadQuery, Status, NodeIterator };
+use crate::query::{ReadQuery, StatusQuery, NodeIterator };
 
 use std::collections::hash_set::IntoIter as HashSetIntoIter;
 
-pub struct ReadDir {
+pub struct ReadDirQuery {
     path: PathBuf
 }
 
-impl ReadDir {
-    pub fn new(path: &Path) -> ReadDir {
-        ReadDir {
+impl ReadDirQuery {
+    pub fn new(path: &Path) -> ReadDirQuery {
+        ReadDirQuery {
             path: path.to_path_buf()
         }
     }
 }
 
-impl ReadQuery<&VirtualFileSystem, NodeIterator<HashSetIntoIter<VirtualPath>>> for Virtual<ReadDir> {
+impl ReadQuery<&VirtualFileSystem, NodeIterator<HashSetIntoIter<VirtualPath>>> for Virtual<ReadDirQuery> {
     fn retrieve(&self, fs: &VirtualFileSystem) -> Result<NodeIterator<HashSetIntoIter<VirtualPath>>, VfsError> {
-        let stat_directory = Virtual(Status::new(self.0.path.as_path()));
+        let stat_directory = Virtual(StatusQuery::new(self.0.path.as_path()));
         let directory = match stat_directory.retrieve(&fs)?.virtual_identity() {
             Some(virtual_identity) =>
                 match virtual_identity.as_kind() {
