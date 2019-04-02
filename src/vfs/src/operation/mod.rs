@@ -35,4 +35,13 @@ pub trait WriteOperation <F: ?Sized> {
     fn execute(&mut self, fs: &mut F) -> Result<(), crate::errors::VfsError>;
     fn virtual_version(&self) -> Option<usize>;
     fn real_version(&self) -> Option<usize>;
+    fn debug(&self) -> String;
 }
+
+impl <F> std::fmt::Debug for WriteOperation <F> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.debug())
+    }
+}
+
+

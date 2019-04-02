@@ -395,27 +395,21 @@ mod virtual_file_system_tests {
 
 
     #[test]
-    pub fn to_apply_operation(){
+    pub fn apply_a_vfs_to_real_fs(){
         let sample_path = get_sample_path();
         let mut vfs = VirtualFileSystem::new();
+        let mut real_fs = RealFileSystem::new(true);
 
 
         _no_dangling(&mut vfs);
         _file_dir_interversion(&mut vfs);
         _some_nesting(&mut vfs);
 
-
-        println!("{:#?}", vfs);
-//        let mut collection = VirtualChildren::new();
-        let state = vfs.virtual_state().unwrap();
-//        let top_path = state.top_unknown_ancestor().unwrap();
-        for path in state.iter() {
-            println!("TO ADD PATH {:#?}", path);
-        }
-
-        for path in vfs.reverse_state().unwrap().iter() {
-            println!("TO DELETE PATH {:#?}", path);
-        }
+        println!("VFS {:#?}", vfs);
+        let mut apply : ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::from_virtual_filesystem(&vfs).unwrap();
+        println!("REAL VERSION : {}", RealVersion::get());
+        apply.execute(&mut real_fs).unwrap();
+        println!("{:?}", apply)
     }
 
     //Error testing

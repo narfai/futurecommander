@@ -46,6 +46,10 @@ impl Virtual<CreateOperation> {
 }
 
 impl WriteOperation<VirtualFileSystem> for Virtual<CreateOperation>{
+    fn debug(&self) -> String {
+        "Write Virtual CreateOperation".to_string()
+    }
+
     fn execute(&mut self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         match Virtual(StatusQuery::new(self.0.path.as_path())).retrieve(&fs)?.virtual_identity() {
             Some(_) => return Err(VfsError::AlreadyExists(self.0.path.to_path_buf())),
@@ -78,6 +82,10 @@ impl Real<CreateOperation> {
 }
 
 impl WriteOperation<RealFileSystem> for Real<CreateOperation>{
+    fn debug(&self) -> String {
+        "Write Real CreateOperation".to_string()
+    }
+
     fn execute(&mut self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         match fs.create(self.0.path.as_path(), false) {
             Ok(_) => { self.0.real_version = Some(RealVersion::increment()); Ok(()) },

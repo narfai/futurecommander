@@ -112,6 +112,10 @@ impl Real<CopyOperation> {
 }
 
 impl WriteOperation<VirtualFileSystem> for Virtual<CopyOperation> {
+    fn debug(&self) -> String {
+        "Write Virtual CopyOperation".to_string()
+    }
+
     fn execute(&mut self, mut fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         let source = Self::retrieve_virtual_identity(&fs, self.0.source.as_path())?;
         let destination = Self::retrieve_virtual_identity(&fs, self.0.destination.as_path())?;
@@ -154,11 +158,17 @@ impl WriteOperation<VirtualFileSystem> for Virtual<CopyOperation> {
 }
 
 impl WriteOperation<RealFileSystem> for Real<CopyOperation> {
+    fn debug(&self) -> String {
+        "Write Real CopyOperation".to_string()
+    }
+
     fn execute(&mut self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         let new_destination = match &self.0.name {
             Some(name) => self.0.destination.join(name),
             None => self.0.destination.to_path_buf()
         };
+
+        println!("EXECUTE {:?}", &self.debug());
 
         match fs.copy(self.0.source.as_path(), new_destination.as_path(), &|_read| {}, true, false) {
             Ok(_) => { self.0.real_version = Some(VirtualVersion::increment()); Ok(()) },

@@ -26,6 +26,7 @@ use crate::operation::{WriteOperation, CopyOperation, CreateOperation, RemoveOpe
 use crate::query::{ReadQuery, StatusQuery};
 
 
+#[derive(Debug)]
 pub struct ApplyOperation<T>(Vec<T>, Option<usize>);
 
 impl <T> ApplyOperation<Box<WriteOperation<T>>> {
@@ -33,21 +34,21 @@ impl <T> ApplyOperation<Box<WriteOperation<T>>> {
         ApplyOperation(Vec::<Box<WriteOperation<T>>>::new(), None)
     }
 
-    fn add_operation(&mut self, operation: Box<WriteOperation<T>>) {
+    fn insert_operation(&mut self, operation: Box<WriteOperation<T>>) {
         self.0.push(operation);
     }
 }
 
 impl ApplyOperation<Box<WriteOperation<RealFileSystem>>> {
-    fn from_virtual_filesystem(vfs: &VirtualFileSystem) -> Result<Self, VfsError> {
-        let mut apply = Self::new();
+    pub fn from_virtual_filesystem(vfs: &VirtualFileSystem) -> Result<ApplyOperation<Box<WriteOperation<RealFileSystem>>>, VfsError> {
+        let mut apply = ApplyOperation::<Box<WriteOperation<RealFileSystem>>>::new();
 
         for add_identity in vfs.virtual_state()?.iter() {
             match add_identity.as_source() {
                 Some(source) =>
                     match source.exists() {
                         true => {
-                            apply.add_operation(
+                            apply.insert_operation(
                                 Box::new(
                                     Real::<CopyOperation>::new(
                                         source,
@@ -63,26 +64,42 @@ impl ApplyOperation<Box<WriteOperation<RealFileSystem>>> {
                         },
                         false => return Err(VfsError::SourceDoesNotExists(source.to_path_buf()))
                     },
-                None =>
-                    match add_identity.to_kind() {
-                        VirtualKind::File | VirtualKind::Directory => {
-                            apply.add_operation(
+                None => {
+                    apply.insert_operation(
+                        Box::new(
+                            Real::<CreateOperation>::new(
+                                add_identity.as_identity(),
+                                add_identity.to_kind(),
+                                Some(add_identity.version())
+                            )
+                        )
+                    );
+                }//just touch or mkdir
+            }
+        }
+
+        for sub_identity in vfs.reverse_state()?.iter() {
+            match sub_identity.as_source() {
+                Some(source) =>
+                    match source.exists() {
+                        true => {
+                            apply.insert_operation(
                                 Box::new(
-                                    Real::<CreateOperation>::new(
-                                        add_identity.as_identity(),
-                                        add_identity.to_kind(),
-                                        Some(add_identity.version())
+                                    Real::<RemoveOperation>::new(
+                                        source,
+                                        Some(sub_identity.version())
                                     )
                                 )
                             );
                         },
-                        VirtualKind::Unknown => {/*unknown unblocking error*/} //TODO @symlink
-                    }//just touch or mkdir
+                        false => return Err(VfsError::SourceDoesNotExists(source.to_path_buf()))
+                    },
+                None => { /*Ignore virtualpath from sub which have no source*/} //just touch or mkdir
             }
         }
 
-        for reverse in vfs.reverse_state()?.iter() {
-
+        for op in apply.0.iter() {
+            println!("{:?}", op);
         }
 
         Ok(apply)
@@ -90,6 +107,9 @@ impl ApplyOperation<Box<WriteOperation<RealFileSystem>>> {
 }
 
 impl <T> WriteOperation<T> for ApplyOperation<Box<WriteOperation<T>>> {
+    fn debug(&self) -> String {
+        format!("{} {}", "ApplyOperation".to_string(), self.0.len())
+    }
     fn execute(&mut self, fs: &mut T) -> Result<(), VfsError> {
         self.0.sort_by(
             |operation_a , operation_b|
@@ -103,15 +123,15 @@ impl <T> WriteOperation<T> for ApplyOperation<Box<WriteOperation<T>>> {
                 }
         );
 
+
         for operation in self.0.iter_mut() {
+            println!("{:?}", operation);
             operation.execute(fs)?
         }
         self.1 = Some(RealVersion::increment());//TODO sum of all real fs operation
         Ok(())
     }
 
-    fn virtual_version(&self) -> Option<usize> {
-        self.1
-    }
+    fn virtual_version(&self) -> Option<usize> { None }
     fn real_version(&self) -> Option<usize> { self.1 }
 }

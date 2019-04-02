@@ -44,6 +44,10 @@ impl Virtual<RemoveOperation> {
 
 
 impl WriteOperation<VirtualFileSystem> for Virtual<RemoveOperation>{
+    fn debug(&self) -> String {
+        "Write Virtual RemoveOperation".to_string()
+    }
+
     fn execute(&mut self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         match Virtual(StatusQuery::new(self.0.path.as_path())).retrieve(&fs)? {
             IdentityStatus::Exists(virtual_identity)
@@ -91,6 +95,10 @@ impl Real<RemoveOperation> {
 }
 
 impl WriteOperation<RealFileSystem> for Real<RemoveOperation>{
+    fn debug(&self) -> String {
+        "Write Real RemoveOperation".to_string()
+    }
+
     fn execute(&mut self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         match fs.remove(self.0.path.as_path()) {
             Ok(_) => { self.0.real_version = Some(RealVersion::increment()); Ok(()) },
