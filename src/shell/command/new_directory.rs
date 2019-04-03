@@ -48,7 +48,7 @@ pub struct InitializedNewDirectoryCommand {
 }
 
 impl InitializedCommand for InitializedNewDirectoryCommand {
-    fn execute(&self, mut vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
         match CreateOperation::new(
             self.path.as_path(),
             VirtualKind::Directory

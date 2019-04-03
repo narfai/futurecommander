@@ -52,7 +52,7 @@ pub struct InitializedCopyCommand {
 }
 
 impl InitializedCommand for InitializedCopyCommand {
-    fn execute(&self, mut vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
         match CopyOperation::new(
                 self.source.as_path(),
                 self.destination.as_path(),
