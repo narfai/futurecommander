@@ -27,21 +27,25 @@ use clap::{ App, ArgMatches };
 #[allow(unused_imports)]
 use vfs::ReadQuery;
 
-use vfs::{ VirtualFileSystem, VirtualKind, StatusQuery };
+use vfs::{ VirtualFileSystem, RealFileSystem, VirtualKind, StatusQuery, Transaction };
 
 use crate::path::absolute;
-use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, ApplyCommand, CommandError };
+use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
 
 pub struct Shell {
     cwd: PathBuf,
-    vfs: VirtualFileSystem
+    vfs: VirtualFileSystem,
+    rfs: RealFileSystem,
+    transaction: Transaction<RealFileSystem>
 }
 
 impl Shell {
     pub fn new() -> Shell {
         Shell {
             cwd: env::current_dir().unwrap(),
-            vfs: VirtualFileSystem::new()
+            vfs: VirtualFileSystem::new(),
+            rfs: RealFileSystem::new(false),
+            transaction: Transaction::new(),
         }
     }
 
@@ -76,16 +80,23 @@ impl Shell {
                                 ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.vfs.sub_state()); Ok(()) },
                                 ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
                                 ("reset",       Some(_matches)) => { self.vfs.reset(); println!("Virtual state is now empty");  Ok(()) },
-                                ("ls",          Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
-                                ("cp",          Some(matches)) => CopyCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
-                                ("mv",          Some(matches)) => MoveCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
-                                ("rm",          Some(matches)) => RemoveCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
-                                ("mkdir",       Some(matches)) => NewDirectoryCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
-                                ("touch",       Some(matches)) => NewFileCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
-                                ("tree",        Some(matches)) => TreeCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
-                                ("apply",        Some(matches)) => ApplyCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
-                                //Find out why this const / match syntax is invalid for webstorm
-//                                (ListCommand::NAME,         Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)), //TODO create command!(MyCommand)
+                                ("ls",          Some(matches)) => Command::<ListCommand>::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                ("cp",          Some(matches)) => Command::<CopyCommand>::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.transaction, &mut self.vfs)),
+                                ("mv",          Some(matches)) => Command::<MoveCommand>::new(&self.cwd, matches)
+                                        .and_then(|c| c.execute(&mut self.transaction, &mut self.vfs)),
+                                ("rm",          Some(matches)) => Command::<RemoveCommand>::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.transaction, &mut self.vfs)),
+                                ("mkdir",       Some(matches)) => Command::<NewDirectoryCommand>::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.transaction, &mut self.vfs)),
+                                ("touch",       Some(matches)) => Command::<NewFileCommand>::new(&self.cwd,matches)
+                                        .and_then(|c| c.execute(&mut self.transaction, &mut self.vfs)),
+                                ("tree",        Some(matches)) => Command::<TreeCommand>::new(&self.cwd, matches)
+                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                ("apply",        Some(matches)) => self.apply(),
+                                //TODO Find out why this const / match syntax is invalid for webstorm
+//                                (ListCommand::NAME,         Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
 //                                (CopyCommand::NAME,         Some(matches)) => CopyCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
 //                                (MoveCommand::NAME,         Some(matches)) => MoveCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
 //                                (RemoveCommand::NAME,       Some(matches)) => RemoveCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
@@ -140,6 +151,16 @@ impl Shell {
             },
             None => Ok(())//TODO go to home directory ?
         }
+    }
+
+    fn apply(&mut self) -> Result<(), CommandError> {
+        match self.transaction.apply(&mut self.rfs) {
+            Ok(_) => {},
+            Err(error) => return Err(CommandError::from(error))
+        };
+        self.vfs.reset();
+        self.transaction = Transaction::new();
+        Ok(())
     }
 }
 

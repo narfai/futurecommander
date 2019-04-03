@@ -21,20 +21,20 @@
 use vfs::WriteOperation;
 
 
-use vfs::{VirtualFileSystem, CopyOperation, RemoveOperation};
+use vfs::{ RealFileSystem, VirtualFileSystem, CopyOperation, RemoveOperation, Transaction};
 use clap::ArgMatches;
 use std::path::{ Path, PathBuf };
 use std::ffi::{ OsString };
-use crate::command::{ Command, InitializedCommand };
+use crate::command::{ Command };
 use crate::command::errors::CommandError;
 
 
 pub struct MoveCommand {}
 
-impl Command for MoveCommand {
-    const NAME : &'static str = "mv";
+impl Command<MoveCommand> {
+    pub const NAME : &'static str = "mv";
 
-    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
+    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedMoveCommand>, CommandError> {
         let source = Self::extract_path_from_args(cwd, args, "source")?;
         for ancestor in cwd.ancestors() {
             if source.as_path() == ancestor {
@@ -44,7 +44,7 @@ impl Command for MoveCommand {
         let (name, destination) = Self::extract_name_and_destination(cwd, args)?;
 
         Ok(
-            Box::new(
+            Command(
                 InitializedMoveCommand {
                     source,
                     destination,
@@ -61,16 +61,20 @@ pub struct InitializedMoveCommand {
     pub name: Option<OsString>
 }
 
-impl InitializedCommand for InitializedMoveCommand {
-    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match CopyOperation::new(
-            self.source.as_path(),
-            self.destination.as_path(),
-            self.name.clone()
-        ).execute(vfs) {
+impl Command<InitializedMoveCommand> {
+    pub fn execute(&self, transaction: &mut Transaction<RealFileSystem>, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        let operation = CopyOperation::new(
+            self.0.source.as_path(),
+            self.0.destination.as_path(),
+            self.0.name.clone()
+        );
+
+        transaction.add_operation(Box::new(operation.clone()));
+
+        match operation.execute(vfs) {
             Ok(_) =>
-                match RemoveOperation::new(self.source.as_path()).execute(vfs) {
-                    Ok(_) => { println!("MOVE {:?} to {:?}", self.source, self.destination); Ok(()) },
+                match RemoveOperation::new(self.0.source.as_path()).execute(vfs) {
+                    Ok(_) => { println!("MOVE {:?} to {:?}", self.0.source, self.0.destination); Ok(()) },
                     Err(error) => Err(CommandError::from(error))
                 },
             Err(error) => Err(CommandError::from(error))

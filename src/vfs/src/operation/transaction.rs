@@ -17,12 +17,17 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::vec::IntoIter;
 use crate::{ VfsError };
 use crate::operation::WriteOperation;
 
-pub struct Transaction<T: ?Sized>(Vec<Box<dyn WriteOperation<T>>>);
+pub struct Transaction<T>(Vec<Box<dyn WriteOperation<T>>>);
 
 impl <T> Transaction<T> {
+    pub fn new() -> Transaction<T> {
+        Transaction::<T>(Vec::new())
+    }
+
     pub fn apply (&self, fs: &mut T) -> Result<(), VfsError>{
         for operation in self.0.iter() {
              operation.execute(fs)?
@@ -32,5 +37,14 @@ impl <T> Transaction<T> {
 
     pub fn add_operation(&mut self, operation: Box<dyn WriteOperation<T>>) {
         self.0.push(operation);
+    }
+}
+
+impl <T>IntoIterator for Transaction<T> {
+    type Item = Box<dyn WriteOperation<T>>;
+    type IntoIter = IntoIter<Box<dyn WriteOperation<T>>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
     }
 }

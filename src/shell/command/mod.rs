@@ -21,7 +21,7 @@
 mod test;
 
 pub mod command;
-pub use self::command::{ Command, InitializedCommand };
+pub use self::command::{ Command };
 
 pub mod errors;
 pub use self::errors::CommandError;
@@ -46,10 +46,6 @@ pub use self::remove::RemoveCommand;
 
 pub mod tree;
 pub use self::tree::TreeCommand;
-
-pub mod apply;
-pub use self::apply::ApplyCommand;
-
 
 
 /*

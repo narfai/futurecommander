@@ -20,19 +20,19 @@
 #[allow(unused_imports)]
 use vfs::WriteOperation;
 
-use vfs::{ VirtualFileSystem, RemoveOperation };
+use vfs::{ VirtualFileSystem, RemoveOperation, RealFileSystem, Transaction };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
-use crate::command::{ Command, InitializedCommand };
+use crate::command::{ Command };
 use crate::command::errors::CommandError;
 
 pub struct RemoveCommand {}
 
-impl Command for RemoveCommand {
-    const NAME : &'static str = "rm";
+impl Command<RemoveCommand> {
+    pub const NAME : &'static str = "rm";
 
-    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
+    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedRemoveCommand>, CommandError> {
         let path = Self::extract_path_from_args(cwd, args, "path")?;
         for ancestor in cwd.ancestors() {
             if path == ancestor {
@@ -41,7 +41,7 @@ impl Command for RemoveCommand {
         }
 
         Ok(
-            Box::new(
+            Command(
                 InitializedRemoveCommand {
                     path
                 }
@@ -54,9 +54,13 @@ pub struct InitializedRemoveCommand {
     pub path: PathBuf
 }
 
-impl InitializedCommand for InitializedRemoveCommand {
-    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match RemoveOperation::new(self.path.as_path()).execute(vfs) {
+impl Command<InitializedRemoveCommand> {
+    pub fn execute(&self, transaction: &mut Transaction<RealFileSystem>, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        let operation = RemoveOperation::new(self.0.path.as_path());
+
+        transaction.add_operation(Box::new(operation.clone()));
+
+        match operation.execute(vfs) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }

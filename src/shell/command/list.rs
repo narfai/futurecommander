@@ -21,18 +21,18 @@ use vfs::{VirtualFileSystem, VirtualKind, Node, ReadQuery, ReadDirQuery};
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
-use crate::command::{ Command, InitializedCommand };
+use crate::command::{Command};
 use crate::command::errors::CommandError;
 
 
 pub struct ListCommand {}
 
-impl Command for ListCommand {
-    const NAME : &'static str = "ls";
+impl Command<ListCommand> {
+    pub const NAME : &'static str = "ls";
 
-    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
+    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedListCommand>, CommandError> {
         Ok(
-            Box::new(
+            Command(
                 InitializedListCommand {
                     path:
                         Self::extract_path_from_args(cwd, args, "path").unwrap_or(cwd.to_path_buf())
@@ -46,9 +46,9 @@ pub struct InitializedListCommand {
     pub path: PathBuf
 }
 
-impl InitializedCommand for InitializedListCommand {
-    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match ReadDirQuery::new(self.path.as_path()).retrieve(&vfs) {
+impl Command<InitializedListCommand> {
+    pub fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        match ReadDirQuery::new(self.0.path.as_path()).retrieve(&vfs) {
             Ok(virtual_children) => {
                 let collection = virtual_children.collection();
                 let len = collection.len();

@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 #[cfg(test)]
 mod test;
 
@@ -28,12 +29,9 @@ pub use self::remove::RemoveOperation;
 mod create;
 pub use self::create::CreateOperation;
 
-//mod apply;
-//pub use self::apply::ApplyOperation;
-
 mod transaction;
 pub use self::transaction::Transaction;
 
-pub trait WriteOperation <F>: std::fmt::Debug {
+pub trait WriteOperation <F: ?Sized>: std::fmt::Debug {
     fn execute(&self, fs: &mut F) -> Result<(), crate::errors::VfsError>;
 }

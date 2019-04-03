@@ -20,21 +20,21 @@
 #[allow(unused_imports)]
 use vfs::WriteOperation;
 
-use vfs::{VirtualKind, VirtualFileSystem, CreateOperation};
+use vfs::{ VirtualKind, VirtualFileSystem, CreateOperation, Transaction, RealFileSystem };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
-use crate::command::{ Command, InitializedCommand };
+use crate::command::{ Command };
 use crate::command::errors::CommandError;
 
 pub struct NewFileCommand {}
 
-impl Command for NewFileCommand {
-    const NAME : &'static str = "touch";
+impl Command<NewFileCommand> {
+    pub const NAME : &'static str = "touch";
 
-    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
+    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewFileCommand>, CommandError> {
         Ok(
-            Box::new(
+            Command(
                 InitializedNewFileCommand {
                     path: Self::extract_path_from_args(cwd, args, "path")?
                 }
@@ -47,12 +47,16 @@ pub struct InitializedNewFileCommand {
     pub path: PathBuf
 }
 
-impl InitializedCommand for InitializedNewFileCommand {
-    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match CreateOperation::new(
-            self.path.as_path(),
+impl Command<InitializedNewFileCommand> {
+    pub fn execute(&self, transaction: &mut Transaction<RealFileSystem>, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        let operation = CreateOperation::new(
+            self.0.path.as_path(),
             VirtualKind::File
-        ).execute(vfs) {
+        );
+
+        transaction.add_operation(Box::new(operation.clone()));
+
+        match operation.execute(vfs) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }

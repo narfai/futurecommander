@@ -19,17 +19,17 @@ use vfs::{VirtualFileSystem, VfsError, Node, ReadQuery, ReadDirQuery};
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
-use crate::command::{ Command, InitializedCommand };
+use crate::command::{ Command };
 use crate::command::errors::CommandError;
 
 pub struct TreeCommand {}
 
-impl Command for TreeCommand {
-    const NAME : &'static str = "tree";
+impl Command<TreeCommand> {
+    pub const NAME : &'static str = "tree";
 
-    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
+    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedTreeCommand>, CommandError> {
         Ok(
-            Box::new(
+            Command(
                 InitializedTreeCommand {
                     path: Self::extract_path_from_args(cwd, args, "path").unwrap_or(cwd.to_path_buf())
                 }
@@ -42,7 +42,7 @@ pub struct InitializedTreeCommand {
     pub path: PathBuf
 }
 
-impl InitializedTreeCommand {
+impl Command<InitializedTreeCommand> {
     fn display_tree_line(depth_list: &Option<Vec<bool>>, parent_last: bool, file_name: String){
         if let Some(depth_list) = &depth_list {
             println!(
@@ -107,11 +107,9 @@ impl InitializedTreeCommand {
         }
         Ok(())
     }
-}
 
-impl InitializedCommand for InitializedTreeCommand {
-    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match Self::tree(vfs, self.path.as_path(), None, true) {
+    pub fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        match Self::tree(vfs, self.0.path.as_path(), None, true) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }

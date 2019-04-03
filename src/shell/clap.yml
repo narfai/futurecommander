@@ -66,6 +66,8 @@ subcommands:
             takes_value: true
   - reset:
       about: Reset virtual state
+  - apply:
+      about: Apply Operations to real file system
   - debug_virtual_state:
       about: show vfs current state
   - debug_add_state:

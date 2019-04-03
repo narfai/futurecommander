@@ -17,6 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::iter::IntoIterator;
 use std::path::{ PathBuf };
 use std::ffi::{ OsStr };
 
@@ -42,6 +43,18 @@ mod operation_test {
                 entry.name().is_some() && entry.name() == Some(OsStr::new("B")) && entry.is_dir()
             })
         );
+    }
+
+    #[test]
+    fn transaction(){
+        let mut vfs = VirtualFileSystem::new();
+        let mut real_fs = RealFileSystem::new(true);
+        let transaction = Transaction::new();
+        transaction.apply(&mut vfs);
+        let mut rt : Transaction<RealFileSystem> = Transaction::new();
+//        for op in transaction.into_iter() {
+//            rt.add_operation(op);
+//        }
     }
 
 //    #[test]

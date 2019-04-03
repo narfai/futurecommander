@@ -17,30 +17,28 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{VirtualFileSystem, CopyOperation, WriteOperation };
+use vfs::{ VirtualFileSystem, CopyOperation, WriteOperation, Transaction, RealFileSystem };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
-use crate::command::{ Command, InitializedCommand };
+use crate::command::{ Command };
 use crate::command::errors::CommandError;
 use std::ffi::{ OsString };
 
 pub struct CopyCommand {}
 
-impl Command for CopyCommand {
-    const NAME : &'static str = "copy";
+impl Command<CopyCommand> {
+    pub const NAME : &'static str = "copy";
 
-    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
+    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedCopyCommand>, CommandError> {
         let source = Self::extract_path_from_args(cwd, args, "source")?;
         let (name, destination) = Self::extract_name_and_destination(cwd, args)?;
 
         Ok(
-            Box::new(
-                InitializedCopyCommand {
-                    source,
-                    destination,
-                    name
-                }
-            )
+            Command(InitializedCopyCommand {
+                source,
+                destination,
+                name
+            })
         )
     }
 }
@@ -51,15 +49,19 @@ pub struct InitializedCopyCommand {
     pub name: Option<OsString>
 }
 
-impl InitializedCommand for InitializedCopyCommand {
-    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match CopyOperation::new(
-                self.source.as_path(),
-                self.destination.as_path(),
-                self.name.clone()
-        ).execute(vfs) {
-                Ok(_) => Ok(()),
-                Err(error) => Err(CommandError::from(error))
+impl Command<InitializedCopyCommand> {
+    pub fn execute(&self, transaction: &mut Transaction<RealFileSystem>, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        let operation = CopyOperation::new(
+            self.0.source.as_path(),
+            self.0.destination.as_path(),
+            self.0.name.clone()
+        );
+
+        transaction.add_operation(Box::new(operation.clone()));
+
+        match operation.execute(vfs) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(CommandError::from(error))
         }
     }
 }
