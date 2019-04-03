@@ -31,15 +31,15 @@ pub struct ApplyOperation<T>(Vec<T>, Option<usize>);
 
 impl <T> ApplyOperation<Box<dyn WriteOperation<T>>> {
     pub fn new() -> Self {
-        ApplyOperation(Vec::<Box<WriteOperation<T>>>::new(), None)
+        ApplyOperation(Vec::<Box<dyn WriteOperation<T>>>::new(), None)
     }
 
-    fn insert_operation(&mut self, operation: Box<WriteOperation<T>>) {
+    fn insert_operation(&mut self, operation: Box<dyn WriteOperation<T>>) {
         self.0.push(operation);
     }
 }
 
-impl ApplyOperation<Box<WriteOperation<RealFileSystem>>> {
+impl ApplyOperation<Box<dyn WriteOperation<RealFileSystem>>> {
     pub fn from_virtual_filesystem(vfs: &VirtualFileSystem) -> Result<ApplyOperation<Box<dyn WriteOperation<RealFileSystem>>>, VfsError> {
         let mut apply = ApplyOperation::<Box<dyn WriteOperation<RealFileSystem>>>::new();
 

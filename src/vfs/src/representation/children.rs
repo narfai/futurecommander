@@ -98,7 +98,7 @@ impl VirtualChildren {
         self.set.contains(virtual_identity)
     }
 
-    pub fn iter <'a>(&self) -> VirtualChildrenIterator {
+    pub fn iter <'a>(&self) -> VirtualChildrenIterator<'_> {
         VirtualChildrenIterator::new(self.set.iter())
     }
 
@@ -147,7 +147,7 @@ pub struct VirtualChildrenIterator<'a> {
 }
 
 impl <'a>VirtualChildrenIterator<'a> {
-    pub fn new(iter: HashSetIter<'a, VirtualPath>) -> VirtualChildrenIterator {
+    pub fn new(iter: HashSetIter<'a, VirtualPath>) -> VirtualChildrenIterator<'_> {
         VirtualChildrenIterator {
             iter
         }

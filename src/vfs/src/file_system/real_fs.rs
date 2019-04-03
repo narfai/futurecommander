@@ -94,7 +94,7 @@ impl RealFileSystem {
             println!("DRY : create directory {:?}", path);
         } else {
             if recursively {
-                fn recursive_dir_creation(mut ancestors: &mut Ancestors) -> Result<(), IoError> {
+                fn recursive_dir_creation(mut ancestors: &mut Ancestors<'_>) -> Result<(), IoError> {
                     if let Some(path) = ancestors.next() {
                         recursive_dir_creation(&mut ancestors)?;
                         create_dir(path)?;
@@ -111,7 +111,7 @@ impl RealFileSystem {
         Ok(())
     }
 
-    pub fn copy(&self, src: &Path, dst: &Path, on_read: &Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
+    pub fn copy(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
         if ! src.exists() {
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source does not exists {:?}", src)))
         }
@@ -126,7 +126,7 @@ impl RealFileSystem {
         }
     }
 
-    pub fn copy_file_into_directory(&self, src: &Path, dst: &Path, on_read: &Fn(usize), overwrite: bool) -> Result<usize, IoError> {
+    pub fn copy_file_into_directory(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), overwrite: bool) -> Result<usize, IoError> {
         if ! src.is_file() {
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a file {:?}", src)));
         }
@@ -149,7 +149,7 @@ impl RealFileSystem {
         self.copy_file_to_file(src, new_destination.as_path(), on_read, overwrite)
     }
 
-    pub fn copy_directory_into_directory(&self, src: &Path, dst: &Path, on_read: &Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
+    pub fn copy_directory_into_directory(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
         if ! src.is_dir() { //TODO @symlink
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a directory {:?}", src)))
         }
@@ -185,7 +185,7 @@ impl RealFileSystem {
         Ok(read)
     }
 
-    pub fn copy_file_to_file(&self, src: &Path, dst: &Path, on_read: &Fn(usize), overwrite: bool) -> Result<usize, IoError>{
+    pub fn copy_file_to_file(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), overwrite: bool) -> Result<usize, IoError>{
         if ! src.is_file() { //TODO @symlink
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a file {:?}", src)));
         }
@@ -206,7 +206,7 @@ impl RealFileSystem {
         }
     }
 
-    fn _copy_file(&self, src: &Path, dst: &Path, on_read: &Fn(usize)) -> Result<usize, IoError> {
+    fn _copy_file(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize)) -> Result<usize, IoError> {
         File::open(src)
             .and_then(|src_file| Ok(BufReader::with_capacity(READ_BUFFER_SIZE,src_file)))
             .and_then(|reader|

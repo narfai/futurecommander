@@ -131,7 +131,7 @@ impl EntryCollection<Node<VirtualPath>> {
         self.0.into_iter()
     }
 
-    pub fn iter(&self) -> Iter<Node<VirtualPath>> {
+    pub fn iter(&self) -> Iter<'_, Node<VirtualPath>> {
         self.0.iter()
     }
 

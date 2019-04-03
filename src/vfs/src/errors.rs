@@ -45,7 +45,7 @@ impl From<io::Error> for VfsError {
 }
 
 impl fmt::Display for VfsError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             VfsError::IoError(ref err)                  => write!(f, "IO error: {}", err),
             VfsError::HasNoSource(identity)             => write!(f, "Path {} has no source defined virtually", identity.as_os_str().to_string_lossy()),
@@ -64,7 +64,7 @@ impl fmt::Display for VfsError {
 }
 
 impl error::Error for VfsError {
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match self {
             VfsError::IoError(err) => Some(err),
             _ => None

@@ -253,7 +253,7 @@ impl VirtualDelta {
         top
     }
 
-    pub fn iter <'a>(&self) -> VirtualDeltaIterator {
+    pub fn iter <'a>(&self) -> VirtualDeltaIterator<'_> {
         VirtualDeltaIterator::new(self.hierarchy.iter())
     }
 }
@@ -307,7 +307,7 @@ pub struct VirtualDeltaIterator<'a> {
 }
 
 impl <'a>VirtualDeltaIterator<'a> {
-    pub fn new(iter: BTreeMapIter<'a, PathBuf, VirtualChildren>) -> VirtualDeltaIterator {
+    pub fn new(iter: BTreeMapIter<'a, PathBuf, VirtualChildren>) -> VirtualDeltaIterator<'_> {
         VirtualDeltaIterator {
             iter,
             current: None

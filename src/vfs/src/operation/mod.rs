@@ -38,8 +38,8 @@ pub trait WriteOperation <F: ?Sized> {
     fn debug(&self) -> String;
 }
 
-impl <F> std::fmt::Debug for WriteOperation <F> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl <F> std::fmt::Debug for dyn WriteOperation <F> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.debug())
     }
 }
