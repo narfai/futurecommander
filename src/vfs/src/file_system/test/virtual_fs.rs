@@ -17,42 +17,19 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::env::current_exe;
-use std::path::{ PathBuf, Path };
-use std::ffi::{ OsString, OsStr };
+use std::path::{ Path };
+use std::ffi::{ OsString };
 
 use crate::*;
-use crate::file_system::test::mock::VfsMock;
-
-pub fn get_sample_path() -> PathBuf {
-    current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("samples")
-}
+use crate::file_system::test::sample::Samples;
 
 #[cfg(test)]
-mod virtual_file_system_tests {
+mod tests {
     use super::*;
 
     #[test]
-    fn test_samples_ok(){
-        let sample_path = get_sample_path();
-        assert!(sample_path.join("A").exists());
-        assert!(sample_path.join("B").exists());
-        assert!(sample_path.join("F").exists());
-        assert!(sample_path.join("B/D").exists());
-        assert!(sample_path.join("B/D/E").exists());
-        assert!(sample_path.join("B/D/G").exists());
-
-        assert!(sample_path.join("A").is_dir());
-        assert!(sample_path.join("B").is_dir());
-        assert!(sample_path.join("F").is_file());
-        assert!(sample_path.join("B/D").is_dir());
-        assert!(sample_path.join("B/D/E").is_dir());
-        assert!(sample_path.join("B/D/G").is_dir());
-    }
-
-    #[test]
-    fn resolve(){
-        let sample_path = get_sample_path();
+    fn resolve() {
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let a = sample_path.join("A");
@@ -79,8 +56,8 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn resolve_through(){
-        let sample_path = get_sample_path();
+    fn resolve_through() {
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let a = sample_path.join("A");
@@ -115,8 +92,8 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn stat_none_if_deleted(){
-        let sample_path = get_sample_path();
+    fn stat_none_if_deleted() {
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
         let a = sample_path.join("A");
 
@@ -142,8 +119,8 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn stat_virtual(){
-        let sample_path = get_sample_path();
+    fn stat_virtual() {
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
         let z = sample_path.join("Z");
 
@@ -164,8 +141,8 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn stat_real(){
-        let sample_path = get_sample_path();
+    fn stat_real() {
+        let sample_path = Samples::static_samples_path();
         let vfs = VirtualFileSystem::new();
         let a = sample_path.join("A");
 
@@ -181,8 +158,8 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn stat_related(){
-        let sample_path = get_sample_path();
+    fn stat_related() {
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
         let abdg = sample_path.join("A/B/D/G");//Note : should exists in samples
 
@@ -204,9 +181,12 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    pub fn no_dangling(){
+    pub fn no_dangling() {
         let mut vfs = VirtualFileSystem::new();
-        _no_dangling(&mut vfs);
+        _no_dangling(
+            &mut vfs,
+            Samples::init_virtual_chroot("no_dangling").as_path()
+        );
     }
 
     /*
@@ -217,40 +197,38 @@ mod virtual_file_system_tests {
     cp APRIME A
     rm APRIME
     */
-    pub fn _no_dangling(mut vfs: &mut VirtualFileSystem){
-        let sample_path = get_sample_path();
-
+    pub fn _no_dangling(mut vfs: &mut VirtualFileSystem, chroot: &Path) {
         Virtual::<CopyOperation>::new(
-            sample_path.join("A").as_path(),
-            sample_path.as_path(),
+            chroot.join("A").as_path(),
+            chroot,
             Some(OsString::from("APRIME"))
         ).execute(&mut vfs).unwrap();
 
         Virtual::<RemoveOperation>::new(
-            sample_path.join("A").as_path()
+            chroot.join("A").as_path()
         ).execute(&mut vfs).unwrap();
 
         Virtual::<CopyOperation>::new(
-            sample_path.join("APRIME").as_path(),
-            sample_path.as_path(),
+            chroot.join("APRIME").as_path(),
+            chroot,
             Some(OsString::from("A"))
         ).execute(&mut vfs).unwrap();
 
         Virtual::<RemoveOperation>::new(
-            sample_path.join("APRIME").as_path()
+            chroot.join("APRIME").as_path()
         ).execute(&mut vfs).unwrap();
 
-        let stated_a = Virtual(StatusQuery::new(sample_path.join("A").as_path()))
+        let stated_a = Virtual(StatusQuery::new(chroot.join("A").as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
             .unwrap();
 
-        assert_eq!(stated_a.as_identity(), sample_path.join("A"));
+        assert_eq!(stated_a.as_identity(), chroot.join("A"));
         assert_eq!(stated_a.to_kind(), VirtualKind::Directory);
-        assert_eq!(stated_a.as_source().unwrap(), sample_path.join("A"));
+        assert_eq!(stated_a.as_source().unwrap(), chroot.join("A"));
 
-        let stated_aprime = Virtual(StatusQuery::new(sample_path.join("APRIME").as_path()))
+        let stated_aprime = Virtual(StatusQuery::new(chroot.join("APRIME").as_path()))
             .retrieve(&vfs)
             .unwrap();
 
@@ -260,12 +238,14 @@ mod virtual_file_system_tests {
     #[test]
     pub fn file_dir_interversion() {
         let mut vfs = VirtualFileSystem::new();
-        _file_dir_interversion(&mut vfs);
+        _file_dir_interversion(
+            &mut vfs,
+            Samples::init_virtual_chroot("file_dir_interversion").as_path()
+        );
     }
 
 
-    pub fn _file_dir_interversion(mut vfs: &mut VirtualFileSystem) {
-        let sample_path = get_sample_path();
+    pub fn _file_dir_interversion(mut vfs: &mut VirtualFileSystem, chroot: &Path) {
         /*
         file dir interversion ( C <-> B )
         cp A/C .
@@ -282,70 +262,70 @@ mod virtual_file_system_tests {
         */
 
         Virtual::<CopyOperation>::new(
-            sample_path.join("A/C").as_path(),
-            sample_path.as_path(),
+            chroot.join("A/C").as_path(),
+            chroot,
             None
         ).execute(&mut vfs).unwrap();
 
         Virtual::<RemoveOperation>::new(
-            sample_path.join("A/C").as_path()
+            chroot.join("A/C").as_path()
         ).execute(&mut vfs).unwrap();
 
         Virtual::<CopyOperation>::new(
-            sample_path.join("C").as_path(),
-            sample_path.as_path(),
+            chroot.join("C").as_path(),
+            chroot,
             Some(OsString::from("Z"))
         ).execute(&mut vfs).unwrap();
 
         Virtual::<RemoveOperation>::new(
-            sample_path.join("C").as_path()
+            chroot.join("C").as_path()
         ).execute(&mut vfs).unwrap();
 
         Virtual::<CopyOperation>::new(
-            sample_path.join("B").as_path(),
-            sample_path.as_path(),
+            chroot.join("B").as_path(),
+            chroot,
             Some(OsString::from("C"))
         ).execute(&mut vfs).unwrap();
 
         Virtual::<RemoveOperation>::new(
-            sample_path.join("B").as_path()
+            chroot.join("B").as_path()
         ).execute(&mut vfs).unwrap();
 
         Virtual::<CopyOperation>::new(
-            sample_path.join("Z").as_path(),
-            sample_path.as_path(),
+            chroot.join("Z").as_path(),
+            chroot,
             Some(OsString::from("B"))
         ).execute(&mut vfs).unwrap();
 
         Virtual::<RemoveOperation>::new(
-            sample_path.join("Z").as_path()
+            chroot.join("Z").as_path()
         ).execute(&mut vfs).unwrap();
 
-        let stated_b = Virtual(StatusQuery::new(sample_path.join("B").as_path()))
+        let stated_b = Virtual(StatusQuery::new(chroot.join("B").as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
             .unwrap();
 
-        assert_eq!(stated_b.as_identity(), sample_path.join("B"));
+        assert_eq!(stated_b.as_identity(), chroot.join("B"));
         assert_eq!(stated_b.to_kind(), VirtualKind::File);
-        assert_eq!(stated_b.as_source().unwrap(), sample_path.join("A/C"));
+        assert_eq!(stated_b.as_source().unwrap(), chroot.join("A/C"));
 
-        let stated_c = Virtual(StatusQuery::new(sample_path.join("C").as_path()))
+        let stated_c = Virtual(StatusQuery::new(chroot.join("C").as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
             .unwrap();
 
-        assert_eq!(stated_c.as_identity(), sample_path.join("C"));
+        assert_eq!(stated_c.as_identity(), chroot.join("C"));
         assert_eq!(stated_c.to_kind(), VirtualKind::Directory);
-        assert_eq!(stated_c.as_source().unwrap(), sample_path.join("B"));
+        assert_eq!(stated_c.as_source().unwrap(), chroot.join("B"));
 
-        let stated_z = Virtual(StatusQuery::new(sample_path.join("Z").as_path()))
+        let stated_z = Virtual(StatusQuery::new(chroot.join("Z").as_path()))
             .retrieve(&vfs)
             .unwrap();
 
-        assert!( ! stated_z.exists());
+        assert!(!stated_z.exists());
     }
 
     /*
@@ -354,66 +334,63 @@ mod virtual_file_system_tests {
         cp A/B/D A/
         rm A/D/G //<- should no appear
     */
-    pub fn _some_nesting(mut vfs: &mut VirtualFileSystem){
-        let sample_path = get_sample_path();
-
+    pub fn _some_nesting(mut vfs: &mut VirtualFileSystem, chroot: &Path) {
         Virtual::<CopyOperation>::new(
-            sample_path.join("C").as_path(),
-            sample_path.join("A").as_path(),
+            chroot.join("C").as_path(),
+            chroot.join("A").as_path(),
             None
         ).execute(&mut vfs).unwrap();
 
         Virtual::<CopyOperation>::new(
-            sample_path.join("A/C/D").as_path(),
-            sample_path.join("A").as_path(),
+            chroot.join("A/C/D").as_path(),
+            chroot.join("A").as_path(),
             None
         ).execute(&mut vfs).unwrap();
 
         Virtual::<RemoveOperation>::new(
-            sample_path.join("A/D/G").as_path()
+            chroot.join("A/D/G").as_path()
         ).execute(&mut vfs).unwrap();
 
-        let stated_ad = Virtual(StatusQuery::new(sample_path.join("A/D").as_path()))
+        let stated_ad = Virtual(StatusQuery::new(chroot.join("A/D").as_path()))
             .retrieve(&vfs)
             .unwrap()
             .virtual_identity()
             .unwrap();
 
-        assert_eq!(stated_ad.as_identity(), sample_path.join("A/D"));
+        assert_eq!(stated_ad.as_identity(), chroot.join("A/D"));
         assert_eq!(stated_ad.to_kind(), VirtualKind::Directory);
-        assert_eq!(stated_ad.as_source().unwrap(), sample_path.join("B/D"));
+        assert_eq!(stated_ad.as_source().unwrap(), chroot.join("B/D"));
 
-        let stated_adg = Virtual(StatusQuery::new(sample_path.join("A/D/G").as_path()))
+        let stated_adg = Virtual(StatusQuery::new(chroot.join("A/D/G").as_path()))
             .retrieve(&vfs)
             .unwrap();
 
-        assert!( ! stated_adg.exists());
+        assert!(!stated_adg.exists());
     }
 
 
     #[test]
-    pub fn apply_a_vfs_to_real_fs(){
-        let sample_path = get_sample_path();
+    pub fn apply_a_vfs_to_real_fs() {
+        let chroot = Samples::init_virtual_chroot("apply_a_vfs_to_real_fs");
         let mut vfs = VirtualFileSystem::new();
         let mut real_fs = RealFileSystem::new(true);
 
 
-        _no_dangling(&mut vfs);
-        _file_dir_interversion(&mut vfs);
-        _some_nesting(&mut vfs);
+        _no_dangling(&mut vfs, chroot.as_path());
+        _file_dir_interversion(&mut vfs, chroot.as_path());
+        _some_nesting(&mut vfs, chroot.as_path());
 
-        println!("VFS {:#?}", vfs);
-        let mut apply : ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::from_virtual_filesystem(&vfs).unwrap();
-        println!("REAL VERSION : {}", RealVersion::get());
-        apply.execute(&mut real_fs).unwrap();
-        println!("{:?}", apply)
+        let mut apply: ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::from_virtual_filesystem(&vfs).unwrap();
+//        println!("REAL VERSION : {}", RealVersion::get());
+//        apply.execute(&mut real_fs).unwrap();
+//        println!("REAL VERSION : {}", RealVersion::get());
+//        println!("{:?}", apply)
     }
 
     //Error testing
-
     #[test]
-    fn copy_or_move_directory_into_itself_must_not_be_allowed(){
-        let sample_path = get_sample_path();
+    fn copy_or_move_directory_into_itself_must_not_be_allowed() {
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let source = sample_path.join("B");
@@ -434,22 +411,21 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn copy_source_does_not_exists(){}
+    fn copy_source_does_not_exists() {}
 
     #[test]
-    fn copy_destination_does_not_exists(){}
+    fn copy_destination_does_not_exists() {}
 
     #[test]
-    fn create_already_exists(){}
+    fn create_already_exists() {}
 
     #[test]
-    fn remove_does_not_exists(){}
+    fn remove_does_not_exists() {}
 
     // No-Backwards tests
-
     #[test]
-    fn reset_empty(){
-        let sample_path = get_sample_path();
+    fn reset_empty() {
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         Virtual::<CreateOperation>::new(
@@ -476,37 +452,36 @@ mod virtual_file_system_tests {
     }
 
     #[test]
-    fn status_exists(){}
+    fn status_exists() {}
 
     #[test]
-    fn status_exists_virtually(){}
+    fn status_exists_virtually() {}
 
     #[test]
-    fn status_exists_through_virtual_parent(){}
+    fn status_exists_through_virtual_parent() {}
 
     #[test]
-    fn status_exists_not_exists(){}
+    fn status_exists_not_exists() {}
 
     #[test]
-    fn status_exists_deleted(){}
+    fn status_exists_deleted() {}
 
     #[test]
-    fn status_exists_replaced(){}
+    fn status_exists_replaced() {}
 
     #[test]
-    fn status_exists_removed_virtually(){}
+    fn status_exists_removed_virtually() {}
 
     #[test]
-    fn create(){}
+    fn create() {}
 
     #[test]
-    fn remove(){}
+    fn remove() {}
 
     #[test]
-    fn copy(){}
+    fn copy() {}
 
     #[test]
-    fn copy_with_rename(){
-
-    }
+    fn copy_with_rename() {}
 }
+

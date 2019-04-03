@@ -19,7 +19,6 @@
 
 use crate::{ VfsError };
 use crate::representation::{ VirtualDelta };
-use crate::operation::{WriteOperation, ApplyOperation};
 
 //TODO Wrapper Historized Vfs
 //TODO vfs should contain realfilesystem in the way that commands could operate over both

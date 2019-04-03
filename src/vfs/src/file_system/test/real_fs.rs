@@ -17,23 +17,16 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::fs::{ File, create_dir, remove_dir_all, remove_file };
-use std::io::Write;
-
-use std::env::current_exe;
-use std::path::{ PathBuf, Path };
-use std::ffi::{ OsString, OsStr };
-
 use crate::*;
-use crate::file_system::test::mock::VfsMock;
+use crate::file_system::test::sample::Samples;
 
 #[cfg(test)]
-mod real_file_system_tests {
+mod tests {
     use super::*;
 
     #[test]
     pub fn copy_file_to_file(){
-        let chroot = VfsMock::init_real_samples_idempotently("copy_file_to_file");
+        let chroot = Samples::init_real_chroot("copy_file_to_file");
         let fs = RealFileSystem::new(false);
 
         fs.copy_file_to_file(
@@ -53,7 +46,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn copy_file_into_directory(){
-        let chroot = VfsMock::init_real_samples_idempotently("copy_file_into_directory");
+        let chroot = Samples::init_real_chroot("copy_file_into_directory");
         let fs = RealFileSystem::new(false);
 
         fs.copy_file_into_directory(
@@ -72,7 +65,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn copy_directory_into_directory(){
-        let chroot = VfsMock::init_real_samples_idempotently("copy_directory_into_directory");
+        let chroot = Samples::init_real_chroot("copy_directory_into_directory");
         let fs = RealFileSystem::new(false);
 
         fs.create_directory(chroot.join("COPIED").as_path(), false);
@@ -95,7 +88,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn create_file(){
-        let chroot = VfsMock::init_real_samples_idempotently("create_file");
+        let chroot = Samples::init_real_chroot("create_file");
         let fs = RealFileSystem::new(false);
 
         fs.create_file(chroot.join("FILE").as_path()).unwrap();
@@ -106,7 +99,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn create_directory(){
-        let chroot = VfsMock::init_real_samples_idempotently("create_directory");
+        let chroot = Samples::init_real_chroot("create_directory");
         let fs = RealFileSystem::new(false);
 
         fs.create_directory(chroot.join("DIRECTORY").as_path(), false).unwrap();
@@ -120,7 +113,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn remove_file(){
-        let chroot = VfsMock::init_real_samples_idempotently("remove_file");
+        let chroot = Samples::init_real_chroot("remove_file");
         let fs = RealFileSystem::new(false);
 
         fs.remove_file(chroot.join("RDIR/RFILEA").as_path()).unwrap();
@@ -130,7 +123,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn remove_directory_recursively(){
-        let chroot = VfsMock::init_real_samples_idempotently("remove_directory");
+        let chroot = Samples::init_real_chroot("remove_directory");
         let fs = RealFileSystem::new(false);
 
         fs.remove_directory(chroot.join("RDIR").as_path()).unwrap();

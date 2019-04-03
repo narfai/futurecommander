@@ -27,6 +27,7 @@ use crate::representation::{ VirtualPath, VirtualKind };
 use crate::operation::{ WriteOperation };
 use crate::query::{ReadQuery, ReadDirQuery, StatusQuery, IdentityStatus, Entry };
 
+#[derive(Debug)]
 pub struct CopyOperation {
     source: PathBuf,
     destination: PathBuf,
@@ -151,10 +152,6 @@ impl WriteOperation<VirtualFileSystem> for Virtual<CopyOperation> {
         self.0.virtual_version
     }
     fn real_version(&self) -> Option<usize> { None }
-    fn debug(&self) -> String {
-        "Write Virtual CopyOperation".to_string()
-    }
-
 }
 
 impl WriteOperation<RealFileSystem> for Real<CopyOperation> {
@@ -163,8 +160,6 @@ impl WriteOperation<RealFileSystem> for Real<CopyOperation> {
             Some(name) => self.0.destination.join(name),
             None => self.0.destination.to_path_buf()
         };
-
-        println!("EXECUTE {:?}", &self.debug());
 
         match fs.copy(self.0.source.as_path(), new_destination.as_path(), &|_read| {}, true, false) {
             Ok(_) => { self.0.real_version = Some(RealVersion::increment()); Ok(()) },
@@ -176,8 +171,5 @@ impl WriteOperation<RealFileSystem> for Real<CopyOperation> {
         self.0.virtual_version
     }
     fn real_version(&self) -> Option<usize> { self.0.real_version }
-    fn debug(&self) -> String {
-        "Write Real CopyOperation".to_string()
-    }
 
 }

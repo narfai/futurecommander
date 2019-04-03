@@ -24,6 +24,7 @@ use crate::file_system::{ VirtualFileSystem, RealFileSystem, VirtualVersion, Rea
 use crate::operation::{ WriteOperation };
 use crate::query::{ReadQuery, StatusQuery, IdentityStatus };
 
+#[derive(Debug)]
 pub struct RemoveOperation {
     path: PathBuf,
     virtual_version: Option<usize>,
@@ -44,10 +45,6 @@ impl Virtual<RemoveOperation> {
 
 
 impl WriteOperation<VirtualFileSystem> for Virtual<RemoveOperation>{
-    fn debug(&self) -> String {
-        "Write Virtual RemoveOperation".to_string()
-    }
-
     fn execute(&mut self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         match Virtual(StatusQuery::new(self.0.path.as_path())).retrieve(&fs)? {
             IdentityStatus::Exists(virtual_identity)
@@ -106,7 +103,4 @@ impl WriteOperation<RealFileSystem> for Real<RemoveOperation>{
         self.0.virtual_version
     }
     fn real_version(&self) -> Option<usize> { self.0.real_version }
-    fn debug(&self) -> String {
-        "Write Real RemoveOperation".to_string()
-    }
 }

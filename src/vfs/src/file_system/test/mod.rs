@@ -18,11 +18,11 @@
  */
 
 #[cfg(test)]
-mod real_test;
+mod real_fs;
 
 #[cfg(test)]
-mod virtual_test;
+mod virtual_fs;
 
 #[cfg(test)]
-mod mock;
+mod sample;
 

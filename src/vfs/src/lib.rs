@@ -17,9 +17,6 @@
  * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg(test)]
-pub use self::mock::VfsMock;
-
 mod representation;
 mod file_system;
 mod operation;
@@ -33,6 +30,8 @@ pub use self::file_system::*;
 pub use self::operation::*;
 pub use self::query::*;
 
+#[derive(Debug)]
 pub struct Real<O>(pub O);
 
+#[derive(Debug)]
 pub struct Virtual<O>(pub O);

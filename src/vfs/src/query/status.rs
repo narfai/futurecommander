@@ -20,7 +20,7 @@
 use std::path::{ PathBuf, Path };
 
 use crate::{ Virtual, VfsError };
-use crate::representation::{ VirtualPath, VirtualKind, VirtualChildren };
+use crate::representation::{ VirtualPath, VirtualKind };
 use crate::file_system::{ VirtualFileSystem };
 use crate::query::{ ReadQuery, IdentityStatus };
 

@@ -17,13 +17,11 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::slice::Iter;
 use std::cmp::Ordering;
 use crate::{ Real, VfsError };
 use crate::file_system::{ VirtualFileSystem, RealFileSystem, RealVersion };
-use crate::representation::{ VirtualKind, VirtualPath };
+use crate::representation::{ VirtualPath };
 use crate::operation::{WriteOperation, CopyOperation, CreateOperation, RemoveOperation};
-use crate::query::{ReadQuery, StatusQuery};
 
 
 #[derive(Debug)]
@@ -98,10 +96,6 @@ impl ApplyOperation<Box<dyn WriteOperation<RealFileSystem>>> {
             }
         }
 
-        for op in apply.0.iter() {
-            println!("{:?}", op);
-        }
-
         Ok(apply)
     }
 }
@@ -134,7 +128,4 @@ impl <T> WriteOperation<T> for ApplyOperation<Box<dyn WriteOperation<T>>> {
 
     fn virtual_version(&self) -> Option<usize> { None }
     fn real_version(&self) -> Option<usize> { self.1 }
-    fn debug(&self) -> String {
-        format!("{} {}", "ApplyOperation".to_string(), self.0.len())
-    }
 }

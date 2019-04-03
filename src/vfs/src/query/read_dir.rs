@@ -21,7 +21,7 @@ use std::path::{ PathBuf, Path };
 
 use crate::{ Virtual, VfsError };
 
-use crate::representation::{ VirtualPath, VirtualKind, VirtualChildren, VirtualDelta };
+use crate::representation::{ VirtualPath, VirtualKind, VirtualChildren };
 use crate::file_system::{ VirtualFileSystem };
 use crate::query::{ReadQuery, StatusQuery, NodeIterator };
 

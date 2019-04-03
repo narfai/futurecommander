@@ -31,17 +31,19 @@ pub use self::create::CreateOperation;
 mod apply;
 pub use self::apply::ApplyOperation;
 
+//use crate::file_system::{ VirtualFileSystem, RealFileSystem };
+//use crate::{ Virtual, Real };
+
 pub trait WriteOperation <F: ?Sized> {
     fn execute(&mut self, fs: &mut F) -> Result<(), crate::errors::VfsError>;
     fn virtual_version(&self) -> Option<usize>;
     fn real_version(&self) -> Option<usize>;
-    fn debug(&self) -> String;
 }
 
-impl <F> std::fmt::Debug for dyn WriteOperation <F> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.debug())
-    }
-}
+//impl <F> std::fmt::Debug for dyn WriteOperation <F> {
+//    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//        write!(f, "{:?}", &self)
+//    }
+//}
 
 

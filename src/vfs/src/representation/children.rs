@@ -20,8 +20,6 @@
 use std::path::{ Path };
 use std::ops::{ Add, Sub };
 
-use std::fs::ReadDir;
-
 use std::collections::hash_set::Iter as HashSetIter;
 use std::collections::hash_set::IntoIter as HashSetIntoIter;
 use std::collections::{ HashSet };

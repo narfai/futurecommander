@@ -17,10 +17,8 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::hash::{ Hash, Hasher };
-use std::collections::hash_map::DefaultHasher;
-use std::path::{ Path, PathBuf };
-use std::ffi::{ OsStr, OsString };
+use std::path::{ PathBuf };
+use std::ffi::{ OsStr };
 
 use crate::*;
 

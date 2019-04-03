@@ -38,9 +38,9 @@ https://github.com/sharkdp/fd
 ## Rust Language
 
 https://rust-lang-nursery.github.io/edition-guide/rust-2018/index.html
+https://doc.rust-lang.org/nightly/edition-guide/rust-2018
 https://doc.rust-lang.org/std/collections/struct.BTreeMap.html
 https://doc.rust-lang.org/reference/index.html
-https://rust-lang-nursery.github.io/edition-guide/rust-2018/index.html
 https://doc.rust-lang.org/rust-by-example/index.html
 https://github.com/mre/idiomatic-rust
 
