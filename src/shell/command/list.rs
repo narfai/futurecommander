@@ -30,7 +30,7 @@ pub struct ListCommand {}
 impl Command for ListCommand {
     const NAME : &'static str = "ls";
 
-    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
         Ok(
             Box::new(
                 InitializedListCommand {

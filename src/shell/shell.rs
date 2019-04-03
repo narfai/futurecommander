@@ -115,7 +115,7 @@ impl Shell {
         }
     }
 
-    fn cd(&mut self, matches: &ArgMatches) -> Result<(), CommandError> {
+    fn cd(&mut self, matches: &ArgMatches<'_>) -> Result<(), CommandError> {
         match matches.value_of("path") {
             Some(string_path) => {
                 let path = absolute(self.cwd.as_path(), Path::new(string_path));

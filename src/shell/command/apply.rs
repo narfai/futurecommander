@@ -28,7 +28,7 @@ pub struct ApplyCommand;
 impl Command for ApplyCommand {
     const NAME : &'static str = "apply";
 
-    fn new(_cwd: &Path, _args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+    fn new(_cwd: &Path, _args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
         Ok(
             Box::new(
                 InitializedApplyCommand
@@ -40,7 +40,7 @@ impl Command for ApplyCommand {
 pub struct InitializedApplyCommand;
 
 impl InitializedCommand for InitializedApplyCommand {
-    fn execute(&self, mut vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+    fn execute(&self, _vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
         unimplemented!()
     }
 }

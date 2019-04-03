@@ -29,7 +29,7 @@ pub struct NewFileCommand {}
 impl Command for NewFileCommand {
     const NAME : &'static str = "touch";
 
-    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
         Ok(
             Box::new(
                 InitializedNewFileCommand {

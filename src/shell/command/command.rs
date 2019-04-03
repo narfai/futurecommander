@@ -29,9 +29,9 @@ use crate::command::errors::CommandError;
 pub trait Command {
     const NAME : &'static str;
 
-    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError>;
+    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError>;
 
-    fn extract_path_from_args(cwd: &Path, args: &ArgMatches, key: &str) -> Result<PathBuf, CommandError> {
+    fn extract_path_from_args(cwd: &Path, args: &ArgMatches<'_>, key: &str) -> Result<PathBuf, CommandError> {
         match args.value_of(key) {
             Some(str_path) => {
                 Ok(normalize(&cwd.join(Path::new(str_path.trim()))))
@@ -40,7 +40,7 @@ pub trait Command {
         }
     }
 
-    fn extract_name_and_destination(cwd: &Path, args: &ArgMatches) -> Result<(Option<OsString>, PathBuf), CommandError>{
+    fn extract_name_and_destination(cwd: &Path, args: &ArgMatches<'_>) -> Result<(Option<OsString>, PathBuf), CommandError>{
         match args.value_of("destination") {
             Some(str_path) =>
                 match str_path.chars().last().unwrap() == MAIN_SEPARATOR {

@@ -29,7 +29,7 @@ pub struct CopyCommand {}
 impl Command for CopyCommand {
     const NAME : &'static str = "copy";
 
-    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
         let source = Self::extract_path_from_args(cwd, args, "source")?;
         let (name, destination) = Self::extract_name_and_destination(cwd, args)?;
 

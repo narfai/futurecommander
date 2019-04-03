@@ -30,7 +30,7 @@ pub fn absolute(cwd: &Path, path: &Path) -> PathBuf {
 * This code will be removed when os::make_absolute will be marked as stable
 */
 pub fn normalize(p: &Path) -> PathBuf {
-    let mut stack: Vec<Component> = vec![];
+    let mut stack: Vec<Component<'_>> = vec![];
 
     for component in p.components() {
         match component {

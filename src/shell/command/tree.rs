@@ -27,7 +27,7 @@ pub struct TreeCommand {}
 impl Command for TreeCommand {
     const NAME : &'static str = "tree";
 
-    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
         Ok(
             Box::new(
                 InitializedTreeCommand {

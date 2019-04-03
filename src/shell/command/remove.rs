@@ -29,7 +29,7 @@ pub struct RemoveCommand {}
 impl Command for RemoveCommand {
     const NAME : &'static str = "rm";
 
-    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
         let path = Self::extract_path_from_args(cwd, args, "path")?;
         for ancestor in cwd.ancestors() {
             if path == ancestor {

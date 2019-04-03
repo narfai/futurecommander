@@ -39,7 +39,7 @@ impl From<VfsError> for CommandError {
 }
 
 impl fmt::Display for CommandError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CommandError::VfsError(error) => write!(f, "Vfs Error: {}", error),
             CommandError::ArgumentMissing(command, argument, usage) => write!(f, "{} missing {} argument \n {}", command, argument, usage),
@@ -52,7 +52,7 @@ impl fmt::Display for CommandError {
 }
 
 impl error::Error for CommandError {
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match self {
             CommandError::VfsError(err) => Some(err),
             _ => None

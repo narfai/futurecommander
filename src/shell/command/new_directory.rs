@@ -29,7 +29,7 @@ pub struct NewDirectoryCommand {}
 impl Command for NewDirectoryCommand {
     const NAME : &'static str = "mkdir";
 
-    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
         Ok(
             Box::new(
                 InitializedNewDirectoryCommand {

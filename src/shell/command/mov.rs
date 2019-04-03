@@ -30,7 +30,7 @@ pub struct MoveCommand {}
 impl Command for MoveCommand {
     const NAME : &'static str = "mv";
 
-    fn new(cwd: &Path, args: &ArgMatches) -> Result<Box<InitializedCommand>, CommandError> {
+    fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Box<dyn InitializedCommand>, CommandError> {
         let source = Self::extract_path_from_args(cwd, args, "source")?;
         for ancestor in cwd.ancestors() {
             if source.as_path() == ancestor {
