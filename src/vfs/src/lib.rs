@@ -18,9 +18,6 @@
  */
 
 #[cfg(test)]
-mod mock;
-
-#[cfg(test)]
 pub use self::mock::VfsMock;
 
 mod representation;

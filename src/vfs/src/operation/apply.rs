@@ -29,7 +29,7 @@ use crate::query::{ReadQuery, StatusQuery};
 #[derive(Debug)]
 pub struct ApplyOperation<T>(Vec<T>, Option<usize>);
 
-impl <T> ApplyOperation<Box<WriteOperation<T>>> {
+impl <T> ApplyOperation<Box<dyn WriteOperation<T>>> {
     pub fn new() -> Self {
         ApplyOperation(Vec::<Box<WriteOperation<T>>>::new(), None)
     }
@@ -40,8 +40,8 @@ impl <T> ApplyOperation<Box<WriteOperation<T>>> {
 }
 
 impl ApplyOperation<Box<WriteOperation<RealFileSystem>>> {
-    pub fn from_virtual_filesystem(vfs: &VirtualFileSystem) -> Result<ApplyOperation<Box<WriteOperation<RealFileSystem>>>, VfsError> {
-        let mut apply = ApplyOperation::<Box<WriteOperation<RealFileSystem>>>::new();
+    pub fn from_virtual_filesystem(vfs: &VirtualFileSystem) -> Result<ApplyOperation<Box<dyn WriteOperation<RealFileSystem>>>, VfsError> {
+        let mut apply = ApplyOperation::<Box<dyn WriteOperation<RealFileSystem>>>::new();
 
         for add_identity in vfs.virtual_state()?.iter() {
             match add_identity.as_source() {
@@ -106,10 +106,7 @@ impl ApplyOperation<Box<WriteOperation<RealFileSystem>>> {
     }
 }
 
-impl <T> WriteOperation<T> for ApplyOperation<Box<WriteOperation<T>>> {
-    fn debug(&self) -> String {
-        format!("{} {}", "ApplyOperation".to_string(), self.0.len())
-    }
+impl <T> WriteOperation<T> for ApplyOperation<Box<dyn WriteOperation<T>>> {
     fn execute(&mut self, fs: &mut T) -> Result<(), VfsError> {
         self.0.sort_by(
             |operation_a , operation_b|
@@ -125,6 +122,9 @@ impl <T> WriteOperation<T> for ApplyOperation<Box<WriteOperation<T>>> {
 
 
         for operation in self.0.iter_mut() {
+            if operation.virtual_version().is_none() {
+                continue
+            }
             println!("{:?}", operation);
             operation.execute(fs)?
         }
@@ -134,4 +134,7 @@ impl <T> WriteOperation<T> for ApplyOperation<Box<WriteOperation<T>>> {
 
     fn virtual_version(&self) -> Option<usize> { None }
     fn real_version(&self) -> Option<usize> { self.1 }
+    fn debug(&self) -> String {
+        format!("{} {}", "ApplyOperation".to_string(), self.0.len())
+    }
 }
