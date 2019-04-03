@@ -17,6 +17,12 @@
  * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+pub use self::mock::VfsMock;
+
 mod representation;
 mod file_system;
 mod operation;

@@ -82,10 +82,6 @@ impl Real<CreateOperation> {
 }
 
 impl WriteOperation<RealFileSystem> for Real<CreateOperation>{
-    fn debug(&self) -> String {
-        "Write Real CreateOperation".to_string()
-    }
-
     fn execute(&mut self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         match fs.create(self.0.path.as_path(), false) {
             Ok(_) => { self.0.real_version = Some(RealVersion::increment()); Ok(()) },
@@ -97,4 +93,8 @@ impl WriteOperation<RealFileSystem> for Real<CreateOperation>{
         self.0.virtual_version
     }
     fn real_version(&self) -> Option<usize> { self.0.real_version }
+    fn debug(&self) -> String {
+        "Write Real CreateOperation".to_string()
+    }
+
 }

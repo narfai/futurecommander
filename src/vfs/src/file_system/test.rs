@@ -514,34 +514,6 @@ mod virtual_file_system_tests {
     }
 }
 
-pub fn init_real_samples_idempotently(arbitrary_identifier: &str) -> PathBuf {
-    let chroot = current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap()
-        .join(Path::new("samples").join(format!("real_tests_{}", arbitrary_identifier)));
-
-    if chroot.exists() {
-        remove_dir_all(chroot.as_path()).unwrap();
-    }
-
-    create_dir(chroot.as_path()).unwrap();
-    assert!(chroot.exists());
-
-    create_dir(chroot.join("RDIR")).unwrap();
-    assert!(chroot.join("RDIR").exists());
-
-    let mut file = File::create(chroot.join("RDIR").join("RFILEA")).unwrap();
-    file.write_all(b"[A]Gummies candy biscuit jelly cheesecake. Liquorice gingerbread oat cake marzipan gummies muffin. Sweet liquorice dessert. Caramels chupa chups lollipop dragee gummies sesame snaps. Tootsie roll lollipop chocolate cake chocolate jelly jelly-o sesame snaps gummies. Topping topping bear claw candy canes bonbon muffin cupcake. Tart croissant liquorice croissant tootsie roll cupcake powder icing. Dessert souffle cake ice cream pie cookie. Brownie cotton candy pudding ice cream pudding cotton candy gingerbread gummi bears. Dragee biscuit croissant chocolate bar cheesecake marshmallow wafer macaroon. Sweet roll chupa chups gummi bears oat cake halvah marshmallow souffle pie. Jujubes pastry fruitcake macaroon jelly lemon drops chocolate cake chocolate cake."
-    ).unwrap();
-    assert!(chroot.join("RDIR").join("RFILEA").exists());
-
-    let mut file = File::create(chroot.join("RDIR").join("RFILEB")).unwrap();
-
-    file.write_all(b"[B]Gummies candy biscuit jelly cheesecake. Liquorice gingerbread oat cake marzipan gummies muffin. Sweet liquorice dessert. Caramels chupa chups lollipop dragee gummies sesame snaps. Tootsie roll lollipop chocolate cake chocolate jelly jelly-o sesame snaps gummies. Topping topping bear claw candy canes bonbon muffin cupcake. Tart croissant liquorice croissant tootsie roll cupcake powder icing. Dessert souffle cake ice cream pie cookie. Brownie cotton candy pudding ice cream pudding cotton candy gingerbread gummi bears. Dragee biscuit croissant chocolate bar cheesecake marshmallow wafer macaroon. Sweet roll chupa chups gummi bears oat cake halvah marshmallow souffle pie. Jujubes pastry fruitcake macaroon jelly lemon drops chocolate cake chocolate cake."
-    ).unwrap();
-    assert!(chroot.join("RDIR").join("RFILEB").exists());
-
-    chroot
-}
-
 
 #[cfg(test)]
 mod real_file_system_tests {
@@ -549,7 +521,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn copy_file_to_file(){
-        let chroot = init_real_samples_idempotently("copy_file_to_file");
+        let chroot = VfsMock::init_real_samples_idempotently("copy_file_to_file");
         let fs = RealFileSystem::new(false);
 
         fs.copy_file_to_file(
@@ -569,7 +541,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn copy_file_into_directory(){
-        let chroot = init_real_samples_idempotently("copy_file_into_directory");
+        let chroot = VfsMock::init_real_samples_idempotently("copy_file_into_directory");
         let fs = RealFileSystem::new(false);
 
         fs.copy_file_into_directory(
@@ -588,7 +560,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn copy_directory_into_directory(){
-        let chroot = init_real_samples_idempotently("copy_directory_into_directory");
+        let chroot = VfsMock::init_real_samples_idempotently("copy_directory_into_directory");
         let fs = RealFileSystem::new(false);
 
         fs.create_directory(chroot.join("COPIED").as_path(), false);
@@ -611,7 +583,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn create_file(){
-        let chroot = init_real_samples_idempotently("create_file");
+        let chroot = VfsMock::init_real_samples_idempotently("create_file");
         let fs = RealFileSystem::new(false);
 
         fs.create_file(chroot.join("FILE").as_path()).unwrap();
@@ -622,7 +594,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn create_directory(){
-        let chroot = init_real_samples_idempotently("create_directory");
+        let chroot = VfsMock::init_real_samples_idempotently("create_directory");
         let fs = RealFileSystem::new(false);
 
         fs.create_directory(chroot.join("DIRECTORY").as_path(), false).unwrap();
@@ -636,7 +608,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn remove_file(){
-        let chroot = init_real_samples_idempotently("remove_file");
+        let chroot = VfsMock::init_real_samples_idempotently("remove_file");
         let fs = RealFileSystem::new(false);
 
         fs.remove_file(chroot.join("RDIR/RFILEA").as_path()).unwrap();
@@ -646,7 +618,7 @@ mod real_file_system_tests {
 
     #[test]
     pub fn remove_directory_recursively(){
-        let chroot = init_real_samples_idempotently("remove_directory");
+        let chroot = VfsMock::init_real_samples_idempotently("remove_directory");
         let fs = RealFileSystem::new(false);
 
         fs.remove_directory(chroot.join("RDIR").as_path()).unwrap();

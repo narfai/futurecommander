@@ -158,10 +158,6 @@ impl WriteOperation<VirtualFileSystem> for Virtual<CopyOperation> {
 }
 
 impl WriteOperation<RealFileSystem> for Real<CopyOperation> {
-    fn debug(&self) -> String {
-        "Write Real CopyOperation".to_string()
-    }
-
     fn execute(&mut self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         let new_destination = match &self.0.name {
             Some(name) => self.0.destination.join(name),
@@ -180,4 +176,8 @@ impl WriteOperation<RealFileSystem> for Real<CopyOperation> {
         self.0.virtual_version
     }
     fn real_version(&self) -> Option<usize> { self.0.real_version }
+    fn debug(&self) -> String {
+        "Write Real CopyOperation".to_string()
+    }
+
 }

@@ -95,10 +95,6 @@ impl Real<RemoveOperation> {
 }
 
 impl WriteOperation<RealFileSystem> for Real<RemoveOperation>{
-    fn debug(&self) -> String {
-        "Write Real RemoveOperation".to_string()
-    }
-
     fn execute(&mut self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         match fs.remove(self.0.path.as_path()) {
             Ok(_) => { self.0.real_version = Some(RealVersion::increment()); Ok(()) },
@@ -110,4 +106,7 @@ impl WriteOperation<RealFileSystem> for Real<RemoveOperation>{
         self.0.virtual_version
     }
     fn real_version(&self) -> Option<usize> { self.0.real_version }
+    fn debug(&self) -> String {
+        "Write Real RemoveOperation".to_string()
+    }
 }
