@@ -68,7 +68,7 @@ mod tests {
         let chroot = Samples::init_real_chroot("copy_directory_into_directory");
         let fs = RealFileSystem::new(false);
 
-        fs.create_directory(chroot.join("COPIED").as_path(), false);
+        fs.create_directory(chroot.join("COPIED").as_path(), false).unwrap();
         fs.copy_directory_into_directory(
             chroot.join("RDIR").as_path(),
             chroot.join("COPIED").as_path(),

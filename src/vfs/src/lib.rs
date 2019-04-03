@@ -29,9 +29,3 @@ pub use self::representation::*;
 pub use self::file_system::*;
 pub use self::operation::*;
 pub use self::query::*;
-
-#[derive(Debug)]
-pub struct Real<O>(pub O);
-
-#[derive(Debug)]
-pub struct Virtual<O>(pub O);

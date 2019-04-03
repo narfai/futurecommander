@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{VirtualFileSystem, Virtual, CopyOperation, WriteOperation };
+use vfs::{VirtualFileSystem, CopyOperation, WriteOperation };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::command::{ Command, InitializedCommand };
@@ -53,11 +53,11 @@ pub struct InitializedCopyCommand {
 
 impl InitializedCommand for InitializedCopyCommand {
     fn execute(&self, mut vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match Virtual::<CopyOperation>::new(
+        match CopyOperation::new(
                 self.source.as_path(),
                 self.destination.as_path(),
                 self.name.clone()
-        ).execute(&mut vfs) {
+        ).execute(vfs) {
                 Ok(_) => Ok(()),
                 Err(error) => Err(CommandError::from(error))
         }

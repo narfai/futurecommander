@@ -44,14 +44,14 @@ mod operation_test {
         );
     }
 
-    #[test]
-    fn apply_virtual(){
-        let _apply : ApplyOperation<Box<WriteOperation<VirtualFileSystem>>> = ApplyOperation::new();
-
-    }
-
-    #[test]
-    fn apply_real(){
-        let _apply : ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::new();
-    }
+//    #[test]
+//    fn apply_virtual(){
+//        let _apply : ApplyOperation<Box<WriteOperation<VirtualFileSystem>>> = ApplyOperation::new();
+//
+//    }
+//
+//    #[test]
+//    fn apply_real(){
+//        let _apply : ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::new();
+//    }
 }

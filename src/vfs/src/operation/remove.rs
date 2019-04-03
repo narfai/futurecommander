@@ -18,47 +18,40 @@
  */
 
 use std::path::{ PathBuf, Path };
-use crate::{ Virtual, Real, VfsError };
+use crate::{ VfsError };
 
-use crate::file_system::{ VirtualFileSystem, RealFileSystem, VirtualVersion, RealVersion };
+use crate::file_system::{ VirtualFileSystem, RealFileSystem };
 use crate::operation::{ WriteOperation };
 use crate::query::{ReadQuery, StatusQuery, IdentityStatus };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RemoveOperation {
-    path: PathBuf,
-    virtual_version: Option<usize>,
-    real_version: Option<usize>
+    path: PathBuf
 }
 
-impl Virtual<RemoveOperation> {
-    pub fn new(path: &Path) -> Virtual<RemoveOperation> {
-        Virtual(
-            RemoveOperation {
-                path: path.to_path_buf(),
-                virtual_version: None,
-                real_version: None
-            }
-        )
+impl RemoveOperation {
+    pub fn new(path: &Path) -> RemoveOperation {
+        RemoveOperation {
+            path: path.to_path_buf()
+        }
     }
 }
 
-
-impl WriteOperation<VirtualFileSystem> for Virtual<RemoveOperation>{
-    fn execute(&mut self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        match Virtual(StatusQuery::new(self.0.path.as_path())).retrieve(&fs)? {
+impl WriteOperation<VirtualFileSystem> for RemoveOperation {
+    fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
+        match StatusQuery::new(self.path.as_path()).retrieve(&fs)? {
             IdentityStatus::Exists(virtual_identity)
             | IdentityStatus::Replaced(virtual_identity)
             | IdentityStatus::ExistsThroughVirtualParent(virtual_identity) => {
                 fs.mut_sub_state().attach_virtual(&virtual_identity)?;
-                self.0.virtual_version = Some(VirtualVersion::increment());
             },
             IdentityStatus::ExistsVirtually(virtual_identity) => {
                 fs.mut_add_state().detach(virtual_identity.as_identity())?;
                 if let Some(source) = virtual_identity.as_source() {
-                    match Virtual(StatusQuery::new(source)).retrieve(&fs)? {
+                    match StatusQuery::new(source).retrieve(&fs)? {
                         IdentityStatus::Replaced(virtual_path) => {
                             if fs.add_state().is_directory_empty(virtual_path.as_identity()) {
+                                println!("Replacing : cleanup vfs");//TODO remove debug
                                 fs.mut_add_state().detach(virtual_path.as_identity())?;
                             }
                         }
@@ -67,40 +60,19 @@ impl WriteOperation<VirtualFileSystem> for Virtual<RemoveOperation>{
                 }
             }
             IdentityStatus::NotExists | IdentityStatus::Removed | IdentityStatus::RemovedVirtually =>
-                return Err(VfsError::DoesNotExists(self.0.path.to_path_buf()))
+                return Err(VfsError::DoesNotExists(self.path.to_path_buf()))
             ,
         }
         Ok(())
     }
-
-    fn virtual_version(&self) -> Option<usize> {
-        self.0.virtual_version
-    }
-    fn real_version(&self) -> Option<usize> { None }
 }
 
-impl Real<RemoveOperation> {
-    pub fn new(path: &Path, virtual_version: Option<usize>) -> Real<RemoveOperation> {
-        Real(
-            RemoveOperation {
-                path: path.to_path_buf(),
-                virtual_version,
-                real_version: None
-            }
-        )
-    }
-}
 
-impl WriteOperation<RealFileSystem> for Real<RemoveOperation>{
-    fn execute(&mut self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
-        match fs.remove(self.0.path.as_path()) {
-            Ok(_) => { self.0.real_version = Some(RealVersion::increment()); Ok(()) },
+impl WriteOperation<RealFileSystem> for RemoveOperation{
+    fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
+        match fs.remove(self.path.as_path()) {
+            Ok(_) => Ok(()),
             Err(error) => Err(VfsError::from(error))
         }
     }
-
-    fn virtual_version(&self) -> Option<usize> {
-        self.0.virtual_version
-    }
-    fn real_version(&self) -> Option<usize> { self.0.real_version }
 }

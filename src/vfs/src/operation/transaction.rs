@@ -17,36 +17,20 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use crate::{ VfsError };
+use crate::operation::WriteOperation;
 
-static VIRTUAL_VERSION: AtomicUsize = AtomicUsize::new(0);
-static REAL_VERSION: AtomicUsize = AtomicUsize::new(0);
+pub struct Transaction<T: ?Sized>(Vec<Box<dyn WriteOperation<T>>>);
 
-
-pub struct VirtualVersion;
-
-
-impl VirtualVersion {
-    pub fn increment() -> usize {
-        VIRTUAL_VERSION.fetch_add(1, Ordering::SeqCst);
-        VIRTUAL_VERSION.load(Ordering::SeqCst)
+impl <T> Transaction<T> {
+    pub fn apply (&self, fs: &mut T) -> Result<(), VfsError>{
+        for operation in self.0.iter() {
+             operation.execute(fs)?
+        }
+        Ok(())
     }
 
-    pub fn get() -> usize {
-        VIRTUAL_VERSION.load(Ordering::SeqCst)
-    }
-}
-
-pub struct RealVersion;
-
-
-impl RealVersion {
-    pub fn increment() -> usize {
-        REAL_VERSION.fetch_add(1, Ordering::SeqCst);
-        VIRTUAL_VERSION.load(Ordering::SeqCst)
-    }
-
-    pub fn get() -> usize {
-        REAL_VERSION.load(Ordering::SeqCst)
+    pub fn add_operation(&mut self, operation: Box<dyn WriteOperation<T>>) {
+        self.0.push(operation);
     }
 }

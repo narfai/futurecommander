@@ -17,7 +17,7 @@
  * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::fs::{ File, create_dir, remove_dir_all, remove_file };
+use std::fs::{ File, rename, create_dir, remove_dir_all, remove_file };
 
 use std::io::prelude::*;
 use std::io::{ BufReader, BufWriter, Error as IoError, ErrorKind };
@@ -26,7 +26,7 @@ const READ_BUFFER_SIZE: usize = 8;
 const WRITE_BUFFER_SIZE: usize = 8;
 
 use std::path::{ Path, Ancestors };
-//use crate::*;
+use std::ffi::OsStr;
 
 pub struct RealFileSystem {
     dry: bool
@@ -57,7 +57,7 @@ impl RealFileSystem {
         Ok(())
     }
 
-    pub fn remove_directory(&self, path: &Path) -> Result<(), IoError> {
+    pub fn remove_directory(&self, path: &Path) -> Result<(), IoError> {//TODO remove_dir if force true
         if self.dry {
             println!("DRY : remove directory recursivelly {:?}", path);
         } else {
@@ -111,8 +111,9 @@ impl RealFileSystem {
     }
 
     pub fn copy(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
+//        println!("src : {:?} is_dir {}, dst: {:?} is dir {}", src, src.is_dir(), dst, dst.is_dir());
         if ! src.exists() {
-            return Err(IoError::new(ErrorKind::InvalidData, format!("Source does not exists {:?}", src)))
+            return Err(IoError::new(ErrorKind::InvalidData, format!("Copy : source does not exists {:?}", src)))
         }
 
         match src.is_dir() { //TODO @symlink
@@ -127,22 +128,22 @@ impl RealFileSystem {
 
     pub fn copy_file_into_directory(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), overwrite: bool) -> Result<usize, IoError> {
         if ! src.is_file() {
-            return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a file {:?}", src)));
+            return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : source is not a file {:?}", src)));
         }
 
         if ! dst.exists() {
-            return Err(IoError::new(ErrorKind::InvalidData, format!("Destination does not exists {:?}", dst)));
+            return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : destination does not exists {:?}", dst)));
         } else if ! dst.is_dir(){
-            return Err(IoError::new(ErrorKind::InvalidData, format!("Destination is not a directory {:?}", dst)));
+            return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : destination is not a directory {:?}", dst)));
         }
 
         let new_destination = match src.file_name() {
             Some(file_name) => dst.join(file_name),
-            None => return Err(IoError::new(ErrorKind::InvalidData, format!("Source file name is a dot path {:?}", src)))
+            None => return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : source file name is a dot path {:?}", src)))
         };
 
         if new_destination.exists() && ! overwrite {
-            return Err(IoError::new(ErrorKind::InvalidData, format!("New destination already exists : {:?}", new_destination)));
+            return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : new destination already exists : {:?}", new_destination)));
         }
 
         self.copy_file_to_file(src, new_destination.as_path(), on_read, overwrite)
@@ -150,15 +151,16 @@ impl RealFileSystem {
 
     pub fn copy_directory_into_directory(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
         if ! src.is_dir() { //TODO @symlink
-            return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a directory {:?}", src)))
+            return Err(IoError::new(ErrorKind::InvalidData, format!("Directory to directory : source is not a directory {:?}", src)))
         }
 
         if dst.exists() {
             if ! dst.is_dir() { //TODO @symlink
-                return Err(IoError::new(ErrorKind::InvalidData, format!("Destination is not a directory {:?}", dst)));
+                return Err(IoError::new(ErrorKind::InvalidData, format!("Directory to directory : destination is not a directory {:?}", dst)));
             }
         } else {
-            return Err(IoError::new(ErrorKind::InvalidData, format!("Destination does not exists {:?}", dst)));
+            self.create_directory(dst, false)?;
+//            return Err(IoError::new(ErrorKind::InvalidData, format!("Directory to directory : destination does not exists {:?}", dst)));
         }
 
         let mut read : usize = 0;
@@ -168,7 +170,7 @@ impl RealFileSystem {
             let new_destination = dst.join(child.strip_prefix(src).unwrap());
 
             if new_destination.exists() && ! merge {
-                return Err(IoError::new(ErrorKind::InvalidData, "New destination already exists - no merge"));
+                return Err(IoError::new(ErrorKind::InvalidData, "Directory to directory : new destination already exists [ no merge ]"));
             }
 
             if new_destination.is_dir() {
@@ -236,5 +238,17 @@ impl RealFileSystem {
                 writer.flush()
                     .and(Ok(read))
             })
+    }
+
+    pub fn rename(&self, path: &Path, new_name: &OsStr, overwrite: bool) -> Result<(), IoError> {
+        unimplemented!()
+    }
+
+    pub fn rename_file(&self, path: &Path, new_name: &OsStr) -> Result<(), IoError> {
+        unimplemented!()
+    }
+
+    pub fn rename_directory(&self, path: &Path, new_name: &OsStr) -> Result<(), IoError> {
+        unimplemented!()
     }
 }

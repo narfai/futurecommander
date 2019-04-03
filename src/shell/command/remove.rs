@@ -20,7 +20,7 @@
 #[allow(unused_imports)]
 use vfs::WriteOperation;
 
-use vfs::{ VirtualFileSystem, RemoveOperation, Virtual };
+use vfs::{ VirtualFileSystem, RemoveOperation };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -55,8 +55,8 @@ pub struct InitializedRemoveCommand {
 }
 
 impl InitializedCommand for InitializedRemoveCommand {
-    fn execute(&self, mut vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match Virtual::<RemoveOperation>::new(self.path.as_path()).execute(&mut vfs) {
+    fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+        match RemoveOperation::new(self.path.as_path()).execute(vfs) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }

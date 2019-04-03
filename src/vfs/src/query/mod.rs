@@ -29,6 +29,8 @@ pub use self::entry::{ NodeIterator, Entry, Node, EntryCollection };
 mod identity_status;
 pub use self::identity_status::{ IdentityStatus };
 
-pub trait ReadQuery<F, T> {
-    fn retrieve(&self, fs: F) -> Result<T, crate::errors::VfsError>;
+pub trait ReadQuery<F> {
+    type Result;
+
+    fn retrieve(&self, fs: F) -> Result<Self::Result, crate::errors::VfsError>;
 }

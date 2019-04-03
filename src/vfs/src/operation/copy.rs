@@ -20,33 +20,27 @@
 use std::path::{ PathBuf, Path };
 use std::ffi::OsString;
 
-use crate::{ Virtual, Real, VfsError };
+use crate::{ VfsError };
 
-use crate::file_system::{ VirtualFileSystem, RealFileSystem, VirtualVersion, RealVersion };
+use crate::file_system::{ VirtualFileSystem, RealFileSystem };
 use crate::representation::{ VirtualPath, VirtualKind };
 use crate::operation::{ WriteOperation };
 use crate::query::{ReadQuery, ReadDirQuery, StatusQuery, IdentityStatus, Entry };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CopyOperation {
     source: PathBuf,
     destination: PathBuf,
-    name: Option<OsString>,
-    virtual_version: Option<usize>,
-    real_version: Option<usize>
+    name: Option<OsString>
 }
 
-impl Virtual<CopyOperation> {
-    pub fn new(source: &Path, destination: &Path, name: Option<OsString>) -> Virtual<CopyOperation> {
-        Virtual(
-            CopyOperation {
-                source: source.to_path_buf(),
-                destination: destination.to_path_buf(),
-                name,
-                virtual_version: None,
-                real_version: None
-            }
-        )
+impl CopyOperation {
+    pub fn new(source: &Path, destination: &Path, name: Option<OsString>) -> CopyOperation {
+        CopyOperation {
+            source: source.to_path_buf(),
+            destination: destination.to_path_buf(),
+            name
+        }
     }
 
     fn create_new_virtual_identity(source: &VirtualPath, destination: &VirtualPath, with_name: &Option<OsString>) -> Result<VirtualPath, VfsError> {
@@ -67,19 +61,19 @@ impl Virtual<CopyOperation> {
         Ok(new_identity)
     }
 
-    fn copy_virtual_children(mut fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
+    fn copy_virtual_children(fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
         match identity.to_kind() {
             VirtualKind::Directory => {
-                let read_dir = Virtual(ReadDirQuery::new(source.as_identity()));
+                let read_dir = ReadDirQuery::new(source.as_identity());
                 for child in read_dir.retrieve(&fs)? {
-                    match Virtual(StatusQuery::new(child.path())).retrieve(&fs)? {
+                    match StatusQuery::new(child.path()).retrieve(&fs)? {
                         IdentityStatus::ExistsVirtually(_) =>
-                            Virtual::<CopyOperation>::new(
+                            CopyOperation::new(
                                 child.path(),
                                 identity.as_identity(),
                                 None
-
-                        ).execute(&mut fs)?,
+                            ).execute(fs)?
+                        ,
                         _ => {}
                     };
                 }
@@ -90,7 +84,7 @@ impl Virtual<CopyOperation> {
     }
 
     fn retrieve_virtual_identity(fs: &VirtualFileSystem, path: &Path) -> Result<VirtualPath, VfsError> {
-        let stat = Virtual(StatusQuery::new(path));
+        let stat = StatusQuery::new(path);
         match stat.retrieve(&fs)?.virtual_identity() {
             Some(virtual_identity) => Ok(virtual_identity),
             None => return Err(VfsError::DoesNotExists(path.to_path_buf()))
@@ -98,37 +92,24 @@ impl Virtual<CopyOperation> {
     }
 }
 
-impl Real<CopyOperation> {
-    pub fn new(source: &Path, destination: &Path, name: Option<OsString>, virtual_version: Option<usize>) -> Real<CopyOperation> {
-        Real(
-            CopyOperation {
-                source: source.to_path_buf(),
-                destination: destination.to_path_buf(),
-                name,
-                virtual_version,
-                real_version: None
-            }
-        )
-    }
-}
 
-impl WriteOperation<VirtualFileSystem> for Virtual<CopyOperation> {
-    fn execute(&mut self, mut fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        let source = Self::retrieve_virtual_identity(&fs, self.0.source.as_path())?;
-        let destination = Self::retrieve_virtual_identity(&fs, self.0.destination.as_path())?;
+impl WriteOperation<VirtualFileSystem> for CopyOperation {
+    fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
+        let source = Self::retrieve_virtual_identity(&fs, self.source.as_path())?;
+        let destination = Self::retrieve_virtual_identity(&fs, self.destination.as_path())?;
 
         match destination.to_kind() {
             VirtualKind::Directory => {},
-            _ => return Err(VfsError::IsNotADirectory(self.0.destination.to_path_buf()))
+            _ => return Err(VfsError::IsNotADirectory(self.destination.to_path_buf()))
         }
 
         let new_identity = Self::create_new_virtual_identity(
             &source,
             &destination,
-            &self.0.name
+            &self.name
         )?;
 
-        let stat_new = Virtual(StatusQuery::new(new_identity.as_identity()));
+        let stat_new = StatusQuery::new(new_identity.as_identity());
 
         match stat_new.retrieve(&fs)? {
             IdentityStatus::Exists(_)
@@ -144,32 +125,20 @@ impl WriteOperation<VirtualFileSystem> for Virtual<CopyOperation> {
             },
         }
 
-        self.0.virtual_version = Some(VirtualVersion::increment());
-        Self::copy_virtual_children(&mut fs, &source, &new_identity)
+        Self::copy_virtual_children(fs, &source, &new_identity)
     }
-
-    fn virtual_version(&self) -> Option<usize> {
-        self.0.virtual_version
-    }
-    fn real_version(&self) -> Option<usize> { None }
 }
 
-impl WriteOperation<RealFileSystem> for Real<CopyOperation> {
-    fn execute(&mut self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
-        let new_destination = match &self.0.name {
-            Some(name) => self.0.destination.join(name),
-            None => self.0.destination.to_path_buf()
+impl WriteOperation<RealFileSystem> for CopyOperation {
+    fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
+        let new_destination = match &self.name {
+            Some(name) => self.destination.join(name),
+            None => self.destination.to_path_buf()
         };
 
-        match fs.copy(self.0.source.as_path(), new_destination.as_path(), &|_read| {}, true, false) {
-            Ok(_) => { self.0.real_version = Some(RealVersion::increment()); Ok(()) },
+        match fs.copy(self.source.as_path(), new_destination.as_path(), &|_read| {}, true, false) {
+            Ok(_) => Ok(()),
             Err(error) => Err(VfsError::from(error))
         }
     }
-
-    fn virtual_version(&self) -> Option<usize> {
-        self.0.virtual_version
-    }
-    fn real_version(&self) -> Option<usize> { self.0.real_version }
-
 }

@@ -17,7 +17,10 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{VirtualKind, VirtualFileSystem, WriteOperation, Virtual, CreateOperation};
+#[allow(unused_imports)]
+use vfs::WriteOperation;
+
+use vfs::{VirtualKind, VirtualFileSystem, CreateOperation};
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -46,10 +49,10 @@ pub struct InitializedNewDirectoryCommand {
 
 impl InitializedCommand for InitializedNewDirectoryCommand {
     fn execute(&self, mut vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match Virtual::<CreateOperation>::new(
+        match CreateOperation::new(
             self.path.as_path(),
             VirtualKind::Directory
-        ).execute(&mut vfs) {
+        ).execute(vfs) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }

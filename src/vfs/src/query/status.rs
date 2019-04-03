@@ -19,7 +19,7 @@
 
 use std::path::{ PathBuf, Path };
 
-use crate::{ Virtual, VfsError };
+use crate::{ VfsError };
 use crate::representation::{ VirtualPath, VirtualKind };
 use crate::file_system::{ VirtualFileSystem };
 use crate::query::{ ReadQuery, IdentityStatus };
@@ -35,36 +35,34 @@ impl StatusQuery {
             path: path.to_path_buf()
         }
     }
-}
 
-impl Virtual<StatusQuery> {
     fn status_virtual(&self, fs: &VirtualFileSystem) -> Result<IdentityStatus, VfsError> {
-        match fs.sub_state().is_virtual(self.0.path.as_path())? {
+        match fs.sub_state().is_virtual(self.path.as_path())? {
             true => //Ok(IdentityStatus::RemovedVirtually),
-                match fs.add_state().get(self.0.path.as_path())? {
-                    Some(_virtual_state) => Err(VfsError::AddSubDanglingVirtualPath(self.0.path.to_path_buf())),
+                match fs.add_state().get(self.path.as_path())? {
+                    Some(_virtual_state) => Err(VfsError::AddSubDanglingVirtualPath(self.path.to_path_buf())),
                     None => Ok(IdentityStatus::RemovedVirtually),
-//                        match self.0.path.exists() {
+//                        match self.path.exists() {
 //                            true => Ok(IdentityStatus::RemovedVirtually),
-//                            false => Err(VfsError::SubDanglingVirtualPath(self.0.path.to_path_buf())),
+//                            false => Err(VfsError::SubDanglingVirtualPath(self.path.to_path_buf())),
 //                        }
                 }
             false =>
-                match fs.add_state().get(self.0.path.as_path())? {//IN ADD AND NOT IN SUB
+                match fs.add_state().get(self.path.as_path())? {//IN ADD AND NOT IN SUB
                     Some(virtual_identity) =>
-                        match self.0.path.exists() {
+                        match self.path.exists() {
                             true => Ok(IdentityStatus::Replaced(virtual_identity.clone())),
                             false => Ok(IdentityStatus::ExistsVirtually(virtual_identity.clone()))
                         }
                     None =>
-                        match fs.virtual_state()?.resolve(self.0.path.as_path())? {
+                        match fs.virtual_state()?.resolve(self.path.as_path())? {
                             Some(real_path) => {
                                 match real_path.exists() {
                                     true =>
                                         Ok(
                                             IdentityStatus::ExistsThroughVirtualParent(
                                                 VirtualPath::from(
-                                                    self.0.path.to_path_buf(),
+                                                    self.path.to_path_buf(),
                                                     Some(real_path.clone()),
                                                     VirtualKind::from_path_buf(real_path)
                                                 )?
@@ -80,17 +78,17 @@ impl Virtual<StatusQuery> {
     }
 
     fn status_real(&self, fs: &VirtualFileSystem) -> Result<IdentityStatus, VfsError> {
-        match fs.sub_state().is_virtual(self.0.path.as_path())? {
+        match fs.sub_state().is_virtual(self.path.as_path())? {
             true => Ok(IdentityStatus::Removed),
             false =>
-                match self.0.path.exists() {
+                match self.path.exists() {
                     true =>
                         Ok(
                             IdentityStatus::Exists(
                                 VirtualPath::from(
-                                    self.0.path.to_path_buf(),
-                                    Some(self.0.path.to_path_buf()),
-                                    match self.0.path.is_dir() {
+                                    self.path.to_path_buf(),
+                                    Some(self.path.to_path_buf()),
+                                    match self.path.is_dir() {
                                         true => VirtualKind::Directory,
                                         false => VirtualKind::File
                                     }
@@ -103,9 +101,11 @@ impl Virtual<StatusQuery> {
     }
 }
 
-impl ReadQuery<&VirtualFileSystem, IdentityStatus> for Virtual<StatusQuery>{
-    fn retrieve(&self, fs: &VirtualFileSystem) -> Result<IdentityStatus, VfsError> {
-        match fs.add_state().is_virtual(self.0.path.as_path())? {
+impl ReadQuery<&VirtualFileSystem> for StatusQuery{
+    type Result = IdentityStatus;
+
+    fn retrieve(&self, fs: &VirtualFileSystem) -> Result<Self::Result, VfsError> {
+        match fs.add_state().is_virtual(self.path.as_path())? {
             true => self.status_virtual(&fs),
             false => self.status_real(&fs),
         }

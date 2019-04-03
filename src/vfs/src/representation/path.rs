@@ -24,9 +24,6 @@ use std::ffi::{ OsStr };
 use std::hash::{ Hash, Hasher };
 use std::path::MAIN_SEPARATOR;
 
-use crate::file_system::VirtualVersion;
-
-
 #[derive(Clone, Debug, Copy)]
 pub enum VirtualKind {
     File,
@@ -56,7 +53,7 @@ pub struct VirtualPath {
     pub identity: PathBuf,
     pub source: Option<PathBuf>,
     pub kind: VirtualKind,
-    pub version: usize
+    pub version: Option<usize>
 }
 
 impl Eq for VirtualPath {}
@@ -158,7 +155,7 @@ impl VirtualPath {
             identity,
             source,
             kind,
-            version: VirtualVersion::get()
+            version: None
         }
     }
 
@@ -217,48 +214,48 @@ impl VirtualPath {
     pub fn with_new_identity_parent(self, new_parent: &Path) -> VirtualPath  {
         Self::_from(
             Self::replace_parent(self.as_identity(), new_parent),
-            self.to_source(),
-            self.into_kind()
+            self.source,
+            self.kind
         )
     }
 
     pub fn with_new_source_parent(self, new_parent: &Path) -> VirtualPath  {
         Self::_from(
-            self.to_identity(),
-            match self.as_source() {
-                Some(source) => Some(Self::replace_parent(source, new_parent)),
+            self.identity,
+            match &self.source {
+                Some(source) => Some(Self::replace_parent(source.as_path(), new_parent)),
                 None => None
             },
-            self.into_kind()
+            self.kind
         )
     }
 
     pub fn with_source(self, new_source: Option<&Path>) -> VirtualPath  {
         Self::_from(
-            self.to_identity(),
+            self.identity,
             match new_source {
                 Some(source) => Some(source.to_path_buf()),
                 None => None
             },
-            self.into_kind()
+            self.kind
         )
     }
 
     pub fn with_owned_source(self, new_source: Option<PathBuf>) -> VirtualPath {
         Self::_from(
-            self.to_identity(),
+            self.identity,
             match new_source {
                 Some(source) => Some(source),
                 None => None
             },
-            self.into_kind()
+            self.kind
         )
     }
 
     pub fn with_kind(self, kind: VirtualKind) -> VirtualPath  {
         Self::_from(
-            self.to_identity(),
-            self.into_source(),
+            self.identity,
+            self.source,
             kind
         )
     }
@@ -266,8 +263,8 @@ impl VirtualPath {
     pub fn with_file_name(self, filename: &OsStr) -> VirtualPath  {
         Self::_from(
             self.to_identity().with_file_name(filename),
-            self.to_source(),
-            self.into_kind()
+            self.source,
+            self.kind
         )
     }
 
@@ -291,7 +288,7 @@ impl VirtualPath {
         false
     }
 
-    pub fn version(&self) -> usize {
+    pub fn version(&self) -> Option<usize> {
         self.version
     }
 }

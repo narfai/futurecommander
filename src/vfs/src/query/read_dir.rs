@@ -19,11 +19,11 @@
 
 use std::path::{ PathBuf, Path };
 
-use crate::{ Virtual, VfsError };
+use crate::{ VfsError };
 
 use crate::representation::{ VirtualPath, VirtualKind, VirtualChildren };
 use crate::file_system::{ VirtualFileSystem };
-use crate::query::{ReadQuery, StatusQuery, NodeIterator };
+use crate::query::{ ReadQuery, StatusQuery, NodeIterator };
 
 use std::collections::hash_set::IntoIter as HashSetIntoIter;
 
@@ -39,22 +39,24 @@ impl ReadDirQuery {
     }
 }
 
-impl ReadQuery<&VirtualFileSystem, NodeIterator<HashSetIntoIter<VirtualPath>>> for Virtual<ReadDirQuery> {
-    fn retrieve(&self, fs: &VirtualFileSystem) -> Result<NodeIterator<HashSetIntoIter<VirtualPath>>, VfsError> {
-        let stat_directory = Virtual(StatusQuery::new(self.0.path.as_path()));
+impl ReadQuery<&VirtualFileSystem> for ReadDirQuery {
+    type Result = NodeIterator<HashSetIntoIter<VirtualPath>>;
+
+    fn retrieve(&self, fs: &VirtualFileSystem) -> Result<Self::Result, VfsError> {
+        let stat_directory = StatusQuery::new(self.path.as_path());
         let directory = match stat_directory.retrieve(&fs)?.virtual_identity() {
             Some(virtual_identity) =>
                 match virtual_identity.as_kind() {
                     VirtualKind::Directory => virtual_identity,
-                    _ => return Err(VfsError::IsNotADirectory(self.0.path.to_path_buf()))
+                    _ => return Err(VfsError::IsNotADirectory(self.path.to_path_buf()))
                 },
-            None => return Err(VfsError::DoesNotExists(self.0.path.to_path_buf()))
+            None => return Err(VfsError::DoesNotExists(self.path.to_path_buf()))
         };
 
         let mut real_children = VirtualChildren::from_file_system(
             directory.as_source().unwrap_or(directory.as_identity()),
             directory.as_source(),
-            Some(self.0.path.as_path())
+            Some(self.path.as_path())
         )?;
 
         if let Some(to_add_children) = fs.add_state().children(directory.as_identity()) {

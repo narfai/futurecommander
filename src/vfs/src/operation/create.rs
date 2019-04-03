@@ -18,76 +18,43 @@
  */
 
 use std::path::{ PathBuf, Path };
-use crate::{ Virtual, Real, VfsError };
+use crate::{ VfsError };
 //use crate::{ VirtualFileSystem, RealFileSystem, VfsError, VirtualKind, VirtualPath };
 use crate::representation::{ VirtualKind };
-use crate::file_system::{ VirtualFileSystem, RealFileSystem, VirtualVersion, RealVersion };
+use crate::file_system::{ VirtualFileSystem, RealFileSystem };
 use crate::operation::{ WriteOperation };
 use crate::query::{ReadQuery, StatusQuery};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CreateOperation {
     path: PathBuf,
-    kind: VirtualKind,
-    virtual_version: Option<usize>,
-    real_version: Option<usize>
+    kind: VirtualKind
 }
 
-impl Virtual<CreateOperation> {
-    pub fn new(path: &Path, kind: VirtualKind) -> Virtual<CreateOperation> {
-        Virtual(
-            CreateOperation {
-                path: path.to_path_buf(),
-                kind,
-                virtual_version: None,
-                real_version: None
-            }
-        )
-    }
-}
-
-impl WriteOperation<VirtualFileSystem> for Virtual<CreateOperation>{
-    fn execute(&mut self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        match Virtual(StatusQuery::new(self.0.path.as_path())).retrieve(&fs)?.virtual_identity() {
-            Some(_) => return Err(VfsError::AlreadyExists(self.0.path.to_path_buf())),
-            None => {
-                fs.mut_add_state().attach(self.0.path.as_path(), None, self.0.kind)?;
-                self.0.virtual_version = Some(VirtualVersion::increment());
-                Ok(())
-            }
+impl CreateOperation {
+    pub fn new(path: &Path, kind: VirtualKind) -> CreateOperation {
+        CreateOperation {
+            path: path.to_path_buf(),
+            kind
         }
     }
-
-    fn virtual_version(&self) -> Option<usize> {
-        self.0.virtual_version
-    }
-    fn real_version(&self) -> Option<usize> { None }
 }
 
-
-impl Real<CreateOperation> {
-    pub fn new(path: &Path, kind: VirtualKind, virtual_version: Option<usize>) -> Real<CreateOperation> {
-        Real(
-            CreateOperation {
-                path: path.to_path_buf(),
-                kind,
-                virtual_version,
-                real_version: None
-            }
-        )
+impl WriteOperation<VirtualFileSystem> for CreateOperation{
+    fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
+        match StatusQuery::new(self.path.as_path()).retrieve(&fs)?.virtual_identity() {
+            Some(_) => return Err(VfsError::AlreadyExists(self.path.to_path_buf())),
+            None => fs.mut_add_state()
+                .attach(self.path.as_path(), None, self.kind)
+        }
     }
 }
 
-impl WriteOperation<RealFileSystem> for Real<CreateOperation>{
-    fn execute(&mut self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
-        match fs.create(self.0.path.as_path(), false) {
-            Ok(_) => { self.0.real_version = Some(RealVersion::increment()); Ok(()) },
+impl WriteOperation<RealFileSystem> for CreateOperation {
+    fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
+        match fs.create(self.path.as_path(), false) {
+            Ok(_) => Ok(()),
             Err(error) => Err(VfsError::from(error))
         }
     }
-
-    fn virtual_version(&self) -> Option<usize> {
-        self.0.virtual_version
-    }
-    fn real_version(&self) -> Option<usize> { self.0.real_version }
 }

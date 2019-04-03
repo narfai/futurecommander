@@ -28,13 +28,15 @@ use crate::representation::{ VirtualChildren, VirtualPath, VirtualKind, VirtualC
 
 #[derive(Debug, Clone)]
 pub struct VirtualDelta {
-    pub hierarchy: BTreeMap<PathBuf, VirtualChildren>
+    pub hierarchy: BTreeMap<PathBuf, VirtualChildren>,
+    pub detached: Vec<VirtualPath>
 }
 
 impl VirtualDelta {
     pub fn new() -> VirtualDelta {
         VirtualDelta {
-            hierarchy: BTreeMap::new()
+            hierarchy: BTreeMap::new(),
+            detached: Vec::new()
         }
     }
 
@@ -83,8 +85,9 @@ impl VirtualDelta {
                 let parent = VirtualPath::get_parent_or_root(identity);
 
                 self.hierarchy.get_mut(&parent)
-                    .unwrap()//Assumed ? self.get has not the same behavior as hierarchy.get_mut
+                    .unwrap()//TODO Assumed ? self.get has not the same behavior as hierarchy.get_mut
                     .remove(&VirtualPath::from_path(identity)?);
+
 
                 match self.is_directory_empty(parent.as_path()) {
                     true => { self.hierarchy.remove(&parent); },
@@ -171,10 +174,9 @@ impl VirtualDelta {
     }
 
     pub fn is_directory_empty(&self, identity: &Path) -> bool {
-        let dir = VirtualPath::get_parent_or_root(identity);
-        match self.children(dir.as_path()) {
+        match self.children(identity) {
             Some(children) => children.len() == 0,
-            None => false
+            None => true
         }
     }
 
