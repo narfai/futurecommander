@@ -17,7 +17,10 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::hash::{ Hash, Hasher };
+#[allow(unused_imports)]
+use std::hash::Hasher;
+
+use std::hash::{ Hash };
 use std::collections::hash_map::DefaultHasher;
 use std::path::{ Path, PathBuf };
 use crate::representation::{ VirtualDelta, VirtualChildren, VirtualPath, VirtualKind };

@@ -17,7 +17,10 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{VirtualFileSystem, VirtualPath, Virtual, RemoveOperation, WriteOperation };
+#[allow(unused_imports)]
+use vfs::WriteOperation;
+
+use vfs::{ VirtualFileSystem, RemoveOperation, Virtual };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;

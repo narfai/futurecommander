@@ -373,14 +373,14 @@ mod tests {
     pub fn apply_a_vfs_to_real_fs() {
         let chroot = Samples::init_virtual_chroot("apply_a_vfs_to_real_fs");
         let mut vfs = VirtualFileSystem::new();
-        let mut real_fs = RealFileSystem::new(true);
+        let _real_fs = RealFileSystem::new(true);
 
 
         _no_dangling(&mut vfs, chroot.as_path());
         _file_dir_interversion(&mut vfs, chroot.as_path());
         _some_nesting(&mut vfs, chroot.as_path());
 
-        let mut apply: ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::from_virtual_filesystem(&vfs).unwrap();
+        let _apply: ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::from_virtual_filesystem(&vfs).unwrap();
 //        println!("REAL VERSION : {}", RealVersion::get());
 //        apply.execute(&mut real_fs).unwrap();
 //        println!("REAL VERSION : {}", RealVersion::get());

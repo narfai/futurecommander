@@ -19,24 +19,51 @@
 
 use std::env::current_exe;
 
+#[allow(unused_imports)]
+use crate::command::InitializedCommand;
+
 use std::path::{ PathBuf, Path };
-use std::ffi::{ OsString, OsStr };
+use std::ffi::{ OsString };
 use vfs::*;
-use crate::command::{ InitializedCommand };
 use crate::command::CommandError;
 use crate::command::copy::{ InitializedCopyCommand };
 use crate::command::mov::InitializedMoveCommand;
 use crate::command::new_directory::InitializedNewDirectoryCommand;
 use crate::command::new_file::InitializedNewFileCommand;
 use crate::command::remove::InitializedRemoveCommand;
-//TODO
 //use crate::command::list::InitializedListCommand;
 //use crate::command::tree::InitializedTreeCommand;
 
-//TODO merge directories with copy
+pub struct Samples;
 
-pub fn get_sample_path() -> PathBuf {
-    current_exe().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().parent().unwrap().join("samples")
+impl Samples {
+    pub fn sample_path() -> PathBuf {
+        current_exe().unwrap()
+            .parent().unwrap() //project root
+            .parent().unwrap() //target
+            .parent().unwrap() //debug
+            .parent().unwrap() //deps
+            .join("samples")
+            .to_path_buf()
+    }
+
+    pub fn static_samples_path() -> PathBuf {
+        let sample_path = Self::sample_path().join("static_samples");
+        assert!(sample_path.join("A").exists());
+        assert!(sample_path.join("B").exists());
+        assert!(sample_path.join("F").exists());
+        assert!(sample_path.join("B/D").exists());
+        assert!(sample_path.join("B/D/E").exists());
+        assert!(sample_path.join("B/D/G").exists());
+
+        assert!(sample_path.join("A").is_dir());
+        assert!(sample_path.join("B").is_dir());
+        assert!(sample_path.join("F").is_file());
+        assert!(sample_path.join("B/D").is_dir());
+        assert!(sample_path.join("B/D/E").is_dir());
+        assert!(sample_path.join("B/D/G").is_dir());
+        sample_path
+    }
 }
 
 #[cfg(test)]
@@ -45,7 +72,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn rm(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let b_path = sample_path.join(&Path::new("B"));
@@ -65,7 +92,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn cp_only(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let copy_a_to_b = InitializedCopyCommand {
@@ -99,7 +126,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn cp_preserve_source_and_node_kind(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let copy_b_to_a = InitializedCopyCommand {
@@ -141,7 +168,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn mv(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let move_f_to_a = InitializedMoveCommand {
@@ -195,7 +222,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn mkdir(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let new_bde_mkdired = InitializedNewDirectoryCommand {
@@ -215,7 +242,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn touch(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
 
@@ -236,7 +263,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn virtual_shell_reference_virtual_children(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let mkdir_z = InitializedNewDirectoryCommand {
@@ -267,7 +294,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn virtual_shell_copy_nested_virtual_identity(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let copy_b_to_a = InitializedCopyCommand {
@@ -303,7 +330,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn virtual_shell_move_nested_virtual_identity(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let move_b_to_a = InitializedCopyCommand {
@@ -340,7 +367,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn virtual_shell_copy_nested_virtual_identity_deep_through(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let copy_b_to_a = InitializedCopyCommand {
@@ -392,7 +419,7 @@ mod virtual_shell_tests {
 
     #[test]
     fn virtual_shell_copy_or_move_directory_into_itself_must_not_be_allowed(){
-        let sample_path = get_sample_path();
+        let sample_path = Samples::static_samples_path();
         let mut vfs = VirtualFileSystem::new();
 
         let source = sample_path.join(&Path::new("B"));

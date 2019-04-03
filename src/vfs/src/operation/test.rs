@@ -46,12 +46,12 @@ mod operation_test {
 
     #[test]
     fn apply_virtual(){
-        let mut apply : ApplyOperation<Box<WriteOperation<VirtualFileSystem>>> = ApplyOperation::new();
+        let _apply : ApplyOperation<Box<WriteOperation<VirtualFileSystem>>> = ApplyOperation::new();
 
     }
 
     #[test]
     fn apply_real(){
-        let mut apply : ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::new();
+        let _apply : ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::new();
     }
 }
