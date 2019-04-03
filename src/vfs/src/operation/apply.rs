@@ -119,7 +119,7 @@ impl <T> WriteOperation<T> for ApplyOperation<Box<dyn WriteOperation<T>>> {
             if operation.virtual_version().is_none() {
                 continue
             }
-            println!("{:?}", operation);
+//            println!("{:?}", operation);
             operation.execute(fs)?
         }
         self.1 = Some(RealVersion::increment());//TODO sum of all real fs operation
