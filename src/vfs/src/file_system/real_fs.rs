@@ -40,15 +40,6 @@ impl RealFileSystem {
         }
     }
 
-    pub fn remove(&self, path: &Path) -> Result<(), IoError> {
-        println!("REMOVE {:?}", path);
-        if path.is_dir() {
-            self.remove_directory(path)
-        } else { //TODO @symlink
-            self.remove_file(path)
-        }
-    }
-
     pub fn remove_file(&self, path: &Path) -> Result<(), IoError> {
         println!("remove_file");
         if self.dry {
@@ -68,15 +59,6 @@ impl RealFileSystem {
             remove_dir_all(path)?;
         }
         Ok(())
-    }
-
-    pub fn create(&self, path: &Path, recursively: bool) -> Result<(), IoError> {
-        println!("CREATE {:?}", path);
-        if path.is_dir() {
-            self.create_directory(path, recursively)
-        } else { //TODO @symlink
-            self.create_file(path)
-        }
     }
 
     pub fn create_file(&self, path: &Path) -> Result<(), IoError> {
@@ -117,85 +99,11 @@ impl RealFileSystem {
         Ok(())
     }
 
-    pub fn copy(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
-        println!("COPY {:?} {:?}", src, dst);
-        if ! src.exists() {
-            return Err(IoError::new(ErrorKind::InvalidData, format!("Copy : source does not exists {:?}", src)))
-        }
-
-        match src.is_dir() { //TODO @symlink
-            true => self.copy_directory_into_directory(src, dst, on_read, merge, overwrite),
-            false =>
-                match dst.is_dir() { //TODO @symlink
-                    true => self.copy_file_into_directory(src, dst, on_read, overwrite),
-                    false => self.copy_file_to_file(src, dst, on_read, overwrite)
-                }
-        }
-    }
-
-    pub fn copy_file_into_directory(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), overwrite: bool) -> Result<usize, IoError> {
-        println!("copy_file_into_directory");
-        if ! src.is_file() {
-            return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : source is not a file {:?}", src)));
-        }
-
-        if ! dst.exists() {
-            return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : destination does not exists {:?}", dst)));
-        } else if ! dst.is_dir(){
-            return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : destination is not a directory {:?}", dst)));
-        }
-
-        let new_destination = match src.file_name() {
-            Some(file_name) => dst.join(file_name),
-            None => return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : source file name is a dot path {:?}", src)))
-        };
-
-        if new_destination.exists() && ! overwrite {
-            return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : new destination already exists : {:?}", new_destination)));
-        }
-
-        self.copy_file_to_file(src, new_destination.as_path(), on_read, overwrite)
-    }
-
-    pub fn copy_directory_into_directory(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
-        println!("copy_directory_into_directory");
-        if ! src.is_dir() { //TODO @symlink
-            return Err(IoError::new(ErrorKind::InvalidData, format!("Directory to directory : source is not a directory {:?}", src)))
-        }
-
-        if dst.exists() {
-            if ! dst.is_dir() { //TODO @symlink
-                return Err(IoError::new(ErrorKind::InvalidData, format!("Directory to directory : destination is not a directory {:?}", dst)));
-            }
-        } else {
-            self.create_directory(dst, false)?;
-//            return Err(IoError::new(ErrorKind::InvalidData, format!("Directory to directory : destination does not exists {:?}", dst)));
-        }
-
-        let mut read : usize = 0;
-
-        for result in src.read_dir()? {
-            let child = result?.path();
-            let new_destination = dst.join(child.strip_prefix(src).unwrap());
-
-            if new_destination.exists() && ! merge {
-                return Err(IoError::new(ErrorKind::InvalidData, "Directory to directory : new destination already exists [ no merge ]"));
-            }
-
-            if new_destination.is_dir() {
-                self.create_directory(new_destination.as_path(), false)?;
-            }
-
-            self.copy(child.as_path(), new_destination.as_path(), on_read, merge, overwrite)
-                .and_then(|directory_read| {
-                    read += directory_read;
-                    Ok(())
-                })?;
-        }
-        Ok(read)
-    }
-
     pub fn copy_file_to_file(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), overwrite: bool) -> Result<usize, IoError>{
+        if ! src.exists() {
+            return Err(IoError::new(ErrorKind::InvalidData, format!("Source does not exists {:?}", src)));
+        }
+
         println!("copy_file_to_file");
         if ! src.is_file() { //TODO @symlink
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a file {:?}", src)));
@@ -250,15 +158,12 @@ impl RealFileSystem {
             })
     }
 
-    pub fn rename(&self, path: &Path, new_name: &OsStr, overwrite: bool) -> Result<(), IoError> {
-        unimplemented!()
-    }
 
-    pub fn rename_file(&self, path: &Path, new_name: &OsStr) -> Result<(), IoError> {
-        unimplemented!()
-    }
-
-    pub fn rename_directory(&self, path: &Path, new_name: &OsStr) -> Result<(), IoError> {
-        unimplemented!()
+    //@TODO find a way to detect if file coming from different resource if true then copy + rm instead
+    pub fn move_to(&self, src: &Path, dst: &Path, overwrite: bool) -> Result<(), IoError> {
+        if ! overwrite && dst.exists() {
+            return Err(IoError::new(ErrorKind::InvalidData, format!("Destination already exists {:?}", dst)));
+        }
+        rename(src, dst)
     }
 }

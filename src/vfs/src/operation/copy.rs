@@ -17,6 +17,8 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* I EXPECT THE PATH destination TO EXISTS WITH SOURCE source */
+
 use std::path::{ PathBuf, Path };
 use std::ffi::OsString;
 
@@ -25,40 +27,24 @@ use crate::{ VfsError };
 use crate::file_system::{ VirtualFileSystem, RealFileSystem };
 use crate::representation::{ VirtualPath, VirtualKind };
 use crate::operation::{ WriteOperation };
-use crate::query::{ReadQuery, ReadDirQuery, StatusQuery, IdentityStatus, Entry };
+use crate::query::{ ReadQuery, ReadDirQuery, StatusQuery, IdentityStatus, Entry };
 
 #[derive(Debug, Clone)]
 pub struct CopyOperation {
     source: PathBuf,
     destination: PathBuf,
-    name: Option<OsString>
+    merge: bool,
+    overwrite: bool //To honour overwrite or merge error, we should crawl recursively the entire vfs children of dst ...
 }
 
 impl CopyOperation {
-    pub fn new(source: &Path, destination: &Path, name: Option<OsString>) -> CopyOperation {
+    pub fn new(source: &Path, destination: &Path) -> CopyOperation {
         CopyOperation {
             source: source.to_path_buf(),
             destination: destination.to_path_buf(),
-            name
+            merge: false,
+            overwrite: false
         }
-    }
-
-    fn create_new_virtual_identity(source: &VirtualPath, destination: &VirtualPath, with_name: &Option<OsString>) -> Result<VirtualPath, VfsError> {
-        if destination.is_contained_by(&source) {
-            return Err(VfsError::CopyIntoItSelf(source.to_identity(), destination.to_identity()));
-        }
-
-        let mut new_identity = VirtualPath::from(
-            source.to_identity(),
-            source.to_source(),
-            source.to_kind()
-        )?.with_new_identity_parent(destination.as_identity());
-
-        if let Some(name) = &with_name {
-            new_identity = new_identity.with_file_name(name.as_os_str());
-        }
-
-        Ok(new_identity)
     }
 
     fn copy_virtual_children(fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
@@ -70,8 +56,7 @@ impl CopyOperation {
                         IdentityStatus::ExistsVirtually(_) =>
                             CopyOperation::new(
                                 child.path(),
-                                identity.as_identity(),
-                                None
+                                identity.as_identity()
                             ).execute(fs)?
                         ,
                         _ => {}
@@ -82,32 +67,29 @@ impl CopyOperation {
             _ => Ok(())
         }
     }
-
-    fn retrieve_virtual_identity(fs: &VirtualFileSystem, path: &Path) -> Result<VirtualPath, VfsError> {
-        let stat = StatusQuery::new(path);
-        match stat.retrieve(&fs)?.virtual_identity() {
-            Some(virtual_identity) => Ok(virtual_identity),
-            None => return Err(VfsError::DoesNotExists(path.to_path_buf()))
-        }
-    }
 }
 
 
 impl WriteOperation<VirtualFileSystem> for CopyOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        let source = Self::retrieve_virtual_identity(&fs, self.source.as_path())?;
-        let destination = Self::retrieve_virtual_identity(&fs, self.destination.as_path())?;
+        let source = match StatusQuery::new(self.source.as_path()).retrieve(fs)?.into_virtual_identity() {
+            Some(virtual_identity) => virtual_identity,
+            None => return Err(VfsError::DoesNotExists(self.source.to_path_buf()))
+        };
 
-        match destination.to_kind() {
-            VirtualKind::Directory => {},
-            _ => return Err(VfsError::IsNotADirectory(self.destination.to_path_buf()))
-        }
+        let destination = StatusQuery::new(self.destination.as_path()).retrieve(fs)?;
 
-        let new_identity = Self::create_new_virtual_identity(
-            &source,
-            &destination,
-            &self.name
+        //TODO check parent exists
+        let new_identity = VirtualPath::from(
+            self.destination.to_path_buf(),
+            source.to_source(),
+            source.to_kind()
         )?;
+
+        //TODO check for merge errors in dst recursively if merge = false
+        if new_identity.is_contained_by(&source) {
+            return Err(VfsError::CopyIntoItSelf(source.to_identity(), self.destination.to_path_buf()));
+        }
 
         let stat_new = StatusQuery::new(new_identity.as_identity());
 
@@ -131,14 +113,15 @@ impl WriteOperation<VirtualFileSystem> for CopyOperation {
 
 impl WriteOperation<RealFileSystem> for CopyOperation {
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
-        let new_destination = match &self.name {
-            Some(name) => self.destination.join(name),
-            None => self.destination.to_path_buf()
-        };
-
-        match fs.copy(self.source.as_path(), new_destination.as_path(), &|_read| {}, true, false) {
-            Ok(_) => Ok(()),
-            Err(error) => Err(VfsError::from(error))
-        }
+//        let new_destination = match &self.name {
+//            Some(name) => self.destination.join(name),
+//            None => self.destination.to_path_buf()
+//        };
+//
+//        match fs.copy(self.source.as_path(), new_destination.as_path(), &|_read| {}, true, false) {
+//            Ok(_) => Ok(()),
+//            Err(error) => Err(VfsError::from(error))
+//        }
+        unimplemented!()
     }
 }

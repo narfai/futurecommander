@@ -44,7 +44,7 @@ impl ReadQuery<&VirtualFileSystem> for ReadDirQuery {
 
     fn retrieve(&self, fs: &VirtualFileSystem) -> Result<Self::Result, VfsError> {
         let stat_directory = StatusQuery::new(self.path.as_path());
-        let directory = match stat_directory.retrieve(&fs)?.virtual_identity() {
+        let directory = match stat_directory.retrieve(&fs)?.into_virtual_identity() {
             Some(virtual_identity) =>
                 match virtual_identity.as_kind() {
                     VirtualKind::Directory => virtual_identity,

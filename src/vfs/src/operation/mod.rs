@@ -32,8 +32,13 @@ pub use self::create::CreateOperation;
 mod transaction;
 pub use self::transaction::Transaction;
 
+mod mov;
+pub use self::mov::MoveOperation;
+
 pub trait WriteOperation <F: ?Sized>: std::fmt::Debug {
     fn execute(&self, fs: &mut F) -> Result<(), crate::errors::VfsError>;
 }
 
 //@TODO trait TranslationOperation & AtomicOperation ?
+//API IS DESCRIPTIVE TRANSLATION : Copy A B means Copy A at the path B. for put A inside be, use Copy A B/A
+//In other hand, it's idempotent : we say we want the path destination exists with source or kind of a

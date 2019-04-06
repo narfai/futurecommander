@@ -39,8 +39,7 @@ mod tests {
 
         CopyOperation::new(
             b.as_path(),
-            a.as_path(),
-            None
+            ab.as_path()
         ).execute(&mut vfs).unwrap();
 
         let virtual_state = vfs.virtual_state().unwrap();
@@ -68,14 +67,12 @@ mod tests {
 
         CopyOperation::new(
             b.as_path(),
-            a.as_path(),
-            None
+            ab.as_path()
         ).execute(&mut vfs).unwrap();
 
         CopyOperation::new(
             ab.as_path(),
-            bd.as_path(),
-            None
+            bd.join("B").as_path()
         ).execute(&mut vfs).unwrap();
 
         let virtual_state = vfs.virtual_state().unwrap();
@@ -101,7 +98,7 @@ mod tests {
             StatusQuery::new(a.as_path())
                 .retrieve(&vfs)
                 .unwrap()
-                .virtual_identity()
+                .as_virtual_identity()
                 .is_some()
         );
 
@@ -113,7 +110,7 @@ mod tests {
             StatusQuery::new(a.as_path())
                 .retrieve(&vfs)
                 .unwrap()
-                .virtual_identity()
+                .as_virtual_identity()
                 .is_none()
         );
     }
@@ -132,7 +129,7 @@ mod tests {
         let stated = StatusQuery::new(z.as_path())
             .retrieve(&vfs)
             .unwrap()
-            .virtual_identity()
+            .into_virtual_identity()
             .unwrap();
 
         assert_eq!(stated.to_kind(), VirtualKind::Directory);
@@ -149,7 +146,7 @@ mod tests {
         let stated = StatusQuery::new(a.as_path())
             .retrieve(&vfs)
             .unwrap()
-            .virtual_identity()
+            .into_virtual_identity()
             .unwrap();
 
         assert_eq!(stated.to_kind(), VirtualKind::Directory);
@@ -165,14 +162,13 @@ mod tests {
 
         CopyOperation::new(
             sample_path.join("B").as_path(),
-            sample_path.join("A").as_path(),
-            None
+            sample_path.join("A/B").as_path()
         ).execute(&mut vfs).unwrap();
 
         let stated = StatusQuery::new(abdg.as_path())
             .retrieve(&vfs)
             .unwrap()
-            .virtual_identity()
+            .into_virtual_identity()
             .unwrap();
 
         assert_eq!(stated.to_kind(), VirtualKind::Directory);
@@ -200,8 +196,7 @@ mod tests {
     pub fn _no_dangling(mut vfs: &mut VirtualFileSystem, chroot: &Path) {
         CopyOperation::new(
             chroot.join("A").as_path(),
-            chroot,
-            Some(OsString::from("APRIME"))
+            chroot.join("APRIME").as_path()
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -210,8 +205,7 @@ mod tests {
 
         CopyOperation::new(
             chroot.join("APRIME").as_path(),
-            chroot,
-            Some(OsString::from("A"))
+            chroot.join("A").as_path()
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -227,7 +221,7 @@ mod tests {
             _ => false
         });
 
-        let virtual_identity = stated_a.virtual_identity().unwrap();
+        let virtual_identity = stated_a.into_virtual_identity().unwrap();
 
         assert_eq!(virtual_identity.as_identity(), chroot.join("A"));
         assert_eq!(virtual_identity.to_kind(), VirtualKind::Directory);
@@ -268,8 +262,7 @@ mod tests {
 
         CopyOperation::new(
             chroot.join("A/C").as_path(),
-            chroot,
-            None
+            chroot.join("C").as_path()
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -278,8 +271,7 @@ mod tests {
 
         CopyOperation::new(
             chroot.join("C").as_path(),
-            chroot,
-            Some(OsString::from("Z"))
+            chroot.join("Z").as_path()
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -288,8 +280,7 @@ mod tests {
 
         CopyOperation::new(
             chroot.join("B").as_path(),
-            chroot,
-            Some(OsString::from("C"))
+            chroot.join("C").as_path(),
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -298,8 +289,7 @@ mod tests {
 
         CopyOperation::new(
             chroot.join("Z").as_path(),
-            chroot,
-            Some(OsString::from("B"))
+            chroot.join("B").as_path(),
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -309,7 +299,7 @@ mod tests {
         let stated_b = StatusQuery::new(chroot.join("B").as_path())
             .retrieve(&vfs)
             .unwrap()
-            .virtual_identity()
+            .into_virtual_identity()
             .unwrap();
 
         assert_eq!(stated_b.as_identity(), chroot.join("B"));
@@ -319,7 +309,7 @@ mod tests {
         let stated_c = StatusQuery::new(chroot.join("C").as_path())
             .retrieve(&vfs)
             .unwrap()
-            .virtual_identity()
+            .into_virtual_identity()
             .unwrap();
 
         assert_eq!(stated_c.as_identity(), chroot.join("C"));
@@ -342,14 +332,12 @@ mod tests {
     pub fn _some_nesting(mut vfs: &mut VirtualFileSystem, chroot: &Path) {
         CopyOperation::new(
             chroot.join("C").as_path(),
-            chroot.join("A").as_path(),
-            None
+            chroot.join("A/C").as_path(),
         ).execute(vfs).unwrap();
 
         CopyOperation::new(
             chroot.join("A/C/D").as_path(),
-            chroot.join("A").as_path(),
-            None
+            chroot.join("A/D").as_path()
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -359,7 +347,7 @@ mod tests {
         let stated_ad = StatusQuery::new(chroot.join("A/D").as_path())
             .retrieve(&vfs)
             .unwrap()
-            .virtual_identity()
+            .into_virtual_identity()
             .unwrap();
 
         assert_eq!(stated_ad.as_identity(), chroot.join("A/D"));
@@ -380,12 +368,11 @@ mod tests {
         let mut vfs = VirtualFileSystem::new();
 
         let source = sample_path.join("B");
-        let destination = sample_path.join("B/D");
+        let destination = sample_path.join("B/D/B");
 
         match CopyOperation::new(
             source.as_path(),
-            destination.as_path(),
-            None
+            destination.as_path()
         ).execute(&mut vfs) {
             Err(VfsError::CopyIntoItSelf(err_source, err_destination)) => {
                 assert_eq!(source.as_path(), err_source.as_path());

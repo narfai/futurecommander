@@ -31,7 +31,7 @@ pub enum IdentityStatus {
 }
 
 impl IdentityStatus {
-    pub fn virtual_identity(self) -> Option<VirtualPath> {
+    pub fn into_virtual_identity(self) -> Option<VirtualPath> {
         match self {
             IdentityStatus::Exists(virtual_identity)
             | IdentityStatus::ExistsVirtually(virtual_identity)
@@ -44,8 +44,21 @@ impl IdentityStatus {
         }
     }
 
-    pub fn exists(self) -> bool {
-        match self.virtual_identity() {
+    pub fn as_virtual_identity(&self) -> Option<&VirtualPath> {
+        match self {
+            IdentityStatus::Exists(virtual_identity)
+            | IdentityStatus::ExistsVirtually(virtual_identity)
+            | IdentityStatus::ExistsThroughVirtualParent(virtual_identity)
+            | IdentityStatus::Replaced(virtual_identity) => Some(virtual_identity),
+
+            IdentityStatus::NotExists
+            | IdentityStatus::Removed
+            | IdentityStatus::RemovedVirtually => None
+        }
+    }
+
+    pub fn exists(&self) -> bool {
+        match &self.as_virtual_identity() {
             Some(_) => true,
             None => false
         }

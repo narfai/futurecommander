@@ -17,45 +17,51 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* I EXPECT THE PATH destination TO EXISTS WITH SOURCE source */
+
 use std::path::{ PathBuf, Path };
+use std::ffi::OsString;
+
 use crate::{ VfsError };
-//use crate::{ VirtualFileSystem, RealFileSystem, VfsError, VirtualKind, VirtualPath };
-use crate::representation::{ VirtualKind };
+
 use crate::file_system::{ VirtualFileSystem, RealFileSystem };
-use crate::operation::{ WriteOperation };
-use crate::query::{ReadQuery, StatusQuery};
+use crate::representation::{ VirtualPath, VirtualKind };
+use crate::operation::{ WriteOperation, RemoveOperation, CopyOperation };
+use crate::query::{ ReadQuery, ReadDirQuery, StatusQuery, IdentityStatus, Entry };
 
 #[derive(Debug, Clone)]
-pub struct CreateOperation {
-    path: PathBuf,
-    kind: VirtualKind
+pub struct MoveOperation {
+    source: PathBuf,
+    destination: PathBuf,
+    merge: bool,
+    overwrite: bool //To honour overwrite or merge error, we should crawl recursively the entire vfs children of dst ...
 }
 
-impl CreateOperation {
-    pub fn new(path: &Path, kind: VirtualKind) -> CreateOperation {
-        CreateOperation {
-            path: path.to_path_buf(),
-            kind
+impl MoveOperation {
+    pub fn new(source: &Path, destination: &Path) -> MoveOperation {
+        MoveOperation {
+            source: source.to_path_buf(),
+            destination: destination.to_path_buf(),
+            merge: false,
+            overwrite: false
         }
     }
 }
 
-impl WriteOperation<VirtualFileSystem> for CreateOperation{
+
+impl WriteOperation<VirtualFileSystem> for MoveOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        match StatusQuery::new(self.path.as_path()).retrieve(&fs)?.as_virtual_identity() {
-            Some(_) => return Err(VfsError::AlreadyExists(self.path.to_path_buf())),
-            None => fs.mut_add_state()
-                .attach(self.path.as_path(), None, self.kind)
-        }
+        CopyOperation::new(
+            self.source.as_path(),
+            self.destination.as_path()
+        ).execute(fs)?;
+
+        RemoveOperation::new(self.source.as_path()).execute(fs)
     }
 }
 
-impl WriteOperation<RealFileSystem> for CreateOperation {
+impl WriteOperation<RealFileSystem> for MoveOperation {
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
-//        match fs.create(self.path.as_path(), false) {
-//            Ok(_) => Ok(()),
-//            Err(error) => Err(VfsError::from(error))
-//        }
         unimplemented!()
     }
 }
