@@ -28,6 +28,7 @@ const WRITE_BUFFER_SIZE: usize = 8;
 use std::path::{ Path, Ancestors };
 use std::ffi::OsStr;
 
+#[derive(Debug)]
 pub struct RealFileSystem {
     dry: bool
 }

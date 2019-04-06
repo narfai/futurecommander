@@ -21,7 +21,7 @@
 use vfs::WriteOperation;
 
 
-use vfs::{ RealFileSystem, VirtualFileSystem, CopyOperation, RemoveOperation, Transaction};
+use vfs::{RealFileSystem, HybridFileSystem, CopyOperation, RemoveOperation, Transaction};
 use clap::ArgMatches;
 use std::path::{ Path, PathBuf };
 use std::ffi::{ OsString };
@@ -62,18 +62,18 @@ pub struct InitializedMoveCommand {
 }
 
 impl Command<InitializedMoveCommand> {
-    pub fn execute(&self, transaction: &mut Transaction<RealFileSystem>, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+    pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
         let operation = CopyOperation::new(
             self.0.source.as_path(),
             self.0.destination.as_path(),
             self.0.name.clone()
         );
 
-        transaction.add_operation(Box::new(operation.clone()));
+        fs.mut_transaction().add_operation(Box::new(operation.clone()));
 
-        match operation.execute(vfs) {
+        match operation.execute(fs.mut_vfs()) {
             Ok(_) =>
-                match RemoveOperation::new(self.0.source.as_path()).execute(vfs) {
+                match RemoveOperation::new(self.0.source.as_path()).execute(fs.mut_vfs()) {
                     Ok(_) => { println!("MOVE {:?} to {:?}", self.0.source, self.0.destination); Ok(()) },
                     Err(error) => Err(CommandError::from(error))
                 },

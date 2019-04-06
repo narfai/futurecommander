@@ -18,10 +18,17 @@
  */
 
 use std::vec::IntoIter;
+use crate::file_system::{ RealFileSystem };
 use crate::{ VfsError };
 use crate::operation::WriteOperation;
 
 pub struct Transaction<T>(Vec<Box<dyn WriteOperation<T>>>);
+
+impl std::fmt::Debug for Transaction<RealFileSystem> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
+}
 
 impl <T> Transaction<T> {
     pub fn new() -> Transaction<T> {

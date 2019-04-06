@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualFileSystem, CopyOperation, WriteOperation, Transaction, RealFileSystem };
+use vfs::{VirtualFileSystem, HybridFileSystem, CopyOperation, WriteOperation, Transaction, RealFileSystem };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::command::{ Command };
@@ -50,16 +50,16 @@ pub struct InitializedCopyCommand {
 }
 
 impl Command<InitializedCopyCommand> {
-    pub fn execute(&self, transaction: &mut Transaction<RealFileSystem>, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+    pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
         let operation = CopyOperation::new(
             self.0.source.as_path(),
             self.0.destination.as_path(),
             self.0.name.clone()
         );
 
-        transaction.add_operation(Box::new(operation.clone()));
+        fs.mut_transaction().add_operation(Box::new(operation.clone()));
 
-        match operation.execute(vfs) {
+        match operation.execute(fs.mut_vfs()) {
             Ok(_) => Ok(()),
             Err(error) => Err(CommandError::from(error))
         }

@@ -20,7 +20,7 @@
 #[allow(unused_imports)]
 use vfs::WriteOperation;
 
-use vfs::{VirtualKind, VirtualFileSystem, CreateOperation, RealFileSystem, Transaction};
+use vfs::{VirtualKind, HybridFileSystem, CreateOperation};
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -48,15 +48,15 @@ pub struct InitializedNewDirectoryCommand {
 }
 
 impl Command<InitializedNewDirectoryCommand> {
-    pub fn execute(&self, transaction: &mut Transaction<RealFileSystem>, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+    pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
         let operation = CreateOperation::new(
             self.0.path.as_path(),
             VirtualKind::Directory
         );
 
-        transaction.add_operation(Box::new(operation.clone()));
+        fs.mut_transaction().add_operation(Box::new(operation.clone()));
 
-        match operation.execute(vfs) {
+        match operation.execute(fs.mut_vfs()) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }

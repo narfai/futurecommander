@@ -27,25 +27,21 @@ use clap::{ App, ArgMatches };
 #[allow(unused_imports)]
 use vfs::ReadQuery;
 
-use vfs::{ VirtualFileSystem, RealFileSystem, VirtualKind, StatusQuery, Transaction };
+use vfs::{HybridFileSystem, VirtualKind, StatusQuery, Transaction };
 
 use crate::path::absolute;
 use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
 
 pub struct Shell {
     cwd: PathBuf,
-    vfs: VirtualFileSystem,
-    rfs: RealFileSystem,
-    transaction: Transaction<RealFileSystem>
+    fs: HybridFileSystem,
 }
 
 impl Shell {
     pub fn new() -> Shell {
         Shell {
             cwd: env::current_dir().unwrap(),
-            vfs: VirtualFileSystem::new(),
-            rfs: RealFileSystem::new(false),
-            transaction: Transaction::new(),
+            fs: HybridFileSystem::new(),
         }
     }
 
@@ -70,39 +66,39 @@ impl Shell {
                                     match matches.value_of("path") {
                                         Some(string_path) => {
                                             let path = absolute(self.cwd.as_path(), Path::new(string_path));
-                                            println!("STATUS : {:?}", StatusQuery::new(path.as_path()).retrieve(&self.vfs));
+                                            println!("STATUS : {:?}", StatusQuery::new(path.as_path()).retrieve(self.fs.vfs()));
                                             Ok(())
                                         },
                                         None => Err(CommandError::InvalidCommand)
                                     },
-                                ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.vfs.virtual_state().unwrap()); Ok(()) },
-                                ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.vfs.add_state()); Ok(()) },
-                                ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.vfs.sub_state()); Ok(()) },
+                                ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.fs.vfs().virtual_state().unwrap()); Ok(()) },
+                                ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.fs.vfs().add_state()); Ok(()) },
+                                ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.fs.vfs().sub_state()); Ok(()) },
                                 ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
-                                ("reset",       Some(_matches)) => { self.vfs.reset(); println!("Virtual state is now empty");  Ok(()) },
+                                ("reset",       Some(_matches)) => { self.fs.reset(); println!("Virtual state is now empty");  Ok(()) },
                                 ("ls",          Some(matches)) => Command::<ListCommand>::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                        .and_then(|c| c.execute(&mut self.fs)),
                                 ("cp",          Some(matches)) => Command::<CopyCommand>::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.transaction, &mut self.vfs)),
+                                        .and_then(|c| c.execute(&mut self.fs)),
                                 ("mv",          Some(matches)) => Command::<MoveCommand>::new(&self.cwd, matches)
-                                        .and_then(|c| c.execute(&mut self.transaction, &mut self.vfs)),
+                                        .and_then(|c| c.execute(&mut self.fs)),
                                 ("rm",          Some(matches)) => Command::<RemoveCommand>::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.transaction, &mut self.vfs)),
+                                        .and_then(|c| c.execute(&mut self.fs)),
                                 ("mkdir",       Some(matches)) => Command::<NewDirectoryCommand>::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.transaction, &mut self.vfs)),
+                                        .and_then(|c| c.execute(&mut self.fs)),
                                 ("touch",       Some(matches)) => Command::<NewFileCommand>::new(&self.cwd,matches)
-                                        .and_then(|c| c.execute(&mut self.transaction, &mut self.vfs)),
+                                        .and_then(|c| c.execute(&mut self.fs)),
                                 ("tree",        Some(matches)) => Command::<TreeCommand>::new(&self.cwd, matches)
-                                        .and_then(|c| c.execute(&mut self.vfs)),
+                                        .and_then(|c| c.execute(&mut self.fs)),
                                 ("apply",        Some(matches)) => self.apply(),
                                 //TODO Find out why this const / match syntax is invalid for webstorm
-//                                (ListCommand::NAME,         Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
-//                                (CopyCommand::NAME,         Some(matches)) => CopyCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
-//                                (MoveCommand::NAME,         Some(matches)) => MoveCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs)),
-//                                (RemoveCommand::NAME,       Some(matches)) => RemoveCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
-//                                (NewDirectoryCommand::NAME, Some(matches)) => NewDirectoryCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
-//                                (NewFileCommand::NAME,      Some(matches)) => NewFileCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.vfs)),
-//                                (TreeCommand::NAME,         Some(matches)) => TreeCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.vfs))
+//                                (ListCommand::NAME,         Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.fs)),
+//                                (CopyCommand::NAME,         Some(matches)) => CopyCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.fs)),
+//                                (MoveCommand::NAME,         Some(matches)) => MoveCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.fs)),
+//                                (RemoveCommand::NAME,       Some(matches)) => RemoveCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.fs)),
+//                                (NewDirectoryCommand::NAME, Some(matches)) => NewDirectoryCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.fs)),
+//                                (NewFileCommand::NAME,      Some(matches)) => NewFileCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.fs)),
+//                                (TreeCommand::NAME,         Some(matches)) => TreeCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.fs))
                                 _ => Err(CommandError::InvalidCommand)
                             }
                             {
@@ -134,7 +130,7 @@ impl Shell {
             Some(string_path) => {
                 let path = absolute(self.cwd.as_path(), Path::new(string_path));
 
-                match StatusQuery::new(path.as_path()).retrieve(&self.vfs) {
+                match StatusQuery::new(path.as_path()).retrieve(&self.fs.vfs()) {
                     Ok(status) =>
                         match status.virtual_identity() {
                             Some(virtual_identity) =>
@@ -154,13 +150,10 @@ impl Shell {
     }
 
     fn apply(&mut self) -> Result<(), CommandError> {
-        match self.transaction.apply(&mut self.rfs) {
-            Ok(_) => {},
+        match self.fs.apply() {
+            Ok(_) => Ok(()),
             Err(error) => return Err(CommandError::from(error))
-        };
-        self.vfs.reset();
-        self.transaction = Transaction::new();
-        Ok(())
+        }
     }
 }
 

@@ -20,7 +20,7 @@
 #[allow(unused_imports)]
 use vfs::WriteOperation;
 
-use vfs::{ VirtualFileSystem, RemoveOperation, RealFileSystem, Transaction };
+use vfs::{HybridFileSystem, RemoveOperation };
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -55,12 +55,12 @@ pub struct InitializedRemoveCommand {
 }
 
 impl Command<InitializedRemoveCommand> {
-    pub fn execute(&self, transaction: &mut Transaction<RealFileSystem>, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
+    pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
         let operation = RemoveOperation::new(self.0.path.as_path());
 
-        transaction.add_operation(Box::new(operation.clone()));
+        fs.mut_transaction().add_operation(Box::new(operation.clone()));
 
-        match operation.execute(vfs) {
+        match operation.execute(fs.mut_vfs()) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }

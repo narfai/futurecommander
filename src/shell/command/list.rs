@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{VirtualFileSystem, VirtualKind, Node, ReadQuery, ReadDirQuery};
+use vfs::{HybridFileSystem, VirtualKind, Node, ReadQuery, ReadDirQuery};
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -47,8 +47,8 @@ pub struct InitializedListCommand {
 }
 
 impl Command<InitializedListCommand> {
-    pub fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match ReadDirQuery::new(self.0.path.as_path()).retrieve(&vfs) {
+    pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
+        match ReadDirQuery::new(self.0.path.as_path()).retrieve(&fs.vfs()) {
             Ok(virtual_children) => {
                 let collection = virtual_children.collection();
                 let len = collection.len();

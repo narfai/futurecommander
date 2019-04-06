@@ -15,7 +15,7 @@
 * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use vfs::{VirtualFileSystem, VfsError, Node, ReadQuery, ReadDirQuery};
+use vfs::{HybridFileSystem, VirtualFileSystem, VfsError, Node, ReadQuery, ReadDirQuery};
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -108,8 +108,8 @@ impl Command<InitializedTreeCommand> {
         Ok(())
     }
 
-    pub fn execute(&self, vfs: &mut VirtualFileSystem) -> Result<(), CommandError> {
-        match Self::tree(vfs, self.0.path.as_path(), None, true) {
+    pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
+        match Self::tree(fs.vfs(), self.0.path.as_path(), None, true) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }
