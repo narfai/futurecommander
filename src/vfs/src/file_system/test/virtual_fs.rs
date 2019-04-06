@@ -185,7 +185,7 @@ mod tests {
         let mut vfs = VirtualFileSystem::new();
         _no_dangling(
             &mut vfs,
-            Samples::init_virtual_chroot("no_dangling").as_path()
+            Samples::init_advanced_chroot("no_dangling").as_path()
         );
     }
 
@@ -245,7 +245,7 @@ mod tests {
         let mut vfs = VirtualFileSystem::new();
         _file_dir_interversion(
             &mut vfs,
-            Samples::init_virtual_chroot("file_dir_interversion").as_path()
+            Samples::init_advanced_chroot("file_dir_interversion").as_path()
         );
     }
 
@@ -371,28 +371,6 @@ mod tests {
             .unwrap();
 
         assert!(!stated_adg.exists());
-    }
-
-
-    #[test]
-    pub fn apply_a_vfs_to_real_fs() {
-        let chroot = Samples::init_virtual_chroot("apply_a_vfs_to_real_fs");
-        let mut vfs = VirtualFileSystem::new();
-        let mut real_fs = RealFileSystem::new(false);
-
-
-        _no_dangling(&mut vfs, chroot.as_path());
-//        println!("VFS 1 {:#?}", vfs);
-        _file_dir_interversion(&mut vfs, chroot.as_path());
-//        println!("VFS 2 {:#?}", vfs);
-//        _some_nesting(&mut vfs, chroot.as_path());
-//        println!("VFS 3 {:#?}", vfs);
-
-//        let mut apply: ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::from_virtual_filesystem(&vfs).unwrap();
-//        println!("VFS {:#?} {:#?}", vfs, apply);
-//        apply.execute(&mut real_fs).unwrap();
-//        println!("REAL VERSION : {}", RealVersion::get());
-//        println!("{:?}", apply)
     }
 
     //Error testing

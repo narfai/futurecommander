@@ -24,5 +24,8 @@ mod real_fs;
 mod virtual_fs;
 
 #[cfg(test)]
+mod hybrid_fs;
+
+#[cfg(test)]
 mod sample;
 

@@ -35,3 +35,5 @@ pub use self::transaction::Transaction;
 pub trait WriteOperation <F: ?Sized>: std::fmt::Debug {
     fn execute(&self, fs: &mut F) -> Result<(), crate::errors::VfsError>;
 }
+
+//@TODO trait TranslationOperation & AtomicOperation ?

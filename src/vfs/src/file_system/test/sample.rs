@@ -65,8 +65,8 @@ impl Samples {
         assert!(chroot.join(path).exists());
     }
 
-    pub fn init_real_chroot(arbitrary_identifier: &str) -> PathBuf {
-        let chroot = Self::sample_path().join(format!("real_chroot_{}", arbitrary_identifier));
+    pub fn init_simple_chroot(arbitrary_identifier: &str) -> PathBuf {
+        let chroot = Self::sample_path().join(format!("simple_chroot_{}", arbitrary_identifier));
 
         if chroot.exists() {
             remove_dir_all(chroot.as_path()).unwrap();
@@ -84,8 +84,8 @@ impl Samples {
         chroot
     }
 
-    pub fn init_virtual_chroot(arbitrary_identifier: &str) -> PathBuf {
-        let chroot = Self::sample_path().join(format!("virtual_chroot_{}", arbitrary_identifier));
+    pub fn init_advanced_chroot(arbitrary_identifier: &str) -> PathBuf {
+        let chroot = Self::sample_path().join(format!("adv_chroot_{}", arbitrary_identifier));
 
         if chroot.exists() {
             remove_dir_all(chroot.as_path()).unwrap();
@@ -115,5 +115,4 @@ impl Samples {
 
         chroot
     }
-
 }

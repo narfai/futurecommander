@@ -41,6 +41,7 @@ impl RealFileSystem {
     }
 
     pub fn remove(&self, path: &Path) -> Result<(), IoError> {
+        println!("REMOVE {:?}", path);
         if path.is_dir() {
             self.remove_directory(path)
         } else { //TODO @symlink
@@ -49,6 +50,7 @@ impl RealFileSystem {
     }
 
     pub fn remove_file(&self, path: &Path) -> Result<(), IoError> {
+        println!("remove_file");
         if self.dry {
             println!("DRY : remove file {:?}", path);
 
@@ -59,6 +61,7 @@ impl RealFileSystem {
     }
 
     pub fn remove_directory(&self, path: &Path) -> Result<(), IoError> {//TODO remove_dir if force true
+        println!("remove_directory");
         if self.dry {
             println!("DRY : remove directory recursivelly {:?}", path);
         } else {
@@ -68,6 +71,7 @@ impl RealFileSystem {
     }
 
     pub fn create(&self, path: &Path, recursively: bool) -> Result<(), IoError> {
+        println!("CREATE {:?}", path);
         if path.is_dir() {
             self.create_directory(path, recursively)
         } else { //TODO @symlink
@@ -76,6 +80,7 @@ impl RealFileSystem {
     }
 
     pub fn create_file(&self, path: &Path) -> Result<(), IoError> {
+        println!("create_file");
         if path.exists() {
             return Err(IoError::new(ErrorKind::AlreadyExists, "Create file : path already exists"));
         }
@@ -90,6 +95,7 @@ impl RealFileSystem {
     }
 
     pub fn create_directory(&self, path: &Path, recursively: bool) -> Result<(), IoError> {
+        println!("create_directory");
         if self.dry {
             println!("DRY : create directory {:?}", path);
         } else {
@@ -112,7 +118,7 @@ impl RealFileSystem {
     }
 
     pub fn copy(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
-//        println!("src : {:?} is_dir {}, dst: {:?} is dir {}", src, src.is_dir(), dst, dst.is_dir());
+        println!("COPY {:?} {:?}", src, dst);
         if ! src.exists() {
             return Err(IoError::new(ErrorKind::InvalidData, format!("Copy : source does not exists {:?}", src)))
         }
@@ -128,6 +134,7 @@ impl RealFileSystem {
     }
 
     pub fn copy_file_into_directory(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), overwrite: bool) -> Result<usize, IoError> {
+        println!("copy_file_into_directory");
         if ! src.is_file() {
             return Err(IoError::new(ErrorKind::InvalidData, format!("File into directory : source is not a file {:?}", src)));
         }
@@ -151,6 +158,7 @@ impl RealFileSystem {
     }
 
     pub fn copy_directory_into_directory(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), merge: bool, overwrite: bool) -> Result<usize, IoError> {
+        println!("copy_directory_into_directory");
         if ! src.is_dir() { //TODO @symlink
             return Err(IoError::new(ErrorKind::InvalidData, format!("Directory to directory : source is not a directory {:?}", src)))
         }
@@ -188,6 +196,7 @@ impl RealFileSystem {
     }
 
     pub fn copy_file_to_file(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), overwrite: bool) -> Result<usize, IoError>{
+        println!("copy_file_to_file");
         if ! src.is_file() { //TODO @symlink
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a file {:?}", src)));
         }
