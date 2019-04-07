@@ -20,9 +20,9 @@
 use std::vec::IntoIter;
 use crate::file_system::{ RealFileSystem };
 use crate::{ VfsError };
-use crate::operation::WriteOperation;
+use crate::operation::Operation;
 
-pub struct Transaction<T>(Vec<Box<dyn WriteOperation<T>>>);
+pub struct Transaction<T>(Vec<Box<dyn Operation<T>>>);
 
 impl std::fmt::Debug for Transaction<RealFileSystem> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -42,14 +42,14 @@ impl <T> Transaction<T> {
         Ok(())
     }
 
-    pub fn add_operation(&mut self, operation: Box<dyn WriteOperation<T>>) {
+    pub fn add_operation(&mut self, operation: Box<dyn Operation<T>>) {
         self.0.push(operation);
     }
 }
 
 impl <T>IntoIterator for Transaction<T> {
-    type Item = Box<dyn WriteOperation<T>>;
-    type IntoIter = IntoIter<Box<dyn WriteOperation<T>>>;
+    type Item = Box<dyn Operation<T>>;
+    type IntoIter = IntoIter<Box<dyn Operation<T>>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()

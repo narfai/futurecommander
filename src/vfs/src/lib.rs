@@ -30,11 +30,10 @@ pub mod representation;
 
 //Read API
 pub mod query;
-
+pub use self::shared::kind::Kind;
 
 //Write API
 pub use self::shared::operation;
-
 
 //Containers
 pub use self::file_system::RealFileSystem;

@@ -23,7 +23,8 @@ use std::hash::Hasher;
 use std::hash::{ Hash };
 use std::collections::hash_map::DefaultHasher;
 use std::path::{ Path, PathBuf };
-use crate::representation::{VirtualDelta, VirtualChildren, VirtualPath, Kind};
+use crate::Kind;
+use crate::representation::{ VirtualDelta, VirtualChildren, VirtualPath };
 
 //TODO test IdentityStatus
 

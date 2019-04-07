@@ -25,11 +25,11 @@ use crate::command::errors::CommandError;
 
 use vfs::{
     HybridFileSystem,
+    Kind,
     operation::{
-        WriteOperation,
+        Operation,
         CreateOperation
     },
-    representation::Kind
 };
 
 pub struct NewDirectoryCommand {}

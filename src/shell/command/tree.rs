@@ -26,7 +26,7 @@ use vfs::{
     HybridFileSystem,
     query::{
         Entry,
-        ReadQuery,
+        Query,
         ReadDirQuery
     },
 };

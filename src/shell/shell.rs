@@ -26,8 +26,8 @@ use clap::{ App, ArgMatches };
 
 use vfs::{
     HybridFileSystem,
-    representation::Kind,
-    query::{ ReadQuery, StatusQuery }
+    Kind,
+    query::{Query, StatusQuery }
 };
 
 use crate::path::absolute;

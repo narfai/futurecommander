@@ -19,9 +19,9 @@
 
 /* I EXPECT THE PATH destination TO EXISTS WITH SOURCE source */
 use crate::{ VirtualFileSystem, VfsError };
-use crate::operation::{ WriteOperation, MoveOperation, CopyOperation, RemoveOperation };
+use crate::operation::{Operation, MoveOperation, CopyOperation, RemoveOperation };
 
-impl WriteOperation<VirtualFileSystem> for MoveOperation {
+impl Operation<VirtualFileSystem> for MoveOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         CopyOperation::new(
             self.source(),

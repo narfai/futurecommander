@@ -24,12 +24,12 @@ use clap::ArgMatches;
 use vfs::{
     HybridFileSystem,
     operation::{
-        WriteOperation,
+        Operation,
         MoveOperation
     },
     query::{
         Entry,
-        ReadQuery,
+        Query,
         StatusQuery
     }
 };

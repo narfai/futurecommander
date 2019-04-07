@@ -22,9 +22,9 @@ use std::collections::btree_map::Iter as BTreeMapIter;
 use std::path::{ PathBuf, Path };
 use std::ops::{ Add, Sub };
 
-use crate::{ VfsError };
+use crate::{ VfsError, Kind };
 
-use crate::representation::{VirtualChildren, VirtualPath, Kind, VirtualChildrenIterator };
+use crate::representation::{VirtualChildren, VirtualPath, VirtualChildrenIterator };
 
 #[derive(Debug, Clone)]
 pub struct VirtualDelta {

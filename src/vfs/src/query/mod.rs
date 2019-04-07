@@ -24,14 +24,20 @@ mod read_dir;
 pub use self::read_dir::ReadDirQuery;
 
 mod entry;
-pub use self::entry::{ Entry, Node, EntryCollection };
+pub use self::entry::Entry;
 
 mod identity_status;
-pub use self::identity_status::{ IdentityStatus };
+pub use self::identity_status::IdentityStatus;
+
+mod node;
+pub use self::node::Node;
+
+mod collection;
+pub use self::collection::EntryCollection;
 
 use crate::VfsError;
 
-pub trait ReadQuery<F> {
+pub trait Query<F> {
     type Result;
 
     fn retrieve(&self, fs: F) -> Result<Self::Result, VfsError>;

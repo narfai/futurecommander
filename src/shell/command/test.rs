@@ -25,7 +25,7 @@ use vfs::{
     HybridFileSystem,
     VfsError,
     query::{
-        ReadQuery,
+        Query,
         Entry,
         StatusQuery,
         ReadDirQuery,

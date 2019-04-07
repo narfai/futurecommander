@@ -25,29 +25,7 @@ use std::path::MAIN_SEPARATOR;
 
 use crate::VfsError;
 
-#[derive(Clone, Debug, Copy)]
-pub enum Kind {
-    File,
-    Directory,
-    Unknown
-}
-
-impl Kind {
-    pub fn from_path(path: &Path) -> Kind {
-        match path.is_dir() {
-            true => Kind::Directory,
-            false =>
-                match path.is_file() {
-                    true => Kind::File,
-                    false => Kind::Unknown
-                }
-        }
-    }
-
-    pub fn from_path_buf(path: PathBuf) -> Kind {
-        Self::from_path(path.as_path())
-    }
-}
+use crate::Kind;
 
 #[derive(Clone, Debug)]
 pub struct VirtualPath {
@@ -57,28 +35,6 @@ pub struct VirtualPath {
 }
 
 impl Eq for VirtualPath {}
-
-impl PartialEq for Kind {
-    fn eq(&self, other: &Kind) -> bool {
-        match &self {
-            Kind::File => match other {
-                Kind::File => true,
-                Kind::Directory => false,
-                Kind::Unknown => false
-            },
-            Kind::Directory => match other {
-                Kind::File => false,
-                Kind::Directory => true,
-                Kind::Unknown => false
-            }
-            Kind::Unknown => match other {
-                Kind::File => false,
-                Kind::Directory => false,
-                Kind::Unknown => true
-            }
-        }
-    }
-}
 
 /*
 Virtual wrapper of PathBuf for keeping control over type & behaviors

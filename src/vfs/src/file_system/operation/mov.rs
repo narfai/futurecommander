@@ -21,9 +21,9 @@
 
 use crate::VfsError;
 use crate::file_system::RealFileSystem;
-use crate::operation::{ WriteOperation, MoveOperation };
+use crate::operation::{Operation, MoveOperation };
 
-impl WriteOperation<RealFileSystem> for MoveOperation {
+impl Operation<RealFileSystem> for MoveOperation {
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         if ! self.source().exists() {
             return Err(VfsError::DoesNotExists(self.source().to_path_buf()));

@@ -24,11 +24,11 @@ use clap::ArgMatches;
 
 use vfs::{
     HybridFileSystem,
+    Kind,
     operation::{
-        WriteOperation,
+        Operation,
         CreateOperation
     },
-    representation::Kind
 };
 
 use crate::command::{

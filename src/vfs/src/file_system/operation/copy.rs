@@ -19,7 +19,7 @@
 
 use crate::VfsError;
 use crate::file_system::RealFileSystem;
-use crate::operation::{ WriteOperation, CopyOperation };
+use crate::operation::{Operation, CopyOperation };
 
 impl CopyOperation {
     pub fn copy_real_children(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
@@ -49,7 +49,7 @@ impl CopyOperation {
 }
 
 
-impl WriteOperation<RealFileSystem> for CopyOperation {
+impl Operation<RealFileSystem> for CopyOperation {
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         let source = self.source();
         let destination = self.destination();

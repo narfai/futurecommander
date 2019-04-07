@@ -17,12 +17,12 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::VfsError;
+use crate::{ VfsError, Kind };
 use crate::file_system::RealFileSystem;
-use crate::representation::{VirtualPath, Kind};
-use crate::operation::{ WriteOperation, CreateOperation };
+use crate::representation::VirtualPath;
+use crate::operation::{Operation, CreateOperation };
 
-impl WriteOperation<RealFileSystem> for CreateOperation {
+impl Operation<RealFileSystem> for CreateOperation {
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         let path = self.path();
         if path.exists() {

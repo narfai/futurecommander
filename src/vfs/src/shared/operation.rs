@@ -19,10 +19,10 @@
 
 use std::path::{ Path, PathBuf };
 
-use crate::representation::{Kind};
+use crate::Kind;
 use crate::VfsError;
 
-pub trait WriteOperation <F: ?Sized>: std::fmt::Debug {
+pub trait Operation<F: ?Sized>: std::fmt::Debug {
     fn execute(&self, fs: &mut F) -> Result<(), VfsError>;
 }
 

@@ -24,7 +24,7 @@ use clap::ArgMatches;
 use vfs::{
     HybridFileSystem,
     operation::{
-        WriteOperation,
+        Operation,
         RemoveOperation
     }
 };

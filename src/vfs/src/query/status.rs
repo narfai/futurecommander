@@ -22,10 +22,10 @@ use std::path::{ PathBuf, Path };
 #[allow(unused_imports)]
 use crate::query::Entry;
 
-use crate::{ VfsError };
-use crate::representation::{VirtualPath, Kind};
+use crate::{ VfsError, Kind };
+use crate::representation::{ VirtualPath };
 use crate::virtual_file_system::{ VirtualFileSystem };
-use crate::query::{ ReadQuery, IdentityStatus, Node };
+use crate::query::{Query, IdentityStatus, Node };
 
 
 pub struct StatusQuery {
@@ -108,7 +108,7 @@ impl StatusQuery {
     }
 }
 
-impl ReadQuery<&VirtualFileSystem> for StatusQuery{
+impl Query<&VirtualFileSystem> for StatusQuery{
     type Result = Node<IdentityStatus>;
 
     fn retrieve(&self, fs: &VirtualFileSystem) -> Result<Self::Result, VfsError> {

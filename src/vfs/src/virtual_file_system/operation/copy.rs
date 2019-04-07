@@ -17,10 +17,10 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{ VfsError, VirtualFileSystem };
-use crate::operation::{ CopyOperation, WriteOperation };
-use crate::representation::{VirtualPath, Kind};
-use crate::query::{ ReadQuery, ReadDirQuery, StatusQuery, IdentityStatus, Entry };
+use crate::{ VfsError, VirtualFileSystem, Kind };
+use crate::operation::{CopyOperation, Operation};
+use crate::representation::{ VirtualPath };
+use crate::query::{Query, ReadDirQuery, StatusQuery, IdentityStatus, Entry };
 
 impl CopyOperation {
     fn copy_virtual_children(fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
@@ -46,7 +46,7 @@ impl CopyOperation {
 }
 
 //TODO should use Transaction to do nothing over recursive error => Maybe it's impossible => maybe with subdelta and "vfs preview"
-impl WriteOperation<VirtualFileSystem> for CopyOperation {
+impl Operation<VirtualFileSystem> for CopyOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         let source = StatusQuery::new(self.source()).retrieve(fs)?;
         let parent_path = VirtualPath::get_parent_or_root(self.destination());

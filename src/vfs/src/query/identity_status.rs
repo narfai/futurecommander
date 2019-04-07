@@ -20,8 +20,8 @@
 use std::path::{ Path, PathBuf };
 use std::ffi::OsStr;
 
-
-use crate::representation::{VirtualPath, Kind};
+use crate::Kind;
+use crate::representation::VirtualPath;
 use crate::query::{ Entry, Node };
 
 #[derive(Debug)]

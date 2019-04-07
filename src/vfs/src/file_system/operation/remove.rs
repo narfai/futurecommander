@@ -18,9 +18,9 @@
  */
 use crate::VfsError;
 use crate::file_system::RealFileSystem;
-use crate::operation::{ WriteOperation, RemoveOperation };
+use crate::operation::{Operation, RemoveOperation };
 
-impl WriteOperation<RealFileSystem> for RemoveOperation{
+impl Operation<RealFileSystem> for RemoveOperation{
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         let path = self.path();
         if ! path.exists() {

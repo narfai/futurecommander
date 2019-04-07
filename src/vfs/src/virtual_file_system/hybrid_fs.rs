@@ -18,7 +18,7 @@
  */
 
 #[allow(unused_imports)]
-use crate::operation::WriteOperation;
+use crate::operation::Operation;
 
 use crate::{ VfsError, Transaction, VirtualFileSystem, RealFileSystem };
 

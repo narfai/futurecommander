@@ -18,12 +18,12 @@
  */
 use std::path::Ancestors;
 
-use crate::{ VirtualFileSystem, VfsError };
-use crate::operation::{ WriteOperation, CreateOperation };
-use crate::query::{ ReadQuery, StatusQuery, Entry };
-use crate::representation::{VirtualPath, Kind};
+use crate::{ VirtualFileSystem, VfsError, Kind };
+use crate::operation::{Operation, CreateOperation };
+use crate::query::{Query, StatusQuery, Entry };
+use crate::representation::{ VirtualPath };
 
-impl WriteOperation<VirtualFileSystem> for CreateOperation{
+impl Operation<VirtualFileSystem> for CreateOperation{
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         let path = self.path();
         match StatusQuery::new(path).retrieve(&fs)?.into_inner().into_existing_virtual() {

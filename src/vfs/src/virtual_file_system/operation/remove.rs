@@ -17,10 +17,10 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 use crate::{ VirtualFileSystem, VfsError };
-use crate::operation::{ WriteOperation, RemoveOperation };
-use crate::query::{ ReadQuery, StatusQuery, IdentityStatus };
+use crate::operation::{Operation, RemoveOperation };
+use crate::query::{Query, StatusQuery, IdentityStatus };
 
-impl WriteOperation<VirtualFileSystem> for RemoveOperation {
+impl Operation<VirtualFileSystem> for RemoveOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         match StatusQuery::new(self.path()).retrieve(&fs)?.into_inner() {
             IdentityStatus::Exists(virtual_identity)
