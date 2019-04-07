@@ -132,7 +132,7 @@ impl Shell {
 
                 match StatusQuery::new(path.as_path()).retrieve(&self.fs.vfs()) {
                     Ok(status) =>
-                        match status.virtual_identity() {
+                        match status.as_virtual_identity() {
                             Some(virtual_identity) =>
                                 if virtual_identity.as_kind() == &VirtualKind::Directory {
                                     self.cwd = path;

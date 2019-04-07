@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{VirtualFileSystem, HybridFileSystem, CopyOperation, WriteOperation, Transaction, RealFileSystem };
+use vfs::{ VirtualFileSystem, HybridFileSystem, CreateOperation, CopyOperation, WriteOperation, Transaction, RealFileSystem , StatusQuery, ReadQuery, VirtualKind };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::command::{ Command };
@@ -30,14 +30,13 @@ impl Command<CopyCommand> {
     pub const NAME : &'static str = "copy";
 
     pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedCopyCommand>, CommandError> {
-        let source = Self::extract_path_from_args(cwd, args, "source")?;
-        let (name, destination) = Self::extract_name_and_destination(cwd, args)?;
+        let (source, _source_trailing) = Self::extract_path_and_trail_from_args(cwd, args, "source")?;
+        let (destination, _destination_trailing) = Self::extract_path_and_trail_from_args(cwd, args, "destination")?;
 
         Ok(
             Command(InitializedCopyCommand {
                 source,
-                destination,
-                name
+                destination
             })
         )
     }
@@ -45,22 +44,42 @@ impl Command<CopyCommand> {
 
 pub struct InitializedCopyCommand {
     pub source: PathBuf,
-    pub destination: PathBuf,
-    pub name: Option<OsString>
+    pub destination: PathBuf
 }
 
 impl Command<InitializedCopyCommand> {
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
-        let operation = CopyOperation::new(
-            self.0.source.as_path(),
-            self.0.destination.as_path(),
-            self.0.name.clone()
-        );
+        let source = StatusQuery::new(self.0.source.as_path()).retrieve(fs.vfs())?;
+        let destination = StatusQuery::new(self.0.destination.as_path()).retrieve(fs.vfs())?;
 
-        fs.mut_transaction().add_operation(Box::new(operation.clone()));
+        if ! source.exists() {
+            return Err(CommandError::DoesNotExists(self.0.source.to_path_buf()));
+        }
+
+        let operation = match destination.exists() {
+            true =>
+                match destination.is_dir() {
+                    true =>
+                        CopyOperation::new(
+                        self.0.source.as_path(),
+                        self.0.destination
+                            .join(self.0.source.file_name().unwrap())
+                            .as_path()
+                        ),
+                    false =>
+                        match source.is_dir() {
+                            true => return Err(CommandError::CustomError("Directory into a file".to_string())),
+                            false => return Err(CommandError::CustomError("Overwrite".to_string())) //OVERWRITE
+                        }
+                },
+            false => CopyOperation::new(self.0.source.as_path(), self.0.destination.as_path())
+        };
 
         match operation.execute(fs.mut_vfs()) {
-            Ok(_) => Ok(()),
+            Ok(_) => {
+                fs.mut_transaction().add_operation(Box::new(operation));
+                Ok(())
+            },
             Err(error) => Err(CommandError::from(error))
         }
     }

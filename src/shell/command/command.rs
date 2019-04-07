@@ -37,21 +37,13 @@ impl <C>Command<C> {
         }
     }
 
-    pub fn extract_name_and_destination(cwd: &Path, args: &ArgMatches<'_>) -> Result<(Option<OsString>, PathBuf), CommandError>{
-        match args.value_of("destination") {
-            Some(str_path) =>
-                match str_path.chars().last().unwrap() == MAIN_SEPARATOR {
-                    false => {
-                        let destination = normalize(&cwd.join(Path::new(str_path.trim())));
-                        let name = match destination.file_name() {
-                            None => return Err(CommandError::from(VfsError::IsDotName(destination.to_path_buf()))),
-                            Some(name) => Some(name.to_os_string())
-                        };
-                        Ok((name, VirtualPath::get_parent_or_root(destination.as_path())))
-                    },
-                    true => Ok((None, normalize(&cwd.join(Path::new(str_path.trim())))))
-                },
-            None => return Err(CommandError::ArgumentMissing("generic".to_string(), "destination".to_string(), args.usage().to_string())) //TODO get back Self::Name
+    pub fn extract_path_and_trail_from_args(cwd: &Path, args: &ArgMatches<'_>, key: &str) -> Result<(PathBuf, bool), CommandError> {
+        match args.value_of(key) {
+            Some(str_path) => Ok((
+                normalize(&cwd.join(Path::new(str_path.trim()))),
+                str_path.chars().last().unwrap() == MAIN_SEPARATOR
+            )),
+            None => return Err(CommandError::ArgumentMissing("generic".to_string(), key.to_string(), args.usage().to_string()))
         }
     }
 }

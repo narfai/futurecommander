@@ -29,7 +29,8 @@ pub enum CommandError {
     InvalidCommand,
     IsNotADirectory(PathBuf),
     DoesNotExists(PathBuf),
-    CwdIsInside(PathBuf)
+    CwdIsInside(PathBuf),
+    CustomError(String)
 }
 
 impl From<VfsError> for CommandError {
@@ -46,7 +47,8 @@ impl fmt::Display for CommandError {
             CommandError::InvalidCommand => write!(f, "Invalid command"),
             CommandError::IsNotADirectory(path) => write!(f, "{} is not a directory", path.as_os_str().to_string_lossy()),
             CommandError::DoesNotExists(path) => write!(f, "{} does not exists", path.as_os_str().to_string_lossy()),
-            CommandError::CwdIsInside(path) => write!(f, "current working directory is inside {}", path.as_os_str().to_string_lossy())
+            CommandError::CwdIsInside(path) => write!(f, "current working directory is inside {}", path.as_os_str().to_string_lossy()),
+            CommandError::CustomError(custom_message) => write!(f, "Custom error message {}", custom_message)
         }
     }
 }

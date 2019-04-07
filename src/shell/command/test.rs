@@ -94,16 +94,14 @@ mod virtual_shell_tests {
 
         let copy_a_to_b = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A"),
-            name: None
+            destination: sample_path.join("A")
         });
 
         copy_a_to_b.execute(&mut fs).unwrap();
 
         let copy_ab_to_abd = Command(InitializedCopyCommand {
             source: sample_path.join("A/B/D"),
-            destination: sample_path.join("A"),
-            name: None
+            destination: sample_path.join("A")
         });
 
         copy_ab_to_abd.execute(&mut fs).unwrap();
@@ -128,24 +126,21 @@ mod virtual_shell_tests {
 
         let copy_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A"),
-            name: None
+            destination: sample_path.join("A")
         });
 
         copy_b_to_a.execute(&mut fs).unwrap();
 
         let copy_f_to_b = Command(InitializedCopyCommand {
             source: sample_path.join("F"),
-            destination: sample_path.join("B"),
-            name: None
+            destination: sample_path.join("B")
         });
 
         copy_f_to_b.execute(&mut fs).unwrap();
 
         let copy_bf_to_bde = Command(InitializedCopyCommand {
             source: sample_path.join("B/F"),
-            destination: sample_path.join("B/D/E"),
-            name: None
+            destination: sample_path.join("B/D/E")
         });
 
         copy_bf_to_bde.execute(&mut fs).unwrap();
@@ -170,24 +165,21 @@ mod virtual_shell_tests {
 
         let move_f_to_a = Command(InitializedMoveCommand {
             source: sample_path.join(&Path::new("F")),
-            destination: sample_path.join("A"),
-            name: None
+            destination: sample_path.join("A")
         });
 
         move_f_to_a.execute(&mut fs).unwrap();
 
         let move_af_to_b = Command(InitializedMoveCommand {
             source: sample_path.join("A/F"),
-            destination: sample_path.join("B"),
-            name: None
+            destination: sample_path.join("B")
         });
 
         move_af_to_b.execute(&mut fs).unwrap();
 
         let move_bf_to_bde = Command(InitializedMoveCommand {
             source: sample_path.join("B/F"),
-            destination: sample_path.join("B/D/E"),
-            name: None
+            destination: sample_path.join("B/D/E")
         });
 
         move_bf_to_bde.execute(&mut fs).unwrap();
@@ -274,8 +266,7 @@ mod virtual_shell_tests {
 
         let copy_test_to_z = Command(InitializedCopyCommand {
             source: sample_path.join("TEST"),
-            destination: sample_path.join("Z"),
-            name: None
+            destination: sample_path.join("Z")
         });
         copy_test_to_z.execute(&mut fs).unwrap();
 
@@ -295,15 +286,13 @@ mod virtual_shell_tests {
 
         let copy_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A"),
-            name: None
+            destination: sample_path.join("A")
         });
         copy_b_to_a.execute(&mut fs).unwrap();
 
         let copy_a_as_aprime = Command(InitializedCopyCommand {
             source: sample_path.join("A"),
-            destination: sample_path.clone(),
-            name: Some(OsString::from("APRIME"))
+            destination: sample_path.join("APRIME")
         });
         copy_a_as_aprime.execute(&mut fs).unwrap();
 
@@ -331,15 +320,13 @@ mod virtual_shell_tests {
 
         let move_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A"),
-            name: None
+            destination: sample_path.join("A")
         });
         move_b_to_a.execute(&mut fs).unwrap();
 
         let move_a_as_aprime = Command(InitializedMoveCommand {
             source: sample_path.join("A"),
-            destination: sample_path.clone(),
-            name: Some(OsString::from("APRIME"))
+            destination: sample_path.join("APRIME")
         });
         move_a_as_aprime.execute(&mut fs).unwrap();
 
@@ -362,35 +349,31 @@ mod virtual_shell_tests {
 
 
     #[test]
-    fn virtual_shell_copy_nested_virtual_identity_deep_through(){
+    fn virtual_shell_copy_nested_deep_through_virtual_identity(){
         let sample_path = Samples::static_samples_path();
         let mut fs = HybridFileSystem::new();
 
         let copy_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A"),
-            name: None
+            destination: sample_path.join("A")
         });
         copy_b_to_a.execute(&mut fs).unwrap();
 
         let copy_a_as_aprime = Command(InitializedCopyCommand {
             source: sample_path.join("A"),
-            destination: sample_path.clone(),
-            name: Some(OsString::from("APRIME"))
+            destination: sample_path.join("APRIME").to_path_buf()
         });
         copy_a_as_aprime.execute(&mut fs).unwrap();
 
         let copy_aprime_as_abeta = Command(InitializedCopyCommand {
             source: sample_path.join("APRIME"),
-            destination: sample_path.clone(),
-            name: Some(OsString::from("ABETA"))
+            destination: sample_path.join("ABETA").clone()
         });
         copy_aprime_as_abeta.execute(&mut fs).unwrap();
 
         let copy_abeta_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("ABETA"),
-            destination: sample_path.join("A"),
-            name: None
+            destination: sample_path.join("A")
         });
         copy_abeta_to_a.execute(&mut fs).unwrap();
 
@@ -423,14 +406,13 @@ mod virtual_shell_tests {
 
         let move_b_to_bd = Command(InitializedMoveCommand {
             source: source.clone(),
-            destination: destination.clone(),
-            name: None
+            destination: destination.clone()
         });
 
         match move_b_to_bd.execute(&mut fs){
             Err(CommandError::VfsError(VfsError::CopyIntoItSelf(err_source, err_destination))) => {
                 assert_eq!(source, err_source);
-                assert_eq!(destination, err_destination);
+                assert_eq!(destination.join("B"), err_destination);
             },
             Err(unwanted_error) => panic!("{}", unwanted_error),
             Ok(_) => panic!("Should not be able to move into itself")
