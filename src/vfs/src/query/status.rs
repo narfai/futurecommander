@@ -41,11 +41,7 @@ impl StatusQuery {
             true => //Ok(IdentityStatus::RemovedVirtually),
                 match fs.add_state().get(self.path.as_path())? {
                     Some(_virtual_state) => Err(VfsError::AddSubDanglingVirtualPath(self.path.to_path_buf())),
-                    None => Ok(IdentityStatus::RemovedVirtually),
-//                        match self.path.exists() {
-//                            true => Ok(IdentityStatus::RemovedVirtually),
-//                            false => Err(VfsError::SubDanglingVirtualPath(self.path.to_path_buf())),
-//                        }
+                    None => Ok(IdentityStatus::RemovedVirtually)
                 }
             false =>
                 match fs.add_state().get(self.path.as_path())? {//IN ADD AND NOT IN SUB
