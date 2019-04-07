@@ -20,6 +20,9 @@
 #[macro_use]
 extern crate clap;
 
+extern crate rustyline;
+
+
 mod path;
 mod command;
 mod shell;

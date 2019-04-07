@@ -26,8 +26,6 @@ use std::path::{ Path, PathBuf };
 use crate::Kind;
 use crate::representation::{ VirtualDelta, VirtualChildren, VirtualPath };
 
-//TODO test IdentityStatus
-
 #[cfg(test)]
 mod virtual_path_tests {
     use super::*;

@@ -104,6 +104,10 @@ https://neon-bindings.com/
 https://nwjs.io/
 https://proton-native.js.org/#/
 
+## Rust lints
+
+https://github.com/rust-lang/rust-clippy
+
 ## QA
 
 https://github.com/rust-lang/miri#bugs-found-by-miri

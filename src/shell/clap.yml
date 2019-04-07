@@ -6,6 +6,8 @@ settings:
   - ArgRequiredElseHelp
   - NoBinaryName
 subcommands:
+  - history:
+      about: Display command history
   - ls:
       about: List content of a directory like it would be AFTER apply
       args:

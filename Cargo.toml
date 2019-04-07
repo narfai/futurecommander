@@ -8,6 +8,7 @@ license = "GPL-3.0-or-later"
 [workspace]
 
 [dependencies]
+rustyline = "3.0.0"
 clap = { version =  "2.32.0", features = ["yaml"] }
 vfs = { package = "futurecommander_vfs", version = "0.2.5", path = "src/vfs" }
 

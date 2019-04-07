@@ -24,6 +24,7 @@ use vfs::VfsError;
 
 #[derive(Debug)]
 pub enum CommandError {
+    Exit,
     VfsError(VfsError),
     ArgumentMissing(String, String, String),
     InvalidCommand,
@@ -42,6 +43,7 @@ impl From<VfsError> for CommandError {
 impl fmt::Display for CommandError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            CommandError::Exit => write!(f, "Exit program"),
             CommandError::VfsError(error) => write!(f, "Vfs Error: {}", error),
             CommandError::ArgumentMissing(command, argument, usage) => write!(f, "{} missing {} argument \n {}", command, argument, usage),
             CommandError::InvalidCommand => write!(f, "Invalid command"),

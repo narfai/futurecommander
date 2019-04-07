@@ -44,48 +44,6 @@ mod tests {
     #[test]
     pub fn copy_file_to_file_overwrite(){}
 
-//    #[test]
-//    pub fn copy_file_into_directory(){
-//        let chroot = Samples::init_simple_chroot("copy_file_into_directory");
-//        let fs = RealFileSystem::new(false);
-//
-//        fs.copy_file_into_directory(
-//            chroot.join("RDIR/RFILEA").as_path(),
-//            chroot.as_path(),
-//            &|_read| { /*println!("read {}", read);*/ },
-//            false
-//        ).unwrap();
-//
-//        assert!(chroot.join("RFILEA").exists());
-//        assert!(chroot.join("RFILEA").is_file());
-//    }
-//
-//    #[test]
-//    pub fn copy_file_into_directory_overwrite(){}
-//
-//    #[test]
-//    pub fn copy_directory_into_directory(){
-//        let chroot = Samples::init_simple_chroot("copy_directory_into_directory");
-//        let fs = RealFileSystem::new(false);
-//
-//        fs.create_directory(chroot.join("COPIED").as_path(), false).unwrap();
-//        fs.copy_directory_into_directory(
-//            chroot.join("RDIR").as_path(),
-//            chroot.join("COPIED").as_path(),
-//            &|_read| { /*println!("read {}", read);*/ },
-//            false,
-//            false
-//        ).unwrap();
-//
-//        assert!(chroot.join("COPIED").exists());
-//        assert!(chroot.join("COPIED").is_dir());
-//        assert!(chroot.join("COPIED/RFILEA").exists());
-//        assert!(chroot.join("COPIED/RFILEB").exists());
-//    }
-//
-//    #[test]
-//    pub fn copy_directory_into_directory_overwrite(){}
-
     #[test]
     pub fn create_file(){
         let chroot = Samples::init_simple_chroot("create_file");
