@@ -20,7 +20,6 @@
 use std::env::current_exe;
 
 use std::path::{ PathBuf, Path };
-use std::ffi::{ OsString };
 use vfs::*;
 use crate::command::{ Command, CommandError };
 use crate::command::copy::{ InitializedCopyCommand };

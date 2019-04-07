@@ -17,18 +17,17 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ VirtualFileSystem, HybridFileSystem, CreateOperation, CopyOperation, WriteOperation, Transaction, RealFileSystem , StatusQuery, ReadQuery, VirtualKind };
+
+use vfs::{ HybridFileSystem, CopyOperation, StatusQuery, WriteOperation, ReadQuery };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::command::{ Command };
 use crate::command::errors::CommandError;
-use std::ffi::{ OsString };
+
 
 pub struct CopyCommand {}
 
 impl Command<CopyCommand> {
-    pub const NAME : &'static str = "copy";
-
     pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedCopyCommand>, CommandError> {
         let (source, _source_trailing) = Self::extract_path_and_trail_from_args(cwd, args, "source")?;
         let (destination, _destination_trailing) = Self::extract_path_and_trail_from_args(cwd, args, "destination")?;

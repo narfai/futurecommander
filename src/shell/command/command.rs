@@ -18,9 +18,7 @@
  */
 
 
-use vfs::{ VirtualPath, VfsError };
 use clap::ArgMatches;
-use std::ffi::OsString;
 use std::path::{ Path, PathBuf, MAIN_SEPARATOR };
 use crate::path::{ normalize };
 use crate::command::errors::CommandError;

@@ -20,7 +20,7 @@
 #[allow(unused_imports)]
 use vfs::WriteOperation;
 
-use vfs::{VirtualKind, HybridFileSystem, CreateOperation};
+use vfs::{ VirtualKind, HybridFileSystem, CreateOperation};
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -30,8 +30,6 @@ use crate::command::errors::CommandError;
 pub struct NewDirectoryCommand {}
 
 impl Command<NewDirectoryCommand> {
-    pub const NAME : &'static str = "mkdir";
-
     pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewDirectoryCommand>, CommandError> {
         Ok(
             Command(

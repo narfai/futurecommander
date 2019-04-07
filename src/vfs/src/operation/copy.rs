@@ -77,8 +77,6 @@ impl WriteOperation<VirtualFileSystem> for CopyOperation {
         let parent_path = VirtualPath::get_parent_or_root(self.destination.as_path());
         let parent = StatusQuery::new(parent_path.as_path()).retrieve(fs)?;
 
-        println!("SOURCE {:?} DEST {:?} {:?}", source, destination, self.destination.as_path());
-
         if ! parent.exists() {
             return Err(VfsError::DoesNotExists(parent_path.to_path_buf()));
         } else if !parent.is_dir() {
@@ -159,8 +157,6 @@ impl WriteOperation<RealFileSystem> for CopyOperation {
         if ! self.source.exists() {
             return Err(VfsError::DoesNotExists(self.source.to_path_buf()));
         }
-
-        println!("SOURCE {:?} DEST {:?}", self.source.as_path(), self.destination.as_path());
 
         match self.source.is_dir() {
             true =>

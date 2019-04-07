@@ -27,7 +27,7 @@ use clap::{ App, ArgMatches };
 #[allow(unused_imports)]
 use vfs::ReadQuery;
 
-use vfs::{HybridFileSystem, VirtualKind, StatusQuery, Transaction };
+use vfs::{ HybridFileSystem, VirtualKind, StatusQuery };
 
 use crate::path::absolute;
 use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
@@ -90,15 +90,7 @@ impl Shell {
                                         .and_then(|c| c.execute(&mut self.fs)),
                                 ("tree",        Some(matches)) => Command::<TreeCommand>::new(&self.cwd, matches)
                                         .and_then(|c| c.execute(&mut self.fs)),
-                                ("apply",        Some(matches)) => self.apply(),
-                                //TODO Find out why this const / match syntax is invalid for webstorm
-//                                (ListCommand::NAME,         Some(matches)) => ListCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.fs)),
-//                                (CopyCommand::NAME,         Some(matches)) => CopyCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.fs)),
-//                                (MoveCommand::NAME,         Some(matches)) => MoveCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.fs)),
-//                                (RemoveCommand::NAME,       Some(matches)) => RemoveCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.fs)),
-//                                (NewDirectoryCommand::NAME, Some(matches)) => NewDirectoryCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.fs)),
-//                                (NewFileCommand::NAME,      Some(matches)) => NewFileCommand::new(&self.cwd,matches).and_then(|c| c.execute(&mut self.fs)),
-//                                (TreeCommand::NAME,         Some(matches)) => TreeCommand::new(&self.cwd, matches).and_then(|c| c.execute(&mut self.fs))
+                                ("apply",        Some(_matches)) => self.apply(),
                                 _ => Err(CommandError::InvalidCommand)
                             }
                             {

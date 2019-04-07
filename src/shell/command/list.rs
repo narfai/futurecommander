@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{HybridFileSystem, VirtualKind, Node, ReadQuery, ReadDirQuery};
+use vfs::{ HybridFileSystem, VirtualKind, Node, ReadQuery, ReadDirQuery};
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -28,8 +28,6 @@ use crate::command::errors::CommandError;
 pub struct ListCommand {}
 
 impl Command<ListCommand> {
-    pub const NAME : &'static str = "ls";
-
     pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedListCommand>, CommandError> {
         Ok(
             Command(

@@ -20,7 +20,7 @@
 #[allow(unused_imports)]
 use vfs::WriteOperation;
 
-use vfs::{VirtualKind, CreateOperation, Transaction, HybridFileSystem};
+use vfs::{VirtualKind, CreateOperation, HybridFileSystem};
 use std::path::Path;
 use clap::ArgMatches;
 use std::path::PathBuf;
@@ -30,8 +30,6 @@ use crate::command::errors::CommandError;
 pub struct NewFileCommand {}
 
 impl Command<NewFileCommand> {
-    pub const NAME : &'static str = "touch";
-
     pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewFileCommand>, CommandError> {
         Ok(
             Command(

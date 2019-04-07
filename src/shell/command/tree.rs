@@ -25,8 +25,6 @@ use crate::command::errors::CommandError;
 pub struct TreeCommand {}
 
 impl Command<TreeCommand> {
-    pub const NAME : &'static str = "tree";
-
     pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedTreeCommand>, CommandError> {
         Ok(
             Command(
