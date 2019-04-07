@@ -27,6 +27,7 @@ pub enum VfsError {
     IoError(io::Error),
     HasNoSource(PathBuf),
     IsNotADirectory(PathBuf),
+    IsNotAFile(PathBuf),
     DoesNotExists(PathBuf),
     AlreadyExists(PathBuf),
     VirtualParentIsAFile(PathBuf),
@@ -35,7 +36,8 @@ pub enum VfsError {
     IsRelativePath(PathBuf),
     IsDotName(PathBuf),
     CopyIntoItSelf(PathBuf, PathBuf),
-    SourceDoesNotExists(PathBuf)
+    SourceDoesNotExists(PathBuf),
+    Custom(String)
 }
 
 impl From<io::Error> for VfsError {
@@ -50,6 +52,7 @@ impl fmt::Display for VfsError {
             VfsError::IoError(ref err)                  => write!(f, "IO error: {}", err),
             VfsError::HasNoSource(identity)             => write!(f, "Path {} has no source defined virtually", identity.as_os_str().to_string_lossy()),
             VfsError::IsNotADirectory(identity)         => write!(f, "Path {} is not a directory", identity.as_os_str().to_string_lossy()),
+            VfsError::IsNotAFile(identity)              => write!(f, "Path {} is not a file", identity.as_os_str().to_string_lossy()),
             VfsError::DoesNotExists(identity)           => write!(f, "Path {} does not exists", identity.as_os_str().to_string_lossy()),
             VfsError::AlreadyExists(identity)           => write!(f, "Path {} already exists", identity.as_os_str().to_string_lossy()),
             VfsError::VirtualParentIsAFile(identity)    => write!(f, "Path {} virtual parent is a file", identity.as_os_str().to_string_lossy()),
@@ -59,6 +62,7 @@ impl fmt::Display for VfsError {
             VfsError::IsDotName(identity)           =>  write!(f, "Path {} has a file name with dots", identity.as_os_str().to_string_lossy()),
             VfsError::CopyIntoItSelf(source, destination) =>  write!(f, "Cannot copy {} into itsef {}", source.as_os_str().to_string_lossy(), destination.as_os_str().to_string_lossy()),
             VfsError::SourceDoesNotExists(source) =>  write!(f, "Real source does not exists {}", source.as_os_str().to_string_lossy()),
+            VfsError::Custom(custom_message) => write!(f, "Custom message {}", custom_message)
         }
     }
 }

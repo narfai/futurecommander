@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::VirtualPath;
+use crate::{ VirtualPath, VirtualKind };
 
 #[derive(Debug)]
 pub enum IdentityStatus {
@@ -60,6 +60,28 @@ impl IdentityStatus {
     pub fn exists(&self) -> bool {
         match &self.as_virtual_identity() {
             Some(_) => true,
+            None => false
+        }
+    }
+
+    pub fn is_dir(&self) -> bool {
+        match self.as_virtual_identity() {
+            Some(virtual_identity) =>
+                match virtual_identity.as_kind() {
+                    VirtualKind::Directory => true,
+                    _ => false
+                },
+            None => false
+        }
+    }
+
+    pub fn is_file(&self) -> bool {
+        match self.as_virtual_identity() {
+            Some(virtual_identity) =>
+                match virtual_identity.as_kind() {
+                    VirtualKind::File => true,
+                    _ => false
+                },
             None => false
         }
     }

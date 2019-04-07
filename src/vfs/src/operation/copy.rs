@@ -42,72 +42,115 @@ impl CopyOperation {
         CopyOperation {
             source: source.to_path_buf(),
             destination: destination.to_path_buf(),
-            merge: false,
+            merge: true,
             overwrite: false
         }
     }
 
     fn copy_virtual_children(fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
-        match identity.to_kind() {
-            VirtualKind::Directory => {
-                let read_dir = ReadDirQuery::new(source.as_identity());
-                for child in read_dir.retrieve(&fs)? {
-                    match StatusQuery::new(child.path()).retrieve(&fs)? {
-                        IdentityStatus::ExistsVirtually(_) =>
-                            CopyOperation::new(
-                                child.path(),
-                                identity.as_identity()
-                            ).execute(fs)?
-                        ,
-                        _ => {}
-                    };
-                }
-                Ok(())
-            },
-            _ => Ok(())
+        let read_dir = ReadDirQuery::new(source.as_identity());
+        for child in read_dir.retrieve(&fs)? {
+            match StatusQuery::new(child.path()).retrieve(&fs)? {
+                IdentityStatus::ExistsVirtually(_) =>
+                    CopyOperation::new(
+                        child.path(),
+                        identity.as_identity()
+                            .join(
+                                child.path()
+                                    .file_name()
+                                    .unwrap()
+                            ).as_path()
+                    ).execute(fs)?
+                ,
+                _ => {}
+            };
         }
+        Ok(())
     }
 }
 
-
+//TODO should use Transaction to do nothing over recursive error => Maybe it's impossible => maybe with subdelta and "vfs preview"
 impl WriteOperation<VirtualFileSystem> for CopyOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        let source = match StatusQuery::new(self.source.as_path()).retrieve(fs)?.into_virtual_identity() {
-            Some(virtual_identity) => virtual_identity,
+        let source = StatusQuery::new(self.source.as_path()).retrieve(fs)?;
+        let destination = StatusQuery::new(self.destination.as_path()).retrieve(fs)?;
+        let parent_path = VirtualPath::get_parent_or_root(self.destination.as_path());
+        let parent = StatusQuery::new(parent_path.as_path()).retrieve(fs)?;
+
+        println!("SOURCE {:?} DEST {:?} {:?}", source, destination, self.destination.as_path());
+
+        if ! parent.exists() {
+            return Err(VfsError::DoesNotExists(parent_path.to_path_buf()));
+        } else if !parent.is_dir() {
+            return Err(VfsError::IsNotADirectory(parent_path.to_path_buf()));
+        }
+
+        let source_identity = match source.as_virtual_identity() {
+            Some(identity) => identity,
             None => return Err(VfsError::DoesNotExists(self.source.to_path_buf()))
         };
 
-        let destination = StatusQuery::new(self.destination.as_path()).retrieve(fs)?;
-
-        //TODO check parent exists
         let new_identity = VirtualPath::from(
             self.destination.to_path_buf(),
-            source.to_source(),
-            source.to_kind()
+            source_identity.to_source(),
+            source_identity.to_kind()
         )?;
 
-        //TODO check for merge errors in dst recursively if merge = false
-        if new_identity.is_contained_by(&source) {
-            return Err(VfsError::CopyIntoItSelf(source.to_identity(), self.destination.to_path_buf()));
+        if new_identity.is_contained_by(source_identity) {
+            return Err(VfsError::CopyIntoItSelf(source_identity.to_identity(), self.destination.to_path_buf()));
         }
 
         let stat_new = StatusQuery::new(new_identity.as_identity());
 
         match stat_new.retrieve(&fs)? {
-            IdentityStatus::Exists(_)
-            | IdentityStatus::ExistsVirtually(_)
-            | IdentityStatus::Replaced(_)
-            | IdentityStatus::ExistsThroughVirtualParent(_) => return Err(VfsError::AlreadyExists(new_identity.to_identity())),
+            IdentityStatus::Exists(virtual_identity)
+            | IdentityStatus::ExistsVirtually(virtual_identity)
+            | IdentityStatus::ExistsThroughVirtualParent(virtual_identity)
+            | IdentityStatus::Replaced(virtual_identity) => {
+                match virtual_identity.to_kind() {
+                    VirtualKind::Directory =>
+                        match source_identity.to_kind() {
+                            VirtualKind::Directory =>
+                                match self.merge {
+                                    true => Self::copy_virtual_children(fs, &source_identity, &virtual_identity)?,
+                                    false => return Err(VfsError::Custom("Merge is not allowed".to_string()))
+                                }, //merge
+                            VirtualKind::File => return Err(VfsError::Custom("Cannot overwrite an existing directory with a file".to_string())),
+                            _ => {}
+                        },
+                    VirtualKind::File =>
+                        match source_identity.to_kind() {
+                            VirtualKind::Directory => return Err(VfsError::Custom("Cannot copy directory into file".to_string())),
+                            VirtualKind::File =>
+                                match self.overwrite {
+                                    true => {
+                                        fs.mut_add_state().detach(virtual_identity.as_identity())?;
+                                        fs.mut_add_state().attach_virtual(&new_identity)?;
+                                    },
+                                    false => return Err(VfsError::Custom("Overwrite is not allowed".to_string())), //overwrite
+                                }
+                            _ => {}
+                        },
+                    _ => {}
+                }
+            },
             IdentityStatus::NotExists => {
                 fs.mut_add_state().attach_virtual(&new_identity)?;
+                match new_identity.to_kind() {
+                    VirtualKind::Directory => Self::copy_virtual_children(fs, &source_identity, &new_identity)?,
+                    _ => {}
+                }
             },
             IdentityStatus::Removed | IdentityStatus::RemovedVirtually => {
                 fs.mut_sub_state().detach(new_identity.as_identity())?;
                 fs.mut_add_state().attach_virtual(&new_identity)?;
+                match new_identity.to_kind() {
+                    VirtualKind::Directory => Self::copy_virtual_children(fs, &source_identity, &new_identity)?,
+                    _ => {}
+                }
             },
         }
-
-        Self::copy_virtual_children(fs, &source, &new_identity)
+        Ok(())
     }
 }
 
