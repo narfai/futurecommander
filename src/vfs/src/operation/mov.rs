@@ -67,5 +67,6 @@ impl WriteOperation<RealFileSystem> for MoveOperation {
             Ok(_) => Ok(()),
             Err(error) => Err(VfsError::from(error))
         }
+        //TODO switch to copy + remove if error
     }
 }

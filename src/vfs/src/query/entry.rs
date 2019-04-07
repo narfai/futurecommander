@@ -17,15 +17,11 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::hash_set::IntoIter as HashSetIntoIter;
+use std::cmp::Ordering;
 use std::slice::Iter;
 use std::vec::IntoIter as VecIntoIter;
-use std::iter::FromIterator;
 use std::path::{ Path, PathBuf };
 use std::ffi::{ OsStr };
-//use std::fs::ReadDir;
-
-use crate::representation::{ VirtualPath, VirtualKind };
 
 pub trait Entry {
     fn path(&self) -> &Path;
@@ -33,36 +29,19 @@ pub trait Entry {
     fn name(&self) -> Option<&OsStr>;
     fn is_dir(&self) -> bool;
     fn is_file(&self) -> bool;
+    fn exists(&self) -> bool;
 }
 
 #[derive(Debug)]
 pub struct Node<T>(pub T);
 
-impl Entry for Node<VirtualPath> {
-    fn path(&self) -> &Path {
-        self.0.as_identity()
+impl <T> Node<T> {
+    pub fn into_inner(self) -> T {
+        self.0
     }
 
-    fn to_path(&self) -> PathBuf {
-        self.0.to_identity()
-    }
-
-    fn name(&self) -> Option<&OsStr> {
-        self.0.as_identity().file_name()
-    }
-
-    fn is_dir(&self) -> bool {
-        match self.0.to_kind() {
-            VirtualKind::Directory => true,
-            _ => false
-        }
-    }
-
-    fn is_file(&self) -> bool {
-        match self.0.to_kind() {
-            VirtualKind::File => true,
-            _ => false
-        }
+    pub fn as_inner(&self) -> &T {
+        &self.0
     }
 }
 
@@ -86,40 +65,29 @@ impl Entry for Node<&Path> {
     fn is_file(&self) -> bool {
         self.0.is_file()
     }
+
+    fn exists(&self) -> bool { self.0.exists() }
 }
 
 #[derive(Debug)]
-pub struct NodeIterator<I>(pub I);
-
-impl <I> Iterator for NodeIterator<I>
-    where I: Iterator<Item = VirtualPath> {
-
-    type Item = Node<VirtualPath>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.0.next() {
-            Some(virtual_identity) => Some(Node(virtual_identity)),
-            None => None
-        }
-    }
-}
-
-impl NodeIterator<HashSetIntoIter<VirtualPath>> {
-    pub fn collection(self) -> EntryCollection<Node<VirtualPath>> {
-        EntryCollection::from_iter(self)
-    }
-}
-
-#[derive(Debug)]
-pub struct EntryCollection<T>(Vec<T>)
+pub struct EntryCollection<T>(pub Vec<T>)
     where T: Entry;
 
-impl EntryCollection<Node<VirtualPath>> {
+impl <T> EntryCollection<T> where T: Entry {
+    pub fn contains(&self, node: &Entry) -> bool {
+        for owned_node in self.0.iter() {
+            if owned_node.path() == node.path() {
+                return true;
+            }
+        }
+        return false;
+    }
+
     pub fn new() -> Self {
         EntryCollection(Vec::new())
     }
 
-    pub fn add(&mut self, node: Node<VirtualPath>) {
+    pub fn add(&mut self, node: T) {
         self.0.push(node)
     }
 
@@ -127,36 +95,34 @@ impl EntryCollection<Node<VirtualPath>> {
         self.0.len()
     }
 
-    pub fn into_iter(self) -> VecIntoIter<Node<VirtualPath>> {
+    pub fn into_iter(self) -> VecIntoIter<T> {
         self.0.into_iter()
     }
 
-    pub fn iter(&self) -> Iter<'_, Node<VirtualPath>> {
+    pub fn iter(&self) -> Iter<'_, T> {
         self.0.iter()
     }
+}
 
-    pub fn contains(&self, node: &Node<VirtualPath>) -> bool {
-        for owned_node in self.0.iter() {
-           if owned_node.path() == node.path() {
-               return true;
-           }
-        }
-        return false;
+
+impl Eq for Entry {}
+
+impl Ord for Entry {
+    fn cmp(&self, other: &Entry) -> Ordering {
+        self.path().cmp(other.path())
     }
 }
 
-impl FromIterator<Node<VirtualPath>> for EntryCollection<Node<VirtualPath>> {
-    fn from_iter<I: IntoIterator<Item=Node<VirtualPath>>>(iter: I) -> Self {
-        let mut collection = EntryCollection::new();
-        for identity in iter {
-            collection.add(identity);
-        }
-        collection
+impl PartialOrd for Entry {
+    fn partial_cmp(&self, other: &Entry) -> Option<Ordering> {
+        Some(self.path().cmp(other.path()))
     }
 }
 
-//TODO Path flavour
-
-
+impl PartialEq for Entry {
+    fn eq(&self, other: &Entry) -> bool {
+        self.path().eq(other.path())
+    }
+}
 
 

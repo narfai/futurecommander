@@ -17,9 +17,6 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg(test)]
-mod test;
-
 mod copy;
 pub use self::copy::CopyOperation;
 

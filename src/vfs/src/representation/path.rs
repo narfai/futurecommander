@@ -52,8 +52,7 @@ impl VirtualKind {
 pub struct VirtualPath {
     pub identity: PathBuf,
     pub source: Option<PathBuf>,
-    pub kind: VirtualKind,
-    pub version: Option<usize>
+    pub kind: VirtualKind
 }
 
 impl Eq for VirtualPath {}
@@ -154,8 +153,7 @@ impl VirtualPath {
         VirtualPath {
             identity,
             source,
-            kind,
-            version: None
+            kind
         }
     }
 
@@ -286,10 +284,6 @@ impl VirtualPath {
             }
         }
         false
-    }
-
-    pub fn version(&self) -> Option<usize> {
-        self.version
     }
 }
 

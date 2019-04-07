@@ -18,8 +18,6 @@
  */
 
 use std::path::{ Path };
-use std::ffi::{ OsString };
-
 use crate::*;
 use crate::file_system::test::sample::Samples;
 
@@ -45,7 +43,7 @@ mod tests {
     cp APRIME A
     rm APRIME
     */
-    pub fn _no_dangling(mut fs: &mut HybridFileSystem, chroot: &Path) {
+    pub fn _no_dangling(fs: &mut HybridFileSystem, chroot: &Path) {
         let cp_a_aprime = CopyOperation::new(
             chroot.join("A").as_path(),
             chroot.join("APRIME").as_path()
@@ -82,14 +80,15 @@ mod tests {
 
         let stated_a = StatusQuery::new(chroot.join("A").as_path())
             .retrieve(fs.vfs())
-            .unwrap();
+            .unwrap()
+            .into_inner();
 
         assert!(match stated_a {
             IdentityStatus::Exists(_) => true,
             _ => false
         });
 
-        let virtual_identity = stated_a.as_virtual_identity().unwrap();
+        let virtual_identity = stated_a.into_existing_virtual().unwrap();
 
         assert_eq!(virtual_identity.as_identity(), chroot.join("A"));
         assert_eq!(virtual_identity.to_kind(), VirtualKind::Directory);
@@ -112,7 +111,7 @@ mod tests {
     }
 
 
-    pub fn _copy_file_dir_interversion(mut fs: &mut HybridFileSystem, chroot: &Path) {
+    pub fn _copy_file_dir_interversion(fs: &mut HybridFileSystem, chroot: &Path) {
         /*
         file dir interversion ( C <-> B )
         cp A/C .
@@ -196,18 +195,19 @@ mod tests {
 
         let stated_b = StatusQuery::new(chroot.join("B").as_path())
             .retrieve(fs.vfs())
-            .unwrap()
-            .into_virtual_identity()
             .unwrap();
 
-        assert_eq!(stated_b.as_identity(), chroot.join("B"));
-        assert_eq!(stated_b.to_kind(), VirtualKind::File);
-        assert_eq!(stated_b.as_source().unwrap(), chroot.join("A/C"));
+        assert!(stated_b.exists());
+        assert!(stated_b.is_file());
+        assert_eq!(stated_b.as_inner().as_virtual().as_identity(), chroot.join("B"));
+        assert_eq!(stated_b.as_inner().as_virtual().to_kind(), VirtualKind::File);
+        assert_eq!(stated_b.as_inner().as_virtual().as_source().unwrap(), chroot.join("A/C"));
 
         let stated_c = StatusQuery::new(chroot.join("C").as_path())
             .retrieve(fs.vfs())
             .unwrap()
-            .into_virtual_identity()
+            .into_inner()
+            .into_existing_virtual()
             .unwrap();
 
         assert_eq!(stated_c.as_identity(), chroot.join("C"));
@@ -227,7 +227,7 @@ mod tests {
         cp A/C/D A/
         rm A/D/G //<- should no appear
     */
-    pub fn _some_nesting(mut fs: &mut HybridFileSystem, chroot: &Path) {
+    pub fn _some_nesting(fs: &mut HybridFileSystem, chroot: &Path) {
         let cp_c_a = CopyOperation::new(
             chroot.join("C").as_path(),
             chroot.join("A").join("C").as_path()
@@ -254,7 +254,8 @@ mod tests {
         let stated_ad = StatusQuery::new(chroot.join("A/D").as_path())
             .retrieve(fs.vfs())
             .unwrap()
-            .into_virtual_identity()
+            .into_inner()
+            .into_existing_virtual()
             .unwrap();
 
         assert_eq!(stated_ad.as_identity(), chroot.join("A/D"));

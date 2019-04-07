@@ -48,8 +48,8 @@ impl CopyOperation {
 
     fn copy_virtual_children(fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
         let read_dir = ReadDirQuery::new(source.as_identity());
-        for child in read_dir.retrieve(&fs)? {
-            match StatusQuery::new(child.path()).retrieve(&fs)? {
+        for child in read_dir.retrieve(&fs)?.into_iter() {
+            match child.as_inner() {
                 IdentityStatus::ExistsVirtually(_) =>
                     CopyOperation::new(
                         child.path(),
@@ -66,6 +66,31 @@ impl CopyOperation {
         }
         Ok(())
     }
+
+    pub fn copy_real_children(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
+        for result in self.source.read_dir()? {
+            let child = result?.path();
+            let new_destination = self.destination.join(child.strip_prefix(self.source.as_path()).unwrap());
+
+            CopyOperation::new(
+                child.as_path(),
+                new_destination.as_path()
+            ).execute(fs)?;
+        }
+        Ok(())
+    }
+
+    pub fn copy_file(&self, fs: &mut RealFileSystem) -> Result<(), VfsError>{
+        match fs.copy_file_to_file(
+            self.source.as_path(),
+            self.destination.as_path(),
+            &|_s| { /* println!("{} {}", self.destination.file_name().unwrap().to_string_lossy(), s)*/ },
+            self.overwrite
+        ) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(VfsError::from(error))
+        }
+    }
 }
 
 //TODO should use Transaction to do nothing over recursive error => Maybe it's impossible => maybe with subdelta and "vfs preview"
@@ -81,10 +106,11 @@ impl WriteOperation<VirtualFileSystem> for CopyOperation {
             return Err(VfsError::IsNotADirectory(parent_path.to_path_buf()));
         }
 
-        let source_identity = match source.as_virtual_identity() {
-            Some(identity) => identity,
-            None => return Err(VfsError::DoesNotExists(self.source.to_path_buf()))
-        };
+        if ! source.exists() {
+            return Err(VfsError::DoesNotExists(self.source.to_path_buf()));
+        }
+
+        let source_identity = source.as_inner().as_virtual();
 
         let new_identity = VirtualPath::from(
             self.destination.to_path_buf(),
@@ -98,7 +124,7 @@ impl WriteOperation<VirtualFileSystem> for CopyOperation {
 
         let stat_new = StatusQuery::new(new_identity.as_identity());
 
-        match stat_new.retrieve(&fs)? {
+        match stat_new.retrieve(&fs)?.into_inner() {
             IdentityStatus::Exists(virtual_identity)
             | IdentityStatus::ExistsVirtually(virtual_identity)
             | IdentityStatus::ExistsThroughVirtualParent(virtual_identity)
@@ -130,14 +156,14 @@ impl WriteOperation<VirtualFileSystem> for CopyOperation {
                     _ => {}
                 }
             },
-            IdentityStatus::NotExists => {
+            IdentityStatus::NotExists(_) => {
                 fs.mut_add_state().attach_virtual(&new_identity)?;
                 match new_identity.to_kind() {
                     VirtualKind::Directory => Self::copy_virtual_children(fs, &source_identity, &new_identity)?,
                     _ => {}
                 }
             },
-            IdentityStatus::Removed | IdentityStatus::RemovedVirtually => {
+            IdentityStatus::Removed(_) | IdentityStatus::RemovedVirtually(_) => {
                 fs.mut_sub_state().detach(new_identity.as_identity())?;
                 fs.mut_add_state().attach_virtual(&new_identity)?;
                 match new_identity.to_kind() {
@@ -156,73 +182,37 @@ impl WriteOperation<RealFileSystem> for CopyOperation {
             return Err(VfsError::DoesNotExists(self.source.to_path_buf()));
         }
 
+        if self.source.is_dir() && self.destination.is_file() {
+            return Err(VfsError::Custom("Cannot copy directory to the path of existing file".to_string())); //Error dir to existing file
+        }
+
+        if self.source.is_file() && self.destination.is_dir() {
+            return Err(VfsError::Custom("Cannot copy file to the path existing directory".to_string()));
+        }
+
         match self.source.is_dir() {
             true =>
                 match self.destination.exists() {
-                    true =>
-                        match self.destination.is_dir() {
-                            true => {
-                                if ! self.merge {
-                                    return Err(VfsError::Custom("Merge is not allowed".to_string()))
-                                }
-                                for result in self.source.read_dir()? {
-                                    let child = result?.path();
-                                    let new_destination = self.destination.join(child.strip_prefix(self.source.as_path()).unwrap());
-
-                                    CopyOperation::new(
-                                        child.as_path(),
-                                        new_destination.as_path()
-                                    ).execute(fs)?;
-                                }
-                                Ok(())
-                            }, //merge
-                            false => return Err(VfsError::Custom("Cannot copy directory to existing file".to_string())) //Error dir to existing file
+                    true => {
+                            if ! self.merge {
+                                return Err(VfsError::Custom("Merge is not allowed".to_string()))
+                            }
+                            self.copy_real_children(fs)
                         },
                     false => {
                         fs.create_directory(self.destination.as_path(), false)?;
-
-                        for result in self.source.read_dir()? {
-                            let child = result?.path();
-                            let new_destination = self.destination.join(child.strip_prefix(self.source.as_path()).unwrap());
-
-                            CopyOperation::new(
-                                child.as_path(),
-                                new_destination.as_path()
-                            ).execute(fs)?;
-                        }
-                        Ok(())
+                        self.copy_real_children(fs)
                     } //dir to dir
                 },
             false =>
                 match self.destination.exists() {
-                    true =>
-                        match self.destination.is_dir() {
-                            true => return Err(VfsError::Custom("Cannot copy file to existing".to_string())),//Error file to existing dir
-                            false => {
-                                if !self.overwrite {
-                                    return Err(VfsError::Custom("Overwrite is not allowrd".to_string()));
-                                }
-                                match fs.copy_file_to_file(
-                                    self.source.as_path(),
-                                    self.destination.as_path(),
-                                    &|_| {},
-                                    self.overwrite
-                                ) {
-                                    Ok(_) => Ok(()),
-                                    Err(error) => Err(VfsError::from(error))
-                                }
+                    true => {
+                            if !self.overwrite {
+                                return Err(VfsError::Custom("Overwrite is not allowed".to_string()));
                             }
+                            self.copy_file(fs)
                         },
-                    false =>
-                        match fs.copy_file_to_file(
-                            self.source.as_path(),
-                            self.destination.as_path(),
-                            &|_| {},
-                            false
-                        ) {
-                            Ok(_) => Ok(()),
-                            Err(error) => Err(VfsError::from(error))
-                        }
+                    false => self.copy_file(fs)
                 },
         }
     }

@@ -39,7 +39,7 @@ impl RemoveOperation {
 
 impl WriteOperation<VirtualFileSystem> for RemoveOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        match StatusQuery::new(self.path.as_path()).retrieve(&fs)? {
+        match StatusQuery::new(self.path.as_path()).retrieve(&fs)?.into_inner() {
             IdentityStatus::Exists(virtual_identity)
             | IdentityStatus::Replaced(virtual_identity)
             | IdentityStatus::ExistsThroughVirtualParent(virtual_identity) => {
@@ -48,10 +48,9 @@ impl WriteOperation<VirtualFileSystem> for RemoveOperation {
             IdentityStatus::ExistsVirtually(virtual_identity) => {
                 fs.mut_add_state().detach(virtual_identity.as_identity())?;
                 if let Some(source) = virtual_identity.as_source() {
-                    match StatusQuery::new(source).retrieve(&fs)? {
+                    match StatusQuery::new(source).retrieve(&fs)?.into_inner() {
                         IdentityStatus::Replaced(virtual_path) => {
                             if fs.add_state().is_directory_empty(virtual_path.as_identity()) {
-                                println!("Replacing : cleanup vfs");//TODO remove debug
                                 fs.mut_add_state().detach(virtual_path.as_identity())?;
                             }
                         }
@@ -59,7 +58,7 @@ impl WriteOperation<VirtualFileSystem> for RemoveOperation {
                     }
                 }
             }
-            IdentityStatus::NotExists | IdentityStatus::Removed | IdentityStatus::RemovedVirtually =>
+            IdentityStatus::NotExists(_) | IdentityStatus::Removed(_) | IdentityStatus::RemovedVirtually(_) =>
                 return Err(VfsError::DoesNotExists(self.path.to_path_buf()))
             ,
         }

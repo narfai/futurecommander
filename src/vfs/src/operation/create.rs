@@ -17,13 +17,19 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[allow(unused_imports)]
+use crate::query::{ Entry };
+
+#[allow(unused_imports)]
+use crate::operation::{ WriteOperation };
+
 use std::path::{ PathBuf, Path, Ancestors };
+
 use crate::{ VfsError };
 //use crate::{ VirtualFileSystem, RealFileSystem, VfsError, VirtualKind, VirtualPath };
 use crate::representation::{ VirtualKind, VirtualPath };
 use crate::file_system::{ VirtualFileSystem, RealFileSystem };
-use crate::operation::{ WriteOperation };
-use crate::query::{ReadQuery, StatusQuery};
+use crate::query::{ ReadQuery, StatusQuery };
 
 #[derive(Debug, Clone)]
 pub struct CreateOperation {
@@ -44,7 +50,7 @@ impl CreateOperation {
 
 impl WriteOperation<VirtualFileSystem> for CreateOperation{
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        match StatusQuery::new(self.path.as_path()).retrieve(&fs)?.as_virtual_identity() {
+        match StatusQuery::new(self.path.as_path()).retrieve(&fs)?.into_inner().into_existing_virtual() {
             Some(_) => return Err(VfsError::AlreadyExists(self.path.to_path_buf())),
             None => {
                 if ! self.recursive || self.kind == VirtualKind::File {

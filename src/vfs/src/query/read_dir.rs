@@ -19,13 +19,12 @@
 
 use std::path::{ PathBuf, Path };
 
+#[allow(unused_imports)]
+use crate::query::Entry;
 use crate::{ VfsError };
-
-use crate::representation::{ VirtualPath, VirtualKind, VirtualChildren };
 use crate::file_system::{ VirtualFileSystem };
-use crate::query::{ ReadQuery, StatusQuery, NodeIterator };
-
-use std::collections::hash_set::IntoIter as HashSetIntoIter;
+use crate::representation::{ VirtualPath, VirtualKind, VirtualChildren };
+use crate::query::{ ReadQuery, StatusQuery, EntryCollection, Node, IdentityStatus };
 
 pub struct ReadDirQuery {
     path: PathBuf
@@ -37,35 +36,80 @@ impl ReadDirQuery {
             path: path.to_path_buf()
         }
     }
+
+    pub fn from_file_system(path: &Path, source: Option<&Path>, parent: Option<&Path>) -> Result<EntryCollection<Node<IdentityStatus>>, VfsError> {
+        if !path.exists() {
+            return Ok(EntryCollection::new());
+        }
+
+        let mut entry_collection = EntryCollection::new();
+
+        match path.read_dir() {
+            Ok(results) => {
+                for result in results {
+                    match result {
+                        Ok(result) => {
+                            let result_path = result.path();
+                            let mut virtual_identity = VirtualPath::from_path(result.path().as_path())?
+                                .with_source(Some(result_path.as_path()))
+                                .with_kind(VirtualKind::from_path(result_path.as_path()));
+
+                            if let Some(source) = source {
+                                virtual_identity = virtual_identity.with_new_source_parent(source);
+                            }
+
+                            if let Some(parent) = parent {
+                                virtual_identity = virtual_identity.with_new_identity_parent(parent);
+                            }
+
+                            entry_collection.add(Node(IdentityStatus::Exists(virtual_identity)));
+                        },
+                        Err(error) => return Err(VfsError::from(error))
+                    };
+                }
+                Ok(entry_collection)
+            },
+            Err(error) => Err(VfsError::from(error))
+        }
+    }
 }
 
 impl ReadQuery<&VirtualFileSystem> for ReadDirQuery {
-    type Result = NodeIterator<HashSetIntoIter<VirtualPath>>;
+    type Result = EntryCollection<Node<IdentityStatus>>;
 
     fn retrieve(&self, fs: &VirtualFileSystem) -> Result<Self::Result, VfsError> {
-        let stat_directory = StatusQuery::new(self.path.as_path());
-        let directory = match stat_directory.retrieve(&fs)?.into_virtual_identity() {
-            Some(virtual_identity) =>
-                match virtual_identity.as_kind() {
-                    VirtualKind::Directory => virtual_identity,
-                    _ => return Err(VfsError::IsNotADirectory(self.path.to_path_buf()))
-                },
-            None => return Err(VfsError::DoesNotExists(self.path.to_path_buf()))
+        let directory =
+            match StatusQuery::new(self.path.as_path())
+                .retrieve(&fs)?
+                .into_inner()
+                .into_existing_virtual() {
+                    Some(virtual_identity) =>
+                        match virtual_identity.as_kind() {
+                            VirtualKind::Directory => virtual_identity,
+                            _ => return Err(VfsError::IsNotADirectory(self.path.to_path_buf()))
+                        },
+                    None => return Err(VfsError::DoesNotExists(self.path.to_path_buf()))
         };
 
-        let mut real_children = VirtualChildren::from_file_system(
+        let mut entry_collection = Self::from_file_system(
             directory.as_source().unwrap_or(directory.as_identity()),
             directory.as_source(),
             Some(self.path.as_path())
         )?;
 
         if let Some(to_add_children) = fs.add_state().children(directory.as_identity()) {
-            real_children = &real_children + &to_add_children;
-        }
-        if let Some(to_del_children) = fs.sub_state().children(directory.as_identity()) {
-            real_children = &real_children - &to_del_children;
+            let empty = VirtualChildren::new();
+            let to_del_children = fs.sub_state()
+                    .children(directory.as_identity())
+                    .unwrap_or(&empty);
+
+            for child in to_add_children.iter() {
+                if ! to_del_children.contains(child) {
+                    entry_collection.add(StatusQuery::new(child.as_identity()).retrieve(fs)?)
+                }
+            }
         }
 
-        Ok(NodeIterator(real_children.into_iter()))
+        Ok(entry_collection)
     }
 }

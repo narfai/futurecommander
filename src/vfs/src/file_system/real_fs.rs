@@ -22,8 +22,8 @@ use std::fs::{ File, rename, create_dir, remove_dir_all, remove_file };
 use std::io::prelude::*;
 use std::io::{ BufReader, BufWriter, Error as IoError, ErrorKind };
 
-const READ_BUFFER_SIZE: usize = 8;
-const WRITE_BUFFER_SIZE: usize = 8;
+const READ_BUFFER_SIZE: usize = 64;
+const WRITE_BUFFER_SIZE: usize = 64;
 
 use std::path::{ Path, Ancestors };
 
@@ -40,7 +40,6 @@ impl RealFileSystem {
     }
 
     pub fn remove_file(&self, path: &Path) -> Result<(), IoError> {
-        println!("remove_file");
         if self.dry {
             println!("DRY : remove file {:?}", path);
 
@@ -51,7 +50,6 @@ impl RealFileSystem {
     }
 
     pub fn remove_directory(&self, path: &Path) -> Result<(), IoError> {//TODO remove_dir if force true
-        println!("remove_directory");
         if self.dry {
             println!("DRY : remove directory recursivelly {:?}", path);
         } else {
@@ -61,7 +59,6 @@ impl RealFileSystem {
     }
 
     pub fn create_file(&self, path: &Path) -> Result<(), IoError> {
-        println!("create_file");
         if path.exists() {
             return Err(IoError::new(ErrorKind::AlreadyExists, "Create file : path already exists"));
         }
@@ -76,7 +73,6 @@ impl RealFileSystem {
     }
 
     pub fn create_directory(&self, path: &Path, recursively: bool) -> Result<(), IoError> {
-        println!("create_directory");
         if self.dry {
             println!("DRY : create directory {:?}", path);
         } else {
@@ -105,7 +101,6 @@ impl RealFileSystem {
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source does not exists {:?}", src)));
         }
 
-        println!("copy_file_to_file");
         if ! src.is_file() { //TODO @symlink
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a file {:?}", src)));
         }

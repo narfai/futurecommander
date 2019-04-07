@@ -24,7 +24,7 @@ mod read_dir;
 pub use self::read_dir::ReadDirQuery;
 
 mod entry;
-pub use self::entry::{ NodeIterator, Entry, Node, EntryCollection };
+pub use self::entry::{ Entry, Node, EntryCollection };
 
 mod identity_status;
 pub use self::identity_status::{ IdentityStatus };
