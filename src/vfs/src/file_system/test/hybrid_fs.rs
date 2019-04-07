@@ -28,12 +28,12 @@ mod tests {
     use super::*;
 
 
-//    #[test]
+    #[test]
     pub fn no_dangling() {
         let mut fs = HybridFileSystem::new();
         _no_dangling(
             &mut fs,
-            Samples::init_advanced_chroot("no_dangling").as_path()
+            Samples::init_advanced_chroot("hybrid_no_dangling").as_path()
         );
     }
 
@@ -102,17 +102,17 @@ mod tests {
         assert!(!stated_aprime.exists());
     }
 
-//    #[test]
-    pub fn file_dir_interversion() {
+    #[test]
+    pub fn copy_file_dir_interversion() {
         let mut fs = HybridFileSystem::new();
-        _file_dir_interversion(
+        _copy_file_dir_interversion(
             &mut fs,
-            Samples::init_advanced_chroot("file_dir_interversion").as_path()
+            Samples::init_advanced_chroot("hybrid_file_dir_interversion").as_path()
         );
     }
 
 
-    pub fn _file_dir_interversion(mut fs: &mut HybridFileSystem, chroot: &Path) {
+    pub fn _copy_file_dir_interversion(mut fs: &mut HybridFileSystem, chroot: &Path) {
         /*
         file dir interversion ( C <-> B )
         cp A/C .
@@ -268,38 +268,35 @@ mod tests {
         assert!(!stated_adg.exists());
     }
 
-    pub fn _directory_to_directory(mut fs: &mut HybridFileSystem, chroot: &Path) {
-        let cp_c_a = CopyOperation::new(
-            chroot.join("B").as_path(),
-            chroot.join("A/B").as_path()
-        );
-
-        fs.mut_transaction().add_operation(Box::new(cp_c_a.clone()));
-        cp_c_a.execute(fs.mut_vfs()).unwrap();
-        assert!(chroot.join("A").as_path().is_dir());
-    }
-
-//    #[test]
+    #[test]
     pub fn apply_a_vfs_to_real_fs() {
-        let chroot = Samples::init_advanced_chroot("apply_a_vfs_to_real_fs");
+        let chroot = Samples::init_advanced_chroot("hybrid_apply_a_vfs_to_real_fs");
         let mut fs = HybridFileSystem::new();
 
-
         _no_dangling(&mut fs, chroot.as_path());
-        _file_dir_interversion(&mut fs, chroot.as_path());
+        _copy_file_dir_interversion(&mut fs, chroot.as_path());
         _some_nesting(&mut fs, chroot.as_path());
-//        _directory_to_directory(&mut fs, chroot.as_path());
-        println!("{:#?}", fs);
+
         fs.apply().unwrap();
-        //@TODO Better to / into real_fs API / and maybe virtual ?
 
+        let c = chroot.join("C");
+        assert!(c.exists());
+        assert!(c.is_dir());
 
+        let b = chroot.join("B");
+        assert!(b.exists());
+        assert!(b.is_file());
 
-//        let mut apply: ApplyOperation<Box<WriteOperation<RealFileSystem>>> = ApplyOperation::from_virtual_filesystem(&vfs).unwrap();
-//        println!("VFS {:#?} {:#?}", vfs, apply);
-//        apply.execute(&mut real_fs).unwrap();
-//        println!("REAL VERSION : {}", RealVersion::get());
-//        println!("{:?}", apply)
+        let ac = chroot.join("A/C");
+        assert!(ac.exists());
+        assert!(ac.is_dir());
+
+        let ad = chroot.join("A/D");
+        assert!(ad.exists());
+        assert!(ad.is_dir());
+
+        let ad = chroot.join("A/D/G");
+        assert!(! ad.exists());
     }
 }
 

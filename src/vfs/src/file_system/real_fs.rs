@@ -84,8 +84,10 @@ impl RealFileSystem {
             if recursively {
                 fn recursive_dir_creation(mut ancestors: &mut Ancestors<'_>) -> Result<(), IoError> {
                     if let Some(path) = ancestors.next() {
-                        recursive_dir_creation(&mut ancestors)?;
-                        create_dir(path)?;
+                        if ! path.exists() {
+                            recursive_dir_creation(&mut ancestors)?;
+                            create_dir(path)?;
+                        }
                     }
                     Ok(())
                 }

@@ -62,6 +62,13 @@ impl WriteOperation<VirtualFileSystem> for MoveOperation {
 
 impl WriteOperation<RealFileSystem> for MoveOperation {
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
-        unimplemented!()
+        if ! self.source.exists() {
+            return Err(VfsError::DoesNotExists(self.source.to_path_buf()));
+        }
+
+        match fs.move_to(self.source.as_path(), self.destination.as_path(), self.overwrite) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(VfsError::from(error))
+        }
     }
 }

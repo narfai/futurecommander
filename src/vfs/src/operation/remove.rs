@@ -70,6 +70,18 @@ impl WriteOperation<VirtualFileSystem> for RemoveOperation {
 
 impl WriteOperation<RealFileSystem> for RemoveOperation{
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
-        unimplemented!()
+        if ! self.path.exists() {
+            return Err(VfsError::DoesNotExists(self.path.to_path_buf()));
+        }
+
+        let result = match self.path.is_dir() {
+            true => fs.remove_directory(self.path.as_path()),
+            false => fs.remove_file(self.path.as_path())
+        };
+
+        match result {
+            Err(error) => Err(VfsError::from(error)),
+            Ok(_) => Ok(())
+        }
     }
 }

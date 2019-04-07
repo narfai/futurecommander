@@ -34,7 +34,7 @@ pub struct CopyOperation {
     source: PathBuf,
     destination: PathBuf,
     merge: bool,
-    overwrite: bool //To honour overwrite or merge error, we should crawl recursively the entire vfs children of dst ...
+    overwrite: bool
 }
 
 impl CopyOperation {
@@ -156,15 +156,80 @@ impl WriteOperation<VirtualFileSystem> for CopyOperation {
 
 impl WriteOperation<RealFileSystem> for CopyOperation {
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
-//        let new_destination = match &self.name {
-//            Some(name) => self.destination.join(name),
-//            None => self.destination.to_path_buf()
-//        };
-//
-//        match fs.copy(self.source.as_path(), new_destination.as_path(), &|_read| {}, true, false) {
-//            Ok(_) => Ok(()),
-//            Err(error) => Err(VfsError::from(error))
-//        }
-        unimplemented!()
+        if ! self.source.exists() {
+            return Err(VfsError::DoesNotExists(self.source.to_path_buf()));
+        }
+
+        println!("SOURCE {:?} DEST {:?}", self.source.as_path(), self.destination.as_path());
+
+        match self.source.is_dir() {
+            true =>
+                match self.destination.exists() {
+                    true =>
+                        match self.destination.is_dir() {
+                            true => {
+                                if ! self.merge {
+                                    return Err(VfsError::Custom("Merge is not allowed".to_string()))
+                                }
+                                for result in self.source.read_dir()? {
+                                    let child = result?.path();
+                                    let new_destination = self.destination.join(child.strip_prefix(self.source.as_path()).unwrap());
+
+                                    CopyOperation::new(
+                                        child.as_path(),
+                                        new_destination.as_path()
+                                    ).execute(fs)?;
+                                }
+                                Ok(())
+                            }, //merge
+                            false => return Err(VfsError::Custom("Cannot copy directory to existing file".to_string())) //Error dir to existing file
+                        },
+                    false => {
+                        fs.create_directory(self.destination.as_path(), false)?;
+
+                        for result in self.source.read_dir()? {
+                            let child = result?.path();
+                            let new_destination = self.destination.join(child.strip_prefix(self.source.as_path()).unwrap());
+
+                            CopyOperation::new(
+                                child.as_path(),
+                                new_destination.as_path()
+                            ).execute(fs)?;
+                        }
+                        Ok(())
+                    } //dir to dir
+                },
+            false =>
+                match self.destination.exists() {
+                    true =>
+                        match self.destination.is_dir() {
+                            true => return Err(VfsError::Custom("Cannot copy file to existing".to_string())),//Error file to existing dir
+                            false => {
+                                if !self.overwrite {
+                                    return Err(VfsError::Custom("Overwrite is not allowrd".to_string()));
+                                }
+                                match fs.copy_file_to_file(
+                                    self.source.as_path(),
+                                    self.destination.as_path(),
+                                    &|_| {},
+                                    self.overwrite
+                                ) {
+                                    Ok(_) => Ok(()),
+                                    Err(error) => Err(VfsError::from(error))
+                                }
+                            }
+                        },
+                    false =>
+                        match fs.copy_file_to_file(
+                            self.source.as_path(),
+                            self.destination.as_path(),
+                            &|_| {},
+                            false
+                        ) {
+                            Ok(_) => Ok(()),
+                            Err(error) => Err(VfsError::from(error))
+                        }
+                },
+        }
     }
 }
