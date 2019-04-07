@@ -18,7 +18,7 @@
  */
 
 use crate::*;
-use crate::file_system::test::sample::Samples;
+use crate::shared::sample::Samples;
 
 #[cfg(test)]
 mod tests {

@@ -24,7 +24,7 @@ use std::ops::{ Add, Sub };
 
 use crate::{ VfsError };
 
-use crate::representation::{ VirtualChildren, VirtualPath, VirtualKind, VirtualChildrenIterator };
+use crate::representation::{VirtualChildren, VirtualPath, Kind, VirtualChildrenIterator };
 
 #[derive(Debug, Clone)]
 pub struct VirtualDelta {
@@ -48,7 +48,7 @@ impl VirtualDelta {
         )
     }
 
-    pub fn attach(&mut self, identity: &Path, source: Option<&Path>, kind: VirtualKind) -> Result<(), VfsError> {
+    pub fn attach(&mut self, identity: &Path, source: Option<&Path>, kind: Kind) -> Result<(), VfsError> {
        match self.get(identity)?.is_some() {
             true => Err(VfsError::AlreadyExists(identity.to_path_buf())),
             false => {
@@ -109,7 +109,7 @@ impl VirtualDelta {
         }
 
         match self.get(identity)? {
-            Some(virtual_identity) => Ok(virtual_identity.kind == VirtualKind::Directory),
+            Some(virtual_identity) => Ok(virtual_identity.kind == Kind::Directory),
             None => Ok(false) //Do not exists
         }
     }
@@ -120,7 +120,7 @@ impl VirtualDelta {
         }
 
         match self.get(identity)? {
-            Some(virtual_identity) => Ok(virtual_identity.kind == VirtualKind::File),
+            Some(virtual_identity) => Ok(virtual_identity.kind == Kind::File),
             None => Ok(false) //Do not exists
         }
     }

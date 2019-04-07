@@ -16,14 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
+use crate::VfsError;
+use crate::file_system::RealFileSystem;
+use crate::operation::{ WriteOperation, RemoveOperation };
 
-#[cfg(test)]
-mod test;
+impl WriteOperation<RealFileSystem> for RemoveOperation{
+    fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
+        let path = self.path();
+        if ! path.exists() {
+            return Err(VfsError::DoesNotExists(path.to_path_buf()));
+        }
 
-mod path;
-mod delta;
-mod children;
+        let result = match path.is_dir() {
+            true => fs.remove_directory(path),
+            false => fs.remove_file(path)
+        };
 
-pub use self::path::{Kind, VirtualPath };
-pub use self::delta::{ VirtualDelta };
-pub use self::children::{ VirtualChildren, VirtualChildrenIterator };
+        match result {
+            Err(error) => Err(VfsError::from(error)),
+            Ok(_) => Ok(())
+        }
+    }
+}

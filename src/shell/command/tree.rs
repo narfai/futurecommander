@@ -15,10 +15,22 @@
 * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use vfs::{HybridFileSystem, VirtualFileSystem, VfsError, Node, ReadQuery, ReadDirQuery};
+
 use std::path::Path;
-use clap::ArgMatches;
 use std::path::PathBuf;
+
+use clap::ArgMatches;
+
+use vfs::{
+    VfsError,
+    HybridFileSystem,
+    query::{
+        Entry,
+        ReadQuery,
+        ReadDirQuery
+    },
+};
+
 use crate::command::{ Command };
 use crate::command::errors::CommandError;
 
@@ -66,7 +78,7 @@ impl Command<InitializedTreeCommand> {
         }
     }
 
-    fn tree(vfs: &VirtualFileSystem, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(),VfsError>{
+    fn tree(fs: &HybridFileSystem, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(),VfsError>{
         let file_name = match identity.file_name() {
             Some(file_name) => file_name.to_string_lossy().to_string(),
             None => "/".to_string()
@@ -74,7 +86,7 @@ impl Command<InitializedTreeCommand> {
 
         Self::display_tree_line(&depth_list, parent_last, file_name);
 
-        match ReadDirQuery::new(identity).retrieve(&vfs) {
+        match ReadDirQuery::new(identity).retrieve(fs.vfs()) {
             Ok(collection) => {
                 let new_depth_list = match depth_list {
                     Some(depth_list) => {
@@ -86,10 +98,10 @@ impl Command<InitializedTreeCommand> {
                 };
 
                 let length = collection.len();
-                for (index, Node(virtual_child)) in collection.into_iter().enumerate() {
+                for (index, child) in collection.into_iter().enumerate() {
                     if let Err(error) = Self::tree(
-                        vfs,
-                        virtual_child.as_virtual().as_identity(),
+                        fs,
+                        child.path(),
                         Some(new_depth_list.clone()),
                         index == (length - 1)
                     ) {
@@ -106,7 +118,7 @@ impl Command<InitializedTreeCommand> {
     }
 
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
-        match Self::tree(fs.vfs(), self.0.path.as_path(), None, true) {
+        match Self::tree(fs, self.0.path.as_path(), None, true) {
             Ok(_)       => Ok(()),
             Err(error)  => Err(CommandError::from(error))
         }

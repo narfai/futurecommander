@@ -17,15 +17,24 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[allow(unused_imports)]
-use vfs::WriteOperation;
-
-use vfs::{VirtualKind, CreateOperation, HybridFileSystem};
 use std::path::Path;
-use clap::ArgMatches;
 use std::path::PathBuf;
-use crate::command::{ Command };
-use crate::command::errors::CommandError;
+
+use clap::ArgMatches;
+
+use vfs::{
+    HybridFileSystem,
+    operation::{
+        WriteOperation,
+        CreateOperation
+    },
+    representation::Kind
+};
+
+use crate::command::{
+    Command,
+    errors::CommandError
+};
 
 pub struct NewFileCommand {}
 
@@ -49,7 +58,7 @@ impl Command<InitializedNewFileCommand> {
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
         let operation = CreateOperation::new(
             self.0.path.as_path(),
-            VirtualKind::File
+            Kind::File
         );
 
         match operation.execute(fs.mut_vfs()) {

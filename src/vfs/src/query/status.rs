@@ -23,8 +23,8 @@ use std::path::{ PathBuf, Path };
 use crate::query::Entry;
 
 use crate::{ VfsError };
-use crate::representation::{ VirtualPath, VirtualKind };
-use crate::file_system::{ VirtualFileSystem };
+use crate::representation::{VirtualPath, Kind};
+use crate::virtual_file_system::{ VirtualFileSystem };
 use crate::query::{ ReadQuery, IdentityStatus, Node };
 
 
@@ -41,9 +41,9 @@ impl StatusQuery {
 
     fn virtual_unknown(&self) -> Result<VirtualPath, VfsError>{
         VirtualPath::from(
-        self.path.to_path_buf(),
-        Some(self.path.to_path_buf()),
-        VirtualKind::Unknown
+            self.path.to_path_buf(),
+            Some(self.path.to_path_buf()),
+            Kind::Unknown
         )
     }
 
@@ -71,7 +71,7 @@ impl StatusQuery {
                                                 VirtualPath::from(
                                                     self.path.to_path_buf(),
                                                     Some(real_path.clone()),
-                                                    VirtualKind::from_path_buf(real_path)
+                                                    Kind::from_path_buf(real_path)
                                                 )?
                                             )
                                         ),
@@ -96,8 +96,8 @@ impl StatusQuery {
                                     self.path.to_path_buf(),
                                     Some(self.path.to_path_buf()),
                                     match self.path.is_dir() {
-                                        true => VirtualKind::Directory,
-                                        false => VirtualKind::File
+                                        true => Kind::Directory,
+                                        false => Kind::File
                                     }
                                 )?
                             )

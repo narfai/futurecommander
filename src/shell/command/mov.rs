@@ -17,11 +17,27 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ HybridFileSystem, StatusQuery, ReadQuery, WriteOperation, MoveOperation, Entry };
 use std::path::{ Path, PathBuf };
+
 use clap::ArgMatches;
-use crate::command::{ Command };
-use crate::command::errors::CommandError;
+
+use vfs::{
+    HybridFileSystem,
+    operation::{
+        WriteOperation,
+        MoveOperation
+    },
+    query::{
+        Entry,
+        ReadQuery,
+        StatusQuery
+    }
+};
+
+use crate::command::{
+    Command,
+    errors::CommandError
+};
 
 pub struct MoveCommand {}
 

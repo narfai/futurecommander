@@ -29,8 +29,10 @@ pub use self::entry::{ Entry, Node, EntryCollection };
 mod identity_status;
 pub use self::identity_status::{ IdentityStatus };
 
+use crate::VfsError;
+
 pub trait ReadQuery<F> {
     type Result;
 
-    fn retrieve(&self, fs: F) -> Result<Self::Result, crate::errors::VfsError>;
+    fn retrieve(&self, fs: F) -> Result<Self::Result, VfsError>;
 }

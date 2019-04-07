@@ -17,15 +17,23 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[allow(unused_imports)]
-use vfs::WriteOperation;
+use std::path::{ Path, PathBuf };
 
-use vfs::{HybridFileSystem, RemoveOperation };
-use std::path::Path;
 use clap::ArgMatches;
-use std::path::PathBuf;
-use crate::command::{ Command };
-use crate::command::errors::CommandError;
+
+use vfs::{
+    HybridFileSystem,
+    operation::{
+        WriteOperation,
+        RemoveOperation
+    }
+};
+
+use crate::command::{
+    Command,
+    errors::CommandError
+};
+
 
 pub struct RemoveCommand {}
 

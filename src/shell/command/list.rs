@@ -17,13 +17,23 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ HybridFileSystem, Entry, ReadQuery, ReadDirQuery};
-use std::path::Path;
-use clap::ArgMatches;
-use std::path::PathBuf;
-use crate::command::{Command};
-use crate::command::errors::CommandError;
+use std::path::{ Path, PathBuf };
 
+use clap::ArgMatches;
+
+use vfs::{
+    HybridFileSystem,
+    query::{
+        Entry,
+        ReadQuery,
+        ReadDirQuery
+    }
+};
+
+use crate::command::{
+    Command,
+    errors::CommandError
+};
 
 pub struct ListCommand {}
 

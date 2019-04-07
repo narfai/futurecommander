@@ -17,13 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg(test)]
-mod test;
-
-mod path;
-mod delta;
-mod children;
-
-pub use self::path::{Kind, VirtualPath };
-pub use self::delta::{ VirtualDelta };
-pub use self::children::{ VirtualChildren, VirtualChildrenIterator };
+mod copy;
+mod create;
+mod mov;
+mod remove;

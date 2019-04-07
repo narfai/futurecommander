@@ -20,10 +20,9 @@
 #[cfg(test)]
 mod test;
 
-mod path;
-mod delta;
-mod children;
+mod hybrid_fs;
+mod virtual_fs;
+mod operation;
 
-pub use self::path::{Kind, VirtualPath };
-pub use self::delta::{ VirtualDelta };
-pub use self::children::{ VirtualChildren, VirtualChildrenIterator };
+pub use self::hybrid_fs::HybridFileSystem;
+pub use self::virtual_fs::VirtualFileSystem;

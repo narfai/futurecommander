@@ -17,13 +17,22 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg(test)]
-mod test;
+/* I EXPECT THE PATH destination TO EXISTS WITH SOURCE source */
 
-mod path;
-mod delta;
-mod children;
+use crate::VfsError;
+use crate::file_system::RealFileSystem;
+use crate::operation::{ WriteOperation, MoveOperation };
 
-pub use self::path::{Kind, VirtualPath };
-pub use self::delta::{ VirtualDelta };
-pub use self::children::{ VirtualChildren, VirtualChildrenIterator };
+impl WriteOperation<RealFileSystem> for MoveOperation {
+    fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
+        if ! self.source().exists() {
+            return Err(VfsError::DoesNotExists(self.source().to_path_buf()));
+        }
+
+        match fs.move_to(self.source(), self.destination(), self.overwrite()) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(VfsError::from(error))
+        }
+        //TODO switch to copy + remove if error
+    }
+}

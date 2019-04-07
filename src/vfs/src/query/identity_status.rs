@@ -21,7 +21,7 @@ use std::path::{ Path, PathBuf };
 use std::ffi::OsStr;
 
 
-use crate::{ VirtualPath, VirtualKind };
+use crate::representation::{VirtualPath, Kind};
 use crate::query::{ Entry, Node };
 
 #[derive(Debug)]
@@ -106,7 +106,7 @@ impl Entry for Node<IdentityStatus> {
         match self.0.as_existing_virtual() {
             Some(identity) =>
                 match identity.as_kind() {
-                    VirtualKind::Directory => true,
+                    Kind::Directory => true,
                     _ => false
                 },
             None => false
@@ -117,7 +117,7 @@ impl Entry for Node<IdentityStatus> {
         match self.0.as_existing_virtual() {
             Some(identity) =>
                 match identity.as_kind() {
-                    VirtualKind::File => true,
+                    Kind::File => true,
                     _ => false
                 },
             None => false

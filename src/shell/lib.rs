@@ -25,9 +25,11 @@ mod command;
 mod shell;
 
 pub use self::shell::Shell;
-pub use self::command::copy::CopyCommand;
-pub use self::command::list::ListCommand;
-pub use self::command::new_directory::NewDirectoryCommand;
-pub use self::command::mov::MoveCommand;
-pub use self::command::new_file::NewFileCommand;
-pub use self::command::remove::RemoveCommand;
+pub use self::command::{
+    copy            ::CopyCommand,
+    list            ::ListCommand,
+    new_directory   ::NewDirectoryCommand,
+    mov             ::MoveCommand,
+    new_file        ::NewFileCommand,
+    remove          ::RemoveCommand
+};

@@ -17,15 +17,28 @@
  * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod representation;
+mod shared;
+
+mod virtual_file_system;
 mod file_system;
-mod operation;
-mod query;
-mod errors;
 
-pub use self::errors::VfsError;
+//Internal
+use self::shared::transaction::Transaction;
 
-pub use self::representation::*;
-pub use self::file_system::*;
-pub use self::operation::*;
-pub use self::query::*;
+//Internal but open for debug / extend
+pub mod representation;
+
+//Read API
+pub mod query;
+
+
+//Write API
+pub use self::shared::operation;
+
+
+//Containers
+pub use self::file_system::RealFileSystem;
+pub use self::virtual_file_system::{ VirtualFileSystem,  HybridFileSystem };
+
+//Errors
+pub use self::shared::errors::VfsError;

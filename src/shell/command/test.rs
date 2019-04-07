@@ -20,13 +20,30 @@
 use std::env::current_exe;
 
 use std::path::{ PathBuf, Path };
-use vfs::*;
-use crate::command::{ Command, CommandError };
-use crate::command::copy::{ InitializedCopyCommand };
-use crate::command::mov::InitializedMoveCommand;
-use crate::command::new_directory::InitializedNewDirectoryCommand;
-use crate::command::new_file::InitializedNewFileCommand;
-use crate::command::remove::InitializedRemoveCommand;
+
+use vfs::{
+    HybridFileSystem,
+    VfsError,
+    query::{
+        ReadQuery,
+        Entry,
+        StatusQuery,
+        ReadDirQuery,
+        Node
+    }
+};
+
+pub use crate::command::{
+    Command,
+    CommandError,
+    copy            ::InitializedCopyCommand,
+    list            ::InitializedListCommand,
+    new_directory   ::InitializedNewDirectoryCommand,
+    mov             ::InitializedMoveCommand,
+    new_file        ::InitializedNewFileCommand,
+    remove          ::InitializedRemoveCommand
+};
+
 //use crate::command::list::InitializedListCommand;
 //use crate::command::tree::InitializedTreeCommand;
 

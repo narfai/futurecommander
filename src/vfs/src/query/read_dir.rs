@@ -22,8 +22,8 @@ use std::path::{ PathBuf, Path };
 #[allow(unused_imports)]
 use crate::query::Entry;
 use crate::{ VfsError };
-use crate::file_system::{ VirtualFileSystem };
-use crate::representation::{ VirtualPath, VirtualKind, VirtualChildren };
+use crate::virtual_file_system::{ VirtualFileSystem };
+use crate::representation::{VirtualPath, Kind, VirtualChildren };
 use crate::query::{ ReadQuery, StatusQuery, EntryCollection, Node, IdentityStatus };
 
 pub struct ReadDirQuery {
@@ -52,7 +52,7 @@ impl ReadDirQuery {
                             let result_path = result.path();
                             let mut virtual_identity = VirtualPath::from_path(result.path().as_path())?
                                 .with_source(Some(result_path.as_path()))
-                                .with_kind(VirtualKind::from_path(result_path.as_path()));
+                                .with_kind(Kind::from_path(result_path.as_path()));
 
                             if let Some(source) = source {
                                 virtual_identity = virtual_identity.with_new_source_parent(source);
@@ -85,7 +85,7 @@ impl ReadQuery<&VirtualFileSystem> for ReadDirQuery {
                 .into_existing_virtual() {
                     Some(virtual_identity) =>
                         match virtual_identity.as_kind() {
-                            VirtualKind::Directory => virtual_identity,
+                            Kind::Directory => virtual_identity,
                             _ => return Err(VfsError::IsNotADirectory(self.path.to_path_buf()))
                         },
                     None => return Err(VfsError::DoesNotExists(self.path.to_path_buf()))

@@ -17,33 +17,34 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::VfsError;
 use std::cmp::Ordering;
 use std::path::{ PathBuf, Path };
 use std::ffi::{ OsStr };
 use std::hash::{ Hash, Hasher };
 use std::path::MAIN_SEPARATOR;
 
+use crate::VfsError;
+
 #[derive(Clone, Debug, Copy)]
-pub enum VirtualKind {
+pub enum Kind {
     File,
     Directory,
     Unknown
 }
 
-impl VirtualKind {
-    pub fn from_path(path: &Path) -> VirtualKind {
+impl Kind {
+    pub fn from_path(path: &Path) -> Kind {
         match path.is_dir() {
-            true => VirtualKind::Directory,
+            true => Kind::Directory,
             false =>
                 match path.is_file() {
-                    true => VirtualKind::File,
-                    false => VirtualKind::Unknown
+                    true => Kind::File,
+                    false => Kind::Unknown
                 }
         }
     }
 
-    pub fn from_path_buf(path: PathBuf) -> VirtualKind {
+    pub fn from_path_buf(path: PathBuf) -> Kind {
         Self::from_path(path.as_path())
     }
 }
@@ -52,28 +53,28 @@ impl VirtualKind {
 pub struct VirtualPath {
     pub identity: PathBuf,
     pub source: Option<PathBuf>,
-    pub kind: VirtualKind
+    pub kind: Kind
 }
 
 impl Eq for VirtualPath {}
 
-impl PartialEq for VirtualKind {
-    fn eq(&self, other: &VirtualKind) -> bool {
+impl PartialEq for Kind {
+    fn eq(&self, other: &Kind) -> bool {
         match &self {
-            VirtualKind::File => match other {
-                VirtualKind::File => true,
-                VirtualKind::Directory => false,
-                VirtualKind::Unknown => false
+            Kind::File => match other {
+                Kind::File => true,
+                Kind::Directory => false,
+                Kind::Unknown => false
             },
-            VirtualKind::Directory => match other {
-                VirtualKind::File => false,
-                VirtualKind::Directory => true,
-                VirtualKind::Unknown => false
+            Kind::Directory => match other {
+                Kind::File => false,
+                Kind::Directory => true,
+                Kind::Unknown => false
             }
-            VirtualKind::Unknown => match other {
-                VirtualKind::File => false,
-                VirtualKind::Directory => false,
-                VirtualKind::Unknown => true
+            Kind::Unknown => match other {
+                Kind::File => false,
+                Kind::Directory => false,
+                Kind::Unknown => true
             }
         }
     }
@@ -96,7 +97,7 @@ impl VirtualPath {
         }
     }
 
-    pub fn as_kind(&self) -> &VirtualKind {
+    pub fn as_kind(&self) -> &Kind {
         &self.kind
     }
 
@@ -109,7 +110,7 @@ impl VirtualPath {
         self.source
     }
 
-    pub fn into_kind(self) -> VirtualKind {
+    pub fn into_kind(self) -> Kind {
         self.kind
     }
 
@@ -125,31 +126,31 @@ impl VirtualPath {
         }
     }
 
-    pub fn to_kind(&self) -> VirtualKind {
+    pub fn to_kind(&self) -> Kind {
         match self.kind {
-            VirtualKind::File => VirtualKind::File,
-            VirtualKind::Directory => VirtualKind::Directory,
-            VirtualKind::Unknown => VirtualKind::Unknown
+            Kind::File => Kind::File,
+            Kind::Directory => Kind::Directory,
+            Kind::Unknown => Kind::Unknown
         }
     }
 
     //Constructors
     pub fn root() -> Result<VirtualPath, VfsError> {
-        VirtualPath::from(VirtualPath::root_identity(), None, VirtualKind::Directory)
+        VirtualPath::from(VirtualPath::root_identity(), None, Kind::Directory)
     }
 
     pub fn root_identity() -> PathBuf {
         PathBuf::from(MAIN_SEPARATOR.to_string())
     }
 
-    pub fn from(identity: PathBuf, source: Option<PathBuf>, kind: VirtualKind) -> Result<VirtualPath, VfsError> {
+    pub fn from(identity: PathBuf, source: Option<PathBuf>, kind: Kind) -> Result<VirtualPath, VfsError> {
         match identity.is_relative() && (identity != PathBuf::new()) {
             true => return Err(VfsError::IsRelativePath(identity.to_path_buf())),
             false => Ok(Self::_from(identity, source, kind))
         }
     }
 
-    fn _from(identity: PathBuf, source: Option<PathBuf>, kind: VirtualKind) -> VirtualPath {
+    fn _from(identity: PathBuf, source: Option<PathBuf>, kind: Kind) -> VirtualPath {
         VirtualPath {
             identity,
             source,
@@ -158,15 +159,15 @@ impl VirtualPath {
     }
 
     pub fn from_path(path: &Path) -> Result<VirtualPath, VfsError> {
-        VirtualPath::from(path.to_path_buf(), None, VirtualKind::Unknown)
+        VirtualPath::from(path.to_path_buf(), None, Kind::Unknown)
     }
 
     pub fn from_path_buf(path: PathBuf) -> Result<VirtualPath, VfsError> {
-        VirtualPath::from(path, None, VirtualKind::Unknown)
+        VirtualPath::from(path, None, Kind::Unknown)
     }
 
     pub fn from_str(path: &str) -> Result<VirtualPath, VfsError> {
-        VirtualPath::from(PathBuf::from(path), None, VirtualKind::Unknown)
+        VirtualPath::from(PathBuf::from(path), None, Kind::Unknown)
     }
 
     //Domain
@@ -250,7 +251,7 @@ impl VirtualPath {
         )
     }
 
-    pub fn with_kind(self, kind: VirtualKind) -> VirtualPath  {
+    pub fn with_kind(self, kind: Kind) -> VirtualPath  {
         Self::_from(
             self.identity,
             self.source,

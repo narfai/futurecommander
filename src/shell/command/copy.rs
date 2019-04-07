@@ -17,10 +17,23 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
-use vfs::{ HybridFileSystem, CopyOperation, StatusQuery, WriteOperation, ReadQuery, Entry };
 use std::path::{ Path, PathBuf };
+
 use clap::ArgMatches;
+
+use vfs::{
+    HybridFileSystem,
+    operation::{
+        WriteOperation,
+        CopyOperation
+    },
+    query::{
+        Entry,
+        ReadQuery,
+        StatusQuery
+    }
+};
+
 use crate::command::{ Command };
 use crate::command::errors::CommandError;
 

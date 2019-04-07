@@ -16,30 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-use std::path::{ PathBuf, Path };
-use crate::{ VfsError };
-
-use crate::file_system::{ VirtualFileSystem, RealFileSystem };
-use crate::operation::{ WriteOperation };
-use crate::query::{ReadQuery, StatusQuery, IdentityStatus };
-
-#[derive(Debug, Clone)]
-pub struct RemoveOperation {
-    path: PathBuf
-}
-
-impl RemoveOperation {
-    pub fn new(path: &Path) -> RemoveOperation {
-        RemoveOperation {
-            path: path.to_path_buf()
-        }
-    }
-}
+use crate::{ VirtualFileSystem, VfsError };
+use crate::operation::{ WriteOperation, RemoveOperation };
+use crate::query::{ ReadQuery, StatusQuery, IdentityStatus };
 
 impl WriteOperation<VirtualFileSystem> for RemoveOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
-        match StatusQuery::new(self.path.as_path()).retrieve(&fs)?.into_inner() {
+        match StatusQuery::new(self.path()).retrieve(&fs)?.into_inner() {
             IdentityStatus::Exists(virtual_identity)
             | IdentityStatus::Replaced(virtual_identity)
             | IdentityStatus::ExistsThroughVirtualParent(virtual_identity) => {
@@ -59,28 +42,9 @@ impl WriteOperation<VirtualFileSystem> for RemoveOperation {
                 }
             }
             IdentityStatus::NotExists(_) | IdentityStatus::Removed(_) | IdentityStatus::RemovedVirtually(_) =>
-                return Err(VfsError::DoesNotExists(self.path.to_path_buf()))
+                return Err(VfsError::DoesNotExists(self.path().to_path_buf()))
             ,
         }
         Ok(())
-    }
-}
-
-
-impl WriteOperation<RealFileSystem> for RemoveOperation{
-    fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
-        if ! self.path.exists() {
-            return Err(VfsError::DoesNotExists(self.path.to_path_buf()));
-        }
-
-        let result = match self.path.is_dir() {
-            true => fs.remove_directory(self.path.as_path()),
-            false => fs.remove_file(self.path.as_path())
-        };
-
-        match result {
-            Err(error) => Err(VfsError::from(error)),
-            Ok(_) => Ok(())
-        }
     }
 }

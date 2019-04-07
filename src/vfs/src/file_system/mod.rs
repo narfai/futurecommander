@@ -21,10 +21,6 @@
 mod test;
 
 mod real_fs;
+mod operation;
+
 pub use self::real_fs::RealFileSystem;
-
-mod virtual_fs;
-pub use self::virtual_fs::VirtualFileSystem;
-
-mod hybrid_fs;
-pub use self::hybrid_fs::HybridFileSystem;

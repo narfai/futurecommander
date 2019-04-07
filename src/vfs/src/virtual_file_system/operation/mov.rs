@@ -17,15 +17,17 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg(test)]
-mod real_fs;
+/* I EXPECT THE PATH destination TO EXISTS WITH SOURCE source */
+use crate::{ VirtualFileSystem, VfsError };
+use crate::operation::{ WriteOperation, MoveOperation, CopyOperation, RemoveOperation };
 
-#[cfg(test)]
-mod virtual_fs;
+impl WriteOperation<VirtualFileSystem> for MoveOperation {
+    fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
+        CopyOperation::new(
+            self.source(),
+            self.destination()
+        ).execute(fs)?;
 
-#[cfg(test)]
-mod hybrid_fs;
-
-#[cfg(test)]
-mod sample;
-
+        RemoveOperation::new(self.source()).execute(fs)
+    }
+}

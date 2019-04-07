@@ -24,10 +24,11 @@ use std::path::{ Path, PathBuf };
 
 use clap::{ App, ArgMatches };
 
-#[allow(unused_imports)]
-use vfs::ReadQuery;
-
-use vfs::{ HybridFileSystem, VirtualKind, StatusQuery };
+use vfs::{
+    HybridFileSystem,
+    representation::Kind,
+    query::{ ReadQuery, StatusQuery }
+};
 
 use crate::path::absolute;
 use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
@@ -127,7 +128,7 @@ impl Shell {
                     Ok(status) =>
                         match status.into_inner().into_existing_virtual() {
                             Some(virtual_identity) =>
-                                if virtual_identity.as_kind() == &VirtualKind::Directory {
+                                if virtual_identity.as_kind() == &Kind::Directory {
                                     self.cwd = path;
                                     Ok(())
                                 } else {

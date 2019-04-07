@@ -20,9 +20,7 @@
 #[allow(unused_imports)]
 use crate::operation::WriteOperation;
 
-use crate::VfsError;
-use crate::file_system::{ VirtualFileSystem, RealFileSystem };
-use crate::operation::{ Transaction };
+use crate::{ VfsError, Transaction, VirtualFileSystem, RealFileSystem };
 
 #[derive(Debug)]
 pub struct HybridFileSystem {
