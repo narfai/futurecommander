@@ -75,7 +75,7 @@ impl Command<InitializedTreeCommand> {
         Self::display_tree_line(&depth_list, parent_last, file_name);
 
         match ReadDirQuery::new(identity).retrieve(&vfs) {
-            Ok(children) => {
+            Ok(collection) => {
                 let new_depth_list = match depth_list {
                     Some(depth_list) => {
                         let mut new = depth_list.clone();
@@ -85,12 +85,11 @@ impl Command<InitializedTreeCommand> {
                     None => vec![]
                 };
 
-                let collection = children.collection();
                 let length = collection.len();
                 for (index, Node(virtual_child)) in collection.into_iter().enumerate() {
                     if let Err(error) = Self::tree(
                         vfs,
-                        virtual_child.as_identity(),
+                        virtual_child.as_virtual().as_identity(),
                         Some(new_depth_list.clone()),
                         index == (length - 1)
                     ) {

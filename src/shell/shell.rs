@@ -74,6 +74,7 @@ impl Shell {
                                 ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.fs.vfs().virtual_state().unwrap()); Ok(()) },
                                 ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.fs.vfs().add_state()); Ok(()) },
                                 ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.fs.vfs().sub_state()); Ok(()) },
+                                ("debug_transaction",   Some(_matches)) => { println!("{:#?}", self.fs.transaction()); Ok(()) },
                                 ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
                                 ("reset",       Some(_matches)) => { self.fs.reset(); println!("Virtual state is now empty");  Ok(()) },
                                 ("ls",          Some(matches)) => Command::<ListCommand>::new(&self.cwd,matches)
@@ -124,7 +125,7 @@ impl Shell {
 
                 match StatusQuery::new(path.as_path()).retrieve(&self.fs.vfs()) {
                     Ok(status) =>
-                        match status.as_virtual_identity() {
+                        match status.into_inner().into_existing_virtual() {
                             Some(virtual_identity) =>
                                 if virtual_identity.as_kind() == &VirtualKind::Directory {
                                     self.cwd = path;

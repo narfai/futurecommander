@@ -102,7 +102,6 @@ impl Entry for Node<IdentityStatus> {
         self.path().file_name()
     }
 
-
     fn is_dir(&self) -> bool {
         match self.0.as_existing_virtual() {
             Some(identity) =>

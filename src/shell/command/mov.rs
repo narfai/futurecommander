@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use vfs::{ HybridFileSystem, StatusQuery, ReadQuery, WriteOperation, MoveOperation };
+use vfs::{ HybridFileSystem, StatusQuery, ReadQuery, WriteOperation, MoveOperation, Entry };
 use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 use crate::command::{ Command };
@@ -65,8 +65,8 @@ impl Command<InitializedMoveCommand> {
                         ),
                     false =>
                         match source.is_dir() {
-                            true => return Err(CommandError::CustomError("Directory into a file".to_string())),
-                            false => return Err(CommandError::CustomError("Overwrite".to_string())) //OVERWRITE
+                            true => return Err(CommandError::CustomError(format!("Directory into a file {:?} {:?}", source.is_dir(), destination.is_dir()))),
+                            false => return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir() ))) //OVERWRITE
                         }
                 },
             false => MoveOperation::new(self.0.source.as_path(), self.0.destination.as_path())

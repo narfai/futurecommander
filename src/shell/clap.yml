@@ -74,6 +74,8 @@ subcommands:
       about: show add delta current state
   - debug_sub_state:
       about: show sub delta current state
+  - debug_transaction:
+      about: show transaction
   - debug_status:
           about: Display virtual status of path
           args:

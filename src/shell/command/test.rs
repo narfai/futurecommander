@@ -108,11 +108,10 @@ mod virtual_shell_tests {
         let read_dir = ReadDirQuery::new(sample_path.join("A/D").as_path());
 
         match read_dir.retrieve(fs.vfs()) {
-            Ok(virtual_children) => {
-                let collection = virtual_children.collection();
+            Ok(collection) => {
                 assert!(collection.len() > 0);
-                assert!(collection.contains(&Node(VirtualPath::from_path_buf(sample_path.join("A/D/G")).unwrap())));
-                assert!(collection.contains(&Node(VirtualPath::from_path_buf(sample_path.join("A/D/E")).unwrap())));
+                assert!(collection.contains(&Node(sample_path.join("A/D/G").as_path())));
+                assert!(collection.contains(&Node(sample_path.join("A/D/E").as_path())));
             },
             Err(error) => panic!("Error : {}", error)
         }
@@ -147,10 +146,9 @@ mod virtual_shell_tests {
         let read_dir = ReadDirQuery::new(sample_path.join("B/D/E").as_path());
 
         match read_dir.retrieve(fs.vfs()) {
-            Ok(virtual_children) => {
-                let collection = virtual_children.collection();
+            Ok(collection) => {
                 assert!(collection.len() > 0);
-                collection.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))).unwrap()));
+                assert!(collection.contains(&Node(sample_path.join("B/D/E/F").as_path())));
 
             },
             Err(error) => panic!("Error : {}", error)
@@ -187,24 +185,21 @@ mod virtual_shell_tests {
             ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path())
                 .retrieve(fs.vfs())
                 .unwrap()
-                .collection()
-                .contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/F"))).unwrap()))
+                .contains(&Node(sample_path.join("B/D/E/F").as_path()))
         );
 
         assert!(
             !ReadDirQuery::new(sample_path.join(&Path::new("A")).as_path())
                 .retrieve(fs.vfs())
                 .unwrap()
-                .collection()
-                .contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("A/F"))).unwrap()))
+                .contains(&Node(sample_path.join("A/F").as_path()))
         );
 
         assert!(
             !ReadDirQuery::new(sample_path.join(&Path::new("B")).as_path())
                 .retrieve(fs.vfs())
                 .unwrap()
-                .collection()
-                .contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("B/F"))).unwrap()))
+                .contains(&Node(sample_path.join("B/F").as_path()))
         );
     }
 
@@ -223,8 +218,7 @@ mod virtual_shell_tests {
             ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path())
                 .retrieve(fs.vfs())
                 .unwrap()
-                .collection()
-                .contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/MKDIRED"))).unwrap()))
+                .contains(&Node(sample_path.join("B/D/E/MKDIRED").as_path()))
         );
     }
 
@@ -243,8 +237,7 @@ mod virtual_shell_tests {
             ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path())
                 .retrieve(fs.vfs())
                 .unwrap()
-                .collection()
-                .contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("B/D/E/TOUCHED"))).unwrap()))
+                .contains(&Node(sample_path.join("B/D/E/TOUCHED").as_path()))
         );
     }
 
@@ -273,8 +266,7 @@ mod virtual_shell_tests {
             ReadDirQuery::new(sample_path.join(&Path::new("Z")).as_path())
                 .retrieve(fs.vfs())
                 .unwrap()
-                .collection()
-                .contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("Z/TEST"))).unwrap()))
+                .contains(&Node(sample_path.join("Z/TEST").as_path()))
         );
     }
 
@@ -297,19 +289,17 @@ mod virtual_shell_tests {
 
         let collection_aprime = ReadDirQuery::new(sample_path.join(&Path::new("APRIME")).as_path())
             .retrieve(fs.vfs())
-            .unwrap()
-            .collection();
+            .unwrap();
 
-        assert!(collection_aprime.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/C"))).unwrap())));
-        assert!(collection_aprime.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B"))).unwrap())));
+        assert!(collection_aprime.contains(&Node(sample_path.join("APRIME/C").as_path())));
+        assert!(collection_aprime.contains(&Node(sample_path.join("APRIME/B").as_path())));
 
         let collection_aprime_b_d = ReadDirQuery::new(sample_path.join(&Path::new("APRIME/B/D")).as_path())
             .retrieve(fs.vfs())
-            .unwrap()
-            .collection();
+            .unwrap();
 
-        assert!(collection_aprime_b_d.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B/D/E"))).unwrap())));
-        assert!(collection_aprime_b_d.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B/D/G"))).unwrap())));
+        assert!(collection_aprime_b_d.contains(&Node(sample_path.join("APRIME/B/D/E").as_path())));
+        assert!(collection_aprime_b_d.contains(&Node(sample_path.join("APRIME/B/D/G").as_path())));
     }
 
     #[test]
@@ -331,19 +321,17 @@ mod virtual_shell_tests {
 
         let collection_aprime = ReadDirQuery::new(sample_path.join(&Path::new("APRIME")).as_path())
             .retrieve(fs.vfs())
-            .unwrap()
-            .collection();
+            .unwrap();
 
-        assert!(collection_aprime.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/C"))).unwrap())));
-        assert!(collection_aprime.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B"))).unwrap())));
+        assert!(collection_aprime.contains(&Node(sample_path.join("APRIME/C").as_path())));
+        assert!(collection_aprime.contains(&Node(sample_path.join("APRIME/B").as_path())));
 
         let collection_aprime_b_d = ReadDirQuery::new(sample_path.join(&Path::new("APRIME/B/D")).as_path())
             .retrieve(fs.vfs())
-            .unwrap()
-            .collection();
+            .unwrap();
 
-        assert!(collection_aprime_b_d.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B/D/E"))).unwrap())));
-        assert!(collection_aprime_b_d.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B/D/G"))).unwrap())));
+        assert!(collection_aprime_b_d.contains(&Node(sample_path.join("APRIME/B/D/E").as_path())));
+        assert!(collection_aprime_b_d.contains(&Node(sample_path.join("APRIME/B/D/G").as_path())));
     }
 
 
@@ -378,19 +366,17 @@ mod virtual_shell_tests {
 
         let collection_a_abeta = ReadDirQuery::new(sample_path.join(&Path::new("APRIME")).as_path())
             .retrieve(fs.vfs())
-            .unwrap()
-            .collection();
+            .unwrap();
 
-        assert!(collection_a_abeta.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/C"))).unwrap())));
-        assert!(collection_a_abeta.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("APRIME/B"))).unwrap())));
+        assert!(collection_a_abeta.contains(&Node(sample_path.join("APRIME/C").as_path())));
+        assert!(collection_a_abeta.contains(&Node(sample_path.join("APRIME/B").as_path())));
 
-        let collection_aprime_a_abeta_b_d = ReadDirQuery::new(sample_path.join(&Path::new("A/ABETA/B/D")).as_path())
+        let collection_aprime_a_abeta_b_d = ReadDirQuery::new(sample_path.join("A/ABETA/B/D").as_path())
             .retrieve(fs.vfs())
-            .unwrap()
-            .collection();
+            .unwrap();
 
-        assert!(collection_aprime_a_abeta_b_d.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("A/ABETA/B/D/E"))).unwrap())));
-        assert!(collection_aprime_a_abeta_b_d.contains(&Node(VirtualPath::from_path_buf(sample_path.join(&Path::new("A/ABETA/B/D/G"))).unwrap())));
+        assert!(collection_aprime_a_abeta_b_d.contains(&Node(sample_path.join("A/ABETA/B/D/E").as_path())));
+        assert!(collection_aprime_a_abeta_b_d.contains(&Node(sample_path.join("A/ABETA/B/D/G").as_path())));
     }
 
     //Error testing

@@ -56,10 +56,11 @@ impl Command<InitializedRemoveCommand> {
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
         let operation = RemoveOperation::new(self.0.path.as_path());
 
-        fs.mut_transaction().add_operation(Box::new(operation.clone()));
-
         match operation.execute(fs.mut_vfs()) {
-            Ok(_)       => Ok(()),
+            Ok(_)       => {
+                fs.mut_transaction().add_operation(Box::new(operation.clone()));
+                Ok(())
+            }
             Err(error)  => Err(CommandError::from(error))
         }
     }

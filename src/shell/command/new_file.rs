@@ -52,10 +52,11 @@ impl Command<InitializedNewFileCommand> {
             VirtualKind::File
         );
 
-        fs.mut_transaction().add_operation(Box::new(operation.clone()));
-
         match operation.execute(fs.mut_vfs()) {
-            Ok(_)       => Ok(()),
+            Ok(_)       => {
+                fs.mut_transaction().add_operation(Box::new(operation.clone()));
+                Ok(())
+            }
             Err(error)  => Err(CommandError::from(error))
         }
     }
