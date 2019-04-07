@@ -20,14 +20,11 @@
 /* I EXPECT THE PATH destination TO EXISTS WITH SOURCE source */
 
 use std::path::{ PathBuf, Path };
-use std::ffi::OsString;
 
 use crate::{ VfsError };
 
 use crate::file_system::{ VirtualFileSystem, RealFileSystem };
-use crate::representation::{ VirtualPath, VirtualKind };
 use crate::operation::{ WriteOperation, RemoveOperation, CopyOperation };
-use crate::query::{ ReadQuery, ReadDirQuery, StatusQuery, IdentityStatus, Entry };
 
 #[derive(Debug, Clone)]
 pub struct MoveOperation {

@@ -20,7 +20,6 @@
 /* I EXPECT THE PATH destination TO EXISTS WITH SOURCE source */
 
 use std::path::{ PathBuf, Path };
-use std::ffi::OsString;
 
 use crate::{ VfsError };
 
@@ -73,7 +72,6 @@ impl CopyOperation {
 impl WriteOperation<VirtualFileSystem> for CopyOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         let source = StatusQuery::new(self.source.as_path()).retrieve(fs)?;
-        let destination = StatusQuery::new(self.destination.as_path()).retrieve(fs)?;
         let parent_path = VirtualPath::get_parent_or_root(self.destination.as_path());
         let parent = StatusQuery::new(parent_path.as_path()).retrieve(fs)?;
 

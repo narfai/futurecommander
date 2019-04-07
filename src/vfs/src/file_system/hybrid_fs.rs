@@ -17,9 +17,12 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[allow(unused_imports)]
+use crate::operation::WriteOperation;
+
 use crate::VfsError;
 use crate::file_system::{ VirtualFileSystem, RealFileSystem };
-use crate::operation::{ Transaction, WriteOperation };
+use crate::operation::{ Transaction };
 
 #[derive(Debug)]
 pub struct HybridFileSystem {
