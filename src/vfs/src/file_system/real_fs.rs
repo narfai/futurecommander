@@ -22,8 +22,8 @@ use std::fs::{ File, rename, create_dir, remove_dir_all, remove_file };
 use std::io::prelude::*;
 use std::io::{ BufReader, BufWriter, Error as IoError, ErrorKind };
 
-const READ_BUFFER_SIZE: usize = 64;
-const WRITE_BUFFER_SIZE: usize = 64;
+const READ_BUFFER_SIZE: usize = 10485760; //10 Mo
+const WRITE_BUFFER_SIZE: usize = 2097152; //2 Mo
 
 use std::path::{ Path, Ancestors };
 

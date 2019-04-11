@@ -51,4 +51,40 @@ impl PartialEq for Entry {
     }
 }
 
+#[derive(Debug)]
+pub struct EntryAdapter<T>(pub T);
+
+impl <T> EntryAdapter<T> {
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+
+    pub fn as_inner(&self) -> &T {
+        &self.0
+    }
+}
+
+impl Entry for EntryAdapter<&Path> {
+    fn path(&self) -> &Path {
+        self.0.clone()
+    }
+
+    fn to_path(&self) -> PathBuf {
+        self.0.to_path_buf()
+    }
+
+    fn name(&self) -> Option<&OsStr> {
+        self.0.file_name()
+    }
+
+    fn is_dir(&self) -> bool {
+        self.0.is_dir()
+    }
+
+    fn is_file(&self) -> bool {
+        self.0.is_file()
+    }
+
+    fn exists(&self) -> bool { self.0.exists() }
+}
 

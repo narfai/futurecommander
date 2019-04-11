@@ -115,3 +115,6 @@ https://github.com/rust-lang/miri#bugs-found-by-miri
 ## Functional programming
 
 https://www.amazon.com/Hands-Functional-Programming-Rust-applications/dp/1788839358/ref=as_li_ss_tl?ie=UTF8&linkCode=sl1&tag=tutorialedge-20&linkId=3664a43d9e5e1a441704bdce071983df
+
+## Portable Native Client for Rust ( PNaCl )
+https://internals.rust-lang.org/t/pnacl-support-for-rust/888

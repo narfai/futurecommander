@@ -21,9 +21,5 @@ use shell::Shell;
 
 fn main() {
     let mut shell = Shell::new();
-    if cfg!(windows) {
-        shell.run_simple()
-    } else {
-        shell.run_readline()
-    }
+    shell.run_readline()
 }

@@ -18,21 +18,22 @@
  */
 use crate::{ VirtualFileSystem, VfsError };
 use crate::operation::{Operation, RemoveOperation };
-use crate::query::{Query, StatusQuery, IdentityStatus };
+use crate::query::{ Query, StatusQuery, VirtualStatus};
+use crate::representation::VirtualState;
 
 impl Operation<VirtualFileSystem> for RemoveOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         match StatusQuery::new(self.path()).retrieve(&fs)?.into_inner() {
-            IdentityStatus::Exists(virtual_identity)
-            | IdentityStatus::Replaced(virtual_identity)
-            | IdentityStatus::ExistsThroughVirtualParent(virtual_identity) => {
-                fs.mut_sub_state().attach_virtual(&virtual_identity)?;
+            VirtualStatus{ state: VirtualState::Exists, identity }
+            | VirtualStatus{ state: VirtualState::Replaced, identity }
+            | VirtualStatus{ state: VirtualState::ExistsThroughVirtualParent, identity } => {
+                fs.mut_sub_state().attach_virtual(&identity)?;
             },
-            IdentityStatus::ExistsVirtually(virtual_identity) => {
-                fs.mut_add_state().detach(virtual_identity.as_identity())?;
-                if let Some(source) = virtual_identity.as_source() {
+            VirtualStatus{ state: VirtualState::ExistsVirtually, identity } => {
+                fs.mut_add_state().detach(identity.as_identity())?;
+                if let Some(source) = identity.as_source() {
                     match StatusQuery::new(source).retrieve(&fs)?.into_inner() {
-                        IdentityStatus::Replaced(virtual_path) => {
+                        VirtualStatus{ state: VirtualState::Replaced, identity: virtual_path } => {
                             if fs.add_state().is_directory_empty(virtual_path.as_identity()) {
                                 fs.mut_add_state().detach(virtual_path.as_identity())?;
                             }
@@ -41,7 +42,9 @@ impl Operation<VirtualFileSystem> for RemoveOperation {
                     }
                 }
             }
-            IdentityStatus::NotExists(_) | IdentityStatus::Removed(_) | IdentityStatus::RemovedVirtually(_) =>
+            VirtualStatus{ state: VirtualState::NotExists, identity:_ }
+            | VirtualStatus{ state: VirtualState::Removed, identity: _ }
+            | VirtualStatus{ state: VirtualState::RemovedVirtually, identity:_ } =>
                 return Err(VfsError::DoesNotExists(self.path().to_path_buf()))
             ,
         }

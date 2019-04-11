@@ -23,8 +23,8 @@ use std::path::{ PathBuf, Path };
 use crate::query::Entry;
 use crate::{ VfsError, Kind };
 use crate::virtual_file_system::{ VirtualFileSystem };
-use crate::representation::{VirtualPath, VirtualChildren };
-use crate::query::{Query, StatusQuery, EntryCollection, Node, IdentityStatus };
+use crate::representation::{VirtualPath, VirtualChildren, VirtualState };
+use crate::query::{Query, StatusQuery, EntryCollection, EntryAdapter, VirtualStatus};
 
 pub struct ReadDirQuery {
     path: PathBuf
@@ -37,7 +37,7 @@ impl ReadDirQuery {
         }
     }
 
-    pub fn from_file_system(path: &Path, source: Option<&Path>, parent: Option<&Path>) -> Result<EntryCollection<Node<IdentityStatus>>, VfsError> {
+    pub fn from_file_system(path: &Path, source: Option<&Path>, parent: Option<&Path>) -> Result<EntryCollection<EntryAdapter<VirtualStatus>>, VfsError> {
         if !path.exists() {
             return Ok(EntryCollection::new());
         }
@@ -62,7 +62,7 @@ impl ReadDirQuery {
                                 virtual_identity = virtual_identity.with_new_identity_parent(parent);
                             }
 
-                            entry_collection.add(Node(IdentityStatus::Exists(virtual_identity)));
+                            entry_collection.add(EntryAdapter(VirtualStatus::new(VirtualState::Exists, virtual_identity)));
                         },
                         Err(error) => return Err(VfsError::from(error))
                     };
@@ -75,7 +75,7 @@ impl ReadDirQuery {
 }
 
 impl Query<&VirtualFileSystem> for ReadDirQuery {
-    type Result = EntryCollection<Node<IdentityStatus>>;
+    type Result = EntryCollection<EntryAdapter<VirtualStatus>>;
 
     fn retrieve(&self, fs: &VirtualFileSystem) -> Result<Self::Result, VfsError> {
         let directory =

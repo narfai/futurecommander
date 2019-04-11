@@ -31,3 +31,5 @@ execute(&vfs)
 read_dir -> ReadDir
 stat -> Stat
 
+s: VirtualStatus::([A-Za-z]+)\(([a-z_]+)
+r: VirtualStatus::new(VirtualState::$1, $2

@@ -22,8 +22,11 @@ mod test;
 
 mod path;
 mod delta;
+mod state;
 mod children;
 
 pub use self::path::VirtualPath;
 pub use self::delta::VirtualDelta;
+pub use self::state::VirtualState;
 pub use self::children::{ VirtualChildren, VirtualChildrenIterator };
+

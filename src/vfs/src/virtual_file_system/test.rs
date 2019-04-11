@@ -87,8 +87,8 @@ mod hybrid_file_system {
             .unwrap()
             .into_inner();
 
-        assert!(match stated_a {
-            IdentityStatus::Exists(_) => true,
+        assert!(match stated_a.state() {
+            VirtualState::Exists => true,
             _ => false
         });
 
@@ -499,8 +499,8 @@ mod virtual_file_system {
             .unwrap()
             .into_inner();
 
-        assert!(match stated_a {
-            IdentityStatus::Exists(_) => true,
+        assert!(match stated_a.state() {
+            VirtualState::Exists => true,
             _ => false
         });
 

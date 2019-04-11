@@ -39,7 +39,7 @@ impl CopyOperation {
         match fs.copy_file_to_file(
             self.source(),
             self.destination(),
-            &|_s| { /* println!("{} {}", self.destination.file_name().unwrap().to_string_lossy(), s)*/ },
+            &|_s| { println!("{} {}", self.destination().file_name().unwrap().to_string_lossy(), _s / 1024)},
             self.overwrite()
         ) {
             Ok(_) => Ok(()),

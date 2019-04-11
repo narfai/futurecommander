@@ -57,7 +57,7 @@ impl Shell {
                 match matches.value_of("path") {
                     Some(string_path) => {
                         let path = absolute(self.cwd.as_path(), Path::new(string_path));
-                        println!("STATUS : {:?}", StatusQuery::new(path.as_path()).retrieve(self.fs.vfs()));
+                        println!("STATUS : {:?}", StatusQuery::new(path.as_path()).retrieve(self.fs.vfs())?);
                         Ok(())
                     },
                     None => Err(CommandError::InvalidCommand)
@@ -92,7 +92,7 @@ impl Shell {
         let mut read_line_editor = Editor::<()>::new();
         print!(">  ");
         loop {
-            let read_line = read_line_editor.readline("> ");
+            let read_line = read_line_editor.readline("\x1b[1;32m>>\x1b[0m ");
             match read_line {
                 Ok(input) => {
                     read_line_editor.add_history_entry(input.as_ref());

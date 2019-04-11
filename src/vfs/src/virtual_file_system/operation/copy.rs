@@ -18,16 +18,16 @@
  */
 
 use crate::{ VfsError, VirtualFileSystem, Kind };
-use crate::operation::{CopyOperation, Operation};
-use crate::representation::{ VirtualPath };
-use crate::query::{Query, ReadDirQuery, StatusQuery, IdentityStatus, Entry };
+use crate::operation::{CopyOperation, Operation };
+use crate::representation::{ VirtualPath, VirtualState };
+use crate::query::{Query, ReadDirQuery, StatusQuery, VirtualStatus, Entry };
 
 impl CopyOperation {
     fn copy_virtual_children(fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
         let read_dir = ReadDirQuery::new(source.as_identity());
         for child in read_dir.retrieve(&fs)?.into_iter() {
-            match child.as_inner() {
-                IdentityStatus::ExistsVirtually(_) =>
+            match child.as_inner().state() {
+                VirtualState::ExistsVirtually =>
                     CopyOperation::new(
                         child.path(),
                         identity.as_identity()
@@ -77,16 +77,16 @@ impl Operation<VirtualFileSystem> for CopyOperation {
         let stat_new = StatusQuery::new(new_identity.as_identity());
 
         match stat_new.retrieve(&fs)?.into_inner() {
-            IdentityStatus::Exists(virtual_identity)
-            | IdentityStatus::ExistsVirtually(virtual_identity)
-            | IdentityStatus::ExistsThroughVirtualParent(virtual_identity)
-            | IdentityStatus::Replaced(virtual_identity) => {
-                match virtual_identity.to_kind() {
+            VirtualStatus{ state: VirtualState::Exists, identity }
+            | VirtualStatus{ state: VirtualState::ExistsVirtually, identity }
+            | VirtualStatus{ state: VirtualState::ExistsThroughVirtualParent, identity}
+            | VirtualStatus{ state: VirtualState::Replaced, identity } => {
+                match identity.to_kind() {
                     Kind::Directory =>
                         match source_identity.to_kind() {
                             Kind::Directory =>
                                 match self.merge() {
-                                    true => Self::copy_virtual_children(fs, &source_identity, &virtual_identity)?,
+                                    true => Self::copy_virtual_children(fs, &source_identity, &identity)?,
                                     false => return Err(VfsError::Custom("Merge is not allowed".to_string()))
                                 }, //merge
                             Kind::File => return Err(VfsError::Custom("Cannot overwrite an existing directory with a file".to_string())),
@@ -98,7 +98,7 @@ impl Operation<VirtualFileSystem> for CopyOperation {
                             Kind::File =>
                                 match self.overwrite() {
                                     true => {
-                                        fs.mut_add_state().detach(virtual_identity.as_identity())?;
+                                        fs.mut_add_state().detach(identity.as_identity())?;
                                         fs.mut_add_state().attach_virtual(&new_identity)?;
                                     },
                                     false => return Err(VfsError::Custom("Overwrite is not allowed".to_string())), //overwrite
@@ -108,14 +108,15 @@ impl Operation<VirtualFileSystem> for CopyOperation {
                     _ => {}
                 }
             },
-            IdentityStatus::NotExists(_) => {
+            VirtualStatus{ state: VirtualState::NotExists, identity: _ } => {
                 fs.mut_add_state().attach_virtual(&new_identity)?;
                 match new_identity.to_kind() {
                     Kind::Directory => Self::copy_virtual_children(fs, &source_identity, &new_identity)?,
                     _ => {}
                 }
             },
-            IdentityStatus::Removed(_) | IdentityStatus::RemovedVirtually(_) => {
+            VirtualStatus{ state: VirtualState::Removed, identity:_ }
+            | VirtualStatus{ state: VirtualState::RemovedVirtually, identity: _ } => {
                 fs.mut_sub_state().detach(new_identity.as_identity())?;
                 fs.mut_add_state().attach_virtual(&new_identity)?;
                 match new_identity.to_kind() {

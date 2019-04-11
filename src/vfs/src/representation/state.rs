@@ -17,44 +17,13 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::{ Path, PathBuf };
-use std::ffi::{ OsStr };
-
-use crate::query::Entry;
-
-#[derive(Debug)]
-pub struct Node<T>(pub T);
-
-impl <T> Node<T> {
-    pub fn into_inner(self) -> T {
-        self.0
-    }
-
-    pub fn as_inner(&self) -> &T {
-        &self.0
-    }
-}
-
-impl Entry for Node<&Path> {
-    fn path(&self) -> &Path {
-        self.0.clone()
-    }
-
-    fn to_path(&self) -> PathBuf {
-        self.0.to_path_buf()
-    }
-
-    fn name(&self) -> Option<&OsStr> {
-        self.0.file_name()
-    }
-
-    fn is_dir(&self) -> bool {
-        self.0.is_dir()
-    }
-
-    fn is_file(&self) -> bool {
-        self.0.is_file()
-    }
-
-    fn exists(&self) -> bool { self.0.exists() }
+#[derive(Debug, Clone, Copy)]
+pub enum VirtualState {
+    Exists, //Exists only in real FS
+    ExistsVirtually, //Directly added
+    ExistsThroughVirtualParent, //Indirectly added
+    Replaced,
+    NotExists, //Does not exists in virtual fs or real, indirectly or not
+    Removed, //Does exists in real fs and should be deleted
+    RemovedVirtually, //Does exists in virtual but is also virtually deleted
 }

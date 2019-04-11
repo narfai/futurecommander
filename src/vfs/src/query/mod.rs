@@ -24,16 +24,13 @@ mod read_dir;
 pub use self::read_dir::ReadDirQuery;
 
 mod entry;
-pub use self::entry::Entry;
+pub use self::entry::{ Entry, EntryAdapter };
 
-mod identity_status;
-pub use self::identity_status::IdentityStatus;
+mod entry_status;
+pub use self::entry_status::{ VirtualStatus };
 
-mod node;
-pub use self::node::Node;
-
-mod collection;
-pub use self::collection::EntryCollection;
+mod entry_collection;
+pub use self::entry_collection::EntryCollection;
 
 use crate::VfsError;
 
