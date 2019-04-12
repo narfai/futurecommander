@@ -41,7 +41,7 @@ static RED_PROMPT: &'static str = "\x1b[1;91m>>\x1b[0m ";
 
 static PROMPT: &'static str = ">> ";
 
-const fn AVAILABLE_COMMANDS() -> [&'static str; 17] {
+const fn AVAILABLE_COMMANDS() -> [&'static str; 18] {
     [
         "exit",
         "cd",
@@ -60,6 +60,7 @@ const fn AVAILABLE_COMMANDS() -> [&'static str; 17] {
         "touch",
         "tree",
         "apply",
+        "history"
     ]
 }
 
