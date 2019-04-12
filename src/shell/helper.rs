@@ -36,7 +36,8 @@ use rustyline::{ Helper };
 use std::path::{ Path, PathBuf, MAIN_SEPARATOR };
 use crate::path::absolute;
 
-static COLORED_PROMPT: &'static str = "\x1b[1;97m>>\x1b[0m ";
+static WHITE_PROMPT: &'static str = "\x1b[1;97m>>\x1b[0m ";
+static RED_PROMPT: &'static str = "\x1b[1;91m>>\x1b[0m ";
 
 static PROMPT: &'static str = ">> ";
 
@@ -228,10 +229,10 @@ impl <'a> Highlighter for VirtualHelper<'a>  {
     }
 
     fn highlight_prompt<'p>(&self, prompt: &'p str) -> Cow<'p, str> {
-        if prompt == PROMPT {
-            Borrowed(COLORED_PROMPT)
+        if self.fs.is_empty() {
+            Borrowed(WHITE_PROMPT)
         } else {
-            Borrowed(prompt)
+            Borrowed(RED_PROMPT)
         }
     }
 

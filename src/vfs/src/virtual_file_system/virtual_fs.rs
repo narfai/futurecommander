@@ -43,6 +43,8 @@ impl VirtualFileSystem {
 
     pub fn has_subtraction(&self) -> bool { !self.sub.is_empty() }
 
+    pub fn is_empty(&self) -> bool { ! self.has_addition() && ! self.has_subtraction() }
+
     pub fn mut_add_state(&mut self) -> &mut VirtualDelta {
         &mut self.add
     }
