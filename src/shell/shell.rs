@@ -101,15 +101,19 @@ impl Shell {
             .build();
 
         let yaml = load_yaml!("clap.yml");
+        let mut history : Vec<String> = Vec::new();
 
         loop {
             let mut read_line_editor = Editor::with_config(config);
+            for line in history.iter() { //@TODO find a better way
+                read_line_editor.add_history_entry(line.to_string());
+            }
             read_line_editor.set_helper(Some(VirtualHelper::new(self.fs.vfs(), self.cwd.to_path_buf())));
             let read_line = read_line_editor.readline(">> ");
 
             match read_line {
                 Ok(input) => {
-                    read_line_editor.add_history_entry(input.as_ref());
+                    history.push(input.clone());
                     if let Some(first_char) = input.trim().chars().next()  {
                         if first_char == '#' {
                             continue;
@@ -123,7 +127,7 @@ impl Shell {
                         Ok(matches) =>
                             match matches.subcommand_matches("history") {
                                 Some(_) => {
-                                    for line in read_line_editor.history() {
+                                    for line in history.iter() {
                                         println!("{}", line);
                                     }
                                 },
