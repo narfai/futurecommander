@@ -118,3 +118,9 @@ https://www.amazon.com/Hands-Functional-Programming-Rust-applications/dp/1788839
 
 ## Portable Native Client for Rust ( PNaCl )
 https://internals.rust-lang.org/t/pnacl-support-for-rust/888
+
+
+## Code Coverage
+
+https://axiomatic.neophilus.net/code-coverage-in-rust/
+https://github.com/xd009642/tarpaulin
