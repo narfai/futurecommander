@@ -26,7 +26,9 @@ extern crate rustyline;
 mod path;
 mod command;
 mod shell;
+mod helper;
 
+pub use self::helper::*;
 pub use self::shell::Shell;
 pub use self::command::{
     copy            ::CopyCommand,

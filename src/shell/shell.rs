@@ -23,18 +23,23 @@ use std::env;
 use std::path::{ Path, PathBuf };
 
 use rustyline::error::ReadlineError;
-use rustyline::Editor;
+use rustyline::completion::{Completer, FilenameCompleter, Pair};
+use rustyline::config::OutputStreamType;
+use rustyline::highlight::{Highlighter, MatchingBracketHighlighter};
+use rustyline::hint::{ Hinter };
+use rustyline::{Cmd, CompletionType, Config, EditMode, Editor, Helper, KeyPress};
 
 use clap::{ App, ArgMatches };
 
 use vfs::{
     HybridFileSystem,
     Kind,
-    query::{Query, StatusQuery }
+    query::{Query, StatusQuery, ReadDirQuery }
 };
 
 use crate::path::absolute;
 use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
+use crate::helper::VirtualHelper;
 
 pub struct Shell {
     cwd: PathBuf,
@@ -88,11 +93,20 @@ impl Shell {
     }
 
     pub fn run_readline(&mut self) {
+        let config = Config::builder()
+            .history_ignore_space(true)
+            .completion_type(CompletionType::List)
+            .edit_mode(EditMode::Emacs)
+            .output_stream(OutputStreamType::Stdout)
+            .build();
+
         let yaml = load_yaml!("clap.yml");
-        let mut read_line_editor = Editor::<()>::new();
-        print!(">  ");
+
         loop {
-            let read_line = read_line_editor.readline("\x1b[1;32m>>\x1b[0m ");
+            let mut read_line_editor = Editor::with_config(config);
+            read_line_editor.set_helper(Some(VirtualHelper::new(self.fs.vfs(), self.cwd.to_path_buf())));
+            let read_line = read_line_editor.readline(">> ");
+
             match read_line {
                 Ok(input) => {
                     read_line_editor.add_history_entry(input.as_ref());
@@ -148,36 +162,56 @@ impl Shell {
 
     pub fn run_simple(&mut self) {
         let yaml = load_yaml!("clap.yml");
+        let mut history : Vec<String> = Vec::new();
         print!("> ");
         loop {
             stdout().flush().unwrap();
             let mut input = String::new();
             if let Ok(_) = stdin().read_line(&mut input) {
-                println!("\n");
+                print!("\n");
+
+                let trimmed = input.trim().to_string();
+                history.push(trimmed.clone());
+
                 let mut argv = Vec::new();
-                argv.extend(input.trim().split(" "));
+                argv.extend(trimmed.split(" "));
+
+                if let Some(first_char) = trimmed.chars().next()  {
+                    if first_char == '#' {
+                        continue;
+                    }
+                }
 
                 match App::from_yaml(yaml).get_matches_from_safe(argv) {
                     Ok(matches) =>
-                        match self.send_matches(&matches) {
-                            Ok(_)      => {/*SUCCESS*/},
-                            Err(error) =>
-                                match error {
-                                    CommandError::InvalidCommand => eprintln!("{} {}", error, matches.usage()),
-                                    CommandError::ArgumentMissing(command, _, _) => {
-                                        //Trick to get proper subcommand help
-                                        match App::from_yaml(yaml).get_matches_from_safe(vec![command, "--help".to_string()]) {
-                                            Ok(_) => {},
-                                            Err(error) => eprintln!("{}", error)
-                                        };
-                                    },
-                                    error => { eprintln!("Error : {}", error) }
+                        match matches.subcommand_matches("history") {
+                            Some(_) => {
+                                for line in history.iter() {
+                                    println!("{}", line);
+                                }
+                            },
+                            _ =>
+                                match self.send_matches(&matches) {
+                                    Ok(_)      => {/*SUCCESS*/},
+                                    Err(error) =>
+                                        match error {
+                                            CommandError::InvalidCommand => eprintln!("{} {}", error, matches.usage()),
+                                            CommandError::ArgumentMissing(command, _, _) => {
+                                                //Trick to get proper subcommand help
+                                                match App::from_yaml(yaml).get_matches_from_safe(vec![command, "--help".to_string()]) {
+                                                    Ok(_) => {},
+                                                    Err(error) => eprintln!("{}", error)
+                                                };
+                                            },
+                                            error => { eprintln!("Error : {}", error) }
+                                        }
                                 }
                         }
+
                     Err(error) => eprintln!("Error: {}", error)
                 }
 
-                println!("\n");
+                print!("\n");
                 print!("> ");
             }
         }
