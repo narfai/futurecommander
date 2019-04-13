@@ -1,3 +1,4 @@
 /samples/*_chroot_*
 /target
 **/*.rs.bk
+/cobertura.xml

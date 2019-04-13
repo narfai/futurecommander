@@ -124,3 +124,7 @@ https://internals.rust-lang.org/t/pnacl-support-for-rust/888
 
 https://axiomatic.neophilus.net/code-coverage-in-rust/
 https://github.com/xd009642/tarpaulin
+
+## Weird Archlinux problem with crt2.o for windows target ( mingw64 )
+
+https://github.com/rust-lang/rust/issues/48272
