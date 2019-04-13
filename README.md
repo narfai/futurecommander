@@ -13,6 +13,7 @@ https://trello.com/b/A2BvQdR9/futurecommander
 
 ## Latest release
 
+
 ### Linux x86_64
 
 https://bitbucket.org/kathreon/futurecommander/downloads/futurecommander_linux64_release_latest
