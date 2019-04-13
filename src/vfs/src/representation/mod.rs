@@ -17,6 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]
 mod test;
 

@@ -1,5 +1,8 @@
 # FutureCommander
 
+[![codecov](https://codecov.io/bb/kathreon/futurecommander/branch/master/graph/badge.svg)](https://codecov.io/bb/kathreon/futurecommander)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 ## License
 
 This is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License.
