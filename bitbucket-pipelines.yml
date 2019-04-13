@@ -7,7 +7,7 @@ pipelines:
           name: Run tests
           script:
           - cargo test --all -v
-          - apt-get update && apt-get install apt-get install libssl-dev pkg-config cmake zlib1g-dev -y
+          - apt-get update && apt-get install libssl-dev pkg-config cmake zlib1g-dev -y
           - RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
           - cargo tarpaulin --out Xml
           - bash <(curl -s https://codecov.io/bash)
