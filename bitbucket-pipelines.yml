@@ -7,10 +7,6 @@ pipelines:
           name: Run tests
           script:
           - cargo test --all -v
-          - apt-get update && apt-get install libssl-dev pkg-config cmake zlib1g-dev -y
-          - RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
-          - cargo tarpaulin --out Xml
-          - bash <(curl -s https://codecov.io/bash)
       - parallel:
         - step:
             name: Build & publish futurecommander for Linux x86_64
@@ -24,6 +20,13 @@ pipelines:
             - rustup target add x86_64-pc-windows-gnu
             - cargo build -v --release --target=x86_64-pc-windows-gnu
             - curl -X POST "https://${BB_AUTH_STRING}@api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"target/x86_64-pc-windows-gnu/release/futurecommander.exe; filename=futurecommander_win64_$(echo ${BITBUCKET_BRANCH} | tr \/ _).exe"
+      - step:
+          name: Generate and send code coverage to codecov
+          script:
+            - apt-get update && apt-get install libssl-dev pkg-config cmake zlib1g-dev -y
+            - RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
+            - cargo tarpaulin --out Xml
+            - bash <(curl -s https://codecov.io/bash)
   pull-requests:
     '**':
       - step:
