@@ -25,7 +25,7 @@ pipelines:
           script:
             - apt-get update && apt-get install libssl-dev pkg-config cmake zlib1g-dev -y
             - RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
-            - cargo tarpaulin --out Xml
+            - cargo tarpaulin --all --count --out Xml
             - bash <(curl -s https://codecov.io/bash)
   pull-requests:
     '**':
