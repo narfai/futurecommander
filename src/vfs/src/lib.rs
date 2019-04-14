@@ -41,3 +41,6 @@ pub use self::virtual_file_system::{ VirtualFileSystem,  HybridFileSystem };
 
 //Errors
 pub use self::shared::errors::VfsError;
+
+#[cfg_attr(tarpaulin, skip)]
+pub use self::shared::sample::Samples;

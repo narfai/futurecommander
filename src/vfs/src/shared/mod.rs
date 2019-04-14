@@ -18,7 +18,6 @@
  */
 
 #[cfg_attr(tarpaulin, skip)]
-#[cfg(test)]
 pub mod sample;
 
 pub mod errors;
