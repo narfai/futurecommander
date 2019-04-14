@@ -26,19 +26,16 @@ impl CopyOperation {
     fn copy_virtual_children(fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
         let read_dir = ReadDirQuery::new(source.as_identity());
         for child in read_dir.retrieve(&fs)?.into_iter() {
-            match child.as_inner().state() {
-                VirtualState::ExistsVirtually =>
-                    CopyOperation::new(
-                        child.path(),
-                        identity.as_identity()
-                            .join(
-                                child.path()
-                                    .file_name()
-                                    .unwrap()
-                            ).as_path()
-                    ).execute(fs)?
-                ,
-                _ => {}
+            if let VirtualState::ExistsVirtually = child.as_inner().state() {
+                CopyOperation::new(
+                    child.path(),
+                    identity.as_identity()
+                        .join(
+                            child.path()
+                                .file_name()
+                                .unwrap()
+                        ).as_path()
+                ).execute(fs)?
             };
         }
         Ok(())
@@ -85,10 +82,11 @@ impl Operation<VirtualFileSystem> for CopyOperation {
                     Kind::Directory =>
                         match source_identity.to_kind() {
                             Kind::Directory =>
-                                match self.merge() {
-                                    true => Self::copy_virtual_children(fs, &source_identity, &identity)?,
-                                    false => return Err(VfsError::Custom("Merge is not allowed".to_string()))
-                                }, //merge
+                                if self.merge() {
+                                    Self::copy_virtual_children(fs, &source_identity, &identity)?
+                                } else {
+                                    return Err(VfsError::Custom("Merge is not allowed".to_string()))
+                                },
                             Kind::File => return Err(VfsError::Custom("Cannot overwrite an existing directory with a file".to_string())),
                             _ => {}
                         },
@@ -96,32 +94,29 @@ impl Operation<VirtualFileSystem> for CopyOperation {
                         match source_identity.to_kind() {
                             Kind::Directory => return Err(VfsError::Custom("Cannot copy directory into file".to_string())),
                             Kind::File =>
-                                match self.overwrite() {
-                                    true => {
-                                        fs.mut_add_state().detach(identity.as_identity())?;
-                                        fs.mut_add_state().attach_virtual(&new_identity)?;
-                                    },
-                                    false => return Err(VfsError::Custom("Overwrite is not allowed".to_string())), //overwrite
+                                if self.overwrite() {
+                                    fs.mut_add_state().detach(identity.as_identity())?;
+                                    fs.mut_add_state().attach_virtual(&new_identity)?;
+                                } else {
+                                    return Err(VfsError::Custom("Overwrite is not allowed".to_string()))
                                 }
                             _ => {}
                         },
                     _ => {}
                 }
             },
-            VirtualStatus{ state: VirtualState::NotExists, identity: _ } => {
+            VirtualStatus{ state: VirtualState::NotExists, .. } => {
                 fs.mut_add_state().attach_virtual(&new_identity)?;
-                match new_identity.to_kind() {
-                    Kind::Directory => Self::copy_virtual_children(fs, &source_identity, &new_identity)?,
-                    _ => {}
+                if let Kind::Directory = new_identity.to_kind() {
+                    Self::copy_virtual_children(fs, &source_identity, &new_identity)?
                 }
             },
-            VirtualStatus{ state: VirtualState::Removed, identity:_ }
-            | VirtualStatus{ state: VirtualState::RemovedVirtually, identity: _ } => {
+            VirtualStatus{ state: VirtualState::Removed, .. }
+            | VirtualStatus{ state: VirtualState::RemovedVirtually, .. } => {
                 fs.mut_sub_state().detach(new_identity.as_identity())?;
                 fs.mut_add_state().attach_virtual(&new_identity)?;
-                match new_identity.to_kind() {
-                    Kind::Directory => Self::copy_virtual_children(fs, &source_identity, &new_identity)?,
-                    _ => {}
+                if let Kind::Directory = new_identity.to_kind() {
+                    Self::copy_virtual_children(fs, &source_identity, &new_identity)?
                 }
             },
         }

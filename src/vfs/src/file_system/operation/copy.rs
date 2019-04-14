@@ -66,30 +66,24 @@ impl Operation<RealFileSystem> for CopyOperation {
             return Err(VfsError::Custom("Cannot copy file to the path existing directory".to_string()));
         }
 
-        match source.is_dir() {
-            true =>
-                match destination.exists() {
-                    true => {
-                        if ! self.merge() {
-                            return Err(VfsError::Custom("Merge is not allowed".to_string()))
-                        }
-                        self.copy_real_children(fs)
-                    },
-                    false => {
-                        fs.create_directory(destination, false)?;
-                        self.copy_real_children(fs)
-                    } //dir to dir
-                },
-            false =>
-                match destination.exists() {
-                    true => {
-                        if !self.overwrite() {
-                            return Err(VfsError::Custom("Overwrite is not allowed".to_string()));
-                        }
-                        self.copy_file(fs)
-                    },
-                    false => self.copy_file(fs)
-                },
+        if source.is_dir() {
+            if destination.exists() {
+                if !self.merge() {
+                    return Err(VfsError::Custom("Merge is not allowed".to_string()))
+                }
+                self.copy_real_children(fs)
+            } else {
+                fs.create_directory(destination, false)?;
+                self.copy_real_children(fs)
+            }
+        } else if destination.exists() {
+            if !self.overwrite() {
+                return Err(VfsError::Custom("Overwrite is not allowed".to_string()));
+            }
+            self.copy_file(fs)
+        } else {
+            self.copy_file(fs)
         }
+
     }
 }

@@ -22,6 +22,7 @@ use crate::file_system::{ RealFileSystem };
 use crate::{ VfsError };
 use crate::operation::Operation;
 
+#[derive(Default)]
 pub struct Transaction<T>(Vec<Box<dyn Operation<T>>>);
 
 impl std::fmt::Debug for Transaction<RealFileSystem> {
@@ -31,10 +32,6 @@ impl std::fmt::Debug for Transaction<RealFileSystem> {
 }
 
 impl <T> Transaction<T> {
-    pub fn new() -> Transaction<T> {
-        Transaction::<T>(Vec::new())
-    }
-
     pub fn apply (&self, fs: &mut T) -> Result<(), VfsError>{
         for operation in self.0.iter() {
              operation.execute(fs)?

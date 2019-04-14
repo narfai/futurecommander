@@ -22,6 +22,7 @@ use std::path::{ PathBuf, Path };
 use std::ffi::{ OsStr };
 use std::hash::{ Hash, Hasher };
 use std::path::MAIN_SEPARATOR;
+use std::str::FromStr;
 
 use crate::VfsError;
 
@@ -35,6 +36,15 @@ pub struct VirtualPath {
 }
 
 impl Eq for VirtualPath {}
+
+
+impl FromStr for VirtualPath {
+    type Err = VfsError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        VirtualPath::from(PathBuf::from(s), None, Kind::Unknown)
+    }
+}
 
 /*
 Virtual wrapper of PathBuf for keeping control over type & behaviors
@@ -100,9 +110,10 @@ impl VirtualPath {
     }
 
     pub fn from(identity: PathBuf, source: Option<PathBuf>, kind: Kind) -> Result<VirtualPath, VfsError> {
-        match identity.is_relative() && (identity != PathBuf::new()) {
-            true => return Err(VfsError::IsRelativePath(identity.to_path_buf())),
-            false => Ok(Self::_from(identity, source, kind))
+        if identity.is_relative() && (identity != PathBuf::new()) {
+            Err(VfsError::IsRelativePath(identity.to_path_buf()))
+        } else {
+            Ok(Self::_from(identity, source, kind))
         }
     }
 
@@ -120,10 +131,6 @@ impl VirtualPath {
 
     pub fn from_path_buf(path: PathBuf) -> Result<VirtualPath, VfsError> {
         VirtualPath::from(path, None, Kind::Unknown)
-    }
-
-    pub fn from_str(path: &str) -> Result<VirtualPath, VfsError> {
-        VirtualPath::from(PathBuf::from(path), None, Kind::Unknown)
     }
 
     //Domain
@@ -223,8 +230,8 @@ impl VirtualPath {
         )
     }
 
-    pub fn depth(&self) -> usize{
-        self.identity.components().into_iter().count()
+    pub fn depth(&self) -> usize {
+        self.identity.components().count()
     }
 
     pub fn get_parent_or_root(identity: &Path) -> PathBuf {
@@ -243,6 +250,7 @@ impl VirtualPath {
         false
     }
 }
+
 
 //Rely on PathBuf implementation for identify & order VirtualPaths over Iterators
 impl Ord for VirtualPath {

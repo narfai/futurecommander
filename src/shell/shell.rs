@@ -48,7 +48,7 @@ impl Default for Shell {
     fn default() -> Self {
         Shell {
             cwd: env::current_dir().unwrap(),
-            fs: HybridFileSystem::new(),
+            fs: HybridFileSystem::default(),
         }
     }
 }
@@ -173,7 +173,7 @@ impl Shell {
             stdout().flush().unwrap();
             let mut input = String::new();
             if stdin().read_line(&mut input).is_ok() {
-                print!("\n");
+                println!();
 
                 let trimmed = input.trim().to_string();
                 history.push(trimmed.clone());

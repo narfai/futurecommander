@@ -32,19 +32,19 @@ impl Operation<VirtualFileSystem> for RemoveOperation {
             VirtualStatus{ state: VirtualState::ExistsVirtually, identity } => {
                 fs.mut_add_state().detach(identity.as_identity())?;
                 if let Some(source) = identity.as_source() {
-                    match StatusQuery::new(source).retrieve(&fs)?.into_inner() {
-                        VirtualStatus{ state: VirtualState::Replaced, identity: virtual_path } => {
-                            if fs.add_state().is_directory_empty(virtual_path.as_identity()) {
-                                fs.mut_add_state().detach(virtual_path.as_identity())?;
-                            }
+                    if let VirtualStatus{
+                        state: VirtualState::Replaced,
+                        identity: virtual_path
+                    } = StatusQuery::new(source).retrieve(&fs)?.into_inner() {
+                        if fs.add_state().is_directory_empty(virtual_path.as_identity()) {
+                            fs.mut_add_state().detach(virtual_path.as_identity())?;
                         }
-                        _ => {}
                     }
                 }
             }
-            VirtualStatus{ state: VirtualState::NotExists, identity:_ }
-            | VirtualStatus{ state: VirtualState::Removed, identity: _ }
-            | VirtualStatus{ state: VirtualState::RemovedVirtually, identity:_ } =>
+            VirtualStatus{ state: VirtualState::NotExists, .. }
+            | VirtualStatus{ state: VirtualState::Removed, .. }
+            | VirtualStatus{ state: VirtualState::RemovedVirtually, .. } =>
                 return Err(VfsError::DoesNotExists(self.path().to_path_buf()))
             ,
         }

@@ -27,9 +27,10 @@ impl Operation<RealFileSystem> for RemoveOperation{
             return Err(VfsError::DoesNotExists(path.to_path_buf()));
         }
 
-        let result = match path.is_dir() {
-            true => fs.remove_directory(path),
-            false => fs.remove_file(path)
+        let result = if path.is_dir() {
+            fs.remove_directory(path)
+        } else {
+            fs.remove_file(path)
         };
 
         match result {

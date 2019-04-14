@@ -24,18 +24,12 @@ use std::collections::{ HashSet };
 use crate::{ VfsError };
 use crate::representation::{ VirtualPath, VirtualDelta };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct VirtualChildren {
     set: HashSet<VirtualPath>
 }
 
 impl VirtualChildren {
-    pub fn new() -> VirtualChildren {
-        VirtualChildren {
-            set: HashSet::new()
-        }
-    }
-
     pub fn insert(&mut self, virtual_identity: VirtualPath) -> bool {
         self.set.insert(virtual_identity)
     }
@@ -52,17 +46,19 @@ impl VirtualChildren {
         self.set.len()
     }
 
+    pub fn is_empty(&self) -> bool { self.set.is_empty() }
+
     pub fn contains(&self, virtual_identity: &VirtualPath) -> bool {
         self.set.contains(virtual_identity)
     }
 
-    pub fn iter <'a>(&self) -> VirtualChildrenIterator<'_> {
+    pub fn iter(&self) -> VirtualChildrenIterator<'_> {
         VirtualChildrenIterator::new(self.set.iter())
     }
 
     //TODO unused yet but seems useful at least for debugging
     pub fn into_delta(self) -> Result<VirtualDelta, VfsError> {
-        let mut delta = VirtualDelta::new();
+        let mut delta = VirtualDelta::default();
         for virtual_identity in self.iter() {
             delta.attach_virtual(&virtual_identity)?;
         }

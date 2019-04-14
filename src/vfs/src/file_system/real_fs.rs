@@ -22,78 +22,50 @@ use std::fs::{ File, rename, create_dir, remove_dir_all, remove_file };
 use std::io::prelude::*;
 use std::io::{ BufReader, BufWriter, Error as IoError, ErrorKind };
 
-const READ_BUFFER_SIZE: usize = 10485760; //10 Mo
-const WRITE_BUFFER_SIZE: usize = 2097152; //2 Mo
+const READ_BUFFER_SIZE: usize = 10_485_760; //10 Mo
+const WRITE_BUFFER_SIZE: usize = 2_097_152; //2 Mo
 
 use std::path::{ Path, Ancestors };
 
-#[derive(Debug)]
-pub struct RealFileSystem {
-    dry: bool
-}
+#[derive(Debug, Default)]
+pub struct RealFileSystem {}
 
 impl RealFileSystem {
-    pub fn new(dry: bool) -> RealFileSystem {
-        RealFileSystem {
-            dry
-        }
+    pub fn default() -> RealFileSystem {
+        RealFileSystem {}
     }
 
     pub fn remove_file(&self, path: &Path) -> Result<(), IoError> {
-        if self.dry {
-            println!("DRY : remove file {:?}", path);
-
-        } else {
-            remove_file(path)?;
-        }
-        Ok(())
+        remove_file(path)
     }
 
     pub fn remove_directory(&self, path: &Path) -> Result<(), IoError> {//TODO remove_dir if force true
-        if self.dry {
-            println!("DRY : remove directory recursivelly {:?}", path);
-        } else {
-            remove_dir_all(path)?;
-        }
-        Ok(())
+        remove_dir_all(path)
     }
 
     pub fn create_file(&self, path: &Path) -> Result<(), IoError> {
         if path.exists() {
             return Err(IoError::new(ErrorKind::AlreadyExists, "Create file : path already exists"));
         }
-
-        if self.dry {
-            println!("DRY : create_file {:?}", path);
-        } else {
-            File::create(path)?;
-        }
-
-        Ok(())
+        File::create(path)?; Ok(())
     }
 
     pub fn create_directory(&self, path: &Path, recursively: bool) -> Result<(), IoError> {
-        if self.dry {
-            println!("DRY : create directory {:?}", path);
-        } else {
-            if recursively {
-                fn recursive_dir_creation(mut ancestors: &mut Ancestors<'_>) -> Result<(), IoError> {
-                    if let Some(path) = ancestors.next() {
-                        if ! path.exists() {
-                            recursive_dir_creation(&mut ancestors)?;
-                            create_dir(path)?;
-                        }
+        if recursively {
+            fn recursive_dir_creation(mut ancestors: &mut Ancestors<'_>) -> Result<(), IoError> {
+                if let Some(path) = ancestors.next() {
+                    if ! path.exists() {
+                        recursive_dir_creation(&mut ancestors)?;
+                        create_dir(path)?;
                     }
-                    Ok(())
                 }
-                let mut ancestors = path.ancestors();
-                recursive_dir_creation(&mut ancestors)?;
-            } else {
-                create_dir(path)?;
+                Ok(())
             }
+            let mut ancestors = path.ancestors();
+            recursive_dir_creation(&mut ancestors)
+        } else {
+            create_dir(path)
         }
-
-        Ok(())
     }
 
     pub fn copy_file_to_file(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), overwrite: bool) -> Result<usize, IoError>{
@@ -113,12 +85,8 @@ impl RealFileSystem {
             return Err(IoError::new(ErrorKind::InvalidData, format!("Destination already exists {:?}", dst)));
         }
 
-        if self.dry {
-            println!("DRY : copy file from {:?} to {:?}", &src, &dst); Ok(0 as usize)
-        } else {
-            self.create_file(dst)?;
-            self._copy_file(src, dst, on_read)
-        }
+        self.create_file(dst)?;
+        self._copy_file(src, dst, on_read)
     }
 
     fn _copy_file(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize)) -> Result<usize, IoError> {

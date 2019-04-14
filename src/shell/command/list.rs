@@ -58,8 +58,7 @@ impl Command<InitializedListCommand> {
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
         match ReadDirQuery::new(self.0.path.as_path()).retrieve(&fs.vfs()) {
             Ok(collection) => {
-                let len = collection.len();
-                if len > 0 {
+                if ! collection.is_empty() {
                     for child in collection.into_iter() {
                         println!(
                             "{}    {}",

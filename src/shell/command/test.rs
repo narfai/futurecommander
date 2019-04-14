@@ -17,16 +17,23 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::env::current_exe;
+use std::{
+    env::current_exe,
+    path::{ PathBuf, Path}
+};
 
-use std::path::{ PathBuf, Path };
+#[allow(unused_imports)]
+use vfs::{
+    query::{
+        Query,
+        Entry
+    }
+};
 
 use vfs::{
     HybridFileSystem,
     VfsError,
     query::{
-        Query,
-        Entry,
         StatusQuery,
         ReadDirQuery,
         EntryAdapter
@@ -43,9 +50,6 @@ pub use crate::command::{
     new_file        ::InitializedNewFileCommand,
     remove          ::InitializedRemoveCommand
 };
-
-//use crate::command::list::InitializedListCommand;
-//use crate::command::tree::InitializedTreeCommand;
 
 pub struct Samples;
 
@@ -86,7 +90,7 @@ mod virtual_shell_tests {
     #[test]
     fn rm(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let b_path = sample_path.join(&Path::new("B"));
 
@@ -106,7 +110,7 @@ mod virtual_shell_tests {
     #[test]
     fn cp_only(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let copy_a_to_b = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
@@ -126,7 +130,7 @@ mod virtual_shell_tests {
 
         match read_dir.retrieve(fs.vfs()) {
             Ok(collection) => {
-                assert!(collection.len() > 0);
+                assert!(!collection.is_empty());
                 assert!(collection.contains(&EntryAdapter(sample_path.join("A/D/G").as_path())));
                 assert!(collection.contains(&EntryAdapter(sample_path.join("A/D/E").as_path())));
             },
@@ -137,7 +141,7 @@ mod virtual_shell_tests {
     #[test]
     fn cp_preserve_source_and_node_kind(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let copy_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
@@ -164,7 +168,7 @@ mod virtual_shell_tests {
 
         match read_dir.retrieve(fs.vfs()) {
             Ok(collection) => {
-                assert!(collection.len() > 0);
+                assert!(!collection.is_empty());
                 assert!(collection.contains(&EntryAdapter(sample_path.join("B/D/E/F").as_path())));
 
             },
@@ -175,7 +179,7 @@ mod virtual_shell_tests {
     #[test]
     fn mv(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let move_f_to_a = Command(InitializedMoveCommand {
             source: sample_path.join(&Path::new("F")),
@@ -223,7 +227,7 @@ mod virtual_shell_tests {
     #[test]
     fn mkdir(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let new_bde_mkdired = Command(InitializedNewDirectoryCommand {
             path: sample_path.join(&Path::new("B/D/E/MKDIRED"))
@@ -242,7 +246,7 @@ mod virtual_shell_tests {
     #[test]
     fn touch(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let new_bde_touched = Command(InitializedNewFileCommand {
             path: sample_path.join(&Path::new("B/D/E/TOUCHED"))
@@ -261,7 +265,7 @@ mod virtual_shell_tests {
     #[test]
     fn virtual_shell_reference_virtual_children(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let mkdir_z = Command(InitializedNewDirectoryCommand {
             path: sample_path.join(&Path::new("Z"))
@@ -290,7 +294,7 @@ mod virtual_shell_tests {
     #[test]
     fn virtual_shell_copy_nested_virtual_identity(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let copy_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
@@ -322,7 +326,7 @@ mod virtual_shell_tests {
     #[test]
     fn virtual_shell_move_nested_virtual_identity(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let move_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
@@ -355,7 +359,7 @@ mod virtual_shell_tests {
     #[test]
     fn virtual_shell_copy_nested_deep_through_virtual_identity(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let copy_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
@@ -401,7 +405,7 @@ mod virtual_shell_tests {
     #[test]
     fn virtual_shell_copy_or_move_directory_into_itself_must_not_be_allowed(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         let source = sample_path.join(&Path::new("B"));
         let destination = sample_path.join("B/D");

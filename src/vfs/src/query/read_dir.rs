@@ -92,13 +92,13 @@ impl Query<&VirtualFileSystem> for ReadDirQuery {
         };
 
         let mut entry_collection = Self::from_file_system(
-            directory.as_source().unwrap_or(directory.as_identity()),
+            directory.as_source().unwrap_or_else(|| directory.as_identity()),
             directory.as_source(),
             Some(self.path.as_path())
         )?;
 
         if let Some(to_add_children) = fs.add_state().children(directory.as_identity()) {
-            let empty = VirtualChildren::new();
+            let empty = VirtualChildren::default();
             let to_del_children = fs.sub_state()
                     .children(directory.as_identity())
                     .unwrap_or(&empty);

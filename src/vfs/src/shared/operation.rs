@@ -67,7 +67,7 @@ impl CreateOperation {
     }
 
     pub fn path(&self) -> &Path { self.path.as_path() }
-    pub fn kind(&self) -> Kind { self.kind.clone() }
+    pub fn kind(&self) -> Kind { self.kind }
     pub fn recursive(&self) -> bool { self.recursive }
 }
 

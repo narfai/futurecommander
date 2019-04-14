@@ -20,23 +20,16 @@
 use crate::{ VfsError };
 use crate::representation::{ VirtualDelta };
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct VirtualFileSystem {
     add: VirtualDelta,
     sub: VirtualDelta
 }
 
 impl VirtualFileSystem {
-    pub fn new() -> VirtualFileSystem {
-        VirtualFileSystem {
-            add: VirtualDelta::new(),
-            sub: VirtualDelta::new()
-        }
-    }
-
     pub fn reset(&mut self) {
-        self.add = VirtualDelta::new();
-        self.sub = VirtualDelta::new();
+        self.add = VirtualDelta::default();
+        self.sub = VirtualDelta::default();
     }
 
     pub fn has_addition(&self) -> bool { !self.add.is_empty() }

@@ -22,7 +22,7 @@ use std::vec::IntoIter as VecIntoIter;
 
 use crate::query::Entry;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct EntryCollection<T>(pub Vec<T>)
     where T: Entry;
 
@@ -33,7 +33,7 @@ impl <T> EntryCollection<T> where T: Entry {
                 return true;
             }
         }
-        return false;
+        false
     }
 
     pub fn new() -> Self {
@@ -48,11 +48,18 @@ impl <T> EntryCollection<T> where T: Entry {
         self.0.len()
     }
 
-    pub fn into_iter(self) -> VecIntoIter<T> {
-        self.0.into_iter()
-    }
-
     pub fn iter(&self) -> Iter<'_, T> {
         self.0.iter()
+    }
+
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+}
+
+impl <T: Entry>IntoIterator for EntryCollection<T> {
+    type Item = T;
+    type IntoIter = VecIntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
     }
 }

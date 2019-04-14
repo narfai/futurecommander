@@ -18,13 +18,28 @@
  */
 
 #[allow(unused_imports)]
-use std::hash::Hasher;
+use std::{
+    hash::Hasher,
+    str::FromStr
+};
 
-use std::hash::{ Hash };
-use std::collections::hash_map::DefaultHasher;
-use std::path::{ Path, PathBuf };
-use crate::Kind;
-use crate::representation::{ VirtualDelta, VirtualChildren, VirtualPath };
+use std::{
+    hash::{ Hash },
+    collections::hash_map::DefaultHasher,
+    path::{
+        Path,
+        PathBuf
+    }
+};
+
+use crate::{
+    Kind,
+    representation::{
+        VirtualDelta,
+        VirtualChildren,
+        VirtualPath
+    }
+};
 
 #[cfg(test)]
 mod virtual_path_tests {
@@ -90,7 +105,7 @@ mod virtual_delta_tests {
 
     #[test]
     fn attach_child_to_root_then_find_it_in_children() {
-        let mut delta = VirtualDelta::new();
+        let mut delta = VirtualDelta::default();
         let path = VirtualPath::from_str("/virtual/path").unwrap();
 
         delta.attach(path.as_identity(), None, Kind::Directory).unwrap();
@@ -105,7 +120,7 @@ mod virtual_delta_tests {
 
     #[test]
     fn is_consistent_over_async() {
-        let mut delta = VirtualDelta::new();
+        let mut delta = VirtualDelta::default();
 
         let child = Path::new("/virtual/path");
         delta.attach(child, None, Kind::File).unwrap();
@@ -124,12 +139,12 @@ mod virtual_delta_tests {
 
     #[test]
     fn add_a_delta_to_another(){
-        let mut delta_r = VirtualDelta::new();
+        let mut delta_r = VirtualDelta::default();
         delta_r.attach(Path::new("/R/to_replace"), None, Kind::Directory).unwrap();
         delta_r.attach(Path::new("/R/to_not_change"), None, Kind::File).unwrap();
         delta_r.attach(Path::new("/R/to_complete"), None, Kind::Directory).unwrap();
 
-        let mut delta_ra = VirtualDelta::new();
+        let mut delta_ra = VirtualDelta::default();
         delta_ra.attach(Path::new("/R/to_replace/A"), None, Kind::Directory).unwrap();
         delta_ra.attach(Path::new("/R/to_not_change"), None, Kind::File).unwrap();
         delta_ra.attach(Path::new("/R/to_complete/B"), None, Kind::File).unwrap();
@@ -144,13 +159,13 @@ mod virtual_delta_tests {
 
     #[test]
     fn substract_a_delta_from_another(){
-        let mut delta_r = VirtualDelta::new();
+        let mut delta_r = VirtualDelta::default();
         delta_r.attach(Path::new("/R/to_remove"), None, Kind::Directory).unwrap();
         delta_r.attach(Path::new("/R/to_not_change"), None, Kind::File).unwrap();
         delta_r.attach(Path::new("/R/to_not_change_dir"), None, Kind::Directory).unwrap();
         delta_r.attach(Path::new("/R/to_not_change_dir/to_remove"), None, Kind::File).unwrap();
 
-        let mut delta_rs = VirtualDelta::new();
+        let mut delta_rs = VirtualDelta::default();
         delta_rs.attach(Path::new("/R/to_remove"), None, Kind::Directory).unwrap();
         delta_rs.attach(Path::new("/R/to_not_change_dir/to_remove"), None, Kind::File).unwrap();
 
@@ -164,7 +179,7 @@ mod virtual_delta_tests {
 
     #[test]
     fn walk(){
-        let mut delta = VirtualDelta::new();
+        let mut delta = VirtualDelta::default();
         delta.attach(Path::new("/R"), None, Kind::Directory).unwrap();
         delta.attach(Path::new("/R/to_replace"), None, Kind::Directory).unwrap();
         delta.attach(Path::new("/R/to_not_change"), None, Kind::File).unwrap();
@@ -172,7 +187,7 @@ mod virtual_delta_tests {
         delta.attach(Path::new("/R/to_complete/D"), None, Kind::Directory).unwrap();
         delta.attach(Path::new("/R/to_complete/E"), None, Kind::Directory).unwrap();
 
-        let mut collection = VirtualChildren::new();
+        let mut collection = VirtualChildren::default();
         delta.walk(&mut collection, &Path::new("/R")).unwrap();
         assert!(collection.contains(&VirtualPath::from_str("/R").unwrap()));
         assert!(collection.contains(&VirtualPath::from_str("/R/to_replace").unwrap()));
@@ -184,7 +199,7 @@ mod virtual_delta_tests {
 
     #[test]
     fn attach_detach_idempotent(){
-        let mut delta = VirtualDelta::new();
+        let mut delta = VirtualDelta::default();
         delta.attach(Path::new("/R"), None, Kind::Directory).unwrap();
         delta.attach(Path::new("/R/to_replace"), None, Kind::Directory).unwrap();
         delta.attach(Path::new("/R/to_not_change"), None, Kind::File).unwrap();
@@ -204,7 +219,7 @@ mod virtual_delta_tests {
 
     #[test]
     fn commute_file_into_dir(){
-        let mut delta = VirtualDelta::new();
+        let mut delta = VirtualDelta::default();
         delta.attach(Path::new("/A"), None, Kind::Directory).unwrap();
         delta.attach(Path::new("/B"), None, Kind::File).unwrap();
 
@@ -253,7 +268,7 @@ mod virtual_delta_tests {
 
     #[test]
     fn generate_sub_delta(){
-        let mut delta = VirtualDelta::new();
+        let mut delta = VirtualDelta::default();
         delta.attach(Path::new("/A"), None, Kind::Directory).unwrap();
         delta.attach(Path::new("/B"), None, Kind::Directory).unwrap();
         delta.attach(Path::new("/B/C"), None, Kind::Directory).unwrap();

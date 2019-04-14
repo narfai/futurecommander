@@ -28,13 +28,12 @@ pub enum Kind {
 
 impl Kind {
     pub fn from_path(path: &Path) -> Kind {
-        match path.is_dir() {
-            true => Kind::Directory,
-            false =>
-                match path.is_file() {
-                    true => Kind::File,
-                    false => Kind::Unknown
-                }
+        if path.is_dir() {
+            Kind::Directory
+        } else if path.is_file() {
+            Kind::File
+        } else {
+            Kind::Unknown
         }
     }
 

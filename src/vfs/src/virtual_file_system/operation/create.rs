@@ -27,7 +27,7 @@ impl Operation<VirtualFileSystem> for CreateOperation{
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         let path = self.path();
         match StatusQuery::new(path).retrieve(&fs)?.into_inner().into_existing_virtual() {
-            Some(_) => return Err(VfsError::AlreadyExists(path.to_path_buf())),
+            Some(_) => Err(VfsError::AlreadyExists(path.to_path_buf())),
             None => {
                 if ! self.recursive() || self.kind() == Kind::File {
                     let parent = VirtualPath::get_parent_or_root(path);

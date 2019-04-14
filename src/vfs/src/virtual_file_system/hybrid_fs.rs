@@ -22,7 +22,7 @@ use crate::operation::Operation;
 
 use crate::{ VfsError, Transaction, VirtualFileSystem, RealFileSystem };
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct HybridFileSystem {
     virtual_file_system: VirtualFileSystem,
     real_file_system: RealFileSystem,
@@ -30,14 +30,6 @@ pub struct HybridFileSystem {
 }
 
 impl HybridFileSystem {
-    pub fn new() -> HybridFileSystem {
-        HybridFileSystem {
-            virtual_file_system: VirtualFileSystem::new(),
-            real_file_system: RealFileSystem::new(false),
-            transaction: Transaction::new()
-        }
-    }
-
     pub fn vfs(&self) -> &VirtualFileSystem {
         &self.virtual_file_system
     }
@@ -56,7 +48,7 @@ impl HybridFileSystem {
 
     pub fn reset(&mut self) {
         self.virtual_file_system.reset();
-        self.transaction = Transaction::new();
+        self.transaction = Transaction::default();
     }
 
     pub fn apply(&mut self) -> Result<(), VfsError> {

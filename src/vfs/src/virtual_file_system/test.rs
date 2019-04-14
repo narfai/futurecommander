@@ -32,7 +32,7 @@ mod hybrid_file_system {
 
     #[test]
     pub fn no_dangling() {
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
         _no_dangling(
             &mut fs,
             Samples::init_advanced_chroot("hybrid_no_dangling").as_path()
@@ -107,7 +107,7 @@ mod hybrid_file_system {
 
     #[test]
     pub fn copy_file_dir_interversion() {
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
         _copy_file_dir_interversion(
             &mut fs,
             Samples::init_advanced_chroot("hybrid_file_dir_interversion").as_path()
@@ -276,7 +276,7 @@ mod hybrid_file_system {
     #[test]
     pub fn apply_a_vfs_to_real_fs() {
         let chroot = Samples::init_advanced_chroot("hybrid_apply_a_vfs_to_real_fs");
-        let mut fs = HybridFileSystem::new();
+        let mut fs = HybridFileSystem::default();
 
         _no_dangling(&mut fs, chroot.as_path());
         _copy_file_dir_interversion(&mut fs, chroot.as_path());
@@ -313,7 +313,7 @@ mod virtual_file_system {
     #[test]
     fn resolve() {
         let sample_path = Samples::static_samples_path();
-        let mut vfs = VirtualFileSystem::new();
+        let mut vfs = VirtualFileSystem::default();
 
         let b = sample_path.join("B");
         let ab = sample_path.join("A/B");
@@ -339,7 +339,7 @@ mod virtual_file_system {
     #[test]
     fn resolve_through() {
         let sample_path = Samples::static_samples_path();
-        let mut vfs = VirtualFileSystem::new();
+        let mut vfs = VirtualFileSystem::default();
 
         let b = sample_path.join("B");
 
@@ -372,7 +372,7 @@ mod virtual_file_system {
     #[test]
     fn stat_none_if_deleted() {
         let sample_path = Samples::static_samples_path();
-        let mut vfs = VirtualFileSystem::new();
+        let mut vfs = VirtualFileSystem::default();
         let a = sample_path.join("A");
 
         assert!(
@@ -397,7 +397,7 @@ mod virtual_file_system {
     #[test]
     fn stat_virtual() {
         let sample_path = Samples::static_samples_path();
-        let mut vfs = VirtualFileSystem::new();
+        let mut vfs = VirtualFileSystem::default();
         let z = sample_path.join("Z");
 
         CreateOperation::new(
@@ -420,7 +420,7 @@ mod virtual_file_system {
     #[test]
     fn stat_real() {
         let sample_path = Samples::static_samples_path();
-        let vfs = VirtualFileSystem::new();
+        let vfs = VirtualFileSystem::default();
         let a = sample_path.join("A");
 
         let stated = StatusQuery::new(a.as_path())
@@ -438,7 +438,7 @@ mod virtual_file_system {
     #[test]
     fn stat_related() {
         let sample_path = Samples::static_samples_path();
-        let mut vfs = VirtualFileSystem::new();
+        let mut vfs = VirtualFileSystem::default();
         let abdg = sample_path.join("A/B/D/G");//Note : should exists in samples
 
         CopyOperation::new(
@@ -460,7 +460,7 @@ mod virtual_file_system {
 
     #[test]
     pub fn no_dangling() {
-        let mut vfs = VirtualFileSystem::new();
+        let mut vfs = VirtualFileSystem::default();
         _no_dangling(
             &mut vfs,
             Samples::init_advanced_chroot("no_dangling").as_path()
@@ -519,7 +519,7 @@ mod virtual_file_system {
 
     #[test]
     pub fn file_dir_interversion() {
-        let mut vfs = VirtualFileSystem::new();
+        let mut vfs = VirtualFileSystem::default();
         _file_dir_interversion(
             &mut vfs,
             Samples::init_advanced_chroot("file_dir_interversion").as_path()
@@ -651,7 +651,7 @@ mod virtual_file_system {
     #[test]
     fn copy_or_move_directory_into_itself_must_not_be_allowed() {
         let sample_path = Samples::static_samples_path();
-        let mut vfs = VirtualFileSystem::new();
+        let mut vfs = VirtualFileSystem::default();
 
         let source = sample_path.join("B");
         let destination = sample_path.join("B/D/B");
@@ -685,7 +685,7 @@ mod virtual_file_system {
     #[test]
     fn reset_empty() {
         let sample_path = Samples::static_samples_path();
-        let mut vfs = VirtualFileSystem::new();
+        let mut vfs = VirtualFileSystem::default();
 
         CreateOperation::new(
             sample_path.join("VIRTUALA").as_path(),

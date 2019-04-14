@@ -27,7 +27,7 @@ mod tests {
     #[test]
     pub fn copy_file_to_file(){
         let chroot = Samples::init_simple_chroot("copy_file_to_file");
-        let fs = RealFileSystem::new(false);
+        let fs = RealFileSystem::default();
 
         fs.copy_file_to_file(
             chroot.join("RDIR/RFILEA").as_path(),
@@ -47,7 +47,7 @@ mod tests {
     #[test]
     pub fn create_file(){
         let chroot = Samples::init_simple_chroot("create_file");
-        let fs = RealFileSystem::new(false);
+        let fs = RealFileSystem::default();
 
         fs.create_file(chroot.join("FILE").as_path()).unwrap();
 
@@ -58,7 +58,7 @@ mod tests {
     #[test]
     pub fn create_directory(){
         let chroot = Samples::init_simple_chroot("create_directory");
-        let fs = RealFileSystem::new(false);
+        let fs = RealFileSystem::default();
 
         fs.create_directory(chroot.join("DIRECTORY").as_path(), false).unwrap();
 
@@ -72,7 +72,7 @@ mod tests {
     #[test]
     pub fn remove_file(){
         let chroot = Samples::init_simple_chroot("remove_file");
-        let fs = RealFileSystem::new(false);
+        let fs = RealFileSystem::default();
 
         fs.remove_file(chroot.join("RDIR/RFILEA").as_path()).unwrap();
 
@@ -82,7 +82,7 @@ mod tests {
     #[test]
     pub fn remove_directory_recursively(){
         let chroot = Samples::init_simple_chroot("remove_directory");
-        let fs = RealFileSystem::new(false);
+        let fs = RealFileSystem::default();
 
         fs.remove_directory(chroot.join("RDIR").as_path()).unwrap();
 
