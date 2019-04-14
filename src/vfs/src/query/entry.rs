@@ -66,7 +66,7 @@ impl <T> EntryAdapter<T> {
 
 impl Entry for EntryAdapter<&Path> {
     fn path(&self) -> &Path {
-        self.0.clone()
+        self.0
     }
 
     fn to_path(&self) -> PathBuf {

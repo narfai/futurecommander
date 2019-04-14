@@ -22,6 +22,8 @@ extern crate clap;
 
 extern crate rustyline;
 
+#[cfg(test)]
+mod test;
 
 mod path;
 mod command;

@@ -42,7 +42,7 @@ use crate::command::{
 pub struct MoveCommand {}
 
 impl Command<MoveCommand> {
-    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedMoveCommand>, CommandError> {
+    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedMoveCommand>, CommandError> {
         let (source, _source_trailing) = Self::extract_path_and_trail_from_args(cwd, args, "source")?;
         let (destination, _destination_trailing) = Self::extract_path_and_trail_from_args(cwd, args, "destination")?;
 
@@ -69,24 +69,23 @@ impl Command<InitializedMoveCommand> {
             return Err(CommandError::DoesNotExists(self.0.source.to_path_buf()));
         }
 
-        let operation = match destination.exists() {
-            true =>
-                match destination.is_dir() {
-                    true =>
-                        MoveOperation::new(
-                            self.0.source.as_path(),
-                            self.0.destination
-                                .join(self.0.source.file_name().unwrap())
-                                .as_path()
-                        ),
-                    false =>
-                        match source.is_dir() {
-                            true => return Err(CommandError::CustomError(format!("Directory into a file {:?} {:?}", source.is_dir(), destination.is_dir()))),
-                            false => return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir() ))) //OVERWRITE
-                        }
-                },
-            false => MoveOperation::new(self.0.source.as_path(), self.0.destination.as_path())
+        let operation = if destination.exists() {
+            if destination.is_dir() {
+                MoveOperation::new(
+                    self.0.source.as_path(),
+                    self.0.destination
+                        .join(self.0.source.file_name().unwrap())
+                        .as_path()
+                )
+            } else if source.is_dir() {
+                return Err(CommandError::CustomError(format!("Directory into a file {:?} {:?}", source.is_dir(), destination.is_dir())))
+            } else {
+                return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
+            }
+        } else {
+            MoveOperation::new(self.0.source.as_path(), self.0.destination.as_path())
         };
+
 
         match operation.execute(fs.mut_vfs()) {
             Ok(_) => {

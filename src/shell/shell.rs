@@ -23,37 +23,38 @@ use std::env;
 use std::path::{ Path, PathBuf };
 
 use rustyline::error::ReadlineError;
-use rustyline::completion::{Completer, FilenameCompleter, Pair};
 use rustyline::config::OutputStreamType;
-use rustyline::highlight::{Highlighter, MatchingBracketHighlighter};
-use rustyline::hint::{ Hinter };
-use rustyline::{Cmd, CompletionType, Config, EditMode, Editor, Helper, KeyPress};
+use rustyline::{ CompletionType, Config, EditMode, Editor };
 
 use clap::{ App, ArgMatches };
 
 use vfs::{
     HybridFileSystem,
     Kind,
-    query::{Query, StatusQuery, ReadDirQuery }
+    query::{Query, StatusQuery }
 };
 
 use crate::path::absolute;
 use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
 use crate::helper::VirtualHelper;
 
+
 pub struct Shell {
     cwd: PathBuf,
     fs: HybridFileSystem,
 }
 
-impl Shell {
-    pub fn new() -> Shell {
+impl Default for Shell {
+    fn default() -> Self {
         Shell {
             cwd: env::current_dir().unwrap(),
             fs: HybridFileSystem::new(),
         }
     }
+}
 
+
+impl Shell {
     fn send_matches(&mut self, matches: &ArgMatches) -> Result<(), CommandError>{
         match matches.subcommand() {
             ("exit", Some(_matches)) => Err(CommandError::Exit),
@@ -73,19 +74,19 @@ impl Shell {
             ("debug_transaction",   Some(_matches)) => { println!("{:#?}", self.fs.transaction()); Ok(()) },
             ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
             ("reset",       Some(_matches)) => { self.fs.reset(); println!("Virtual state is now empty");  Ok(()) },
-            ("ls",          Some(matches)) => Command::<ListCommand>::new(&self.cwd,matches)
+            ("ls",          Some(matches)) => Command::<ListCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
-            ("cp",          Some(matches)) => Command::<CopyCommand>::new(&self.cwd,matches)
+            ("cp",          Some(matches)) => Command::<CopyCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
-            ("mv",          Some(matches)) => Command::<MoveCommand>::new(&self.cwd, matches)
+            ("mv",          Some(matches)) => Command::<MoveCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
-            ("rm",          Some(matches)) => Command::<RemoveCommand>::new(&self.cwd,matches)
+            ("rm",          Some(matches)) => Command::<RemoveCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
-            ("mkdir",       Some(matches)) => Command::<NewDirectoryCommand>::new(&self.cwd,matches)
+            ("mkdir",       Some(matches)) => Command::<NewDirectoryCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
-            ("touch",       Some(matches)) => Command::<NewFileCommand>::new(&self.cwd,matches)
+            ("touch",       Some(matches)) => Command::<NewFileCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
-            ("tree",        Some(matches)) => Command::<TreeCommand>::new(&self.cwd, matches)
+            ("tree",        Some(matches)) => Command::<TreeCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
             ("apply",        Some(_matches)) => self.apply(),
             _ => Err(CommandError::InvalidCommand)
@@ -121,7 +122,7 @@ impl Shell {
                     }
 
                     let mut argv = Vec::new();
-                    argv.extend(input.trim().split(" "));
+                    argv.extend(input.trim().split(' '));
 
                     match App::from_yaml(yaml).get_matches_from_safe(argv) {
                         Ok(matches) =>
@@ -159,7 +160,7 @@ impl Shell {
                     break
                 }
             }
-            println!("\n");
+            println!();
         }
     }
 
@@ -171,14 +172,14 @@ impl Shell {
         loop {
             stdout().flush().unwrap();
             let mut input = String::new();
-            if let Ok(_) = stdin().read_line(&mut input) {
+            if stdin().read_line(&mut input).is_ok() {
                 print!("\n");
 
                 let trimmed = input.trim().to_string();
                 history.push(trimmed.clone());
 
                 let mut argv = Vec::new();
-                argv.extend(trimmed.split(" "));
+                argv.extend(trimmed.split(' '));
 
                 if let Some(first_char) = trimmed.chars().next()  {
                     if first_char == '#' {
@@ -215,7 +216,7 @@ impl Shell {
                     Err(error) => eprintln!("Error: {}", error)
                 }
 
-                print!("\n");
+                println!();
                 print!("> ");
             }
         }
@@ -248,7 +249,7 @@ impl Shell {
     fn apply(&mut self) -> Result<(), CommandError> {
         match self.fs.apply() {
             Ok(_) => Ok(()),
-            Err(error) => return Err(CommandError::from(error))
+            Err(error) => Err(CommandError::from(error))
         }
     }
 }

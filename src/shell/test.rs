@@ -17,10 +17,21 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use shell::Shell;
+//pub struct ArgMatches<'a> {
+//    #[doc(hidden)] pub args: HashMap<&'a str, MatchedArg>,
+//    #[doc(hidden)] pub subcommand: Option<Box<SubCommand<'a>>>,
+//    #[doc(hidden)] pub usage: Option<String>,
+//}
 
-
-fn main() {
-    let mut shell = Shell::default();
-    shell.run_readline()
-}
+//#[cfg(test)]
+//mod shell_tests {
+//    use super::*;
+//
+//    pub fn remove_cwd_must_not_be_allowed() {
+//
+//    }
+//
+//    pub fn remove_cwd_ancestors_must_not_be_allowed() {
+//
+//    }
+//}

@@ -38,12 +38,12 @@ use crate::command::{
 pub struct ListCommand {}
 
 impl Command<ListCommand> {
-    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedListCommand>, CommandError> {
+    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedListCommand>, CommandError> {
         Ok(
             Command(
                 InitializedListCommand {
                     path:
-                        Self::extract_path_from_args(cwd, args, "path").unwrap_or(cwd.to_path_buf())
+                        Self::extract_path_from_args(cwd, args, "path").unwrap_or_else(|_| cwd.to_path_buf())
                 }
             )
         )
@@ -63,14 +63,13 @@ impl Command<InitializedListCommand> {
                     for child in collection.into_iter() {
                         println!(
                             "{}    {}",
-                            match child.is_dir() {
-                                true => "Directory",
-                                false =>
-                                    match child.is_file() {
-                                        true => "File     ",
-                                        false => "Unknown  "
-                                    }
-                            },
+                           if child.is_dir() {
+                               "Directory"
+                           } else if child.is_file() {
+                               "File     "
+                           } else {
+                               "Unknown  "
+                           },
                             child.name().unwrap().to_string_lossy()
                         );
                     }

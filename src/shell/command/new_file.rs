@@ -39,7 +39,7 @@ use crate::command::{
 pub struct NewFileCommand {}
 
 impl Command<NewFileCommand> {
-    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewFileCommand>, CommandError> {
+    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewFileCommand>, CommandError> {
         Ok(
             Command(
                 InitializedNewFileCommand {

@@ -17,12 +17,13 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::path::PathBuf;
 use std::vec::IntoIter;
+
 use vfs::{
-    VfsError,
     VirtualFileSystem,
     representation::{ VirtualPath },
-    query::{ EntryCollection, VirtualStatus, EntryAdapter, Query, ReadDirQuery, Entry }
+    query::{ Query, ReadDirQuery, Entry }
 };
 
 use std::borrow::Cow::{self, Borrowed, Owned};
@@ -33,15 +34,11 @@ use rustyline::error::ReadlineError;
 use rustyline::highlight::{Highlighter, MatchingBracketHighlighter};
 use rustyline::hint::Hinter;
 use rustyline::{ Helper };
-use std::path::{ Path, PathBuf, MAIN_SEPARATOR };
-use crate::path::absolute;
 
 static WHITE_PROMPT: &'static str = "\x1b[1;97m>>\x1b[0m ";
 static RED_PROMPT: &'static str = "\x1b[1;91m>>\x1b[0m ";
 
-static PROMPT: &'static str = ">> ";
-
-const fn AVAILABLE_COMMANDS() -> [&'static str; 18] {
+const fn available_commands() -> [&'static str; 18] {
     [
         "exit",
         "cd",
@@ -95,7 +92,7 @@ impl  <'a>VirtualHelper<'a>  {
     }
 
     pub fn score_to_pairs(scores: IntoIter<(usize, String)>, pos: usize) -> Vec<Pair> {
-        scores.map(|(score, command)| {
+        scores.map(|(_score, command)| {
             let mut replacement = command.to_string();
             if pos <= replacement.len() {
                 replacement.replace_range(..pos, "");
@@ -105,7 +102,7 @@ impl  <'a>VirtualHelper<'a>  {
     }
 
     pub fn score_and_pos_to_pairs(scores: IntoIter<(usize, String, usize)>) -> Vec<Pair> {
-        scores.map(|(score, command, pos)| {
+        scores.map(|(_score, command, pos)| {
             let mut replacement = command.to_string();
             if pos <= replacement.len() {
                 replacement.replace_range(..pos, "");
@@ -118,7 +115,7 @@ impl  <'a>VirtualHelper<'a>  {
         let mut scores = Vec::new();
         let mut max_score : usize = 0;
 
-        for command in AVAILABLE_COMMANDS().iter() {
+        for command in available_commands().iter() {
             let score = Self::score(given, command);
             if score > max_score {
                 max_score = score;
@@ -137,13 +134,13 @@ impl  <'a>VirtualHelper<'a>  {
             return Self::score_to_pairs(scores.into_iter(), pos);
         }
 
-        return Self::score_to_pairs(
+        Self::score_to_pairs(
             scores.into_iter()
                 .filter(| &(score, _)|  score == max_score )
                 .collect::<Vec<(usize, String)>>()
                 .into_iter(),
             pos
-        );
+        )
     }
 
     pub fn path_candidates(&self, given: &str) -> Vec<Pair> {
@@ -155,7 +152,7 @@ impl  <'a>VirtualHelper<'a>  {
         match ReadDirQuery::new(given_path.as_path()).retrieve(self.fs) {
             Ok(collection) => {
                 for entry in collection.iter() {
-                    let path = entry.path().strip_prefix(&self.cwd).unwrap_or(entry.path());
+                    let path = entry.path().strip_prefix(&self.cwd).unwrap_or_else(|_| entry.path());
                     let path_str = path.as_os_str().to_str().unwrap();
                     let score = Self::score(given, path_str);
                     if score > max_score {
@@ -166,20 +163,17 @@ impl  <'a>VirtualHelper<'a>  {
                 }
             },
             Err(_) =>
-                match ReadDirQuery::new(parent.as_path()).retrieve(self.fs) {
-                    Ok(collection) => {
-                        for entry in collection.iter() {
-                            let path = entry.path().strip_prefix(&self.cwd).unwrap_or(entry.path());
-                            let path_str = path.as_os_str().to_str().unwrap();
-                            let score = Self::score(given, path_str);
-                            if score > max_score {
-                                max_score = score;
-                            }
-
-                            scores.push((score, path_str.to_string(), given.len()));
+                if let Ok(collection) = ReadDirQuery::new(parent.as_path()).retrieve(self.fs) {
+                    for entry in collection.iter() {
+                        let path = entry.path().strip_prefix(&self.cwd).unwrap_or_else(|_| entry.path());
+                        let path_str = path.as_os_str().to_str().unwrap();
+                        let score = Self::score(given, path_str);
+                        if score > max_score {
+                            max_score = score;
                         }
-                    },
-                    Err(_) => {}
+
+                        scores.push((score, path_str.to_string(), given.len()));
+                    }
                 }
         }
 
@@ -197,7 +191,7 @@ impl  <'a>VirtualHelper<'a>  {
             )
         }
 
-        return Self::score_and_pos_to_pairs(
+        Self::score_and_pos_to_pairs(
             scores.into_iter()
                 .filter(| &(score, _, _)|  score == max_score )
                 .collect::<Vec<(usize, String, usize)>>()
@@ -210,7 +204,7 @@ impl <'a> Completer for VirtualHelper<'a>  {
     type Candidate = Pair;
 
     fn complete(&self, line: &str, pos: usize) -> Result<(usize, Vec<Pair>), ReadlineError> {
-        let input : Vec<&str> = line.split(" ").collect();
+        let input : Vec<&str> = line.split(' ').collect();
 
         if input.len() == 1 {
             return Ok((pos, self.command_candidates(line.trim(), pos)));
@@ -229,7 +223,7 @@ impl <'a> Highlighter for VirtualHelper<'a>  {
         self.highlighter.highlight(line, pos)
     }
 
-    fn highlight_prompt<'p>(&self, prompt: &'p str) -> Cow<'p, str> {
+    fn highlight_prompt<'p>(&self, _prompt: &'p str) -> Cow<'p, str> {
         if self.fs.is_empty() {
             Borrowed(WHITE_PROMPT)
         } else {

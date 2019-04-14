@@ -128,3 +128,7 @@ https://github.com/xd009642/tarpaulin
 ## Weird Archlinux problem with crt2.o for windows target ( mingw64 )
 
 https://github.com/rust-lang/rust/issues/48272
+
+## Rust with Nix \o/
+
+https://docs.rs/nix/0.13.0/nix/

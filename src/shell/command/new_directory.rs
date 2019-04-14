@@ -35,7 +35,7 @@ use vfs::{
 pub struct NewDirectoryCommand {}
 
 impl Command<NewDirectoryCommand> {
-    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewDirectoryCommand>, CommandError> {
+    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewDirectoryCommand>, CommandError> {
         Ok(
             Command(
                 InitializedNewDirectoryCommand {

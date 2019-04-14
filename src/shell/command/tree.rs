@@ -37,11 +37,11 @@ use crate::command::errors::CommandError;
 pub struct TreeCommand {}
 
 impl Command<TreeCommand> {
-    pub fn new(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedTreeCommand>, CommandError> {
+    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedTreeCommand>, CommandError> {
         Ok(
             Command(
                 InitializedTreeCommand {
-                    path: Self::extract_path_from_args(cwd, args, "path").unwrap_or(cwd.to_path_buf())
+                    path: Self::extract_path_from_args(cwd, args, "path").unwrap_or_else(|_| cwd.to_path_buf())
                 }
             )
         )
@@ -61,15 +61,9 @@ impl Command<InitializedTreeCommand> {
                     iter().fold(
                     "".to_string(),
                     |depth_delimiter, last|
-                        depth_delimiter + match *last {
-                            true  => "    ",
-                            false => "│   "
-                        }
+                        depth_delimiter + if *last { "    " } else { "│   " }
                 ),
-                match parent_last {
-                    false => "├",
-                    true  => "└"
-                },
+                if parent_last { '├' } else { '└' },
                 file_name
             );
         } else {
