@@ -18,68 +18,72 @@
  */
 
 extern crate futurecommander_vfs;
-use futurecommander_vfs::{
-    RealFileSystem,
-    Samples
-};
 
-#[test]
-pub fn copy_file_to_file(){
-    let chroot = Samples::init_simple_chroot("copy_file_to_file");
-    let fs = RealFileSystem::default();
+#[cfg_attr(tarpaulin, skip)]
+mod tests {
+    use futurecommander_vfs::{
+        RealFileSystem,
+        Samples
+    };
 
-    fs.copy_file_to_file(
-        chroot.join("RDIR/RFILEA").as_path(),
-        chroot.join("COPIED").as_path(),
-        &|_read| { /*println!("read {}", read);*/ },
-        false
-    ).unwrap();
+    #[test]
+    pub fn copy_file_to_file() {
+        let chroot = Samples::init_simple_chroot("copy_file_to_file");
+        let fs = RealFileSystem::default();
 
-    assert!(chroot.join("COPIED").exists());
-    assert!(chroot.join("COPIED").is_file());
-    assert!(chroot.join("COPIED").metadata().unwrap().len() > 1);
-}
+        fs.copy_file_to_file(
+            chroot.join("RDIR/RFILEA").as_path(),
+            chroot.join("COPIED").as_path(),
+            &|_read| { /*println!("read {}", read);*/ },
+            false
+        ).unwrap();
 
-#[test]
-pub fn create_file(){
-    let chroot = Samples::init_simple_chroot("create_file");
-    let fs = RealFileSystem::default();
+        assert!(chroot.join("COPIED").exists());
+        assert!(chroot.join("COPIED").is_file());
+        assert!(chroot.join("COPIED").metadata().unwrap().len() > 1);
+    }
 
-    fs.create_file(chroot.join("FILE").as_path()).unwrap();
+    #[test]
+    pub fn create_file() {
+        let chroot = Samples::init_simple_chroot("create_file");
+        let fs = RealFileSystem::default();
 
-    assert!(chroot.join("FILE").exists());
-    assert!(chroot.join("FILE").is_file());
-}
+        fs.create_file(chroot.join("FILE").as_path()).unwrap();
 
-#[test]
-pub fn create_directory(){
-    let chroot = Samples::init_simple_chroot("create_directory");
-    let fs = RealFileSystem::default();
+        assert!(chroot.join("FILE").exists());
+        assert!(chroot.join("FILE").is_file());
+    }
 
-    fs.create_directory(chroot.join("DIRECTORY").as_path(), false).unwrap();
+    #[test]
+    pub fn create_directory() {
+        let chroot = Samples::init_simple_chroot("create_directory");
+        let fs = RealFileSystem::default();
 
-    assert!(chroot.join("DIRECTORY").exists());
-    assert!(chroot.join("DIRECTORY").is_dir());
-}
+        fs.create_directory(chroot.join("DIRECTORY").as_path(), false).unwrap();
 
-#[test]
-pub fn remove_file(){
-    let chroot = Samples::init_simple_chroot("remove_file");
-    let fs = RealFileSystem::default();
+        assert!(chroot.join("DIRECTORY").exists());
+        assert!(chroot.join("DIRECTORY").is_dir());
+    }
 
-    fs.remove_file(chroot.join("RDIR/RFILEA").as_path()).unwrap();
+    #[test]
+    pub fn remove_file() {
+        let chroot = Samples::init_simple_chroot("remove_file");
+        let fs = RealFileSystem::default();
 
-    assert!(!chroot.join("RDIR/RFILEA").exists());
-}
+        fs.remove_file(chroot.join("RDIR/RFILEA").as_path()).unwrap();
 
-#[test]
-pub fn remove_directory_recursively(){
-    let chroot = Samples::init_simple_chroot("remove_directory");
-    let fs = RealFileSystem::default();
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+    }
 
-    fs.remove_directory(chroot.join("RDIR").as_path()).unwrap();
+    #[test]
+    pub fn remove_directory_recursively() {
+        let chroot = Samples::init_simple_chroot("remove_directory");
+        let fs = RealFileSystem::default();
 
-    assert!(!chroot.join("RDIR").exists());
-    assert!(!chroot.join("RDIR/RFILEA").exists());
-    assert!(!chroot.join("RDIR/RFILEB").exists());
+        fs.remove_directory(chroot.join("RDIR").as_path()).unwrap();
+
+        assert!(!chroot.join("RDIR").exists());
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+        assert!(!chroot.join("RDIR/RFILEB").exists());
+    }
 }
