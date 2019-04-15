@@ -54,7 +54,8 @@ impl CopyOperation {
 pub struct CreateOperation {
     path: PathBuf,
     kind: Kind,
-    recursive: bool
+    recursive: bool,
+    overwrite: bool
 }
 
 impl CreateOperation {
@@ -62,13 +63,15 @@ impl CreateOperation {
         CreateOperation {
             path: path.to_path_buf(),
             kind,
-            recursive: false
+            recursive: false,
+            overwrite: false
         }
     }
 
     pub fn path(&self) -> &Path { self.path.as_path() }
     pub fn kind(&self) -> Kind { self.kind }
     pub fn recursive(&self) -> bool { self.recursive }
+    pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
 #[derive(Debug, Clone)]

@@ -43,8 +43,8 @@ impl RealFileSystem {
         remove_dir_all(path)
     }
 
-    pub fn create_file(&self, path: &Path) -> Result<(), IoError> {
-        if path.exists() {
+    pub fn create_file(&self, path: &Path, overwrite: bool) -> Result<(), IoError> {
+        if !overwrite && path.exists() {
             return Err(IoError::new(ErrorKind::AlreadyExists, "Create file : path already exists"));
         }
         File::create(path)?; Ok(())
@@ -85,7 +85,7 @@ impl RealFileSystem {
             return Err(IoError::new(ErrorKind::InvalidData, format!("Destination already exists {:?}", dst)));
         }
 
-        self.create_file(dst)?;
+        self.create_file(dst, overwrite)?;
         self._copy_file(src, dst, on_read)
     }
 
@@ -144,10 +144,23 @@ mod tests {
         let chroot = Samples::init_simple_chroot("create_file");
         let fs = RealFileSystem::default();
 
-        fs.create_file(chroot.join("FILE").as_path()).unwrap();
+        fs.create_file(chroot.join("FILE").as_path(), false).unwrap();
 
         assert!(chroot.join("FILE").exists());
         assert!(chroot.join("FILE").is_file());
+    }
+
+    #[test]
+    pub fn create_file_overwrite() {
+        let chroot = Samples::init_simple_chroot("create_file_overwrite");
+        let fs = RealFileSystem::default();
+
+        let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
+
+        fs.create_file(chroot.join("RDIR/RFILEA").as_path(), true).unwrap();
+
+        assert!(chroot.join("RDIR/RFILEA").exists());
+        assert_ne!(a_len, chroot.join("RDIR/RFILEA").metadata().unwrap().len());
     }
 
     #[test]
@@ -159,6 +172,17 @@ mod tests {
 
         assert!(chroot.join("DIRECTORY").exists());
         assert!(chroot.join("DIRECTORY").is_dir());
+    }
+
+    #[test]
+    pub fn create_directory_recursively() {
+        let chroot = Samples::init_simple_chroot("create_directory_recursively");
+        let fs = RealFileSystem::default();
+
+        fs.create_directory(chroot.join("DEEP/NESTED/DIRECTORY").as_path(), true).unwrap();
+
+        assert!(chroot.join("DEEP/NESTED/DIRECTORY").exists());
+        assert!(chroot.join("DEEP/NESTED/DIRECTORY").is_dir());
     }
 
     #[test]
@@ -176,6 +200,25 @@ mod tests {
         assert!(chroot.join("COPIED").exists());
         assert!(chroot.join("COPIED").is_file());
         assert!(chroot.join("COPIED").metadata().unwrap().len() > 1);
+    }
+
+    #[test]
+    pub fn copy_file_to_file_overwrite() {
+        let chroot = Samples::init_simple_chroot("copy_file_to_file_overwrite");
+        let fs = RealFileSystem::default();
+
+        let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
+
+        fs.copy_file_to_file(
+            chroot.join("RDIR/RFILEA").as_path(),
+            chroot.join("RDIR/RFILEB").as_path(),
+            &|_read| { /*println!("read {}", read);*/ },
+            true
+        ).unwrap();
+
+        assert!(chroot.join("RDIR/RFILEA").exists());
+        assert!(chroot.join("RDIR/RFILEB").is_file());
+        assert_eq!(a_len, chroot.join("RDIR/RFILEB").metadata().unwrap().len());
     }
 
     #[test]
@@ -198,5 +241,46 @@ mod tests {
         assert!(!chroot.join("RDIR").exists());
         assert!(!chroot.join("RDIR/RFILEA").exists());
         assert!(!chroot.join("RDIR/RFILEB").exists());
+    }
+
+
+    #[test]
+    pub fn move_to() {
+        let chroot = Samples::init_simple_chroot("move_directory");
+
+        let fs = RealFileSystem::default();
+
+        fs.move_to(
+            chroot.join("RDIR").as_path(),
+            chroot.join("MOVED").as_path(),
+            false
+        ).unwrap();
+
+        assert!(!chroot.join("RDIR").exists());
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+        assert!(!chroot.join("RDIR/RFILEB").exists());
+
+        assert!(chroot.join("MOVED").exists());
+        assert!(chroot.join("MOVED/RFILEA").exists());
+        assert!(chroot.join("MOVED/RFILEB").exists());
+    }
+
+    pub fn move_to_overwrite() {
+        let chroot = Samples::init_simple_chroot("move_to_overwrite");
+
+        let fs = RealFileSystem::default();
+
+        let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
+
+        fs.move_to(
+            chroot.join("RDIR/RFILEA").as_path(),
+            chroot.join("RDIR/RFILEB").as_path(),
+            false
+        ).unwrap();
+
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+        assert!(chroot.join("RDIR/RFILEB").exists());
+
+        assert_eq!(a_len, chroot.join("RDIR/RFILEB").metadata().unwrap().len());
     }
 }

@@ -17,6 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[allow(unused_imports)]
+use std::collections::hash_map::{ DefaultHasher };
+
 use std::{
     cmp::Ordering,
     path::{
@@ -26,7 +29,6 @@ use std::{
     },
     ffi::{ OsStr },
     str::{ FromStr },
-    collections::hash_map::{ DefaultHasher },
     hash::{ Hash, Hasher }
 };
 

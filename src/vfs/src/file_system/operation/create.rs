@@ -39,7 +39,7 @@ impl Operation<RealFileSystem> for CreateOperation {
         }
 
         let result = match self.kind() {
-            Kind::File => fs.create_file(path),
+            Kind::File => fs.create_file(path, self.overwrite()),
             Kind::Directory => fs.create_directory(path, self.recursive()),
             _ => Ok(())
         };

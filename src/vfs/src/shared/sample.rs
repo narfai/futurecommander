@@ -36,7 +36,7 @@ impl Samples {
     }
 
     pub fn static_samples_path() -> PathBuf {
-        let sample_path = Self::sample_path().join("static_samples");
+        let sample_path = Self::sample_path().join("static");
         assert!(sample_path.join("A").exists());
         assert!(sample_path.join("B").exists());
         assert!(sample_path.join("F").exists());
@@ -53,6 +53,10 @@ impl Samples {
         sample_path
     }
 
+    pub fn dynamic_samples_path() -> PathBuf {
+        Self::sample_path().join("dynamic")
+    }
+
     pub fn create_sample_file(chroot: &Path, path: &Path) {
         let path = chroot.join(path);
         let mut file = File::create(path.as_path()).unwrap();
@@ -66,7 +70,7 @@ impl Samples {
     }
 
     pub fn init_simple_chroot(arbitrary_identifier: &str) -> PathBuf {
-        let chroot = Self::sample_path().join(format!("simple_chroot_{}", arbitrary_identifier));
+        let chroot = Self::dynamic_samples_path().join(format!("simple_chroot_{}", arbitrary_identifier));
 
         if chroot.exists() {
             remove_dir_all(chroot.as_path()).unwrap();
@@ -85,7 +89,7 @@ impl Samples {
     }
 
     pub fn init_advanced_chroot(arbitrary_identifier: &str) -> PathBuf {
-        let chroot = Self::sample_path().join(format!("adv_chroot_{}", arbitrary_identifier));
+        let chroot = Self::dynamic_samples_path().join(format!("adv_chroot_{}", arbitrary_identifier));
 
         if chroot.exists() {
             remove_dir_all(chroot.as_path()).unwrap();

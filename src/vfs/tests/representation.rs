@@ -25,8 +25,7 @@ use std::{
 };
 
 use std::{
-    path::{ Path },
-    ops::{ Add, Sub }
+    path::{ Path }
 };
 
 use futurecommander_vfs::{
