@@ -56,7 +56,7 @@ mod tests {
     use crate::{Samples};
 
     #[test]
-    pub fn create_operation_directory(){
+    fn create_operation_directory(){
         let chroot = Samples::init_simple_chroot("create_operation_directory");
         let mut fs = RealFileSystem::default();
 
@@ -75,7 +75,7 @@ mod tests {
 
 
     #[test]
-    pub fn create_operation_directory_recursive(){
+    fn create_operation_directory_recursive(){
         let chroot = Samples::init_simple_chroot("create_operation_directory_recursive");
         let mut fs = RealFileSystem::default();
 
@@ -93,7 +93,7 @@ mod tests {
     }
 
     #[test]
-    pub fn create_operation_file(){
+    fn create_operation_file(){
         let chroot = Samples::init_simple_chroot("create_operation_file");
         let mut fs = RealFileSystem::default();
 
@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    pub fn create_operation_file_overwrite(){
+    fn create_operation_file_overwrite(){
         let chroot = Samples::init_simple_chroot("create_operation_file_overwrite");
         let mut fs = RealFileSystem::default();
 

@@ -52,7 +52,7 @@ mod tests {
     use crate::{ Samples };
 
     #[test]
-    pub fn remove_operation_file() {
+    fn remove_operation_file() {
         let chroot = Samples::init_simple_chroot("remove_operation_file");
         let mut fs = RealFileSystem::default();
 
@@ -67,7 +67,7 @@ mod tests {
     }
 
     #[test]
-    pub fn remove_operation_directory() {
+    fn remove_operation_directory() {
         let chroot = Samples::init_simple_chroot("remove_operation_directory");
         let mut fs = RealFileSystem::default();
 
@@ -82,7 +82,7 @@ mod tests {
     }
 
     #[test]
-    pub fn remove_operation_directory_recursive() {
+    fn remove_operation_directory_recursive() {
         let chroot = Samples::init_simple_chroot("remove_operation_directory_recursive");
         let mut fs = RealFileSystem::default();
 

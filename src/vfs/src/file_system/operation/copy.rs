@@ -97,7 +97,7 @@ mod tests {
     use crate::{ Samples };
 
     #[test]
-    pub fn copy_operation_dir(){
+    fn copy_operation_dir(){
         let chroot = Samples::init_simple_chroot("copy_operation_dir");
         let mut fs = RealFileSystem::default();
 
@@ -115,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    pub fn copy_operation_dir_merge_overwrite(){
+    fn copy_operation_dir_merge_overwrite(){
         let chroot = Samples::init_simple_chroot("copy_operation_dir_merge_overwrite");
         let mut fs = RealFileSystem::default();
 
@@ -139,7 +139,7 @@ mod tests {
     }
 
     #[test]
-    pub fn copy_operation_file(){
+    fn copy_operation_file(){
         let chroot = Samples::init_simple_chroot("copy_operation_file");
         let mut fs = RealFileSystem::default();
 
@@ -161,7 +161,7 @@ mod tests {
     }
 
     #[test]
-    pub fn copy_operation_file_overwrite(){
+    fn copy_operation_file_overwrite(){
         let chroot = Samples::init_simple_chroot("copy_operation_file_overwrite");
         let mut fs = RealFileSystem::default();
 
