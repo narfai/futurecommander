@@ -19,28 +19,28 @@
 
 extern crate futurecommander_vfs;
 
-#[allow(unused_imports)]
-use std::{
-    str::FromStr
-};
-
-use std::{
-    path::{ Path }
-};
-
-use futurecommander_vfs::{
-    Kind,
-    representation::{
-        VirtualChildren,
-        VirtualPath,
-        VirtualDelta
-    }
-};
-
-
 #[cfg_attr(tarpaulin, skip)]
 mod representation_integration {
     use super::*;
+
+    #[allow(unused_imports)]
+    use std::{
+        str::FromStr
+    };
+
+    use std::{
+        path::{ Path }
+    };
+
+    use futurecommander_vfs::{
+        Kind,
+        representation::{
+            VirtualChildren,
+            VirtualPath,
+            VirtualDelta
+        }
+    };
+
 
     #[test]
     fn attach_child_to_root_then_find_it_in_children() {

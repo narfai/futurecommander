@@ -23,10 +23,33 @@ use crate::representation::{ VirtualPath, VirtualState };
 use crate::query::{Query, ReadDirQuery, StatusQuery, VirtualStatus, Entry };
 
 impl CopyOperation {
-    fn copy_virtual_children(fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
+    fn copy_virtual_children(&self, fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
         let read_dir = ReadDirQuery::new(source.as_identity());
         for child in read_dir.retrieve(&fs)?.into_iter() {
-            if let VirtualState::ExistsVirtually = child.as_inner().state() {
+            match child.as_inner().state() {
+                VirtualState::ExistsVirtually => {
+                    CopyOperation::new(
+                        child.path(),
+                        identity.as_identity()
+                            .join(
+                                child.path()
+                                    .file_name()
+                                    .unwrap()
+                            ).as_path(),
+                        self.merge(),
+                        self.overwrite()
+                    ).execute(fs)?
+                },
+                _ => {}
+            };
+        }
+        Ok(())
+    }
+
+    fn copy_exiting_children(&self, fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
+        let read_dir = ReadDirQuery::new(source.as_identity());
+        for child in read_dir.retrieve(&fs)?.into_iter() {
+            if child.exists() {
                 CopyOperation::new(
                     child.path(),
                     identity.as_identity()
@@ -35,10 +58,10 @@ impl CopyOperation {
                                 .file_name()
                                 .unwrap()
                         ).as_path(),
-                    true,
-                    false
+                    self.merge(),
+                    self.overwrite()
                 ).execute(fs)?
-            };
+            }
         }
         Ok(())
     }
@@ -75,7 +98,9 @@ impl Operation<VirtualFileSystem> for CopyOperation {
 
         let stat_new = StatusQuery::new(new_identity.as_identity());
 
-        match stat_new.retrieve(&fs)?.into_inner() {
+        let entry = stat_new.retrieve(&fs)?;
+        let state = entry.as_inner().state().clone();
+        match entry.into_inner() {
             VirtualStatus{ state: VirtualState::Exists, identity }
             | VirtualStatus{ state: VirtualState::ExistsVirtually, identity }
             | VirtualStatus{ state: VirtualState::ExistsThroughVirtualParent, identity}
@@ -85,7 +110,7 @@ impl Operation<VirtualFileSystem> for CopyOperation {
                         match source_identity.to_kind() {
                             Kind::Directory =>
                                 if self.merge() {
-                                    Self::copy_virtual_children(fs, &source_identity, &identity)?
+                                    self.copy_exiting_children(fs, &source_identity, &identity)?
                                 } else {
                                     return Err(VfsError::Custom("Merge is not allowed".to_string()))
                                 },
@@ -97,8 +122,15 @@ impl Operation<VirtualFileSystem> for CopyOperation {
                             Kind::Directory => return Err(VfsError::Custom("Cannot copy directory into file".to_string())),
                             Kind::File =>
                                 if self.overwrite() {
-                                    fs.mut_add_state().detach(identity.as_identity())?;
-                                    fs.mut_add_state().attach_virtual(&new_identity)?;
+                                    match state {
+                                        VirtualState::Replaced
+                                        | VirtualState::ExistsVirtually => {
+                                            fs.mut_add_state().detach(identity.as_identity())?;
+                                        },
+                                        _ => {}
+                                    }
+
+                                    fs.mut_add_state().attach_virtual( & new_identity)?;
                                 } else {
                                     return Err(VfsError::Custom("Overwrite is not allowed".to_string()))
                                 }
@@ -110,7 +142,7 @@ impl Operation<VirtualFileSystem> for CopyOperation {
             VirtualStatus{ state: VirtualState::NotExists, .. } => {
                 fs.mut_add_state().attach_virtual(&new_identity)?;
                 if let Kind::Directory = new_identity.to_kind() {
-                    Self::copy_virtual_children(fs, &source_identity, &new_identity)?
+                    self.copy_virtual_children(fs, &source_identity, &new_identity)?
                 }
             },
             VirtualStatus{ state: VirtualState::Removed, .. }
@@ -118,7 +150,7 @@ impl Operation<VirtualFileSystem> for CopyOperation {
                 fs.mut_sub_state().detach(new_identity.as_identity())?;
                 fs.mut_add_state().attach_virtual(&new_identity)?;
                 if let Kind::Directory = new_identity.to_kind() {
-                    Self::copy_virtual_children(fs, &source_identity, &new_identity)?
+                    self.copy_virtual_children(fs, &source_identity, &new_identity)?
                 }
             },
         }
@@ -155,5 +187,91 @@ mod virtual_file_system {
             Err(error) => panic!("{}", error),
             Ok(_) => panic!("Should not be able to copy into itself")
         };
+    }
+}
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{
+        Samples
+    };
+
+    #[test]
+    fn virtual_copy_operation_directory(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = VirtualFileSystem::default();
+
+        let operation = CopyOperation::new(
+            samples_path.join("A").as_path(),
+            samples_path.join("Z").as_path(),
+            false,
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(fs.virtual_state().unwrap().is_virtual(samples_path.join("Z").as_path()).unwrap());
+        assert!(fs.virtual_state().unwrap().is_directory(samples_path.join("Z").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_copy_operation_directory_merge(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = VirtualFileSystem::default();
+
+        //Avoid need of override because of .gitkeep file present in both directory
+        let gitkeep = samples_path.join("B/.gitkeep");
+        fs.mut_sub_state().attach(gitkeep.as_path(),Some(gitkeep.as_path()), Kind::File).unwrap();
+
+        let operation = CopyOperation::new(
+            samples_path.join("B").as_path(),
+            samples_path.join("A").as_path(),
+            true,
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(fs.virtual_state().unwrap().is_virtual(samples_path.join("A/D").as_path()).unwrap());
+        assert!(fs.virtual_state().unwrap().is_directory(samples_path.join("A/D").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_copy_operation_file(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = VirtualFileSystem::default();
+
+        let operation = CopyOperation::new(
+            samples_path.join("F").as_path(),
+            samples_path.join("Z").as_path(),
+            false,
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(fs.virtual_state().unwrap().is_virtual(samples_path.join("Z").as_path()).unwrap());
+        assert!(fs.virtual_state().unwrap().is_file(samples_path.join("Z").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_copy_operation_file_overwrite(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = VirtualFileSystem::default();
+
+        let operation = CopyOperation::new(
+            samples_path.join("F").as_path(),
+            samples_path.join("A/C").as_path(),
+            false,
+            true
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(fs.virtual_state().unwrap().is_virtual(samples_path.join("A/C").as_path()).unwrap());
+        assert!(fs.virtual_state().unwrap().is_file(samples_path.join("A/C").as_path()).unwrap());
     }
 }

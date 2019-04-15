@@ -63,7 +63,7 @@ impl Command<InitializedTreeCommand> {
                     |depth_delimiter, last|
                         depth_delimiter + if *last { "    " } else { "│   " }
                 ),
-                if parent_last { '├' } else { '└' },
+                if parent_last { '└' } else { '├' },
                 file_name
             );
         } else {

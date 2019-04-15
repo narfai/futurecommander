@@ -18,23 +18,24 @@
  */
 extern crate futurecommander_vfs;
 
-#[allow(unused_imports)]
-use futurecommander_vfs::{
-    operation::{ Operation },
-    query::{ Query, Entry }
-};
-
-use futurecommander_vfs::{
-    Samples,
-    Kind,
-    VirtualFileSystem,
-    operation::{ CopyOperation, RemoveOperation, CreateOperation },
-    query::{ StatusQuery }
-};
-
+#[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]
 mod query_integration {
     use super::*;
+
+    #[allow(unused_imports)]
+    use futurecommander_vfs::{
+        operation::{ Operation },
+        query::{ Query, Entry }
+    };
+
+    use futurecommander_vfs::{
+        Samples,
+        Kind,
+        VirtualFileSystem,
+        operation::{ CopyOperation, RemoveOperation, CreateOperation },
+        query::{ StatusQuery }
+    };
 
     #[test]
     fn resolve() {

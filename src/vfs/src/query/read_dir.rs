@@ -37,7 +37,7 @@ impl ReadDirQuery {
         }
     }
 
-    pub fn from_file_system(path: &Path, source: Option<&Path>, parent: Option<&Path>) -> Result<EntryCollection<EntryAdapter<VirtualStatus>>, VfsError> {
+    pub fn from_file_system(fs: &VirtualFileSystem, path: &Path, source: Option<&Path>, parent: Option<&Path>) -> Result<EntryCollection<EntryAdapter<VirtualStatus>>, VfsError> {
         if !path.exists() {
             return Ok(EntryCollection::new());
         }
@@ -62,7 +62,9 @@ impl ReadDirQuery {
                                 virtual_identity = virtual_identity.with_new_identity_parent(parent);
                             }
 
-                            entry_collection.add(EntryAdapter(VirtualStatus::new(VirtualState::Exists, virtual_identity)));
+                            if ! fs.sub_state().is_virtual(virtual_identity.as_identity())? {
+                                entry_collection.add(EntryAdapter(VirtualStatus::new(VirtualState::Exists, virtual_identity)));
+                            }
                         },
                         Err(error) => return Err(VfsError::from(error))
                     };
@@ -92,19 +94,15 @@ impl Query<&VirtualFileSystem> for ReadDirQuery {
         };
 
         let mut entry_collection = Self::from_file_system(
+            fs,
             directory.as_source().unwrap_or_else(|| directory.as_identity()),
             directory.as_source(),
             Some(self.path.as_path())
         )?;
 
         if let Some(to_add_children) = fs.add_state().children(directory.as_identity()) {
-            let empty = VirtualChildren::default();
-            let to_del_children = fs.sub_state()
-                    .children(directory.as_identity())
-                    .unwrap_or(&empty);
-
             for child in to_add_children.iter() {
-                if ! to_del_children.contains(child) {
+                if ! fs.sub_state().is_virtual(child.as_identity())? {
                     entry_collection.add(StatusQuery::new(child.as_identity()).retrieve(fs)?)
                 }
             }
