@@ -128,8 +128,6 @@ mod tests {
         let chroot = Samples::init_simple_chroot("virtual_create_operation_file_overwrite");
         let mut fs = VirtualFileSystem::default();
 
-        let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
-
         let operation = CreateOperation::new(
             chroot.join("RDIR/RFILEA").as_path(),
             Kind::File,
