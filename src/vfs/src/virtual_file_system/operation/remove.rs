@@ -51,3 +51,56 @@ impl Operation<VirtualFileSystem> for RemoveOperation {
         Ok(())
     }
 }
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{ Samples };
+
+    #[test]
+    fn virtual_remove_operation_file() {
+        let chroot = Samples::init_simple_chroot("virtual_remove_operation_file");
+        let mut fs = VirtualFileSystem::default();
+
+        let operation = RemoveOperation::new(
+            chroot.join("RDIR/RFILEA").as_path(),
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+        assert!(!fs.virtual_state().unwrap().is_virtual(chroot.join("RDIR/RFILEA").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_remove_operation_directory() {
+        let chroot = Samples::init_simple_chroot("virtual_remove_operation_directory");
+        let mut fs = VirtualFileSystem::default();
+
+        let operation = RemoveOperation::new(
+            chroot.join("RDIR3").as_path(),
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(!fs.virtual_state().unwrap().is_virtual(chroot.join("RDIR3").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_remove_operation_directory_recursive() {
+        let chroot = Samples::init_simple_chroot("virtual_remove_operation_directory_recursive");
+        let mut fs = VirtualFileSystem::default();
+
+        let operation = RemoveOperation::new(
+            chroot.join("RDIR").as_path(),
+            true
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(!fs.virtual_state().unwrap().is_virtual(chroot.join("RDIR").as_path()).unwrap());
+    }
+}

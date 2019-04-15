@@ -27,7 +27,10 @@ impl Operation<VirtualFileSystem> for CreateOperation{
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         let path = self.path();
         match StatusQuery::new(path).retrieve(&fs)?.into_inner().into_existing_virtual() {
-            Some(_) => Err(VfsError::AlreadyExists(path.to_path_buf())),
+            Some(identity) => {
+                fs.mut_add_state().attach_virtual(&identity.with_source(None))?;
+                Ok(())
+            },
             None => {
                 if ! self.recursive() || self.kind() == Kind::File {
                     let parent = VirtualPath::get_parent_or_root(path);
@@ -52,5 +55,91 @@ impl Operation<VirtualFileSystem> for CreateOperation{
                 }
             }
         }
+    }
+}
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{
+        Samples
+    };
+
+
+    #[test]
+    fn virtual_create_operation_directory(){
+        let chroot = Samples::init_simple_chroot("virtual_create_operation_directory");
+        let mut fs = VirtualFileSystem::default();
+
+        let operation = CreateOperation::new(
+            chroot.join("CREATED").as_path(),
+            Kind::Directory,
+            false,
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(fs.virtual_state().unwrap().is_virtual(chroot.join("CREATED").as_path()).unwrap());
+        assert!(fs.virtual_state().unwrap().is_directory(chroot.join("CREATED").as_path()).unwrap());
+    }
+
+
+    #[test]
+    fn virtual_create_operation_directory_recursive(){
+        let chroot = Samples::init_simple_chroot("virtual_create_operation_directory_recursive");
+        let mut fs = VirtualFileSystem::default();
+
+        let operation = CreateOperation::new(
+            chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
+            Kind::Directory,
+            true,
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(fs.virtual_state().unwrap().is_virtual(chroot.join("CREATED/NESTED/DIRECTORY").as_path()).unwrap());
+        assert!(fs.virtual_state().unwrap().is_directory(chroot.join("CREATED/NESTED/DIRECTORY").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_create_operation_file(){
+        let chroot = Samples::init_simple_chroot("virtual_create_operation_file");
+        let mut fs = VirtualFileSystem::default();
+
+        let operation = CreateOperation::new(
+            chroot.join("CREATED").as_path(),
+            Kind::File,
+            false,
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(fs.virtual_state().unwrap().is_virtual(chroot.join("CREATED").as_path()).unwrap());
+        assert!(fs.virtual_state().unwrap().is_file(chroot.join("CREATED").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_create_operation_file_overwrite(){
+        let chroot = Samples::init_simple_chroot("virtual_create_operation_file_overwrite");
+        let mut fs = VirtualFileSystem::default();
+
+        let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
+
+        let operation = CreateOperation::new(
+            chroot.join("RDIR/RFILEA").as_path(),
+            Kind::File,
+            false,
+            true
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(fs.virtual_state().unwrap().is_virtual(chroot.join("RDIR/RFILEA").as_path()).unwrap());
+        assert!(fs.virtual_state().unwrap().is_file(chroot.join("RDIR/RFILEA").as_path()).unwrap());
     }
 }
