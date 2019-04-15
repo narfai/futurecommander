@@ -82,8 +82,13 @@ impl Samples {
         create_dir(chroot.join("RDIR")).unwrap();
         assert!(chroot.join("RDIR").exists());
 
+        create_dir(chroot.join("RDIR2")).unwrap();
+        assert!(chroot.join("RDIR2").exists());
+
         Self::create_sample_file(chroot.as_path(), Path::new("RDIR").join("RFILEA").as_path());
         Self::create_sample_file(chroot.as_path(), Path::new("RDIR").join("RFILEB").as_path());
+        Self::create_sample_file(chroot.as_path(), Path::new("RDIR2").join("RFILEA").as_path());
+        Self::create_sample_file(chroot.as_path(), Path::new("RDIR2").join("RFILEC").as_path());
 
         chroot
     }

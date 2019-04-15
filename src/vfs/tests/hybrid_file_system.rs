@@ -64,7 +64,9 @@ mod hybrid_fs_integration {
     pub fn _no_dangling(fs: &mut HybridFileSystem, chroot: &Path) {
         let cp_a_aprime = CopyOperation::new(
             chroot.join("A").as_path(),
-            chroot.join("APRIME").as_path()
+            chroot.join("APRIME").as_path(),
+            true,
+            false
         );
 
         fs.mut_transaction().add_operation(Box::new(cp_a_aprime.clone()));
@@ -81,7 +83,9 @@ mod hybrid_fs_integration {
 
         let cp_aprime_chroot = CopyOperation::new(
             chroot.join("APRIME").as_path(),
-            chroot.join("A").as_path()
+            chroot.join("A").as_path(),
+            true,
+            false
         );
 
         fs.mut_transaction().add_operation(Box::new(cp_aprime_chroot.clone()));
@@ -148,6 +152,8 @@ mod hybrid_fs_integration {
         let cp_ac_chroot = CopyOperation::new(
             chroot.join("A/C").as_path(),
             chroot.join("C").as_path(),
+            true,
+            false
         );
 
         fs.mut_transaction().add_operation(Box::new(cp_ac_chroot.clone()));
@@ -163,7 +169,9 @@ mod hybrid_fs_integration {
 
         let cp_c_z = CopyOperation::new(
             chroot.join("C").as_path(),
-            chroot.join("Z").as_path()
+            chroot.join("Z").as_path(),
+            true,
+            false
         );
 
         fs.mut_transaction().add_operation(Box::new(cp_c_z.clone()));
@@ -180,7 +188,9 @@ mod hybrid_fs_integration {
 
         let cp_b_c = CopyOperation::new(
             chroot.join("B").as_path(),
-            chroot.join("C").as_path()
+            chroot.join("C").as_path(),
+            true,
+            false
         );
 
         fs.mut_transaction().add_operation(Box::new(cp_b_c.clone()));
@@ -196,7 +206,9 @@ mod hybrid_fs_integration {
 
         let cp_z_b = CopyOperation::new(
             chroot.join("Z").as_path(),
-            chroot.join("B").as_path()
+            chroot.join("B").as_path(),
+            true,
+            false
         );
 
         fs.mut_transaction().add_operation(Box::new(cp_z_b.clone()));
@@ -248,7 +260,9 @@ mod hybrid_fs_integration {
     pub fn _some_nesting(fs: &mut HybridFileSystem, chroot: &Path) {
         let cp_c_a = CopyOperation::new(
             chroot.join("C").as_path(),
-            chroot.join("A").join("C").as_path()
+            chroot.join("A").join("C").as_path(),
+            true,
+            false
         );
 
         fs.mut_transaction().add_operation(Box::new(cp_c_a.clone()));
@@ -256,7 +270,9 @@ mod hybrid_fs_integration {
 
         let cp_acd_a = CopyOperation::new(
             chroot.join("A/C/D").as_path(),
-            chroot.join("A").join("D").as_path()
+            chroot.join("A").join("D").as_path(),
+            true,
+            false
         );
 
         fs.mut_transaction().add_operation(Box::new(cp_acd_a.clone()));

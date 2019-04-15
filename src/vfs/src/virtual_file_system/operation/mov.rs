@@ -25,7 +25,9 @@ impl Operation<VirtualFileSystem> for MoveOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         CopyOperation::new(
             self.source(),
-            self.destination()
+            self.destination(),
+            true,
+            false
         ).execute(fs)?;
 
         RemoveOperation::new(self.source()).execute(fs)

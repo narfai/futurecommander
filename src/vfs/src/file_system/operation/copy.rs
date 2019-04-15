@@ -29,7 +29,9 @@ impl CopyOperation {
 
             CopyOperation::new(
                 child.as_path(),
-                new_destination.as_path()
+                new_destination.as_path(),
+                self.merge(),
+                self.overwrite()
             ).execute(fs)?;
         }
         Ok(())
@@ -39,7 +41,7 @@ impl CopyOperation {
         match fs.copy_file_to_file(
             self.source(),
             self.destination(),
-            &|_s| { println!("{} {}", self.destination().file_name().unwrap().to_string_lossy(), _s / 1024)},
+            &|_s| { /*println!("{} {}", self.destination().file_name().unwrap().to_string_lossy(), _s / 1024)*/ },
             self.overwrite()
         ) {
             Ok(_) => Ok(()),
@@ -84,6 +86,99 @@ impl Operation<RealFileSystem> for CopyOperation {
         } else {
             self.copy_file(fs)
         }
+    }
+}
 
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{ Samples };
+
+    #[test]
+    pub fn copy_dir_no_merge_no_overwrite(){
+        let chroot = Samples::init_simple_chroot("copy_dir_no_merge_no_overwrite");
+        let mut fs = RealFileSystem::default();
+
+        let operation = CopyOperation::new(
+            chroot.join("RDIR").as_path(),
+            chroot.join("COPIED").as_path(),
+            false,
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(chroot.join("RDIR/RFILEA").exists());
+        assert!(chroot.join("COPIED/RFILEA").exists());
+    }
+
+    #[test]
+    pub fn copy_dir_merge_overwrite(){
+        let chroot = Samples::init_simple_chroot("copy_dir_merge_overwrite");
+        let mut fs = RealFileSystem::default();
+
+        let operation = CopyOperation::new(
+            chroot.join("RDIR").as_path(),
+            chroot.join("RDIR2").as_path(),
+            true,
+            true
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(chroot.join("RDIR/RFILEB").exists());
+        assert!(chroot.join("RDIR2/RFILEA").exists());
+        assert!(chroot.join("RDIR2/RFILEB").exists());
+        assert!(chroot.join("RDIR2/RFILEC").exists());
+        assert_eq!(
+            chroot.join("RDIR/RFILEA").metadata().unwrap().len(),
+            chroot.join("RDIR2/RFILEA").metadata().unwrap().len()
+        )
+    }
+
+    #[test]
+    pub fn copy_file_no_overwrite(){
+        let chroot = Samples::init_simple_chroot("copy_file_no_overwrite");
+        let mut fs = RealFileSystem::default();
+
+        let operation = CopyOperation::new(
+            chroot.join("RDIR/RFILEB").as_path(),
+            chroot.join("RDIR2/RFILEB").as_path(),
+            false,
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(chroot.join("RDIR/RFILEB").exists());
+        assert!(chroot.join("RDIR2/RFILEB").exists());
+        assert_eq!(
+            chroot.join("RDIR/RFILEB").metadata().unwrap().len(),
+            chroot.join("RDIR2/RFILEB").metadata().unwrap().len()
+        )
+    }
+
+    #[test]
+    pub fn copy_file_overwrite(){
+        let chroot = Samples::init_simple_chroot("copy_file_overwrite");
+        let mut fs = RealFileSystem::default();
+
+        let operation = CopyOperation::new(
+            chroot.join("RDIR/RFILEB").as_path(),
+            chroot.join("RDIR2/RFILEB").as_path(),
+            false,
+            true
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(chroot.join("RDIR/RFILEB").exists());
+        assert!(chroot.join("RDIR2/RFILEB").exists());
+        assert_eq!(
+            chroot.join("RDIR/RFILEB").metadata().unwrap().len(),
+            chroot.join("RDIR2/RFILEB").metadata().unwrap().len()
+        )
     }
 }

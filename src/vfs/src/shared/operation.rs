@@ -35,12 +35,12 @@ pub struct CopyOperation {
 }
 
 impl CopyOperation {
-    pub fn new(source: &Path, destination: &Path) -> CopyOperation {
+    pub fn new(source: &Path, destination: &Path, merge: bool, overwrite: bool) -> CopyOperation {
         CopyOperation {
             source: source.to_path_buf(),
             destination: destination.to_path_buf(),
-            merge: true,
-            overwrite: false
+            merge,
+            overwrite
         }
     }
 

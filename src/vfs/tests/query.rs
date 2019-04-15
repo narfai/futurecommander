@@ -47,7 +47,9 @@ mod query_integration {
 
         CopyOperation::new(
             b.as_path(),
-            ab.as_path()
+            ab.as_path(),
+            true,
+            false
         ).execute(&mut vfs).unwrap();
 
         let virtual_state = vfs.virtual_state().unwrap();
@@ -74,12 +76,16 @@ mod query_integration {
 
         CopyOperation::new(
             b.as_path(),
-            ab.as_path()
+            ab.as_path(),
+            true,
+            false
         ).execute(&mut vfs).unwrap();
 
         CopyOperation::new(
             ab.as_path(),
-            bd.join("B").as_path()
+            bd.join("B").as_path(),
+            true,
+            false
         ).execute(&mut vfs).unwrap();
 
         let virtual_state = vfs.virtual_state().unwrap();
@@ -169,7 +175,9 @@ mod query_integration {
 
         CopyOperation::new(
             sample_path.join("B").as_path(),
-            sample_path.join("A/B").as_path()
+            sample_path.join("A/B").as_path(),
+            true,
+            false
         ).execute(&mut vfs).unwrap();
 
         let stated = StatusQuery::new(abdg.as_path())

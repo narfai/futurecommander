@@ -34,7 +34,9 @@ impl CopyOperation {
                             child.path()
                                 .file_name()
                                 .unwrap()
-                        ).as_path()
+                        ).as_path(),
+                    true,
+                    false
                 ).execute(fs)?
             };
         }
@@ -142,7 +144,9 @@ mod virtual_file_system {
 
         match CopyOperation::new(
             source.as_path(),
-            destination.as_path()
+            destination.as_path(),
+            true,
+            false
         ).execute(&mut vfs) {
             Err(VfsError::CopyIntoItSelf(err_source, err_destination)) => {
                 assert_eq!(source.as_path(), err_source.as_path());

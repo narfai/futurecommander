@@ -65,7 +65,9 @@ mod vfs_integration {
     pub fn _no_dangling(vfs: &mut VirtualFileSystem, chroot: &Path) {
         CopyOperation::new(
             chroot.join("A").as_path(),
-            chroot.join("APRIME").as_path()
+            chroot.join("APRIME").as_path(),
+            true,
+            false
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -74,7 +76,9 @@ mod vfs_integration {
 
         CopyOperation::new(
             chroot.join("APRIME").as_path(),
-            chroot.join("A").as_path()
+            chroot.join("A").as_path(),
+            true,
+            false
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -132,7 +136,9 @@ mod vfs_integration {
 
         CopyOperation::new(
             chroot.join("A/C").as_path(),
-            chroot.join("C").as_path()
+            chroot.join("C").as_path(),
+            true,
+            false
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -141,7 +147,9 @@ mod vfs_integration {
 
         CopyOperation::new(
             chroot.join("C").as_path(),
-            chroot.join("Z").as_path()
+            chroot.join("Z").as_path(),
+            true,
+            false
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -151,6 +159,8 @@ mod vfs_integration {
         CopyOperation::new(
             chroot.join("B").as_path(),
             chroot.join("C").as_path(),
+            true,
+            false
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -160,6 +170,8 @@ mod vfs_integration {
         CopyOperation::new(
             chroot.join("Z").as_path(),
             chroot.join("B").as_path(),
+            true,
+            false
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
@@ -205,11 +217,15 @@ mod vfs_integration {
         CopyOperation::new(
             chroot.join("C").as_path(),
             chroot.join("A/C").as_path(),
+            true,
+            false
         ).execute(vfs).unwrap();
 
         CopyOperation::new(
             chroot.join("A/C/D").as_path(),
-            chroot.join("A/D").as_path()
+            chroot.join("A/D").as_path(),
+            true,
+            false
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(

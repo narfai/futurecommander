@@ -77,12 +77,14 @@ impl RealFileSystem {
             return Err(IoError::new(ErrorKind::InvalidData, format!("Source is not a file {:?}", src)));
         }
 
-        if overwrite {
-            if ! dst.is_file() { //TODO @symlink
-                return Err(IoError::new(ErrorKind::InvalidData, format!("Destination is not a file {:?}", dst)));
+        if dst.exists() {
+            if overwrite {
+                if !dst.is_file() { //TODO @symlink
+                    return Err(IoError::new(ErrorKind::InvalidData, format!("Destination is not a file {:?}", dst)));
+                }
+            } else {
+                return Err(IoError::new(ErrorKind::InvalidData, format!("Destination already exists {:?}", dst)));
             }
-        } else if dst.exists() {
-            return Err(IoError::new(ErrorKind::InvalidData, format!("Destination already exists {:?}", dst)));
         }
 
         self.create_file(dst, overwrite)?;
