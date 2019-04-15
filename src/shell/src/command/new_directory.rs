@@ -54,7 +54,9 @@ impl Command<InitializedNewDirectoryCommand> {
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
         let operation = CreateOperation::new(
             self.0.path.as_path(),
-            Kind::Directory
+            Kind::Directory,
+            false,
+            false
         );
 
         match operation.execute(fs.mut_vfs()) {

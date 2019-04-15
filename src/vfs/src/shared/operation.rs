@@ -59,12 +59,12 @@ pub struct CreateOperation {
 }
 
 impl CreateOperation {
-    pub fn new(path: &Path, kind: Kind) -> CreateOperation {
+    pub fn new(path: &Path, kind: Kind, recursive: bool, overwrite: bool) -> CreateOperation {
         CreateOperation {
             path: path.to_path_buf(),
             kind,
-            recursive: false,
-            overwrite: false
+            recursive,
+            overwrite
         }
     }
 

@@ -267,6 +267,7 @@ mod tests {
         assert!(chroot.join("MOVED/RFILEB").exists());
     }
 
+    #[test]
     pub fn move_to_overwrite() {
         let chroot = Samples::init_simple_chroot("move_to_overwrite");
 
@@ -277,7 +278,7 @@ mod tests {
         fs.move_to(
             chroot.join("RDIR/RFILEA").as_path(),
             chroot.join("RDIR/RFILEB").as_path(),
-            false
+            true
         ).unwrap();
 
         assert!(!chroot.join("RDIR/RFILEA").exists());

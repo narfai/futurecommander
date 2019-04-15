@@ -259,12 +259,16 @@ mod vfs_integration {
 
         CreateOperation::new(
             sample_path.join("VIRTUALA").as_path(),
-            Kind::File
+            Kind::File,
+            false,
+            false
         ).execute(&mut vfs).unwrap();
 
         CreateOperation::new(
             sample_path.join("VIRTUALB").as_path(),
-            Kind::Directory
+            Kind::Directory,
+            false,
+            false
         ).execute(&mut vfs).unwrap();
 
         RemoveOperation::new(

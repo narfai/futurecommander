@@ -134,7 +134,9 @@ mod query_integration {
 
         CreateOperation::new(
             z.as_path(),
-            Kind::Directory
+            Kind::Directory,
+            false,
+            false
         ).execute(&mut vfs).unwrap();
 
         let stated = StatusQuery::new(z.as_path())
