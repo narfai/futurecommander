@@ -70,3 +70,33 @@ impl Command<InitializedNewFileCommand> {
         }
     }
 }
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use vfs::{
+        Samples,
+        query::{Query, ReadDirQuery, EntryAdapter}
+    };
+
+    #[test]
+    fn touch(){
+        let sample_path = Samples::static_samples_path();
+        let mut fs = HybridFileSystem::default();
+
+        let new_bde_touched = Command(InitializedNewFileCommand {
+            path: sample_path.join(&Path::new("B/D/E/TOUCHED"))
+        });
+
+        new_bde_touched.execute(&mut fs).unwrap();
+
+        assert!(
+            ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path())
+                .retrieve(fs.vfs())
+                .unwrap()
+                .contains(&EntryAdapter(sample_path.join("B/D/E/TOUCHED").as_path()))
+        );
+    }
+}

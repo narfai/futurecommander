@@ -96,3 +96,88 @@ impl Command<InitializedMoveCommand> {
         }
     }
 }
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use vfs::{
+        Samples,
+        VfsError,
+        query::{ ReadDirQuery, EntryAdapter }
+    };
+
+    #[test]
+    fn mv(){
+        let sample_path = Samples::static_samples_path();
+        let mut fs = HybridFileSystem::default();
+
+        let move_f_to_a = Command(InitializedMoveCommand {
+            source: sample_path.join(&Path::new("F")),
+            destination: sample_path.join("A")
+        });
+
+        move_f_to_a.execute(&mut fs).unwrap();
+
+        let move_af_to_b = Command(InitializedMoveCommand {
+            source: sample_path.join("A/F"),
+            destination: sample_path.join("B")
+        });
+
+        move_af_to_b.execute(&mut fs).unwrap();
+
+        let move_bf_to_bde = Command(InitializedMoveCommand {
+            source: sample_path.join("B/F"),
+            destination: sample_path.join("B/D/E")
+        });
+
+        move_bf_to_bde.execute(&mut fs).unwrap();
+
+        assert!(
+            ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path())
+                .retrieve(fs.vfs())
+                .unwrap()
+                .contains(&EntryAdapter(sample_path.join("B/D/E/F").as_path()))
+        );
+
+        assert!(
+            !ReadDirQuery::new(sample_path.join(&Path::new("A")).as_path())
+                .retrieve(fs.vfs())
+                .unwrap()
+                .contains(&EntryAdapter(sample_path.join("A/F").as_path()))
+        );
+
+        assert!(
+            !ReadDirQuery::new(sample_path.join(&Path::new("B")).as_path())
+                .retrieve(fs.vfs())
+                .unwrap()
+                .contains(&EntryAdapter(sample_path.join("B/F").as_path()))
+        );
+    }
+
+    //Error testing
+
+    #[test]
+    fn virtual_shell_move_directory_into_itself_must_not_be_allowed(){
+        let sample_path = Samples::static_samples_path();
+        let mut fs = HybridFileSystem::default();
+
+        let source = sample_path.join(&Path::new("B"));
+        let destination = sample_path.join("B/D");
+
+        let move_b_to_bd = Command(InitializedMoveCommand {
+            source: source.clone(),
+            destination: destination.clone()
+        });
+
+        match move_b_to_bd.execute(&mut fs){
+            Err(CommandError::VfsError(VfsError::CopyIntoItSelf(err_source, err_destination))) => {
+                assert_eq!(source, err_source);
+                assert_eq!(destination.join("B"), err_destination);
+            },
+            Err(unwanted_error) => panic!("{}", unwanted_error),
+            Ok(_) => panic!("Should not be able to move into itself")
+        };
+    }
+}

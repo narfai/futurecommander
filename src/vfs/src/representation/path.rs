@@ -17,16 +17,21 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::cmp::Ordering;
-use std::path::{ PathBuf, Path };
-use std::ffi::{ OsStr };
-use std::hash::{ Hash, Hasher };
-use std::path::MAIN_SEPARATOR;
-use std::str::FromStr;
+use std::{
+    cmp::Ordering,
+    path::{
+        PathBuf,
+        Path,
+        MAIN_SEPARATOR,
+    },
+    ffi::{ OsStr },
+    str::{ FromStr },
+    collections::hash_map::{ DefaultHasher },
+    hash::{ Hash, Hasher }
+};
 
-use crate::VfsError;
+use crate::{ VfsError, Kind };
 
-use crate::Kind;
 
 #[derive(Clone, Debug)]
 pub struct VirtualPath {
@@ -274,5 +279,64 @@ impl PartialEq for VirtualPath {
 impl Hash for VirtualPath {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.identity.hash(state);
+    }
+}
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn virtually_equal() {
+        let vpath1 = VirtualPath::from_str("/intentionally/virtual/full/path").unwrap();
+        let vpath2 = VirtualPath::from_str("/intentionally/virtual/full/path").unwrap();
+        assert_eq!(vpath1, vpath2);
+    }
+
+    #[test]
+    fn parent_virtually_equal() {
+        let parent = VirtualPath::from_str("/intentionally/virtual/full/").unwrap();
+        let child = VirtualPath::from_str("/intentionally/virtual/full/path").unwrap();
+        assert_eq!(parent, VirtualPath::from_path_buf(child.into_parent().unwrap()).unwrap());
+    }
+
+    #[test]
+    fn still_equal_with_source_diff() {
+        let vpath1 = VirtualPath::from(
+            PathBuf::from("/intentionally/virtual/full/path"),
+            None,
+            Kind::File
+        ).unwrap();
+        let vpath2 = VirtualPath::from(
+            PathBuf::from("/intentionally/virtual/full/path"),
+            Some(PathBuf::from("/another/source/path")),
+            Kind::File
+        ).unwrap();
+        assert_eq!(vpath1, vpath2);
+    }
+
+    #[test]
+    fn hash_with_source_equal() {
+        fn calculate_hash<T: Hash>(t: &T) -> u64 {
+            let mut s = DefaultHasher::new();
+            t.hash(&mut s);
+            s.finish()
+        }
+        let vpath1 = VirtualPath::from(
+            PathBuf::from("/intentionally/virtual/full/path"),
+            None,
+            Kind::File
+        ).unwrap();
+        let vpath2 = VirtualPath::from(
+            PathBuf::from("/intentionally/virtual/full/path"),
+            Some(PathBuf::from("/another/source/path")),
+            Kind::File
+        ).unwrap();
+        assert_eq!(
+            calculate_hash(&vpath1),
+            calculate_hash(&vpath2)
+        );
     }
 }

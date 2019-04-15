@@ -20,7 +20,7 @@
 extern crate futurecommander_vfs;
 
 #[cfg_attr(tarpaulin, skip)]
-mod tests {
+mod fs_integration {
     use futurecommander_vfs::{
         RealFileSystem,
         Samples

@@ -66,3 +66,33 @@ impl Command<InitializedNewDirectoryCommand> {
         }
     }
 }
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use vfs::{
+        Samples,
+        query::{Query, ReadDirQuery, EntryAdapter}
+    };
+
+    #[test]
+    fn mkdir(){
+        let sample_path = Samples::static_samples_path();
+        let mut fs = HybridFileSystem::default();
+
+        let new_bde_mkdired = Command(InitializedNewDirectoryCommand {
+            path: sample_path.join(&Path::new("B/D/E/MKDIRED"))
+        });
+
+        new_bde_mkdired.execute(&mut fs).unwrap();
+
+        assert!(
+            ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path())
+                .retrieve(fs.vfs())
+                .unwrap()
+                .contains(&EntryAdapter(sample_path.join("B/D/E/MKDIRED").as_path()))
+        );
+    }
+}

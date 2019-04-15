@@ -17,14 +17,24 @@
  * along with FutureCommanderVfs.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::collections::{ BTreeMap };
-use std::collections::btree_map::Iter as BTreeMapIter;
-use std::path::{ PathBuf, Path };
-use std::ops::{ Add, Sub };
+use std::{
+    collections::{
+        BTreeMap,
+        btree_map::Iter as BTreeMapIter
+    },
+    path::{ PathBuf, Path },
+    ops::{ Add, Sub }
+};
 
-use crate::{ VfsError, Kind };
-
-use crate::representation::{VirtualChildren, VirtualPath, VirtualChildrenIterator };
+use crate::{
+    VfsError,
+    Kind,
+    representation::{
+        VirtualChildren,
+        VirtualPath,
+        VirtualChildrenIterator
+    }
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct VirtualDelta {

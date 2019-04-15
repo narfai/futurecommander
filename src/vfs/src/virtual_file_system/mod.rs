@@ -17,10 +17,6 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg_attr(tarpaulin, skip)]
-#[cfg(test)]
-mod test;
-
 mod hybrid_fs;
 mod virtual_fs;
 mod operation;

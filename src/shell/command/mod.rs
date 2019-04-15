@@ -17,33 +17,29 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[cfg_attr(tarpaulin, skip)]
-#[cfg(test)]
-mod test;
-
 pub mod errors;
 pub use self::errors::CommandError;
 
 pub mod copy;
-pub use self::copy::CopyCommand;
+pub use self::copy::{ InitializedCopyCommand, CopyCommand };
 
 pub mod list;
-pub use self::list::ListCommand;
+pub use self::list::{ InitializedListCommand, ListCommand };
 
 pub mod mov;
-pub use self::mov::MoveCommand;
+pub use self::mov::{ InitializedMoveCommand, MoveCommand };
 
 pub mod new_directory;
-pub use self::new_directory::NewDirectoryCommand;
+pub use self::new_directory::{ InitializedNewDirectoryCommand, NewDirectoryCommand };
 
 pub mod new_file;
-pub use self::new_file::NewFileCommand;
+pub use self::new_file::{ InitializedNewFileCommand, NewFileCommand };
 
 pub mod remove;
-pub use self::remove::RemoveCommand;
+pub use self::remove::{ InitializedRemoveCommand, RemoveCommand };
 
 pub mod tree;
-pub use self::tree::TreeCommand;
+pub use self::tree::{ InitializedTreeCommand, TreeCommand };
 
 use clap::ArgMatches;
 use std::path::{ Path, PathBuf, MAIN_SEPARATOR };

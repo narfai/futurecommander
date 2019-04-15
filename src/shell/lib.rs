@@ -22,21 +22,11 @@ extern crate clap;
 
 extern crate rustyline;
 
-#[cfg(test)]
-mod test;
-
 mod path;
-mod command;
 mod shell;
 mod helper;
 
+pub mod command;
+
 pub use self::helper::*;
 pub use self::shell::Shell;
-pub use self::command::{
-    copy            ::CopyCommand,
-    list            ::ListCommand,
-    new_directory   ::NewDirectoryCommand,
-    mov             ::MoveCommand,
-    new_file        ::NewFileCommand,
-    remove          ::RemoveCommand
-};

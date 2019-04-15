@@ -17,90 +17,30 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+extern crate futurecommander_vfs;
+
 #[allow(unused_imports)]
 use std::{
-    hash::Hasher,
     str::FromStr
 };
 
 use std::{
-    hash::{ Hash },
-    collections::hash_map::DefaultHasher,
-    path::{
-        Path,
-        PathBuf
-    }
+    path::{ Path },
+    ops::{ Add, Sub }
 };
 
-use crate::{
+use futurecommander_vfs::{
     Kind,
     representation::{
-        VirtualDelta,
         VirtualChildren,
-        VirtualPath
+        VirtualPath,
+        VirtualDelta
     }
 };
 
-#[cfg(test)]
-mod virtual_path_tests {
-    use super::*;
 
-    #[test]
-    fn virtually_equal() {
-        let vpath1 = VirtualPath::from_str("/intentionally/virtual/full/path").unwrap();
-        let vpath2 = VirtualPath::from_str("/intentionally/virtual/full/path").unwrap();
-        assert_eq!(vpath1, vpath2);
-    }
-
-    #[test]
-    fn parent_virtually_equal() {
-        let parent = VirtualPath::from_str("/intentionally/virtual/full/").unwrap();
-        let child = VirtualPath::from_str("/intentionally/virtual/full/path").unwrap();
-        assert_eq!(parent, VirtualPath::from_path_buf(child.into_parent().unwrap()).unwrap());
-    }
-
-    #[test]
-    fn still_equal_with_source_diff() {
-        let vpath1 = VirtualPath::from(
-            PathBuf::from("/intentionally/virtual/full/path"),
-            None,
-            Kind::File
-        ).unwrap();
-        let vpath2 = VirtualPath::from(
-            PathBuf::from("/intentionally/virtual/full/path"),
-            Some(PathBuf::from("/another/source/path")),
-            Kind::File
-        ).unwrap();
-        assert_eq!(vpath1, vpath2);
-    }
-
-    #[test]
-    fn hash_with_source_equal() {
-        fn calculate_hash<T: Hash>(t: &T) -> u64 {
-            let mut s = DefaultHasher::new();
-            t.hash(&mut s);
-            s.finish()
-        }
-        let vpath1 = VirtualPath::from(
-            PathBuf::from("/intentionally/virtual/full/path"),
-            None,
-            Kind::File
-        ).unwrap();
-        let vpath2 = VirtualPath::from(
-            PathBuf::from("/intentionally/virtual/full/path"),
-            Some(PathBuf::from("/another/source/path")),
-            Kind::File
-        ).unwrap();
-        assert_eq!(
-            calculate_hash(&vpath1),
-            calculate_hash(&vpath2)
-        );
-    }
-}
-
-
-#[cfg(test)]
-mod virtual_delta_tests {
+#[cfg_attr(tarpaulin, skip)]
+mod representation_integration {
     use super::*;
 
     #[test]

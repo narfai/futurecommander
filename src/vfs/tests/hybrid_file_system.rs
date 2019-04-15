@@ -20,7 +20,7 @@
 extern crate futurecommander_vfs;
 
 #[cfg_attr(tarpaulin, skip)]
-mod tests {
+mod hybrid_fs_integration {
     use std::{
         path:: { Path }
     };

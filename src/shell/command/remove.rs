@@ -73,3 +73,34 @@ impl Command<InitializedRemoveCommand> {
         }
     }
 }
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use vfs::{
+        Samples,
+        query::{ Query, StatusQuery, Entry }
+    };
+
+    #[test]
+    fn rm(){
+        let sample_path = Samples::static_samples_path();
+        let mut fs = HybridFileSystem::default();
+
+        let b_path = sample_path.join(&Path::new("B"));
+
+        let remove_b = Command(InitializedRemoveCommand {
+            path: b_path.to_path_buf()
+        });
+
+        remove_b.execute(&mut fs).unwrap();
+
+        assert!(!StatusQuery::new(b_path.as_path())
+            .retrieve(fs.vfs())
+            .unwrap()
+            .exists()
+        )
+    }
+}

@@ -95,3 +95,159 @@ impl Command<InitializedCopyCommand> {
         }
     }
 }
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use vfs::{
+        Samples,
+        query::{ ReadDirQuery, EntryAdapter }
+    };
+
+    #[test]
+    fn cp_only(){
+        let sample_path = Samples::static_samples_path();
+        let mut fs = HybridFileSystem::default();
+
+        let copy_a_to_b = Command(InitializedCopyCommand {
+            source: sample_path.join("B"),
+            destination: sample_path.join("A")
+        });
+
+        copy_a_to_b.execute(&mut fs).unwrap();
+
+        let copy_ab_to_abd = Command(InitializedCopyCommand {
+            source: sample_path.join("A/B/D"),
+            destination: sample_path.join("A")
+        });
+
+        copy_ab_to_abd.execute(&mut fs).unwrap();
+
+        let read_dir = ReadDirQuery::new(sample_path.join("A/D").as_path());
+
+        match read_dir.retrieve(fs.vfs()) {
+            Ok(collection) => {
+                assert!(!collection.is_empty());
+                assert!(collection.contains(&EntryAdapter(sample_path.join("A/D/G").as_path())));
+                assert!(collection.contains(&EntryAdapter(sample_path.join("A/D/E").as_path())));
+            },
+            Err(error) => panic!("Error : {}", error)
+        }
+    }
+
+    #[test]
+    fn cp_preserve_source_and_node_kind(){
+        let sample_path = Samples::static_samples_path();
+        let mut fs = HybridFileSystem::default();
+
+        let copy_b_to_a = Command(InitializedCopyCommand {
+            source: sample_path.join("B"),
+            destination: sample_path.join("A")
+        });
+
+        copy_b_to_a.execute(&mut fs).unwrap();
+
+        let copy_f_to_b = Command(InitializedCopyCommand {
+            source: sample_path.join("F"),
+            destination: sample_path.join("B")
+        });
+
+        copy_f_to_b.execute(&mut fs).unwrap();
+
+        let copy_bf_to_bde = Command(InitializedCopyCommand {
+            source: sample_path.join("B/F"),
+            destination: sample_path.join("B/D/E")
+        });
+
+        copy_bf_to_bde.execute(&mut fs).unwrap();
+
+        let read_dir = ReadDirQuery::new(sample_path.join("B/D/E").as_path());
+
+        match read_dir.retrieve(fs.vfs()) {
+            Ok(collection) => {
+                assert!(!collection.is_empty());
+                assert!(collection.contains(&EntryAdapter(sample_path.join("B/D/E/F").as_path())));
+
+            },
+            Err(error) => panic!("Error : {}", error)
+        }
+    }
+
+    #[test]
+    fn virtual_shell_copy_nested_virtual_identity(){
+        let sample_path = Samples::static_samples_path();
+        let mut fs = HybridFileSystem::default();
+
+        let copy_b_to_a = Command(InitializedCopyCommand {
+            source: sample_path.join("B"),
+            destination: sample_path.join("A")
+        });
+        copy_b_to_a.execute(&mut fs).unwrap();
+
+        let copy_a_as_aprime = Command(InitializedCopyCommand {
+            source: sample_path.join("A"),
+            destination: sample_path.join("APRIME")
+        });
+        copy_a_as_aprime.execute(&mut fs).unwrap();
+
+        let collection_aprime = ReadDirQuery::new(sample_path.join(&Path::new("APRIME")).as_path())
+            .retrieve(fs.vfs())
+            .unwrap();
+
+        assert!(collection_aprime.contains(&EntryAdapter(sample_path.join("APRIME/C").as_path())));
+        assert!(collection_aprime.contains(&EntryAdapter(sample_path.join("APRIME/B").as_path())));
+
+        let collection_aprime_b_d = ReadDirQuery::new(sample_path.join(&Path::new("APRIME/B/D")).as_path())
+            .retrieve(fs.vfs())
+            .unwrap();
+
+        assert!(collection_aprime_b_d.contains(&EntryAdapter(sample_path.join("APRIME/B/D/E").as_path())));
+        assert!(collection_aprime_b_d.contains(&EntryAdapter(sample_path.join("APRIME/B/D/G").as_path())));
+    }
+
+    #[test]
+    fn virtual_shell_copy_nested_deep_through_virtual_identity(){
+        let sample_path = Samples::static_samples_path();
+        let mut fs = HybridFileSystem::default();
+
+        let copy_b_to_a = Command(InitializedCopyCommand {
+            source: sample_path.join("B"),
+            destination: sample_path.join("A")
+        });
+        copy_b_to_a.execute(&mut fs).unwrap();
+
+        let copy_a_as_aprime = Command(InitializedCopyCommand {
+            source: sample_path.join("A"),
+            destination: sample_path.join("APRIME").to_path_buf()
+        });
+        copy_a_as_aprime.execute(&mut fs).unwrap();
+
+        let copy_aprime_as_abeta = Command(InitializedCopyCommand {
+            source: sample_path.join("APRIME"),
+            destination: sample_path.join("ABETA").clone()
+        });
+        copy_aprime_as_abeta.execute(&mut fs).unwrap();
+
+        let copy_abeta_to_a = Command(InitializedCopyCommand {
+            source: sample_path.join("ABETA"),
+            destination: sample_path.join("A")
+        });
+        copy_abeta_to_a.execute(&mut fs).unwrap();
+
+        let collection_a_abeta = ReadDirQuery::new(sample_path.join(&Path::new("APRIME")).as_path())
+            .retrieve(fs.vfs())
+            .unwrap();
+
+        assert!(collection_a_abeta.contains(&EntryAdapter(sample_path.join("APRIME/C").as_path())));
+        assert!(collection_a_abeta.contains(&EntryAdapter(sample_path.join("APRIME/B").as_path())));
+
+        let collection_aprime_a_abeta_b_d = ReadDirQuery::new(sample_path.join("A/ABETA/B/D").as_path())
+            .retrieve(fs.vfs())
+            .unwrap();
+
+        assert!(collection_aprime_a_abeta_b_d.contains(&EntryAdapter(sample_path.join("A/ABETA/B/D/E").as_path())));
+        assert!(collection_aprime_a_abeta_b_d.contains(&EntryAdapter(sample_path.join("A/ABETA/B/D/G").as_path())));
+    }
+}

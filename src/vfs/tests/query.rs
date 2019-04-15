@@ -16,14 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-use crate::shared::sample::Samples;
+extern crate futurecommander_vfs;
 
-use crate::*;
-use crate::operation::*;
-use crate::query::*;
+use futurecommander_vfs::{
+    Samples,
+    Kind,
+    VirtualFileSystem,
+    operation::{ Operation, CopyOperation, RemoveOperation, CreateOperation },
+    query::{ Query, Entry, StatusQuery }
+};
 
 #[cfg(test)]
-mod virtual_file_system {
+mod query_integration {
     use super::*;
 
     #[test]
@@ -172,56 +176,5 @@ mod virtual_file_system {
         assert_eq!(stated.to_kind(), Kind::Directory);
         assert_eq!(stated.as_identity(), abdg.as_path());
         assert_eq!(stated.as_source(), Some(sample_path.join("B/D/G").as_path()))
-    }
-
-    //Error testing
-    #[test]
-    fn copy_or_move_directory_into_itself_must_not_be_allowed() {
-        let sample_path = Samples::static_samples_path();
-        let mut vfs = VirtualFileSystem::default();
-
-        let source = sample_path.join("B");
-        let destination = sample_path.join("B/D/B");
-
-        match CopyOperation::new(
-            source.as_path(),
-            destination.as_path()
-        ).execute(&mut vfs) {
-            Err(VfsError::CopyIntoItSelf(err_source, err_destination)) => {
-                assert_eq!(source.as_path(), err_source.as_path());
-                assert_eq!(destination.as_path(), err_destination.as_path());
-            }
-            Err(error) => panic!("{}", error),
-            Ok(_) => panic!("Should not be able to copy into itself")
-        };
-    }
-
-    // No-Backwards tests
-    #[test]
-    fn reset_empty() {
-        let sample_path = Samples::static_samples_path();
-        let mut vfs = VirtualFileSystem::default();
-
-        CreateOperation::new(
-            sample_path.join("VIRTUALA").as_path(),
-            Kind::File
-        ).execute(&mut vfs).unwrap();
-
-        CreateOperation::new(
-            sample_path.join("VIRTUALB").as_path(),
-            Kind::Directory
-        ).execute(&mut vfs).unwrap();
-
-        RemoveOperation::new(
-            sample_path.join("A").as_path()
-        ).execute(&mut vfs).unwrap();
-
-        assert!(vfs.has_addition());
-        assert!(vfs.has_subtraction());
-
-        vfs.reset();
-
-        assert!(!vfs.has_addition());
-        assert!(!vfs.has_subtraction());
     }
 }

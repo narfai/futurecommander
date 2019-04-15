@@ -123,3 +123,33 @@ impl Operation<VirtualFileSystem> for CopyOperation {
         Ok(())
     }
 }
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod virtual_file_system {
+    use super::*;
+
+    use crate::Samples;
+
+    //Error testing
+    #[test]
+    fn copy_or_move_directory_into_itself_must_not_be_allowed() {
+        let sample_path = Samples::static_samples_path();
+        let mut vfs = VirtualFileSystem::default();
+
+        let source = sample_path.join("B");
+        let destination = sample_path.join("B/D/B");
+
+        match CopyOperation::new(
+            source.as_path(),
+            destination.as_path()
+        ).execute(&mut vfs) {
+            Err(VfsError::CopyIntoItSelf(err_source, err_destination)) => {
+                assert_eq!(source.as_path(), err_source.as_path());
+                assert_eq!(destination.as_path(), err_destination.as_path());
+            }
+            Err(error) => panic!("{}", error),
+            Ok(_) => panic!("Should not be able to copy into itself")
+        };
+    }
+}

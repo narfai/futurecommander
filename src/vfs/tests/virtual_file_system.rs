@@ -20,7 +20,7 @@
 extern crate futurecommander_vfs;
 
 #[cfg_attr(tarpaulin, skip)]
-mod tests {
+mod vfs_integration {
     use std::{
         path::{ Path }
     };
@@ -30,7 +30,8 @@ mod tests {
         operation::{
             Operation,
             CopyOperation,
-            RemoveOperation
+            RemoveOperation,
+            CreateOperation
         },
         query::{
             Query,
@@ -231,5 +232,35 @@ mod tests {
             .unwrap();
 
         assert!(!stated_adg.exists());
+    }
+
+
+    // No-Backwards tests
+    #[test]
+    fn reset_empty() {
+        let sample_path = Samples::static_samples_path();
+        let mut vfs = VirtualFileSystem::default();
+
+        CreateOperation::new(
+            sample_path.join("VIRTUALA").as_path(),
+            Kind::File
+        ).execute(&mut vfs).unwrap();
+
+        CreateOperation::new(
+            sample_path.join("VIRTUALB").as_path(),
+            Kind::Directory
+        ).execute(&mut vfs).unwrap();
+
+        RemoveOperation::new(
+            sample_path.join("A").as_path()
+        ).execute(&mut vfs).unwrap();
+
+        assert!(vfs.has_addition());
+        assert!(vfs.has_subtraction());
+
+        vfs.reset();
+
+        assert!(!vfs.has_addition());
+        assert!(!vfs.has_subtraction());
     }
 }
