@@ -185,26 +185,66 @@ mod tests {
         assert_eq!(a.into_inner(), a_status);
     }
 
-
-    #[test]
-    fn entry_adapter_virtual_status_not_exists() {
+    fn _generate_adapter_with_state_and_kind(status: VirtualState, kind: Kind) -> EntryAdapter<VirtualStatus>{
         let a_path = PathBuf::from("/MOCK");
         let a_status = VirtualStatus::new(
-            VirtualState::NotExists,
+            status,
             VirtualPath::from(
                 a_path.clone(),
                 Some(a_path.clone()),
-                Kind::Unknown
+                kind
             ).unwrap()
         );
 
-        let a = EntryAdapter(a_status.clone());
+        EntryAdapter(a_status.clone())
+    }
+
+
+    #[test]
+    fn entry_adapter_virtual_status_not_exists() {
+        let a = _generate_adapter_with_state_and_kind(VirtualState::NotExists, Kind::Unknown);
         assert!(!a.exists());
         assert!(!a.is_dir());
         assert!(!a.is_file());
-        assert_eq!(a.to_path(), a_path.clone());
-        assert_eq!(a.path(), a_path.as_path());
-        assert_eq!(a.name(), Some(OsStr::new("MOCK")));
-        assert_eq!(a.into_inner(), a_status);
+    }
+
+    #[test]
+    fn entry_adapter_virtual_status_removed() {
+        let a = _generate_adapter_with_state_and_kind(VirtualState::Removed, Kind::Unknown);
+        assert!(!a.exists());
+        assert!(!a.is_dir());
+        assert!(!a.is_file());
+    }
+
+    #[test]
+    fn entry_adapter_virtual_status_removed_virtually() {
+        let a = _generate_adapter_with_state_and_kind(VirtualState::RemovedVirtually, Kind::Unknown);
+        assert!(!a.exists());
+        assert!(!a.is_dir());
+        assert!(!a.is_file());
+    }
+
+    #[test]
+    fn entry_adapter_virtual_status_exists_virtually() {
+        let a = _generate_adapter_with_state_and_kind(VirtualState::ExistsVirtually, Kind::Directory);
+        assert!(a.exists());
+        assert!(a.is_dir());
+        assert!(!a.is_file());
+    }
+
+    #[test]
+    fn entry_adapter_virtual_status_exists_through_virtual_parent() {
+        let a = _generate_adapter_with_state_and_kind(VirtualState::ExistsThroughVirtualParent, Kind::File);
+        assert!(a.exists());
+        assert!(!a.is_dir());
+        assert!(a.is_file());
+    }
+
+    #[test]
+    fn entry_adapter_virtual_status_replaced() {
+        let a = _generate_adapter_with_state_and_kind(VirtualState::Replaced, Kind::File);
+        assert!(a.exists());
+        assert!(!a.is_dir());
+        assert!(a.is_file());
     }
 }
