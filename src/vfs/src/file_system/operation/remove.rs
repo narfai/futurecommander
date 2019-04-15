@@ -28,6 +28,10 @@ impl Operation<RealFileSystem> for RemoveOperation{
         }
 
         let result = if path.is_dir() {
+            if ! self.recursive() && self.path().read_dir()?.count() > 0 {
+                return Err(VfsError::Custom("Directory is not empty".to_string()));
+            }
+
             fs.remove_directory(path)
         } else {
             fs.remove_file(path)
@@ -37,5 +41,58 @@ impl Operation<RealFileSystem> for RemoveOperation{
             Err(error) => Err(VfsError::from(error)),
             Ok(_) => Ok(())
         }
+    }
+}
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{ Samples };
+
+    #[test]
+    pub fn remove_operation_file() {
+        let chroot = Samples::init_simple_chroot("remove_operation_file");
+        let mut fs = RealFileSystem::default();
+
+        let operation = RemoveOperation::new(
+            chroot.join("RDIR/RFILEA").as_path(),
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+    }
+
+    #[test]
+    pub fn remove_operation_directory() {
+        let chroot = Samples::init_simple_chroot("remove_operation_directory");
+        let mut fs = RealFileSystem::default();
+
+        let operation = RemoveOperation::new(
+            chroot.join("RDIR3").as_path(),
+            false
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(!chroot.join("RDIR3").exists());
+    }
+
+    #[test]
+    pub fn remove_operation_directory_recursive() {
+        let chroot = Samples::init_simple_chroot("remove_operation_directory_recursive");
+        let mut fs = RealFileSystem::default();
+
+        let operation = RemoveOperation::new(
+            chroot.join("RDIR").as_path(),
+            true
+        );
+
+        operation.execute(&mut fs).unwrap();
+
+        assert!(!chroot.join("RDIR").exists());
     }
 }

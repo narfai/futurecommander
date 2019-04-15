@@ -97,8 +97,8 @@ mod tests {
     use crate::{ Samples };
 
     #[test]
-    pub fn copy_dir_no_merge_no_overwrite(){
-        let chroot = Samples::init_simple_chroot("copy_dir_no_merge_no_overwrite");
+    pub fn copy_operation_dir(){
+        let chroot = Samples::init_simple_chroot("copy_operation_dir");
         let mut fs = RealFileSystem::default();
 
         let operation = CopyOperation::new(
@@ -115,8 +115,8 @@ mod tests {
     }
 
     #[test]
-    pub fn copy_dir_merge_overwrite(){
-        let chroot = Samples::init_simple_chroot("copy_dir_merge_overwrite");
+    pub fn copy_operation_dir_merge_overwrite(){
+        let chroot = Samples::init_simple_chroot("copy_operation_dir_merge_overwrite");
         let mut fs = RealFileSystem::default();
 
         let operation = CopyOperation::new(
@@ -139,8 +139,8 @@ mod tests {
     }
 
     #[test]
-    pub fn copy_file_no_overwrite(){
-        let chroot = Samples::init_simple_chroot("copy_file_no_overwrite");
+    pub fn copy_operation_file(){
+        let chroot = Samples::init_simple_chroot("copy_operation_file");
         let mut fs = RealFileSystem::default();
 
         let operation = CopyOperation::new(
@@ -161,8 +161,8 @@ mod tests {
     }
 
     #[test]
-    pub fn copy_file_overwrite(){
-        let chroot = Samples::init_simple_chroot("copy_file_overwrite");
+    pub fn copy_operation_file_overwrite(){
+        let chroot = Samples::init_simple_chroot("copy_operation_file_overwrite");
         let mut fs = RealFileSystem::default();
 
         let operation = CopyOperation::new(
@@ -181,4 +181,6 @@ mod tests {
             chroot.join("RDIR2/RFILEB").metadata().unwrap().len()
         )
     }
+
+    //TODO replace len tests with md5 sum for copy & move
 }

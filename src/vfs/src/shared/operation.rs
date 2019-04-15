@@ -83,12 +83,12 @@ pub struct MoveOperation {
 }
 
 impl MoveOperation {
-    pub fn new(source: &Path, destination: &Path) -> MoveOperation {
+    pub fn new(source: &Path, destination: &Path, merge: bool, overwrite: bool) -> MoveOperation {
         MoveOperation {
             source: source.to_path_buf(),
             destination: destination.to_path_buf(),
-            merge: false,
-            overwrite: false
+            merge,
+            overwrite
         }
     }
 
@@ -100,15 +100,18 @@ impl MoveOperation {
 
 #[derive(Debug, Clone)]
 pub struct RemoveOperation {
-    path: PathBuf
+    path: PathBuf,
+    recursive: bool
 }
 
 impl RemoveOperation {
-    pub fn new(path: &Path) -> RemoveOperation {
+    pub fn new(path: &Path, recursive: bool) -> RemoveOperation {
         RemoveOperation {
-            path: path.to_path_buf()
+            path: path.to_path_buf(),
+            recursive
         }
     }
 
     pub fn path(&self) -> &Path { self.path.as_path() }
+    pub fn recursive(&self) -> bool { self.recursive }
 }

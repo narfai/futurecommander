@@ -30,6 +30,6 @@ impl Operation<VirtualFileSystem> for MoveOperation {
             false
         ).execute(fs)?;
 
-        RemoveOperation::new(self.source()).execute(fs)
+        RemoveOperation::new(self.source(), true).execute(fs)
     }
 }

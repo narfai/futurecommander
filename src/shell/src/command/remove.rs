@@ -62,7 +62,7 @@ pub struct InitializedRemoveCommand {
 
 impl Command<InitializedRemoveCommand> {
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
-        let operation = RemoveOperation::new(self.0.path.as_path());
+        let operation = RemoveOperation::new(self.0.path.as_path(), true);
 
         match operation.execute(fs.mut_vfs()) {
             Ok(_)       => {

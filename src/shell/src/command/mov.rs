@@ -75,7 +75,9 @@ impl Command<InitializedMoveCommand> {
                     self.0.source.as_path(),
                     self.0.destination
                         .join(self.0.source.file_name().unwrap())
-                        .as_path()
+                        .as_path(),
+                    false,
+                    false
                 )
             } else if source.is_dir() {
                 return Err(CommandError::CustomError(format!("Directory into a file {:?} {:?}", source.is_dir(), destination.is_dir())))
@@ -83,7 +85,12 @@ impl Command<InitializedMoveCommand> {
                 return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
             }
         } else {
-            MoveOperation::new(self.0.source.as_path(), self.0.destination.as_path())
+            MoveOperation::new(
+                self.0.source.as_path(),
+                self.0.destination.as_path(),
+                false,
+                false
+            )
         };
 
 

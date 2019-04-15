@@ -71,7 +71,8 @@ mod vfs_integration {
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
-            chroot.join("A").as_path()
+            chroot.join("A").as_path(),
+            true
         ).execute(vfs).unwrap();
 
         CopyOperation::new(
@@ -82,7 +83,8 @@ mod vfs_integration {
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
-            chroot.join("APRIME").as_path()
+            chroot.join("APRIME").as_path(),
+            true
         ).execute(vfs).unwrap();
 
         let stated_a = StatusQuery::new(chroot.join("A").as_path())
@@ -142,7 +144,8 @@ mod vfs_integration {
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
-            chroot.join("A/C").as_path()
+            chroot.join("A/C").as_path(),
+            true
         ).execute(vfs).unwrap();
 
         CopyOperation::new(
@@ -153,7 +156,8 @@ mod vfs_integration {
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
-            chroot.join("C").as_path()
+            chroot.join("C").as_path(),
+            true
         ).execute(vfs).unwrap();
 
         CopyOperation::new(
@@ -164,7 +168,8 @@ mod vfs_integration {
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
-            chroot.join("B").as_path()
+            chroot.join("B").as_path(),
+            true
         ).execute(vfs).unwrap();
 
         CopyOperation::new(
@@ -175,7 +180,8 @@ mod vfs_integration {
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
-            chroot.join("Z").as_path()
+            chroot.join("Z").as_path(),
+            true
         ).execute(vfs).unwrap();
 
         let stated_b = StatusQuery::new(chroot.join("B").as_path())
@@ -229,7 +235,8 @@ mod vfs_integration {
         ).execute(vfs).unwrap();
 
         RemoveOperation::new(
-            chroot.join("A/D/G").as_path()
+            chroot.join("A/D/G").as_path(),
+            true
         ).execute(vfs).unwrap();
 
         let stated_ad = StatusQuery::new(chroot.join("A/D").as_path())
@@ -272,7 +279,8 @@ mod vfs_integration {
         ).execute(&mut vfs).unwrap();
 
         RemoveOperation::new(
-            sample_path.join("A").as_path()
+            sample_path.join("A").as_path(),
+            true
         ).execute(&mut vfs).unwrap();
 
         assert!(vfs.has_addition());

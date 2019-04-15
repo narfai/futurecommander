@@ -114,9 +114,8 @@ mod query_integration {
                 .exists()
         );
 
-        RemoveOperation::new(a.as_path())
+        RemoveOperation::new(a.as_path(),true)
             .execute(&mut vfs).unwrap();
-
 
         assert!(
             ! StatusQuery::new(a.as_path())

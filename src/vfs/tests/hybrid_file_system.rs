@@ -74,7 +74,8 @@ mod hybrid_fs_integration {
 
 
         let rm_a = RemoveOperation::new(
-            chroot.join("A").as_path()
+            chroot.join("A").as_path(),
+            true
         );
 
         fs.mut_transaction().add_operation(Box::new(rm_a.clone()));
@@ -93,7 +94,8 @@ mod hybrid_fs_integration {
 
 
         let rm_aprime = RemoveOperation::new(
-            chroot.join("APRIME").as_path()
+            chroot.join("APRIME").as_path(),
+            true
         );
 
         fs.mut_transaction().add_operation(Box::new(rm_aprime.clone()));
@@ -160,7 +162,8 @@ mod hybrid_fs_integration {
         cp_ac_chroot.execute(fs.mut_vfs()).unwrap();
 
         let rm_ac = RemoveOperation::new(
-            chroot.join("A/C").as_path()
+            chroot.join("A/C").as_path(),
+            true
         );
 
         fs.mut_transaction().add_operation(Box::new(rm_ac.clone()));
@@ -179,7 +182,8 @@ mod hybrid_fs_integration {
 
 
         let rm_c = RemoveOperation::new(
-            chroot.join("C").as_path()
+            chroot.join("C").as_path(),
+            true
         );
 
         fs.mut_transaction().add_operation(Box::new(rm_c.clone()));
@@ -198,7 +202,8 @@ mod hybrid_fs_integration {
 
 
         let rm_b = RemoveOperation::new(
-            chroot.join("B").as_path()
+            chroot.join("B").as_path(),
+            true
         );
 
         fs.mut_transaction().add_operation(Box::new(rm_b.clone()));
@@ -216,7 +221,8 @@ mod hybrid_fs_integration {
 
 
         let rm_z = RemoveOperation::new(
-            chroot.join("Z").as_path()
+            chroot.join("Z").as_path(),
+            true
         );
 
         fs.mut_transaction().add_operation(Box::new(rm_z.clone()));
@@ -279,7 +285,8 @@ mod hybrid_fs_integration {
         cp_acd_a.execute(fs.mut_vfs()).unwrap();
 
         let rm_adg = RemoveOperation::new(
-            chroot.join("A/D/G").as_path()
+            chroot.join("A/D/G").as_path(),
+            true
         );
 
         fs.mut_transaction().add_operation(Box::new(rm_adg.clone()));
