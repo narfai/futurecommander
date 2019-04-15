@@ -21,7 +21,7 @@ use std::path::{ Path, PathBuf };
 
 use clap::ArgMatches;
 
-use vfs::{
+use futurecommander_vfs::{
     HybridFileSystem,
     operation::{
         Operation,
@@ -102,7 +102,7 @@ impl Command<InitializedMoveCommand> {
 mod tests {
     use super::*;
 
-    use vfs::{
+    use futurecommander_vfs::{
         Samples,
         VfsError,
         query::{ ReadDirQuery, EntryAdapter }

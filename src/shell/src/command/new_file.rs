@@ -18,12 +18,11 @@
  */
 
 use std::path::Path;
-use clap::ArgMatches;
 use std::path::PathBuf;
-use crate::command::{ Command };
-use crate::command::errors::CommandError;
 
-use vfs::{
+use clap::ArgMatches;
+
+use futurecommander_vfs::{
     HybridFileSystem,
     Kind,
     operation::{
@@ -32,13 +31,18 @@ use vfs::{
     },
 };
 
-pub struct NewDirectoryCommand {}
+use crate::command::{
+    Command,
+    errors::CommandError
+};
 
-impl Command<NewDirectoryCommand> {
-    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewDirectoryCommand>, CommandError> {
+pub struct NewFileCommand {}
+
+impl Command<NewFileCommand> {
+    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewFileCommand>, CommandError> {
         Ok(
             Command(
-                InitializedNewDirectoryCommand {
+                InitializedNewFileCommand {
                     path: Self::extract_path_from_args(cwd, args, "path")?
                 }
             )
@@ -46,15 +50,15 @@ impl Command<NewDirectoryCommand> {
     }
 }
 
-pub struct InitializedNewDirectoryCommand {
+pub struct InitializedNewFileCommand {
     pub path: PathBuf
 }
 
-impl Command<InitializedNewDirectoryCommand> {
+impl Command<InitializedNewFileCommand> {
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
         let operation = CreateOperation::new(
             self.0.path.as_path(),
-            Kind::Directory
+            Kind::File
         );
 
         match operation.execute(fs.mut_vfs()) {
@@ -72,27 +76,27 @@ impl Command<InitializedNewDirectoryCommand> {
 mod tests {
     use super::*;
 
-    use vfs::{
+    use futurecommander_vfs::{
         Samples,
         query::{Query, ReadDirQuery, EntryAdapter}
     };
 
     #[test]
-    fn mkdir(){
+    fn touch(){
         let sample_path = Samples::static_samples_path();
         let mut fs = HybridFileSystem::default();
 
-        let new_bde_mkdired = Command(InitializedNewDirectoryCommand {
-            path: sample_path.join(&Path::new("B/D/E/MKDIRED"))
+        let new_bde_touched = Command(InitializedNewFileCommand {
+            path: sample_path.join(&Path::new("B/D/E/TOUCHED"))
         });
 
-        new_bde_mkdired.execute(&mut fs).unwrap();
+        new_bde_touched.execute(&mut fs).unwrap();
 
         assert!(
             ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path())
                 .retrieve(fs.vfs())
                 .unwrap()
-                .contains(&EntryAdapter(sample_path.join("B/D/E/MKDIRED").as_path()))
+                .contains(&EntryAdapter(sample_path.join("B/D/E/TOUCHED").as_path()))
         );
     }
 }

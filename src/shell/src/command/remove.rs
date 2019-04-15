@@ -17,18 +17,16 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{ Path, PathBuf };
 
 use clap::ArgMatches;
 
-use vfs::{
+use futurecommander_vfs::{
     HybridFileSystem,
-    Kind,
     operation::{
         Operation,
-        CreateOperation
-    },
+        RemoveOperation
+    }
 };
 
 use crate::command::{
@@ -36,30 +34,35 @@ use crate::command::{
     errors::CommandError
 };
 
-pub struct NewFileCommand {}
 
-impl Command<NewFileCommand> {
-    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewFileCommand>, CommandError> {
+pub struct RemoveCommand {}
+
+impl Command<RemoveCommand> {
+    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedRemoveCommand>, CommandError> {
+        let path = Self::extract_path_from_args(cwd, args, "path")?;
+        for ancestor in cwd.ancestors() {
+            if path == ancestor {
+                return Err(CommandError::CwdIsInside(path.to_path_buf()))
+            }
+        }
+
         Ok(
             Command(
-                InitializedNewFileCommand {
-                    path: Self::extract_path_from_args(cwd, args, "path")?
+                InitializedRemoveCommand {
+                    path
                 }
             )
         )
     }
 }
 
-pub struct InitializedNewFileCommand {
+pub struct InitializedRemoveCommand {
     pub path: PathBuf
 }
 
-impl Command<InitializedNewFileCommand> {
+impl Command<InitializedRemoveCommand> {
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
-        let operation = CreateOperation::new(
-            self.0.path.as_path(),
-            Kind::File
-        );
+        let operation = RemoveOperation::new(self.0.path.as_path());
 
         match operation.execute(fs.mut_vfs()) {
             Ok(_)       => {
@@ -76,27 +79,28 @@ impl Command<InitializedNewFileCommand> {
 mod tests {
     use super::*;
 
-    use vfs::{
+    use futurecommander_vfs::{
         Samples,
-        query::{Query, ReadDirQuery, EntryAdapter}
+        query::{ Query, StatusQuery, Entry }
     };
 
     #[test]
-    fn touch(){
+    fn rm(){
         let sample_path = Samples::static_samples_path();
         let mut fs = HybridFileSystem::default();
 
-        let new_bde_touched = Command(InitializedNewFileCommand {
-            path: sample_path.join(&Path::new("B/D/E/TOUCHED"))
+        let b_path = sample_path.join(&Path::new("B"));
+
+        let remove_b = Command(InitializedRemoveCommand {
+            path: b_path.to_path_buf()
         });
 
-        new_bde_touched.execute(&mut fs).unwrap();
+        remove_b.execute(&mut fs).unwrap();
 
-        assert!(
-            ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path())
-                .retrieve(fs.vfs())
-                .unwrap()
-                .contains(&EntryAdapter(sample_path.join("B/D/E/TOUCHED").as_path()))
-        );
+        assert!(!StatusQuery::new(b_path.as_path())
+            .retrieve(fs.vfs())
+            .unwrap()
+            .exists()
+        )
     }
 }

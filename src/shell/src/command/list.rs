@@ -21,7 +21,7 @@ use std::path::{ Path, PathBuf };
 
 use clap::ArgMatches;
 
-use vfs::{
+use futurecommander_vfs::{
     HybridFileSystem,
     query::{
         Entry,

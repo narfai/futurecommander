@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use shell::Shell;
+use futurecommander_shell::Shell;
 
 
 fn main() {

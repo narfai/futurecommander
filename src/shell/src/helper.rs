@@ -20,7 +20,7 @@
 use std::path::PathBuf;
 use std::vec::IntoIter;
 
-use vfs::{
+use futurecommander_vfs::{
     VirtualFileSystem,
     representation::{ VirtualPath },
     query::{ Query, ReadDirQuery, Entry }

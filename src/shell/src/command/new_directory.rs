@@ -17,52 +17,45 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::{ Path, PathBuf };
-
+use std::path::Path;
 use clap::ArgMatches;
+use std::path::PathBuf;
+use crate::command::{ Command };
+use crate::command::errors::CommandError;
 
-use vfs::{
+use futurecommander_vfs::{
     HybridFileSystem,
+    Kind,
     operation::{
         Operation,
-        RemoveOperation
-    }
+        CreateOperation
+    },
 };
 
-use crate::command::{
-    Command,
-    errors::CommandError
-};
+pub struct NewDirectoryCommand {}
 
-
-pub struct RemoveCommand {}
-
-impl Command<RemoveCommand> {
-    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedRemoveCommand>, CommandError> {
-        let path = Self::extract_path_from_args(cwd, args, "path")?;
-        for ancestor in cwd.ancestors() {
-            if path == ancestor {
-                return Err(CommandError::CwdIsInside(path.to_path_buf()))
-            }
-        }
-
+impl Command<NewDirectoryCommand> {
+    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewDirectoryCommand>, CommandError> {
         Ok(
             Command(
-                InitializedRemoveCommand {
-                    path
+                InitializedNewDirectoryCommand {
+                    path: Self::extract_path_from_args(cwd, args, "path")?
                 }
             )
         )
     }
 }
 
-pub struct InitializedRemoveCommand {
+pub struct InitializedNewDirectoryCommand {
     pub path: PathBuf
 }
 
-impl Command<InitializedRemoveCommand> {
+impl Command<InitializedNewDirectoryCommand> {
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
-        let operation = RemoveOperation::new(self.0.path.as_path());
+        let operation = CreateOperation::new(
+            self.0.path.as_path(),
+            Kind::Directory
+        );
 
         match operation.execute(fs.mut_vfs()) {
             Ok(_)       => {
@@ -79,28 +72,27 @@ impl Command<InitializedRemoveCommand> {
 mod tests {
     use super::*;
 
-    use vfs::{
+    use futurecommander_vfs::{
         Samples,
-        query::{ Query, StatusQuery, Entry }
+        query::{Query, ReadDirQuery, EntryAdapter}
     };
 
     #[test]
-    fn rm(){
+    fn mkdir(){
         let sample_path = Samples::static_samples_path();
         let mut fs = HybridFileSystem::default();
 
-        let b_path = sample_path.join(&Path::new("B"));
-
-        let remove_b = Command(InitializedRemoveCommand {
-            path: b_path.to_path_buf()
+        let new_bde_mkdired = Command(InitializedNewDirectoryCommand {
+            path: sample_path.join(&Path::new("B/D/E/MKDIRED"))
         });
 
-        remove_b.execute(&mut fs).unwrap();
+        new_bde_mkdired.execute(&mut fs).unwrap();
 
-        assert!(!StatusQuery::new(b_path.as_path())
-            .retrieve(fs.vfs())
-            .unwrap()
-            .exists()
-        )
+        assert!(
+            ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path())
+                .retrieve(fs.vfs())
+                .unwrap()
+                .contains(&EntryAdapter(sample_path.join("B/D/E/MKDIRED").as_path()))
+        );
     }
 }

@@ -20,7 +20,7 @@
 
 use std::path::{ PathBuf };
 use std::{ error, fmt };
-use vfs::VfsError;
+use futurecommander_vfs::VfsError;
 
 #[derive(Debug)]
 pub enum CommandError {

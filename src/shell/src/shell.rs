@@ -28,7 +28,7 @@ use rustyline::{ CompletionType, Config, EditMode, Editor };
 
 use clap::{ App, ArgMatches };
 
-use vfs::{
+use futurecommander_vfs::{
     HybridFileSystem,
     Kind,
     query::{Query, StatusQuery }
