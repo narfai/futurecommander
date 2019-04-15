@@ -22,7 +22,7 @@ use std::vec::IntoIter as VecIntoIter;
 
 use crate::query::Entry;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct EntryCollection<T>(pub Vec<T>)
     where T: Entry;
 
@@ -61,5 +61,37 @@ impl <T: Entry>IntoIterator for EntryCollection<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{
+        query::{ EntryAdapter }
+    };
+
+    use std::{
+        path::Path
+    };
+
+
+    #[test]
+    fn entry_collection_contains() {
+        let mut c = EntryCollection::new();
+        c.add(EntryAdapter(Path::new("A")));
+
+        assert!(c.contains(&EntryAdapter(Path::new("A"))));
+        assert_eq!(c.len(), 1);
+    }
+
+    #[test]
+    fn entry_collection_is_empty() {
+        let c = EntryCollection::<EntryAdapter<&Path>>::new();
+
+        assert!(c.is_empty());
+        assert_eq!(c.len(), 0);
     }
 }

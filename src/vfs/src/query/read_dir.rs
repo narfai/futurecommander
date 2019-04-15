@@ -113,3 +113,70 @@ impl Query<&VirtualFileSystem> for ReadDirQuery {
         Ok(entry_collection)
     }
 }
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{
+        Samples,
+        query::{EntryAdapter}
+    };
+
+    use std::{
+        path::Path
+    };
+
+    #[test]
+    fn read_dir_query_relay_real_fs() {
+        let static_samples = Samples::static_samples_path();
+        let vfs = VirtualFileSystem::default();
+
+        let collection = ReadDirQuery::new(static_samples.as_path()).retrieve(&vfs).unwrap();
+        let a_path = static_samples.join("A");
+        assert!(collection.contains(
+            &EntryAdapter(
+                    VirtualStatus::new(
+                    VirtualState::Exists,
+                    VirtualPath::from(
+                        a_path.clone(),
+                        Some(a_path.clone()),
+                        Kind::Directory
+                        ).unwrap()
+                    )
+                )
+            )
+        );
+
+        let b_path = static_samples.join("B");
+        assert!(collection.contains(
+                &EntryAdapter(
+                    VirtualStatus::new(
+                        VirtualState::Exists,
+                        VirtualPath::from(
+                            b_path.clone(),
+                            Some(b_path.clone()),
+                            Kind::Directory
+                        ).unwrap()
+                    )
+                )
+            )
+        );
+
+        let b_path = static_samples.join("F");
+        assert!(collection.contains(
+                &EntryAdapter(
+                    VirtualStatus::new(
+                        VirtualState::Exists,
+                        VirtualPath::from(
+                            b_path.clone(),
+                            Some(b_path.clone()),
+                            Kind::File
+                        ).unwrap()
+                    )
+                )
+            )
+        );
+    }
+}

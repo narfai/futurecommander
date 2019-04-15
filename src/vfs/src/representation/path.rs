@@ -53,6 +53,32 @@ impl FromStr for VirtualPath {
     }
 }
 
+//Rely on PathBuf implementation for identify & order VirtualPaths over Iterators
+impl Ord for VirtualPath {
+    fn cmp(&self, other: &VirtualPath) -> Ordering {
+        self.identity.cmp(&other.identity)
+    }
+}
+
+impl PartialOrd for VirtualPath {
+    fn partial_cmp(&self, other: &VirtualPath) -> Option<Ordering> {
+        Some(self.identity.cmp(&other.identity))
+    }
+}
+
+impl PartialEq for VirtualPath {
+    fn eq(&self, other: &VirtualPath) -> bool {
+        self.identity.eq(&other.identity)
+    }
+}
+
+impl Hash for VirtualPath {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.identity.hash(state);
+    }
+}
+
+
 /*
 Virtual wrapper of PathBuf for keeping control over type & behaviors
 PathBuf implementation will do the job for path components manipulation.
@@ -255,32 +281,6 @@ impl VirtualPath {
             }
         }
         false
-    }
-}
-
-
-//Rely on PathBuf implementation for identify & order VirtualPaths over Iterators
-impl Ord for VirtualPath {
-    fn cmp(&self, other: &VirtualPath) -> Ordering {
-        self.identity.cmp(&other.identity)
-    }
-}
-
-impl PartialOrd for VirtualPath {
-    fn partial_cmp(&self, other: &VirtualPath) -> Option<Ordering> {
-        Some(self.identity.cmp(&other.identity))
-    }
-}
-
-impl PartialEq for VirtualPath {
-    fn eq(&self, other: &VirtualPath) -> bool {
-        self.identity.eq(&other.identity)
-    }
-}
-
-impl Hash for VirtualPath {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.identity.hash(state);
     }
 }
 

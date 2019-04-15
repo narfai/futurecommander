@@ -24,11 +24,13 @@ use crate::Kind;
 use crate::representation::{ VirtualPath, VirtualState };
 use crate::query::{ Entry, EntryAdapter};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct VirtualStatus {
     pub state: VirtualState,
     pub identity: VirtualPath
 }
+
+impl Eq for VirtualStatus {}
 
 impl VirtualStatus {
     pub fn new(state: VirtualState, identity: VirtualPath) -> VirtualStatus {
@@ -124,5 +126,85 @@ impl Entry for EntryAdapter<VirtualStatus> {
             | VirtualState::Removed
             | VirtualState::RemovedVirtually => false
         }
+    }
+}
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{
+        query::{ EntryAdapter }
+    };
+
+    use std::str::FromStr;
+
+    #[test]
+    fn entry_adapter_virtual_status_directory() {
+        let a_path = PathBuf::from("/MOCK");
+        let a_status = VirtualStatus::new(
+            VirtualState::Exists,
+            VirtualPath::from(
+                a_path.clone(),
+                Some(a_path.clone()),
+                Kind::Directory
+            ).unwrap()
+        );
+
+        let a = EntryAdapter(a_status.clone());
+        assert!(a.exists());
+        assert!(a.is_dir());
+        assert!(!a.is_file());
+        assert_eq!(a.to_path(), a_path.clone());
+        assert_eq!(a.path(), a_path.as_path());
+        assert_eq!(a.name(), Some(OsStr::new("MOCK")));
+        assert_eq!(a.into_inner(), a_status);
+    }
+
+
+    #[test]
+    fn entry_adapter_virtual_status_file() {
+        let a_path = PathBuf::from("/MOCK");
+        let a_status = VirtualStatus::new(
+            VirtualState::Exists,
+            VirtualPath::from(
+                a_path.clone(),
+                Some(a_path.clone()),
+                Kind::File
+            ).unwrap()
+        );
+
+        let a = EntryAdapter(a_status.clone());
+        assert!(a.exists());
+        assert!(!a.is_dir());
+        assert!(a.is_file());
+        assert_eq!(a.to_path(), a_path.clone());
+        assert_eq!(a.path(), a_path.as_path());
+        assert_eq!(a.name(), Some(OsStr::new("MOCK")));
+        assert_eq!(a.into_inner(), a_status);
+    }
+
+
+    #[test]
+    fn entry_adapter_virtual_status_not_exists() {
+        let a_path = PathBuf::from("/MOCK");
+        let a_status = VirtualStatus::new(
+            VirtualState::NotExists,
+            VirtualPath::from(
+                a_path.clone(),
+                Some(a_path.clone()),
+                Kind::Unknown
+            ).unwrap()
+        );
+
+        let a = EntryAdapter(a_status.clone());
+        assert!(!a.exists());
+        assert!(!a.is_dir());
+        assert!(!a.is_file());
+        assert_eq!(a.to_path(), a_path.clone());
+        assert_eq!(a.path(), a_path.as_path());
+        assert_eq!(a.name(), Some(OsStr::new("MOCK")));
+        assert_eq!(a.into_inner(), a_status);
     }
 }
