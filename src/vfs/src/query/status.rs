@@ -133,12 +133,7 @@ mod tests {
     use super::*;
 
     use crate::{
-        Samples,
-        query::{EntryAdapter}
-    };
-
-    use std::{
-        path::Path
+        Samples
     };
 
     #[test]

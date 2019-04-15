@@ -19,8 +19,7 @@
 
 use std::{
     collections::{
-        BTreeMap,
-        btree_map::Iter as BTreeMapIter
+        BTreeMap
     },
     path::{ PathBuf, Path },
     ops::{ Add, Sub }
@@ -31,8 +30,7 @@ use crate::{
     Kind,
     representation::{
         VirtualChildren,
-        VirtualPath,
-        VirtualChildrenIterator
+        VirtualPath
     }
 };
 
@@ -125,13 +123,6 @@ impl VirtualDelta {
         match self.hierarchy.get(parent) {
             Some(children) => Some(&children),
             None => None //No key parent
-        }
-    }
-
-    pub fn children_owned(&self, parent: &Path) -> Option<VirtualChildren> {
-        match self.hierarchy.get(parent) {
-            Some(children) => Some(children.clone()),
-            None => None //Do not exists
         }
     }
 
@@ -235,23 +226,6 @@ impl VirtualDelta {
             None => Ok(false),
         }
     }
-
-    pub fn top_unknown_ancestor(&self) -> Option<PathBuf> {
-        let mut min_count = usize::max_value();
-        let mut top = None;
-        for parent in self.hierarchy.keys() {
-            let ancestor_count = parent.ancestors().count();
-            if ancestor_count < min_count {
-                min_count = ancestor_count;
-                top = Some(VirtualPath::get_parent_or_root(parent));
-            }
-        }
-        top
-    }
-
-    pub fn iter(&self) -> VirtualDeltaIterator<'_> {
-        VirtualDeltaIterator::new(self.hierarchy.iter())
-    }
 }
 
 
@@ -292,46 +266,5 @@ impl <'a, 'b> Sub<&'b VirtualDelta> for &'a VirtualDelta {
             }
         }
         Ok(result)
-    }
-}
-
-
-#[derive(Debug, Clone)]
-pub struct VirtualDeltaIterator<'a> {
-    iter: BTreeMapIter<'a, PathBuf, VirtualChildren>,
-    current: Option<VirtualChildrenIterator<'a>>
-}
-
-impl <'a>VirtualDeltaIterator<'a> {
-    pub fn new(iter: BTreeMapIter<'a, PathBuf, VirtualChildren>) -> VirtualDeltaIterator<'_> {
-        VirtualDeltaIterator {
-            iter,
-            current: None
-        }
-    }
-}
-
-impl <'a>Iterator for VirtualDeltaIterator<'a> {
-    type Item = &'a VirtualPath;
-
-    fn next(&mut self) -> Option<&'a VirtualPath> {
-        match &mut self.current {
-            None =>
-                match self.iter.next() {
-                    Some((_parent, children)) =>  {
-                        self.current = Some(children.iter());
-                        self.next()
-                    },
-                    None => None
-                }
-            Some(current) =>
-                match current.next() {
-                    Some(path) => Some(path),
-                    None => {
-                        self.current = None;
-                        self.next()
-                    }
-                }
-        }
     }
 }

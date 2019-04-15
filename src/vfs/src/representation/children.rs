@@ -18,7 +18,6 @@
  */
 
 use std::collections::hash_set::Iter as HashSetIter;
-use std::collections::hash_set::IntoIter as HashSetIntoIter;
 use std::collections::{ HashSet };
 
 use crate::{ VfsError };
@@ -40,10 +39,6 @@ impl VirtualChildren {
 
     pub fn get(&self, virtual_identity: &VirtualPath) -> Option<&VirtualPath> {
         self.set.get(&virtual_identity)
-    }
-
-    pub fn len(&self) -> usize {
-        self.set.len()
     }
 
     pub fn is_empty(&self) -> bool { self.set.is_empty() }
@@ -84,14 +79,5 @@ impl <'a>Iterator for VirtualChildrenIterator<'a> {
 
     fn next(&mut self) -> Option<&'a VirtualPath> {
         self.iter.next()
-    }
-}
-
-impl IntoIterator for VirtualChildren {
-    type Item = VirtualPath;
-    type IntoIter = HashSetIntoIter<VirtualPath>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.set.into_iter()
     }
 }

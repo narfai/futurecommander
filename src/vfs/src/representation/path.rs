@@ -100,19 +100,6 @@ impl VirtualPath {
         &self.kind
     }
 
-    //Casts / Move
-    pub fn into_identity(self) -> PathBuf {
-        self.identity
-    }
-
-    pub fn into_source(self) -> Option<PathBuf> {
-        self.source
-    }
-
-    pub fn into_kind(self) -> Kind {
-        self.kind
-    }
-
     //Conversions / Copy
     pub fn to_identity(&self) -> PathBuf {
         self.identity.to_path_buf()
@@ -131,11 +118,6 @@ impl VirtualPath {
             Kind::Directory => Kind::Directory,
             Kind::Unknown => Kind::Unknown
         }
-    }
-
-    //Constructors
-    pub fn root() -> Result<VirtualPath, VfsError> {
-        VirtualPath::from(VirtualPath::root_identity(), None, Kind::Directory)
     }
 
     pub fn root_identity() -> PathBuf {
@@ -166,34 +148,11 @@ impl VirtualPath {
         VirtualPath::from(path, None, Kind::Unknown)
     }
 
-    //Domain
-    pub fn as_parent(&self) -> Option<&Path> {
-        self.identity.parent()
-    }
-
-    pub fn to_parent(&self) -> Option<PathBuf> {
-        match self.identity.parent() {
-            Some(parent) => Some(parent.to_path_buf()),
-            None => None
-        }
-    }
-
     pub fn into_parent(self) -> Option<PathBuf> {
         match self.identity.parent() {
             Some(parent) => Some(parent.to_path_buf()),
             None => None
         }
-    }
-
-    pub fn file_name(&self) -> Result<&OsStr, VfsError> {
-        match self.identity.file_name() {
-            Some(filename) => Ok(filename),
-            None => Err(VfsError::IsDotName(self.identity.to_path_buf()))
-        }
-    }
-
-    pub fn join(&self, node_name: &OsStr) -> Result<VirtualPath, VfsError>  {
-        VirtualPath::from_path_buf(self.identity.join(node_name))
     }
 
     pub fn replace_parent(path: &Path, new_parent: &Path) -> PathBuf {
@@ -236,35 +195,12 @@ impl VirtualPath {
         )
     }
 
-    pub fn with_owned_source(self, new_source: Option<PathBuf>) -> VirtualPath {
-        Self::_from(
-            self.identity,
-            match new_source {
-                Some(source) => Some(source),
-                None => None
-            },
-            self.kind
-        )
-    }
-
     pub fn with_kind(self, kind: Kind) -> VirtualPath  {
         Self::_from(
             self.identity,
             self.source,
             kind
         )
-    }
-
-    pub fn with_file_name(self, filename: &OsStr) -> VirtualPath  {
-        Self::_from(
-            self.to_identity().with_file_name(filename),
-            self.source,
-            self.kind
-        )
-    }
-
-    pub fn depth(&self) -> usize {
-        self.identity.components().count()
     }
 
     pub fn get_parent_or_root(identity: &Path) -> PathBuf {

@@ -121,11 +121,7 @@ mod tests {
 
     use crate::{
         Samples,
-        query::{EntryAdapter}
-    };
-
-    use std::{
-        path::Path
+        query::{ EntryAdapter }
     };
 
     #[test]

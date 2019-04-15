@@ -138,8 +138,6 @@ mod tests {
         query::{ EntryAdapter }
     };
 
-    use std::str::FromStr;
-
     #[test]
     fn entry_adapter_virtual_status_directory() {
         let a_path = PathBuf::from("/MOCK");
