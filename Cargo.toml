@@ -1,6 +1,6 @@
 [package]
 name = "futurecommander"
-version = "0.2.5"
+version = "0.3.5"
 authors = ["François Cadeillan <francois@azsystem.fr>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
