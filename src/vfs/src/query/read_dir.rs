@@ -23,7 +23,7 @@ use std::path::{ PathBuf, Path };
 use crate::query::Entry;
 use crate::{ VfsError, Kind };
 use crate::virtual_file_system::{ VirtualFileSystem };
-use crate::representation::{VirtualPath, VirtualChildren, VirtualState };
+use crate::representation::{ VirtualPath,  VirtualState };
 use crate::query::{Query, StatusQuery, EntryCollection, EntryAdapter, VirtualStatus};
 
 pub struct ReadDirQuery {

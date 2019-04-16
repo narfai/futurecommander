@@ -71,7 +71,7 @@ impl CopyOperation {
 impl Operation<VirtualFileSystem> for CopyOperation {
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
         let source = StatusQuery::new(self.source()).retrieve(fs)?;
-        let parent_path = VirtualPath::get_parent_or_root(self.destination());
+        let parent_path = crate::path_helper::get_parent_or_root(self.destination());
         let parent = StatusQuery::new(parent_path.as_path()).retrieve(fs)?;
 
         if ! parent.exists() {

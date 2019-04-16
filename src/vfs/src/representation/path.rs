@@ -24,10 +24,8 @@ use std::{
     cmp::Ordering,
     path::{
         PathBuf,
-        Path,
-        MAIN_SEPARATOR,
+        Path
     },
-    ffi::{ OsStr },
     str::{ FromStr },
     hash::{ Hash, Hasher }
 };
@@ -120,10 +118,6 @@ impl VirtualPath {
         }
     }
 
-    pub fn root_identity() -> PathBuf {
-        PathBuf::from(MAIN_SEPARATOR.to_string())
-    }
-
     pub fn from(identity: PathBuf, source: Option<PathBuf>, kind: Kind) -> Result<VirtualPath, VfsError> {
         if identity.is_relative() && (identity != PathBuf::new()) {
             Err(VfsError::IsRelativePath(identity.to_path_buf()))
@@ -201,13 +195,6 @@ impl VirtualPath {
             self.source,
             kind
         )
-    }
-
-    pub fn get_parent_or_root(identity: &Path) -> PathBuf {
-        match identity.parent() {
-            Some(parent) => parent.to_path_buf(),
-            None => VirtualPath::root_identity()
-        }
     }
 
     pub fn is_contained_by(&self, other: &VirtualPath) -> bool {

@@ -19,15 +19,14 @@
 
 use crate::{ VfsError, Kind };
 use crate::file_system::RealFileSystem;
-use crate::representation::VirtualPath;
-use crate::operation::{Operation, CreateOperation };
+use crate::operation::{ Operation, CreateOperation };
 
 impl Operation<RealFileSystem> for CreateOperation {
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), VfsError> {
         let path = self.path();
 
         if ! self.recursive() {
-            let parent = VirtualPath::get_parent_or_root(path);
+            let parent = crate::path_helper::get_parent_or_root(path);
             if !parent.exists() {
                 return Err(VfsError::DoesNotExists(path.to_path_buf()));
             } else if !parent.is_dir() {

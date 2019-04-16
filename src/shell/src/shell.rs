@@ -34,7 +34,6 @@ use futurecommander_vfs::{
     query::{Query, StatusQuery }
 };
 
-use crate::path::absolute;
 use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
 use crate::helper::VirtualHelper;
 
@@ -62,7 +61,7 @@ impl Shell {
             ("debug_status",   Some(matches))  =>
                 match matches.value_of("path") {
                     Some(string_path) => {
-                        let path = absolute(self.cwd.as_path(), Path::new(string_path));
+                        let path = futurecommander_vfs::path_helper::absolute(self.cwd.as_path(), Path::new(string_path));
                         println!("STATUS : {:?}", StatusQuery::new(path.as_path()).retrieve(self.fs.vfs())?);
                         Ok(())
                     },
@@ -225,7 +224,7 @@ impl Shell {
     fn cd(&mut self, matches: &ArgMatches<'_>) -> Result<(), CommandError> {
         match matches.value_of("path") {
             Some(string_path) => {
-                let path = absolute(self.cwd.as_path(), Path::new(string_path));
+                let path = futurecommander_vfs::path_helper::absolute(self.cwd.as_path(), Path::new(string_path));
 
                 match StatusQuery::new(path.as_path()).retrieve(&self.fs.vfs()) {
                     Ok(status) =>

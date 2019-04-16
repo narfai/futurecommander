@@ -22,7 +22,6 @@ extern crate clap;
 
 extern crate rustyline;
 
-mod path;
 mod shell;
 mod helper;
 

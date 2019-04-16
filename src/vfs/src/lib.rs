@@ -31,6 +31,7 @@ pub mod representation;
 //Read API
 pub mod query;
 pub use self::shared::kind::Kind;
+pub use self::shared::path_helper;
 
 //Write API
 pub use self::shared::operation;

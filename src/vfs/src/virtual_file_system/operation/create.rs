@@ -20,8 +20,7 @@ use std::path::Ancestors;
 
 use crate::{ VirtualFileSystem, VfsError, Kind };
 use crate::operation::{Operation, CreateOperation };
-use crate::query::{Query, StatusQuery, Entry };
-use crate::representation::{ VirtualPath };
+use crate::query::{ Query, StatusQuery, Entry };
 
 impl Operation<VirtualFileSystem> for CreateOperation{
     fn execute(&self, fs: &mut VirtualFileSystem) -> Result<(), VfsError> {
@@ -33,7 +32,7 @@ impl Operation<VirtualFileSystem> for CreateOperation{
             },
             None => {
                 if ! self.recursive() || self.kind() == Kind::File {
-                    let parent = VirtualPath::get_parent_or_root(path);
+                    let parent = crate::path_helper::get_parent_or_root(path);
                     let parent_status = StatusQuery::new(parent.as_path()).retrieve(&fs)?;
                     if ! parent_status.exists() {
                         return Err(VfsError::DoesNotExists(path.to_path_buf()));

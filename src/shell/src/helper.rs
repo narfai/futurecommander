@@ -22,7 +22,6 @@ use std::vec::IntoIter;
 
 use futurecommander_vfs::{
     VirtualFileSystem,
-    representation::{ VirtualPath },
     query::{ Query, ReadDirQuery, Entry }
 };
 
@@ -147,7 +146,7 @@ impl  <'a>VirtualHelper<'a>  {
         let mut max_score : usize = 0;
         let mut scores = Vec::new();
         let given_path = self.cwd.join(given);
-        let parent = VirtualPath::get_parent_or_root(given_path.as_path());
+        let parent = futurecommander_vfs::path_helper::get_parent_or_root(given_path.as_path());
 
         match ReadDirQuery::new(given_path.as_path()).retrieve(self.fs) {
             Ok(collection) => {
