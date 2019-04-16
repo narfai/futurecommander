@@ -22,7 +22,7 @@ use std::vec::IntoIter as VecIntoIter;
 
 use crate::query::Entry;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct EntryCollection<T>(pub Vec<T>)
     where T: Entry;
 

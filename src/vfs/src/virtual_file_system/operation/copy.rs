@@ -26,22 +26,19 @@ impl CopyOperation {
     fn copy_virtual_children(&self, fs: &mut VirtualFileSystem, source: &VirtualPath, identity: &VirtualPath) -> Result<(), VfsError> {
         let read_dir = ReadDirQuery::new(source.as_identity());
         for child in read_dir.retrieve(&fs)?.into_iter() {
-            match child.as_inner().state() {
-                VirtualState::ExistsVirtually => {
-                    CopyOperation::new(
-                        child.path(),
-                        identity.as_identity()
-                            .join(
-                                child.path()
-                                    .file_name()
-                                    .unwrap()
-                            ).as_path(),
-                        self.merge(),
-                        self.overwrite()
-                    ).execute(fs)?
-                },
-                _ => {}
-            };
+            if let VirtualState::ExistsVirtually = child.as_inner().state() {
+                CopyOperation::new(
+                    child.path(),
+                    identity.as_identity()
+                        .join(
+                            child.path()
+                                .file_name()
+                                .unwrap()
+                        ).as_path(),
+                    self.merge(),
+                    self.overwrite()
+                ).execute(fs)?
+            }
         }
         Ok(())
     }
@@ -99,7 +96,7 @@ impl Operation<VirtualFileSystem> for CopyOperation {
         let stat_new = StatusQuery::new(new_identity.as_identity());
 
         let entry = stat_new.retrieve(&fs)?;
-        let state = entry.as_inner().state().clone();
+        let state = entry.as_inner().state();
         match entry.into_inner() {
             VirtualStatus{ state: VirtualState::Exists, identity }
             | VirtualStatus{ state: VirtualState::ExistsVirtually, identity }
