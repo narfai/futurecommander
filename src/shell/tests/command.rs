@@ -18,7 +18,7 @@
  */
 
 extern crate futurecommander_shell;
-extern crate futurecommander_vfs;
+extern crate file_system;
 
 
 #[cfg_attr(tarpaulin, skip)]
@@ -39,7 +39,7 @@ mod command_integration {
         },
     };
 
-    use futurecommander_vfs::{
+    use file_system::{
         Samples,
         HybridFileSystem,
         query::{ Query, ReadDirQuery, EntryAdapter }

@@ -21,7 +21,7 @@ use std::path::{ Path, PathBuf };
 
 use clap::ArgMatches;
 
-use futurecommander_vfs::{
+use file_system::{
     HybridFileSystem,
     operation::{
         Operation,
@@ -79,7 +79,7 @@ impl Command<InitializedRemoveCommand> {
 mod tests {
     use super::*;
 
-    use futurecommander_vfs::{
+    use file_system::{
         Samples,
         query::{ Query, StatusQuery, Entry }
     };

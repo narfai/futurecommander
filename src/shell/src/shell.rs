@@ -28,7 +28,7 @@ use rustyline::{ CompletionType, Config, EditMode, Editor };
 
 use clap::{ App, ArgMatches };
 
-use futurecommander_vfs::{
+use file_system::{
     HybridFileSystem,
     Kind,
     query::{Query, StatusQuery }
@@ -61,7 +61,7 @@ impl Shell {
             ("debug_status",   Some(matches))  =>
                 match matches.value_of("path") {
                     Some(string_path) => {
-                        let path = futurecommander_vfs::path_helper::absolute(self.cwd.as_path(), Path::new(string_path));
+                        let path = file_system::path_helper::absolute(self.cwd.as_path(), Path::new(string_path));
                         println!("STATUS : {:?}", StatusQuery::new(path.as_path()).retrieve(self.fs.vfs())?);
                         Ok(())
                     },
@@ -224,7 +224,7 @@ impl Shell {
     fn cd(&mut self, matches: &ArgMatches<'_>) -> Result<(), CommandError> {
         match matches.value_of("path") {
             Some(string_path) => {
-                let path = futurecommander_vfs::path_helper::absolute(self.cwd.as_path(), Path::new(string_path));
+                let path = file_system::path_helper::absolute(self.cwd.as_path(), Path::new(string_path));
 
                 match StatusQuery::new(path.as_path()).retrieve(&self.fs.vfs()) {
                     Ok(status) =>

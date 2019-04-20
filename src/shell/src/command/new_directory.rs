@@ -23,7 +23,7 @@ use std::path::PathBuf;
 use crate::command::{ Command };
 use crate::command::errors::CommandError;
 
-use futurecommander_vfs::{
+use file_system::{
     HybridFileSystem,
     Kind,
     operation::{
@@ -74,7 +74,7 @@ impl Command<InitializedNewDirectoryCommand> {
 mod tests {
     use super::*;
 
-    use futurecommander_vfs::{
+    use file_system::{
         Samples,
         query::{Query, ReadDirQuery, EntryAdapter}
     };

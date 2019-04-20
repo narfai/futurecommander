@@ -21,13 +21,14 @@ use std::path::{ Path, PathBuf };
 
 use clap::ArgMatches;
 
-use futurecommander_vfs::{
+use file_system::{
     HybridFileSystem,
     operation::{
         Operation,
         CopyOperation
     },
     query::{
+        QueryError,
         Entry,
         Query,
         StatusQuery
@@ -79,7 +80,7 @@ impl Command<InitializedCopyCommand> {
                     false
                 )
             } else if source.is_dir() {
-                return Err(CommandError::CustomError(format!("Directory into a file {:?} {:?}", source.is_dir(), destination.is_dir())))
+                return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
             } else {
                 return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
             }
@@ -103,7 +104,7 @@ impl Command<InitializedCopyCommand> {
 mod tests {
     use super::*;
 
-    use futurecommander_vfs::{
+    use file_system::{
         Samples,
         query::{ ReadDirQuery, EntryAdapter }
     };

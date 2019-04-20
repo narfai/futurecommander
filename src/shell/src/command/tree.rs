@@ -21,10 +21,10 @@ use std::path::PathBuf;
 
 use clap::ArgMatches;
 
-use futurecommander_vfs::{
-    VfsError,
+use file_system::{
     HybridFileSystem,
     query::{
+        QueryError,
         Entry,
         Query,
         ReadDirQuery
@@ -72,7 +72,7 @@ impl Command<InitializedTreeCommand> {
         }
     }
 
-    fn tree(fs: &HybridFileSystem, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(),VfsError>{
+    fn tree(fs: &HybridFileSystem, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), QueryError>{
         let file_name = match identity.file_name() {
             Some(file_name) => file_name.to_string_lossy().to_string(),
             None => "/".to_string()
@@ -104,7 +104,7 @@ impl Command<InitializedTreeCommand> {
                 }
             },
             Err(error) => match error {
-                VfsError::DoesNotExists(_) | VfsError::IsNotADirectory(_) => {},
+                QueryError::ReadTargetDoesNotExists(_) | QueryError::IsNotADirectory(_) => {},
                 error => return Err(error)
             }
         }
@@ -112,10 +112,8 @@ impl Command<InitializedTreeCommand> {
     }
 
     pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
-        match Self::tree(fs, self.0.path.as_path(), None, true) {
-            Ok(_)       => Ok(()),
-            Err(error)  => Err(CommandError::from(error))
-        }
+        Self::tree(fs, self.0.path.as_path(), None, true)?;
+        Ok(())
     }
 }
 

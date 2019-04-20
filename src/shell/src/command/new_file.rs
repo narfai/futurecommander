@@ -22,7 +22,7 @@ use std::path::PathBuf;
 
 use clap::ArgMatches;
 
-use futurecommander_vfs::{
+use file_system::{
     HybridFileSystem,
     Kind,
     operation::{
@@ -78,7 +78,7 @@ impl Command<InitializedNewFileCommand> {
 mod tests {
     use super::*;
 
-    use futurecommander_vfs::{
+    use file_system::{
         Samples,
         query::{Query, ReadDirQuery, EntryAdapter}
     };

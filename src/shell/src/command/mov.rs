@@ -21,7 +21,7 @@ use std::path::{ Path, PathBuf };
 
 use clap::ArgMatches;
 
-use futurecommander_vfs::{
+use file_system::{
     HybridFileSystem,
     operation::{
         Operation,
@@ -80,7 +80,7 @@ impl Command<InitializedMoveCommand> {
                     false
                 )
             } else if source.is_dir() {
-                return Err(CommandError::CustomError(format!("Directory into a file {:?} {:?}", source.is_dir(), destination.is_dir())))
+                return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
             } else {
                 return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
             }
@@ -109,9 +109,9 @@ impl Command<InitializedMoveCommand> {
 mod tests {
     use super::*;
 
-    use futurecommander_vfs::{
+    use file_system::{
         Samples,
-        VfsError,
+        OperationError,
         query::{ ReadDirQuery, EntryAdapter }
     };
 
@@ -179,7 +179,7 @@ mod tests {
         });
 
         match move_b_to_bd.execute(&mut fs){
-            Err(CommandError::VfsError(VfsError::CopyIntoItSelf(err_source, err_destination))) => {
+            Err(CommandError::Operation(OperationError::CopyIntoItSelf(err_source, err_destination))) => {
                 assert_eq!(source, err_source);
                 assert_eq!(destination.join("B"), err_destination);
             },
