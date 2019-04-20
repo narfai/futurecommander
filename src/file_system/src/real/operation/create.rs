@@ -21,8 +21,7 @@ use crate::{
     Kind,
     OperationError,
     real::{
-        RealFileSystem,
-        errors::RealError
+        RealFileSystem
     },
     operation::{ Operation, CreateOperation }
 };
@@ -34,9 +33,9 @@ impl Operation<RealFileSystem> for CreateOperation {
         if ! self.recursive() {
             let parent = crate::path_helper::get_parent_or_root(path);
             if !parent.exists() {
-                return Err(OperationError::from(RealError::ParentDoesNotExists(path.to_path_buf())));
+                return Err(OperationError::ParentDoesNotExists(path.to_path_buf()));
             } else if !parent.is_dir() {
-                return Err(OperationError::from(RealError::ParentIsNotADirectory(path.to_path_buf())));
+                return Err(OperationError::ParentIsNotADirectory(path.to_path_buf()));
             }
         }
 

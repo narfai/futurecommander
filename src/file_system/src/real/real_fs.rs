@@ -26,9 +26,7 @@ use std::{
     path::{ Path, Ancestors }
 };
 
-use crate::{
-    real::errors::RealError
-};
+use crate::OperationError;
 
 const READ_BUFFER_SIZE: usize = 10_485_760; //10 Mo
 const WRITE_BUFFER_SIZE: usize = 2_097_152; //2 Mo
@@ -41,26 +39,26 @@ impl RealFileSystem {
         RealFileSystem {}
     }
 
-    pub fn remove_file(&self, path: &Path) -> Result<(), RealError> {
+    pub fn remove_file(&self, path: &Path) -> Result<(), OperationError> {
         remove_file(path)?;
         Ok(())
     }
 
-    pub fn remove_directory(&self, path: &Path) -> Result<(), RealError> {//TODO remove_dir if force true
+    pub fn remove_directory(&self, path: &Path) -> Result<(), OperationError> {//TODO remove_dir if force true
         remove_dir_all(path)?;
         Ok(())
     }
 
-    pub fn create_file(&self, path: &Path, overwrite: bool) -> Result<(), RealError> {
+    pub fn create_file(&self, path: &Path, overwrite: bool) -> Result<(), OperationError> {
         if !overwrite && path.exists() {
-            return Err(RealError::AlreadyExists(path.to_path_buf()));
+            return Err(OperationError::AlreadyExists(path.to_path_buf()));
         }
         File::create(path)?; Ok(())
     }
 
-    pub fn create_directory(&self, path: &Path, recursively: bool) -> Result<(), RealError> {
+    pub fn create_directory(&self, path: &Path, recursively: bool) -> Result<(), OperationError> {
         if recursively {
-            fn recursive_dir_creation(mut ancestors: &mut Ancestors<'_>) -> Result<(), RealError> {
+            fn recursive_dir_creation(mut ancestors: &mut Ancestors<'_>) -> Result<(), OperationError> {
                 if let Some(path) = ancestors.next() {
                     if ! path.exists() {
                         recursive_dir_creation(&mut ancestors)?;
@@ -77,29 +75,29 @@ impl RealFileSystem {
         }
     }
 
-    pub fn copy_file_to_file(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), overwrite: bool) -> Result<usize, RealError>{
+    pub fn copy_file_to_file(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize), overwrite: bool) -> Result<usize, OperationError>{
         if ! src.exists() {
-            return Err(RealError::SourceDoesNotExists(src.to_path_buf()));
+            return Err(OperationError::SourceDoesNotExists(src.to_path_buf()));
         }
 
         if ! src.is_file() { //TODO @symlink
-            return Err(RealError::SourceIsNotAFile(src.to_path_buf()));
+            return Err(OperationError::SourceIsNotAFile(src.to_path_buf()));
         }
 
         if dst.exists() {
             if overwrite {
                 if !dst.is_file() { //TODO @symlink
-                    return Err(RealError::OverwriteDirectoryWithFile(src.to_path_buf(), dst.to_path_buf()));
+                    return Err(OperationError::OverwriteDirectoryWithFile(src.to_path_buf(), dst.to_path_buf()));
                 }
             } else {
-                return Err(RealError::OverwriteNotAllowed(src.to_path_buf(), dst.to_path_buf()));
+                return Err(OperationError::OverwriteNotAllowed(src.to_path_buf(), dst.to_path_buf()));
             }
         }
 
         self.create_file(dst, overwrite)?;
         match self._copy_file(src, dst, on_read) {
             Ok(size) => Ok(size),
-            Err(error) => Err(RealError::from(error))
+            Err(error) => Err(OperationError::from(error))
         }
     }
 
@@ -138,9 +136,9 @@ impl RealFileSystem {
 
 
     //@TODO find a way to detect if file coming from different resource if true then copy + rm instead
-    pub fn move_to(&self, src: &Path, dst: &Path, overwrite: bool) -> Result<(), RealError> {
+    pub fn move_to(&self, src: &Path, dst: &Path, overwrite: bool) -> Result<(), OperationError> {
         if ! overwrite && dst.exists() {
-            return Err(RealError::OverwriteNotAllowed(src.to_path_buf(), dst.to_path_buf()));
+            return Err(OperationError::OverwriteNotAllowed(src.to_path_buf(), dst.to_path_buf()));
         }
         rename(src, dst)?;
         Ok(())

@@ -17,9 +17,6 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod errors;
-pub mod query;
-
 mod virtual_fs;
 mod operation;
 

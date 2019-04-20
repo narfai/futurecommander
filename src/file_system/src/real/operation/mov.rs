@@ -22,14 +22,13 @@
 use crate::{
     OperationError,
     RealFileSystem,
-    real::errors::RealError,
     operation::{ Operation, MoveOperation }
 };
 
 impl Operation<RealFileSystem> for MoveOperation {
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), OperationError> {
         if ! self.source().exists() {
-            return Err(OperationError::from(RealError::DoesNotExists(self.source().to_path_buf())));
+            return Err(OperationError::DoesNotExists(self.source().to_path_buf()));
         }
 
         if self.source().is_dir() && self.destination().is_dir() && self.merge() {
@@ -43,13 +42,9 @@ impl Operation<RealFileSystem> for MoveOperation {
                     self.overwrite()
                 ).execute(fs)?;
             }
-            fs.remove_directory(self.source())?;
-            Ok(())
+            fs.remove_directory(self.source())
         } else {
-            match fs.move_to(self.source(), self.destination(), self.overwrite()) {
-                Ok(_) => Ok(()),
-                Err(error) => Err(OperationError::from(RealError::from(error)))
-            }
+            fs.move_to(self.source(), self.destination(), self.overwrite())
         }
         //TODO switch to copy + remove if error
     }

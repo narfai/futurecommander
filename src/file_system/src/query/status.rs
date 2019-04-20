@@ -26,8 +26,7 @@ use crate::{
     VirtualFileSystem,
     Kind,
     representation::{ VirtualPath, VirtualState },
-    query::{ Query, VirtualStatus, EntryAdapter },
-    virt::{ errors::VirtualError }
+    query::{ QueryError, Query, VirtualStatus, EntryAdapter }
 };
 
 
@@ -42,21 +41,21 @@ impl StatusQuery {
         }
     }
 
-    fn virtual_unknown(&self) -> Result<VirtualPath, VirtualError>{
+    fn virtual_unknown(&self) -> Result<VirtualPath, QueryError>{
         match VirtualPath::from(
             self.path.to_path_buf(),
             Some(self.path.to_path_buf()),
             Kind::Unknown
         ) {
             Ok(virtual_identity) => Ok(virtual_identity),
-            Err(error) => Err(VirtualError::from(error))
+            Err(error) => Err(QueryError::from(error))
         }
     }
 
-    fn status_virtual(&self, fs: &VirtualFileSystem) -> Result<VirtualStatus, VirtualError> {
+    fn status_virtual(&self, fs: &VirtualFileSystem) -> Result<VirtualStatus, QueryError> {
         if fs.sub_state().is_virtual(self.path.as_path())? {
             match fs.add_state().get(self.path.as_path())? {
-                Some(_virtual_state) => Err(VirtualError::AddSubDanglingVirtualPath(self.path.to_path_buf())),
+                Some(_virtual_state) => Err(QueryError::AddSubDanglingVirtualPath(self.path.to_path_buf())),
                 None => Ok(VirtualStatus::new(VirtualState::RemovedVirtually, self.virtual_unknown()?))
             }
         } else {
@@ -92,7 +91,7 @@ impl StatusQuery {
         }
     }
 
-    fn status_real(&self, fs: &VirtualFileSystem) -> Result<VirtualStatus, VirtualError> {
+    fn status_real(&self, fs: &VirtualFileSystem) -> Result<VirtualStatus, QueryError> {
         if fs.sub_state().is_virtual(self.path.as_path())? {
             Ok(VirtualStatus::new(VirtualState::Removed, self.virtual_unknown()?))
         } else if self.path.exists() {
@@ -118,7 +117,7 @@ impl StatusQuery {
 impl Query<&VirtualFileSystem> for StatusQuery{
     type Result = EntryAdapter<VirtualStatus>;
 
-    fn retrieve(&self, fs: &VirtualFileSystem) -> Result<Self::Result, VirtualError> {
+    fn retrieve(&self, fs: &VirtualFileSystem) -> Result<Self::Result, QueryError> {
         if fs.add_state().is_virtual(self.path.as_path())? {
             match self.status_virtual(&fs) {
                 Ok(status) => Ok(EntryAdapter(status)),

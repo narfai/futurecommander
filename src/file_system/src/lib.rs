@@ -29,7 +29,7 @@ mod hybrid;
 pub mod representation;
 
 //Read API
-pub use self::virt::query;
+pub mod query;
 pub use self::shared::kind::Kind;
 pub use self::shared::path_helper;
 

@@ -20,7 +20,6 @@
 use crate::{
     OperationError,
     RealFileSystem,
-    real::errors::RealError,
     operation::{ Operation, RemoveOperation }
 };
 
@@ -28,19 +27,18 @@ impl Operation<RealFileSystem> for RemoveOperation{
     fn execute(&self, fs: &mut RealFileSystem) -> Result<(), OperationError> {
         let path = self.path();
         if ! path.exists() {
-            return Err(OperationError::from(RealError::DoesNotExists(path.to_path_buf())));
+            return Err(OperationError::DoesNotExists(path.to_path_buf()));
         }
 
         if path.is_dir() {
             if ! self.recursive() && self.path().read_dir()?.count() > 0 {
-                return Err(OperationError::from(RealError::DirectoryIsNotEmpty(path.to_path_buf())));
+                return Err(OperationError::DirectoryIsNotEmpty(path.to_path_buf()));
             }
 
-            fs.remove_directory(path)?;
+            fs.remove_directory(path)
         } else {
-            fs.remove_file(path)?;
+            fs.remove_file(path)
         }
-        Ok(())
     }
 }
 

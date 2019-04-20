@@ -18,10 +18,7 @@
  */
 
 use crate::{
-    representation::{ VirtualDelta },
-    virt::{
-        errors::VirtualError
-    }
+    representation::{ VirtualDelta, errors::RepresentationError },
 };
 
 
@@ -59,17 +56,7 @@ impl VirtualFileSystem {
         &self.sub
     }
 
-    pub fn virtual_state(&self) -> Result<VirtualDelta, VirtualError> {
-        match &self.add - &self.sub {
-            Ok(state) => Ok(state),
-            Err(error) => Err(VirtualError::from(error))
-        }
-    }
+    pub fn virtual_state(&self) -> Result<VirtualDelta, RepresentationError> { &self.add - &self.sub }
 
-    pub fn reverse_state(&self) -> Result<VirtualDelta, VirtualError> {
-        match &self.sub - &self.add {
-            Ok(state) => Ok(state),
-            Err(error) => Err(VirtualError::from(error))
-        }
-    }
+    pub fn reverse_state(&self) -> Result<VirtualDelta, RepresentationError> { &self.sub - &self.add }
 }

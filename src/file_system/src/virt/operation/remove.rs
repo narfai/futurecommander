@@ -21,10 +21,7 @@ use crate::{
     OperationError,
     operation::{Operation, RemoveOperation },
     query::{ Query, StatusQuery, VirtualStatus},
-    representation::VirtualState,
-    virt::{
-        errors::VirtualError
-    }
+    representation::VirtualState
 };
 
 impl Operation<VirtualFileSystem> for RemoveOperation {
@@ -51,7 +48,7 @@ impl Operation<VirtualFileSystem> for RemoveOperation {
             VirtualStatus{ state: VirtualState::NotExists, .. }
             | VirtualStatus{ state: VirtualState::Removed, .. }
             | VirtualStatus{ state: VirtualState::RemovedVirtually, .. } =>
-                return Err(OperationError::from(VirtualError::DoesNotExists(self.path().to_path_buf())))
+                return Err(OperationError::DoesNotExists(self.path().to_path_buf()))
             ,
         }
         Ok(())

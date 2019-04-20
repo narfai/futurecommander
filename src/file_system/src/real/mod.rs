@@ -17,8 +17,6 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod errors;
-
 mod real_fs;
 mod operation;
 

@@ -26,8 +26,7 @@ use crate::{
     VirtualFileSystem,
     Kind,
     representation::{ VirtualPath,  VirtualState },
-    query::{ Query, StatusQuery, EntryCollection, EntryAdapter, VirtualStatus },
-    virt::{ errors::VirtualError }
+    query::{ QueryError, Query, StatusQuery, EntryCollection, EntryAdapter, VirtualStatus },
 };
 
 pub struct ReadDirQuery {
@@ -46,7 +45,7 @@ impl ReadDirQuery {
         path: &Path,
         source: Option<&Path>,
         parent: Option<&Path>
-    ) -> Result<EntryCollection<EntryAdapter<VirtualStatus>>, VirtualError> {
+    ) -> Result<EntryCollection<EntryAdapter<VirtualStatus>>, QueryError> {
         if !path.exists() {
             return Ok(EntryCollection::new());
         }
@@ -75,12 +74,12 @@ impl ReadDirQuery {
                                 entry_collection.add(EntryAdapter(VirtualStatus::new(VirtualState::Exists, virtual_identity)));
                             }
                         },
-                        Err(error) => return Err(VirtualError::from(error))
+                        Err(error) => return Err(QueryError::from(error))
                     };
                 }
                 Ok(entry_collection)
             },
-            Err(error) => Err(VirtualError::from(error))
+            Err(error) => Err(QueryError::from(error))
         }
     }
 }
@@ -88,7 +87,7 @@ impl ReadDirQuery {
 impl Query<&VirtualFileSystem> for ReadDirQuery {
     type Result = EntryCollection<EntryAdapter<VirtualStatus>>;
 
-    fn retrieve(&self, fs: &VirtualFileSystem) -> Result<Self::Result, VirtualError> {
+    fn retrieve(&self, fs: &VirtualFileSystem) -> Result<Self::Result, QueryError> {
         let directory =
             match StatusQuery::new(self.path.as_path())
                 .retrieve(&fs)?
@@ -97,9 +96,9 @@ impl Query<&VirtualFileSystem> for ReadDirQuery {
                     Some(virtual_identity) =>
                         match virtual_identity.as_kind() {
                             Kind::Directory => virtual_identity,
-                            _ => return Err(VirtualError::IsNotADirectory(self.path.to_path_buf()))
+                            _ => return Err(QueryError::IsNotADirectory(self.path.to_path_buf()))
                         },
-                    None => return Err(VirtualError::DoesNotExists(self.path.to_path_buf()))
+                    None => return Err(QueryError::ReadTargetDoesNotExists(self.path.to_path_buf()))
         };
 
         let mut entry_collection = Self::from_file_system(

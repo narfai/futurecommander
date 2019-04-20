@@ -23,10 +23,7 @@ use crate::{
     OperationError,
     operation::{ CopyOperation, Operation },
     representation::{ VirtualPath, VirtualState },
-    query::{ Query, ReadDirQuery, StatusQuery, VirtualStatus, Entry },
-    virt::{
-        errors::VirtualError
-    }
+    query::{ Query, ReadDirQuery, StatusQuery, VirtualStatus, Entry }
 };
 
 impl CopyOperation {
@@ -79,13 +76,13 @@ impl Operation<VirtualFileSystem> for CopyOperation {
         let parent = StatusQuery::new(parent_path.as_path()).retrieve(fs)?;
 
         if ! parent.exists() {
-            return Err(OperationError::from(VirtualError::ParentDoesNotExists(parent_path.to_path_buf())));
+            return Err(OperationError::ParentDoesNotExists(parent_path.to_path_buf()));
         } else if !parent.is_dir() {
-            return Err(OperationError::from(VirtualError::ParentIsNotADirectory(parent_path.to_path_buf())));
+            return Err(OperationError::ParentIsNotADirectory(parent_path.to_path_buf()));
         }
 
         if ! source.exists() {
-            return Err(OperationError::from(VirtualError::SourceDoesNotExists(self.source().to_path_buf().to_path_buf())));
+            return Err(OperationError::SourceDoesNotExists(self.source().to_path_buf().to_path_buf()));
         }
 
         let source_identity = source.as_inner().as_virtual();
@@ -97,7 +94,7 @@ impl Operation<VirtualFileSystem> for CopyOperation {
         )?;
 
         if new_identity.is_contained_by(source_identity) {
-            return Err(OperationError::from(VirtualError::CopyIntoItSelf(source_identity.to_identity(), self.destination().to_path_buf().to_path_buf())));
+            return Err(OperationError::CopyIntoItSelf(source_identity.to_identity(), self.destination().to_path_buf().to_path_buf()));
         }
 
         let stat_new = StatusQuery::new(new_identity.as_identity());
@@ -116,14 +113,14 @@ impl Operation<VirtualFileSystem> for CopyOperation {
                                 if self.merge() {
                                     self.copy_exiting_children(fs, &source_identity, &identity)?
                                 } else {
-                                    return Err(OperationError::from(VirtualError::MergeNotAllowed(self.source().to_path_buf(), self.destination().to_path_buf())))
+                                    return Err(OperationError::MergeNotAllowed(self.source().to_path_buf(), self.destination().to_path_buf()))
                                 },
-                            Kind::File => return Err(OperationError::from(VirtualError::OverwriteDirectoryWithFile(self.source().to_path_buf(), self.destination().to_path_buf()))),
+                            Kind::File => return Err(OperationError::OverwriteDirectoryWithFile(self.source().to_path_buf(), self.destination().to_path_buf())),
                             _ => {}
                         },
                     Kind::File =>
                         match source_identity.to_kind() {
-                            Kind::Directory => return Err(OperationError::from(VirtualError::CopyDirectoryIntoFile(self.source().to_path_buf(), self.destination().to_path_buf()))),
+                            Kind::Directory => return Err(OperationError::CopyDirectoryIntoFile(self.source().to_path_buf(), self.destination().to_path_buf())),
                             Kind::File =>
                                 if self.overwrite() {
                                     match state {
@@ -136,7 +133,7 @@ impl Operation<VirtualFileSystem> for CopyOperation {
 
                                     fs.mut_add_state().attach_virtual( & new_identity)?;
                                 } else {
-                                    return Err(OperationError::from(VirtualError::OverwriteNotAllowed(self.source().to_path_buf(), self.destination().to_path_buf())))
+                                    return Err(OperationError::OverwriteNotAllowed(self.source().to_path_buf(), self.destination().to_path_buf()))
                                 }
                             _ => {}
                         },
@@ -183,7 +180,7 @@ mod virtual_file_system {
             true,
             false
         ).execute(&mut vfs) {
-            Err(OperationError::Virtual(VirtualError::CopyIntoItSelf(err_source, err_destination))) => {
+            Err(OperationError::CopyIntoItSelf(err_source, err_destination)) => {
                 assert_eq!(source.as_path(), err_source.as_path());
                 assert_eq!(destination.as_path(), err_destination.as_path());
             }

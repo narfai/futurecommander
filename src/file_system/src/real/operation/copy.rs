@@ -20,8 +20,7 @@
 use crate::{
     OperationError,
     real:: {
-        RealFileSystem,
-        errors::RealError
+        RealFileSystem
     },
     operation::{ Operation, CopyOperation }
 };
@@ -42,16 +41,14 @@ impl CopyOperation {
         Ok(())
     }
 
-    pub fn copy_file(&self, fs: &mut RealFileSystem) -> Result<(), RealError>{
-        match fs.copy_file_to_file(
+    pub fn copy_file(&self, fs: &mut RealFileSystem) -> Result<(), OperationError>{
+        fs.copy_file_to_file(
             self.source(),
             self.destination(),
             &|_s| { /*println!("{} {}", self.destination().file_name().unwrap().to_string_lossy(), _s / 1024)*/ },
             self.overwrite()
-        ) {
-            Ok(_) => Ok(()),
-            Err(error) => Err(RealError::from(error))
-        }
+        )?;
+        Ok(())
     }
 }
 
@@ -62,21 +59,21 @@ impl Operation<RealFileSystem> for CopyOperation {
         let destination = self.destination();
 
         if ! source.exists() {
-            return Err(OperationError::from(RealError::SourceDoesNotExists(source.to_path_buf())));
+            return Err(OperationError::SourceDoesNotExists(source.to_path_buf()));
         }
 
         if source.is_dir() && destination.is_file() {
-            return Err(OperationError::from(RealError::OverwriteDirectoryWithFile(source.to_path_buf(), destination.to_path_buf())));
+            return Err(OperationError::OverwriteDirectoryWithFile(source.to_path_buf(), destination.to_path_buf()));
         }
 
         if source.is_file() && destination.is_dir() {
-            return Err(OperationError::from(RealError::CopyDirectoryIntoFile(source.to_path_buf(), destination.to_path_buf())));
+            return Err(OperationError::CopyDirectoryIntoFile(source.to_path_buf(), destination.to_path_buf()));
         }
 
         if source.is_dir() {
             if destination.exists() {
                 if !self.merge() {
-                    return Err(OperationError::from(RealError::MergeNotAllowed(source.to_path_buf(), destination.to_path_buf())));
+                    return Err(OperationError::MergeNotAllowed(source.to_path_buf(), destination.to_path_buf()));
                 }
                 self.copy_real_children(fs)?;
             } else {
@@ -85,7 +82,7 @@ impl Operation<RealFileSystem> for CopyOperation {
             }
         } else if destination.exists() {
             if !self.overwrite() {
-                return Err(OperationError::from(RealError::OverwriteNotAllowed(source.to_path_buf(), destination.to_path_buf())));
+                return Err(OperationError::OverwriteNotAllowed(source.to_path_buf(), destination.to_path_buf()));
             }
             self.copy_file(fs)?;
         } else {

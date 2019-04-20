@@ -23,10 +23,7 @@ use crate::{
     Kind,
     OperationError,
     operation::{ Operation, CreateOperation },
-    query::{ Query, StatusQuery, Entry },
-    virt::{
-        errors::VirtualError
-    }
+    query::{ Query, StatusQuery, Entry }
 };
 
 impl Operation<VirtualFileSystem> for CreateOperation{
@@ -41,13 +38,13 @@ impl Operation<VirtualFileSystem> for CreateOperation{
                     let parent = crate::path_helper::get_parent_or_root(path);
                     let parent_status = StatusQuery::new(parent.as_path()).retrieve(&fs)?;
                     if ! parent_status.exists() {
-                        return Err(OperationError::from(VirtualError::ParentDoesNotExists(path.to_path_buf())));
+                        return Err(OperationError::ParentDoesNotExists(path.to_path_buf()));
                     } else if !parent_status.is_dir() {
-                        return Err(OperationError::from(VirtualError::ParentIsNotADirectory(path.to_path_buf())));
+                        return Err(OperationError::ParentIsNotADirectory(path.to_path_buf()));
                     }
                     fs.mut_add_state().attach(path, None, self.kind())?;
                 } else {
-                    fn recursive_dir_creation(fs: &mut VirtualFileSystem, mut ancestors: &mut Ancestors<'_>) -> Result<(), VirtualError> {
+                    fn recursive_dir_creation(fs: &mut VirtualFileSystem, mut ancestors: &mut Ancestors<'_>) -> Result<(), OperationError> {
                         if let Some(path) = ancestors.next() {
                             if ! StatusQuery::new(path).retrieve(&fs)?.exists() {
                                 recursive_dir_creation(fs, &mut ancestors)?;

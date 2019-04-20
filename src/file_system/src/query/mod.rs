@@ -17,6 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+mod errors;
+pub use self::errors::QueryError;
+
 mod status;
 pub use self::status::StatusQuery;
 
@@ -35,5 +38,5 @@ pub use self::entry_collection::EntryCollection;
 pub trait Query<F> {
     type Result;
 
-    fn retrieve(&self, fs: F) -> Result<Self::Result, crate::virt::errors::VirtualError>;
+    fn retrieve(&self, fs: F) -> Result<Self::Result, self::QueryError>;
 }
