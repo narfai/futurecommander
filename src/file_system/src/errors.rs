@@ -52,7 +52,8 @@ pub enum OperationError {
     ParentDoesNotExists(PathBuf),
     ParentIsNotADirectory(PathBuf),
     SourceDoesNotExists(PathBuf),
-    DoesNotExists(PathBuf)
+    DoesNotExists(PathBuf),
+    Custom(String)
 }
 
 impl From<io::Error> for OperationError {
@@ -97,6 +98,7 @@ impl fmt::Display for OperationError {
             OperationError::OverwriteNotAllowed(source, dst) => write!(f, "Overwrite of {} into {} is not allowed", source.to_string_lossy(), dst.to_string_lossy()),
             OperationError::MergeNotAllowed(source, dst) => write!(f, "Merge of {} into {} is not allowed", source.to_string_lossy(), dst.to_string_lossy()),
             OperationError::DoesNotExists(path) => write!(f, "Path {} does not exists", path.to_string_lossy()),
+            OperationError::Custom(s) => write!(f, "Custom error {}", s),
         }
     }
 }

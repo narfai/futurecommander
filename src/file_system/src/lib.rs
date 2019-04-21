@@ -19,6 +19,9 @@
 
 mod errors;
 
+//Experimental
+pub mod file_system;
+
 mod shared;
 
 mod virt;
