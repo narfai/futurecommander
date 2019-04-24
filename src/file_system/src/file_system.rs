@@ -27,139 +27,9 @@ use crate::{
     OperationError,
     representation::VirtualState,
 //    operation::*,
-    query::{ VirtualStatus, QueryError }
+    query::{ VirtualStatus, QueryError, EntryCollection, Entry, EntryAdapter }
 };
 
-pub trait Entry {
-    fn path(&self) -> &Path;
-    fn to_path(&self) -> PathBuf;
-    fn name(&self) -> Option<&OsStr>;
-    fn is_dir(&self) -> bool;
-    fn is_file(&self) -> bool;
-    fn exists(&self) -> bool;
-}
-
-impl Eq for Entry {}
-
-impl Ord for Entry {
-    fn cmp(&self, other: &Entry) -> Ordering {
-        self.path().cmp(other.path())
-    }
-}
-
-impl PartialOrd for Entry {
-    fn partial_cmp(&self, other: &Entry) -> Option<Ordering> {
-        Some(self.path().cmp(other.path()))
-    }
-}
-
-impl PartialEq for Entry {
-    fn eq(&self, other: &Entry) -> bool {
-        self.path().eq(other.path())
-    }
-}
-
-
-use std::slice::Iter;
-
-impl Entry for &Entry { //TODO find a proper way to do that
-    fn path(&self) -> &Path {
-        self.path()
-    }
-
-    fn to_path(&self) -> PathBuf {
-        self.to_path()
-    }
-
-    fn name(&self) -> Option<&OsStr> {
-        self.name()
-    }
-
-    fn is_dir(&self) -> bool {
-        self.is_dir()
-    }
-
-    fn is_file(&self) -> bool {
-        self.is_file()
-    }
-
-    fn exists(&self) -> bool { self.exists() }
-}
-
-#[derive(Debug, Clone)]
-pub struct EntryAdapter<T: Clone>(pub T);
-
-impl <T: Clone> EntryAdapter<T> {
-    pub fn into_inner(self) -> T {
-        self.0
-    }
-
-    pub fn as_inner(&self) -> &T {
-        &self.0
-    }
-}
-
-impl Entry for &EntryAdapter<&Path> {
-    fn path(&self) -> &Path {
-        self.0
-    }
-
-    fn to_path(&self) -> PathBuf {
-        self.0.to_path_buf()
-    }
-
-    fn name(&self) -> Option<&OsStr> {
-        self.0.file_name()
-    }
-
-    fn is_dir(&self) -> bool {
-        self.0.is_dir()
-    }
-
-    fn is_file(&self) -> bool {
-        self.0.is_file()
-    }
-
-    fn exists(&self) -> bool { self.0.exists() }
-}
-impl Entry for EntryAdapter<&Path> {
-    fn path(&self) -> &Path {
-        self.0
-    }
-
-    fn to_path(&self) -> PathBuf {
-        self.0.to_path_buf()
-    }
-
-    fn name(&self) -> Option<&OsStr> {
-        self.0.file_name()
-    }
-
-    fn is_dir(&self) -> bool {
-        self.0.is_dir()
-    }
-
-    fn is_file(&self) -> bool {
-        self.0.is_file()
-    }
-
-    fn exists(&self) -> bool { self.0.exists() }
-}
-
-
-impl Entry for &EntryAdapter<PathBuf> {
-    fn path(&self) -> &Path { self.0.as_path() }
-
-    fn to_path(&self) -> PathBuf { self.0.clone() }
-
-    fn name(&self) -> Option<&OsStr> { self.0.file_name() }
-
-    fn is_dir(&self) -> bool { self.0.is_dir() }
-
-    fn is_file(&self) -> bool { self.0.is_file() }
-
-    fn exists(&self) -> bool { self.0.exists() }
-}
 
 impl Entry for EntryAdapter<PathBuf> {
     fn path(&self) -> &Path { self.0.as_path() }
@@ -176,159 +46,17 @@ impl Entry for EntryAdapter<PathBuf> {
 }
 
 
-impl Entry for &EntryAdapter<VirtualStatus> {
-    fn path(&self) -> &Path {
-        self.0.as_virtual().as_identity()
-    }
-
-    fn to_path(&self) -> PathBuf {
-        self.0.as_virtual().to_identity()
-    }
-
-    fn name(&self) -> Option<&OsStr> {
-        self.path().file_name()
-    }
-
-    fn is_dir(&self) -> bool {
-        match self.0.as_existing_virtual() {
-            Some(identity) =>
-                match identity.as_kind() {
-                    Kind::Directory => true,
-                    _ => false
-                },
-            None => false
-        }
-    }
-
-    fn is_file(&self) -> bool {
-        match self.0.as_existing_virtual() {
-            Some(identity) =>
-                match identity.as_kind() {
-                    Kind::File => true,
-                    _ => false
-                },
-            None => false
-        }
-    }
-
-    fn exists(&self) -> bool {
-        match self.0.state() {
-            VirtualState::Exists
-            | VirtualState::ExistsVirtually
-            | VirtualState::ExistsThroughVirtualParent
-            | VirtualState::Replaced => true,
-
-            VirtualState::NotExists
-            | VirtualState::Removed
-            | VirtualState::RemovedVirtually => false
-        }
-    }
-}
-
-impl Entry for EntryAdapter<VirtualStatus> {
-    fn path(&self) -> &Path {
-        self.0.as_virtual().as_identity()
-    }
-
-    fn to_path(&self) -> PathBuf {
-        self.0.as_virtual().to_identity()
-    }
-
-    fn name(&self) -> Option<&OsStr> {
-        self.path().file_name()
-    }
-
-    fn is_dir(&self) -> bool {
-        match self.0.as_existing_virtual() {
-            Some(identity) =>
-                match identity.as_kind() {
-                    Kind::Directory => true,
-                    _ => false
-                },
-            None => false
-        }
-    }
-
-    fn is_file(&self) -> bool {
-        match self.0.as_existing_virtual() {
-            Some(identity) =>
-                match identity.as_kind() {
-                    Kind::File => true,
-                    _ => false
-                },
-            None => false
-        }
-    }
-
-    fn exists(&self) -> bool {
-        match self.0.state() {
-            VirtualState::Exists
-            | VirtualState::ExistsVirtually
-            | VirtualState::ExistsThroughVirtualParent
-            | VirtualState::Replaced => true,
-
-            VirtualState::NotExists
-            | VirtualState::Removed
-            | VirtualState::RemovedVirtually => false
-        }
-    }
-}
-
-
-#[derive(Debug, Default)]
-pub struct EntryCollection<'a, T: 'a>(pub Vec<&'a T>)
-    where T: Entry;
-
-impl <'a, T> EntryCollection<'a, T> where T: Entry {
-    pub fn contains(&self, node: &Entry) -> bool {
-        for owned_node in self.0.iter() {
-            if owned_node.path() == node.path() {
-                return true;
-            }
-        }
-        false
-    }
-
-    pub fn new() -> Self {
-        EntryCollection(Vec::new())
-    }
-
-    pub fn add(&mut self, node: T) {
-        self.0.push(&node)
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn iter(&self) -> Iter<'_, &T> {
-        self.0.iter()
-    }
-
-    pub fn is_empty(&self) -> bool { self.0.is_empty() }
-}
-
-
-trait WriteableFileSystem: ReadableFileSystem {
-    //Write API Interface
-    fn create_empty_directory(&mut self, path: &Path) -> Result<(), OperationError>;
-    fn create_empty_file(&mut self, path: &Path) -> Result<(), OperationError>;
-    fn copy_file_into_directory(&mut self, source: &Path, destination: &Path) -> Result<(), OperationError>;
-    fn move_file_into_directory(&mut self, source: &Path, destination: &Path) -> Result<(), OperationError>;
-    fn remove_file(&mut self, path: &Path) -> Result<(), OperationError>;
-    fn remove_empty_directory(&mut self, path: &Path) -> Result<(), OperationError>;
-}
 
 pub struct FileSystemAdapter<T>(pub T);
 
 impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
     //Write virtual specialization
     fn create_empty_directory(&mut self, path: &Path) -> Result<(), OperationError> { unimplemented!() }
-    fn create_empty_file(&mut self, path: &Path) -> Result<(), OperationError> { unimplemented!() }
     fn copy_file_into_directory(&mut self, source: &Path, destination: &Path) -> Result<(), OperationError>{ unimplemented!() }
     fn move_file_into_directory(&mut self, source: &Path, destination: &Path) -> Result<(), OperationError>{ unimplemented!() }
     fn remove_file(&mut self, path: &Path) -> Result<(), OperationError> { unimplemented!() }
     fn remove_empty_directory(&mut self, path: &Path) -> Result<(), OperationError>{ unimplemented!() }
+    fn create_empty_file(&mut self, path: &Path) -> Result<(), OperationError> { unimplemented!() }
 }
 
 impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
@@ -341,20 +69,23 @@ impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
     fn remove_empty_directory(&mut self, path: &Path) -> Result<(), OperationError>{ unimplemented!() }
 }
 
-trait ReadableFileSystem {
-    fn read_dir(&self, path: &Path) -> Result<EntryCollection<&Entry>,QueryError>;
-    fn status(&self, path: &Path) -> Result<&Entry, QueryError>;
+pub trait ReadableFileSystem {
+    type Result : Entry;
+    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Result>,QueryError>;
+    fn status(&self, path: &Path) -> Result<Self::Result, QueryError>;
 }
 
 impl ReadableFileSystem for FileSystemAdapter<VirtualFileSystem> {
+    type Result = EntryAdapter<VirtualStatus>;
     //Read virtual specialization
-    fn read_dir(&self, path: &Path) -> Result<EntryCollection<&Entry>, QueryError> { unimplemented!() }
-    fn status(&self, path: &Path) -> Result<&Entry, QueryError> { unimplemented!() }
+    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Result>, QueryError> { unimplemented!() }
+    fn status(&self, path: &Path) -> Result<Self::Result, QueryError> { unimplemented!() }
 }
 
 impl ReadableFileSystem for FileSystemAdapter<RealFileSystem> {
+    type Result = EntryAdapter<PathBuf>;
     //Read real specialization
-    fn read_dir(&self, path: &Path) -> Result<EntryCollection<&Entry>,QueryError> {
+    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Result>,QueryError> {
         if ! path.exists() {
             return Err(QueryError::ReadTargetDoesNotExists(path.to_path_buf()))
         }
@@ -369,7 +100,7 @@ impl ReadableFileSystem for FileSystemAdapter<RealFileSystem> {
             Ok(results) => {
                 for result in results {
                     match result {
-                        Ok(result) => entry_collection.add(&EntryAdapter(result.path().as_path())),
+                        Ok(result) => entry_collection.add(EntryAdapter(result.path())),
                         Err(error) => return Err(QueryError::from(error))
                     };
                 }
@@ -379,12 +110,12 @@ impl ReadableFileSystem for FileSystemAdapter<RealFileSystem> {
         }
     }
 
-    fn status(&self, path: &Path) -> Result<&Entry, QueryError> {
-        Ok(EntryAdapter(path))
+    fn status(&self, path: &Path) -> Result<Self::Result, QueryError> {
+        Ok(EntryAdapter(path.to_path_buf()))
     }
 }
 
-pub enum AtomicOperation {
+pub enum Operation {
     CreateEmptyDirectory(PathBuf),
     CreateEmptyFile(PathBuf),
     CopyFileIntoDirectory(PathBuf, PathBuf),
@@ -393,9 +124,9 @@ pub enum AtomicOperation {
     RemoveEmptyDirectory(PathBuf)
 }
 
-impl AtomicOperation {
+impl Operation {
     pub fn apply<F: WriteableFileSystem>(self, fs: &mut F) -> Result<(), OperationError> {
-        use self::AtomicOperation::*;
+        use self::Operation::*;
         match self {
             CreateEmptyDirectory(path) => fs.create_empty_directory(path.as_path()),
             CreateEmptyFile(path) => fs.create_empty_file(path.as_path()),
@@ -405,13 +136,14 @@ impl AtomicOperation {
             RemoveEmptyDirectory(path) => fs.remove_empty_directory(path.as_path())
         }
     }
+
     //TODO apply_at(op position) => makes the index bubble through errors
     //TODO rollback & reverse there
 }
 
-pub struct AtomicTransaction(pub Vec<AtomicOperation>);
+pub struct Transaction(pub Vec<Operation>);
 
-impl AtomicTransaction {
+impl Transaction {
     pub fn apply<F: WriteableFileSystem>(self, fs: &mut F) -> Result<(), OperationError> {
         for atomic in self.0 {
             atomic.apply(fs)?
@@ -419,38 +151,40 @@ impl AtomicTransaction {
         Ok(())
     }
 
-    pub fn add(&mut self, atomic: AtomicOperation) {
+    pub fn add(&mut self, atomic: Operation) {
         self.0.push(atomic)
     }
 }
 
-impl IntoIterator for AtomicTransaction {
-    type Item = AtomicOperation;
-    type IntoIter = IntoIter<AtomicOperation>;
+impl IntoIterator for Transaction {
+    type Item = Operation;
+    type IntoIter = IntoIter<Operation>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
 }
 
-pub struct RequestTransaction(pub Vec<Box<dyn Request>>);
+pub struct CommandTransaction(pub Vec<Box<dyn Command<Entry>>>);
 
-pub trait Request {
-    fn atomize(&self, fs: &ReadableFileSystem) -> Result<AtomicTransaction, OperationError>;
+pub trait Command<E: Entry> {
+    fn atomize(&self, fs: &ReadableFileSystem<Result=E>) -> Result<Transaction, OperationError>;
 }
 
+//==================//
+
 #[derive(Debug, Clone)]
-pub struct CopyRequest {
+pub struct CopyCommand {
     source: PathBuf,
     destination: PathBuf,
     merge: bool,
     overwrite: bool
 }
 
-impl CopyRequest {
+impl CopyCommand {
     //App
-    pub fn new(source: &Path, destination: &Path, merge: bool, overwrite: bool) -> CopyRequest {
-        CopyRequest {
+    pub fn new(source: &Path, destination: &Path, merge: bool, overwrite: bool) -> CopyCommand {
+        CopyCommand {
             source: source.to_path_buf(),
             destination: destination.to_path_buf(),
             merge,
@@ -464,8 +198,8 @@ impl CopyRequest {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
-impl Request for CopyRequest {
-    fn atomize(&self, fs: &ReadableFileSystem) -> Result<AtomicTransaction, OperationError> {
+impl <E: Entry> Command<E> for CopyCommand {
+    fn atomize(&self, fs: &ReadableFileSystem<Result=E>) -> Result<Transaction, OperationError> {
         //Business
         unimplemented!()
     }
@@ -473,11 +207,11 @@ impl Request for CopyRequest {
 
 fn test(){
     let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
-    let request = CopyRequest::new(Path::new("SRC"), Path::new("DST"), false, false);
-    request
+    let Command = CopyCommand::new(Path::new("SRC"), Path::new("DST"), false, false);
+    Command
         .atomize(&vfs)
         .unwrap()
         .apply(&mut vfs)
         .unwrap();
 }
-//CopyRequest->atomize(ReadableFileSystem) => AtomicTransaction.apply(WriteableFileSystem)
+//CopyCommand->atomize(ReadableFileSystem) => AtomicTransaction.apply(WriteableFileSystem)

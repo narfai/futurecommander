@@ -111,7 +111,7 @@ mod tests {
 
     use file_system::{
         Samples,
-        OperationError,
+        BusinessError,
         query::{ ReadDirQuery, EntryAdapter }
     };
 
@@ -179,7 +179,7 @@ mod tests {
         });
 
         match move_b_to_bd.execute(&mut fs){
-            Err(CommandError::Operation(OperationError::CopyIntoItSelf(err_source, err_destination))) => {
+            Err(CommandError::Operation(BusinessError::CopyIntoItSelf(err_source, err_destination))) => {
                 assert_eq!(source, err_source);
                 assert_eq!(destination.join("B"), err_destination);
             },

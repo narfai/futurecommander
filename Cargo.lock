@@ -157,7 +157,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "futurecommander_file_system"
+name = "futurecommander_filesystem"
 version = "0.3.5"
 
 [[package]]
@@ -165,7 +165,7 @@ name = "futurecommander_shell"
 version = "0.3.5"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "futurecommander_file_system 0.3.5",
+ "futurecommander_filesystem 0.3.5",
  "rustyline 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

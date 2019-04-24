@@ -17,10 +17,16 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::slice::Iter;
-use std::vec::IntoIter as VecIntoIter;
+use std::{
+    slice::Iter,
+    vec::IntoIter as VecIntoIter
+};
 
-use crate::query::Entry;
+use crate::{
+    port::{
+        Entry
+    }
+};
 
 #[derive(Debug, Default)]
 pub struct EntryCollection<T>(pub Vec<T>)
@@ -64,3 +70,38 @@ impl <T: Entry>IntoIterator for EntryCollection<T> {
     }
 }
 
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::{
+        path::Path
+    };
+
+    use crate::{
+        port::{
+            Entry,
+            EntryAdapter
+        }
+    };
+
+
+    #[test]
+    fn entry_collection_contains() {
+        let mut c = EntryCollection::new();
+        c.add(EntryAdapter(Path::new("A")));
+
+        assert!(c.contains(&EntryAdapter(Path::new("A"))));
+        assert_eq!(c.len(), 1);
+    }
+
+    #[test]
+    fn entry_collection_is_empty() {
+        let c = EntryCollection::<EntryAdapter<&Path>>::new();
+
+        assert!(c.is_empty());
+        assert_eq!(c.len(), 0);
+    }
+}
