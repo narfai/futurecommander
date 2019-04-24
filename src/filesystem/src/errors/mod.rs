@@ -17,8 +17,8 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod business;
-pub use self::business::BusinessError;
+mod domain;
+pub use self::domain::DomainError;
 
 mod query;
 pub use self::query::QueryError;

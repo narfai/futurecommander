@@ -26,7 +26,8 @@ use crate::{
     infrastructure::virt::{
         representation  ::{
             VirtualPath, VirtualState
-        }
+        },
+        VirtualFileSystem
     },
     port::{
         Entry,

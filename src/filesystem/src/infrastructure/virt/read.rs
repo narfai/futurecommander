@@ -28,6 +28,7 @@ use crate::{
         FileSystemAdapter,
         EntryAdapter,
         EntryCollection,
+        Entry
     },
     infrastructure::virt::{
         VirtualFileSystem,
@@ -36,8 +37,8 @@ use crate::{
 };
 
 impl ReadableFileSystem for FileSystemAdapter<VirtualFileSystem> {
-    type Result = EntryAdapter<VirtualStatus>;
+    type Item = EntryAdapter<VirtualStatus>;
     //Read virtual specialization
-    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Result>, QueryError> { unimplemented!() }
-    fn status(&self, path: &Path) -> Result<Self::Result, QueryError> { unimplemented!() }
+    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Item>, QueryError> { unimplemented!() }
+    fn status(&self, path: &Path) -> Result<Self::Item, QueryError> { unimplemented!() }
 }

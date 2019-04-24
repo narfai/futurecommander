@@ -32,7 +32,7 @@ use crate::{
 pub struct EntryCollection<T>(pub Vec<T>)
     where T: Entry;
 
-impl <T> EntryCollection<T> where T: Entry {
+impl <T: Entry> EntryCollection<T> {
     pub fn contains(&self, node: &Entry) -> bool {
         for owned_node in self.0.iter() {
             if owned_node.path() == node.path() {
@@ -69,7 +69,6 @@ impl <T: Entry>IntoIterator for EntryCollection<T> {
         self.0.into_iter()
     }
 }
-
 
 #[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]

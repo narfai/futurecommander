@@ -23,7 +23,7 @@ use std::{
 };
 
 use crate::{
-    errors  ::{ BusinessError },
+    errors  ::DomainError,
     port    ::{
         WriteableFileSystem,
         FileSystemTransaction

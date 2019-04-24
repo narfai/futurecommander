@@ -23,14 +23,14 @@ use std::{
 
 
 #[derive(Debug, Clone)]
-pub struct RemoveOperation {
+pub struct RemoveEvent {
     path: PathBuf,
     recursive: bool
 }
 
-impl RemoveOperation {
-    pub fn new(path: &Path, recursive: bool) -> RemoveOperation {
-        RemoveOperation {
+impl RemoveEvent {
+    pub fn new(path: &Path, recursive: bool) -> RemoveEvent {
+        RemoveEvent {
             path: path.to_path_buf(),
             recursive
         }

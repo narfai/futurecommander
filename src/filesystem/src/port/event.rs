@@ -18,16 +18,26 @@
  */
 
 use crate::{
-    errors::BusinessError,
+    errors::DomainError,
     port::{
         Entry,
         ReadableFileSystem,
         WriteableFileSystem,
         FileSystemTransaction,
-        AtomicTransaction
+        AtomicTransaction,
+        EntryAdapter
     }
 };
 
-pub trait Event<E: Entry> {
-    fn atomize(&self, fs: &ReadableFileSystem<Result=E>) -> Result<AtomicTransaction, BusinessError>;
+pub trait Event<E, F> where F: ReadableFileSystem<Item=E>, E: Entry {
+    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError>;
+}
+
+
+pub trait Listener<E> {
+    fn emit(&mut self, event: E) -> Result<(), DomainError>;
+}
+
+pub trait Delayer<E> {
+    fn delay(&mut self, event: E);
 }

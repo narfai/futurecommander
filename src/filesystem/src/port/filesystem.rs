@@ -22,10 +22,11 @@ use std::{
 };
 
 use crate::{
-    errors::{ QueryError, BusinessError },
+    errors::{QueryError, DomainError},
     port::{
         Entry,
-        EntryCollection
+        EntryCollection,
+        EntryAdapter
     },
     infrastructure::errors::InfrastructureError
 };
@@ -33,9 +34,9 @@ use crate::{
 pub struct FileSystemAdapter<F>(pub F);
 
 pub trait ReadableFileSystem {
-    type Result : Entry;
-    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Result>,QueryError>;
-    fn status(&self, path: &Path) -> Result<Self::Result, QueryError>;
+    type Item : Entry;
+    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Item>,QueryError>;
+    fn status(&self, path: &Path) -> Result<Self::Item, QueryError>;
 }
 
 pub trait WriteableFileSystem: ReadableFileSystem {

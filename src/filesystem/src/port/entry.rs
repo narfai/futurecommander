@@ -24,10 +24,10 @@ use std::{
 };
 
 
-#[derive(Debug, Clone)]
-pub struct EntryAdapter<T: Clone>(pub T);
+#[derive(Debug)]
+pub struct EntryAdapter<T>(pub T);
 
-impl <T: Clone> EntryAdapter<T> {
+impl <T> EntryAdapter<T> {
     pub fn into_inner(self) -> T {
         self.0
     }
@@ -65,7 +65,6 @@ impl PartialEq for Entry {
         self.path().eq(other.path())
     }
 }
-
 
 #[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]

@@ -25,7 +25,7 @@ pub mod kind;
 pub use self::kind::Kind;
 
 mod errors;
-pub use self::errors::BusinessError;
+pub use self::errors::DomainError;
 
 mod container;
 pub use self::container::Container;

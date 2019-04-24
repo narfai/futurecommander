@@ -63,14 +63,3 @@ pub fn normalize(p: &Path) -> PathBuf {
 
     norm_path
 }
-
-pub fn root_identity() -> PathBuf {
-    PathBuf::from(MAIN_SEPARATOR.to_string())
-}
-
-pub fn get_parent_or_root(identity: &Path) -> PathBuf {
-    match identity.parent() {
-        Some(parent) => parent.to_path_buf(),
-        None => root_identity()
-    }
-}

@@ -11,16 +11,18 @@ use crate::{
         ReadableFileSystem,
         FileSystemAdapter,
         EntryAdapter,
-        EntryCollection
+        EntryCollection,
+        Entry
     },
     infrastructure::real::{
         RealFileSystem
     }
 };
 impl ReadableFileSystem for FileSystemAdapter<RealFileSystem> {
-    type Result = EntryAdapter<PathBuf>;
+    type Item = EntryAdapter<PathBuf>;
+
     //Read real specialization
-    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Result>,QueryError> {
+    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Item>,QueryError> {
         if ! path.exists() {
             return Err(QueryError::ReadTargetDoesNotExists(path.to_path_buf()))
         }
@@ -45,7 +47,7 @@ impl ReadableFileSystem for FileSystemAdapter<RealFileSystem> {
         }
     }
 
-    fn status(&self, path: &Path) -> Result<Self::Result, QueryError> {
+    fn status(&self, path: &Path) -> Result<Self::Item, QueryError> {
         Ok(EntryAdapter(path.to_path_buf()))
     }
 }

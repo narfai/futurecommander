@@ -22,16 +22,16 @@ use std::{
 };
 
 #[derive(Debug, Clone)]
-pub struct MoveOperation {
+pub struct MoveEvent {
     source: PathBuf,
     destination: PathBuf,
     merge: bool,
     overwrite: bool //To honour overwrite or merge error, we should crawl recursively the entire vfs children of dst ...
 }
 
-impl MoveOperation {
-    pub fn new(source: &Path, destination: &Path, merge: bool, overwrite: bool) -> MoveOperation {
-        MoveOperation {
+impl MoveEvent {
+    pub fn new(source: &Path, destination: &Path, merge: bool, overwrite: bool) -> MoveEvent {
+        MoveEvent {
             source: source.to_path_buf(),
             destination: destination.to_path_buf(),
             merge,

@@ -21,15 +21,13 @@ mod entry;
 mod entry_collection;
 mod event;
 mod filesystem;
-mod listener;
 mod atomic;
 
 pub use self::{
     entry_collection::{ EntryCollection },
     entry::{ EntryAdapter, Entry },
-    event::{ Event },
+    event::{ Event, Listener, Delayer },
     filesystem::{ FileSystemAdapter, WriteableFileSystem, ReadableFileSystem, FileSystemTransaction },
-    listener::{ Listener },
     atomic::{ AtomicTransaction, Atomic }
 };
 

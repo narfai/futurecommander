@@ -22,7 +22,7 @@ use std::{
 };
 
 use crate::{
-    errors::{ BusinessError },
+    errors::{DomainError},
     port::{
         Entry,
         ReadableFileSystem,
@@ -56,8 +56,8 @@ impl CopyEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
-impl <E: Entry> Event<E> for CopyEvent {
-    fn atomize(&self, fs: &ReadableFileSystem<Result=E>) -> Result<AtomicTransaction, BusinessError> {
+impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: Entry {
+    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
         //Business
         unimplemented!()
     }

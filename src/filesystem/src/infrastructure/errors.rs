@@ -27,8 +27,10 @@ use std::{
 
 use crate::{
     errors::{ QueryError },
-    infrastructure::virt::representation::errors::RepresentationError
 };
+
+//Representation error convenient re-export
+pub use crate::infrastructure::virt::representation::errors::RepresentationError;
 
 #[derive(Debug)]
 pub enum InfrastructureError {
@@ -56,13 +58,13 @@ impl From<QueryError> for InfrastructureError {
     }
 }
 
-
 impl fmt::Display for InfrastructureError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             InfrastructureError::Io(error) => write!(f, "Io error {}", error),
             InfrastructureError::Representation(error) => write!(f, "Representation error {}", error),
             InfrastructureError::Query(error) => write!(f, "Query error {}", error),
+            InfrastructureError::Custom(message) => write!(f, "Custom message {}", message),
         }
     }
 }

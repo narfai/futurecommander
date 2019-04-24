@@ -21,7 +21,7 @@ use std::{
     collections::{
         BTreeMap
     },
-    path::{ PathBuf, Path },
+    path::{ PathBuf, Path, MAIN_SEPARATOR },
     ops::{ Add, Sub }
 };
 
@@ -52,7 +52,7 @@ impl VirtualDelta {
     pub fn attach(&mut self, identity: &Path, source: Option<&Path>, kind: Kind) -> Result<(), RepresentationError> {
        if self.get(identity)?.is_some() { Err(RepresentationError::AlreadyExists(identity.to_path_buf())) }
        else {
-            let parent = crate::path_helper::get_parent_or_root(identity);
+            let parent = Self::get_parent_or_root(identity);
 
             if !self.hierarchy.contains_key(parent.as_path()) {
                 self.hierarchy.insert(parent.to_path_buf(), VirtualChildren::default());
@@ -62,7 +62,7 @@ impl VirtualDelta {
                 return Err(RepresentationError::VirtualParentIsAFile(identity.to_path_buf()));
             }
 
-            if identity != crate::path_helper::root_identity().as_path() {
+            if identity != Self::root_identity().as_path() {
                 self.hierarchy
                     .get_mut(parent.as_path())
                     .unwrap() //Assumed
@@ -79,7 +79,7 @@ impl VirtualDelta {
 
     pub fn detach(&mut self, identity: &Path) -> Result<(), RepresentationError> {
         if self.get(identity)?.is_some() {
-            let parent = crate::path_helper::get_parent_or_root(identity);
+            let parent = Self::get_parent_or_root(identity);
 
             self.hierarchy.get_mut(&parent)
                 .unwrap()//TODO Assumed ? self.get has not the same behavior as hierarchy.get_mut
@@ -98,7 +98,7 @@ impl VirtualDelta {
     }
 
     pub fn is_directory(&self, identity: &Path) -> Result<bool, RepresentationError> {
-        if identity == crate::path_helper::root_identity().as_path() {
+        if identity == Self::root_identity().as_path() {
             return Ok(true);
         }
 
@@ -109,7 +109,7 @@ impl VirtualDelta {
     }
 
     pub fn is_file(&self, identity: &Path) -> Result<bool, RepresentationError> {
-        if identity == crate::path_helper::root_identity().as_path() {
+        if identity == Self::root_identity().as_path() {
             return Ok(false);
         }
 
@@ -149,7 +149,7 @@ impl VirtualDelta {
     }
 
     pub fn get(&self, identity: &Path) -> Result<Option<&VirtualPath>, RepresentationError> {
-        match self.hierarchy.get(crate::path_helper::get_parent_or_root(identity).as_path()) {
+        match self.hierarchy.get(Self::get_parent_or_root(identity).as_path()) {
             Some(children) => {
                 match children.get(&VirtualPath::from_path(identity)?) {
                     Some(child) => Ok(Some(&child)),
@@ -226,6 +226,18 @@ impl VirtualDelta {
             None => Ok(false),
         }
     }
+
+    pub fn root_identity() -> PathBuf {
+        PathBuf::from(MAIN_SEPARATOR.to_string())
+    }
+
+    pub fn get_parent_or_root(identity: &Path) -> PathBuf {
+        match identity.parent() {
+            Some(parent) => parent.to_path_buf(),
+            None => Self::root_identity()
+        }
+    }
+
 }
 
 

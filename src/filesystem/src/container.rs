@@ -17,22 +17,24 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+
 use std::{
-    path::Path,
+    path::{ Path, PathBuf },
     collections::vec_deque::VecDeque
 };
 
 use crate::{
-    errors:: { BusinessError, QueryError },
+    errors:: {DomainError, QueryError },
     port::{
         Listener,
         ReadableFileSystem,
-//        WriteableFileSystem,
+        WriteableFileSystem,
         FileSystemAdapter,
         Entry,
         EntryAdapter,
         EntryCollection,
-        Event
+        Event,
+        Delayer
     },
     infrastructure::{
         VirtualFileSystem,
@@ -41,30 +43,28 @@ use crate::{
     }
 };
 
+type RealEvent      = Event<EntryAdapter<PathBuf>,          FileSystemAdapter<RealFileSystem>>;
+type VirtualEvent   = Event<EntryAdapter<VirtualStatus>,    FileSystemAdapter<VirtualFileSystem>> ;
+
 pub struct Container {
     virtual_fs: FileSystemAdapter<VirtualFileSystem>,
-    real_fs: FileSystemAdapter<RealFileSystem>,
-    transaction: VecDeque<Box<Event<Entry>>>
+    real_fs:    FileSystemAdapter<RealFileSystem>,
+    transaction: VecDeque<Box<RealEvent>>
 }
 
 impl Container {
     pub fn new() -> Container {
         Container {
             virtual_fs: FileSystemAdapter(VirtualFileSystem::default()),
-            real_fs: FileSystemAdapter(RealFileSystem::default()),
+            real_fs:    FileSystemAdapter(RealFileSystem::default()),
             transaction: VecDeque::new()
         }
     }
 
-    fn apply(&mut self) -> Result<(), BusinessError> {
+    fn apply(&mut self) -> Result<(), DomainError> {
         while let Some(event) = self.transaction.pop_front() {
-            match self.emit(event) {
-                Err(error) => {
-                    self.transaction.push_front(event);
-                    return Err(error);
-                },
-                Ok(_) => Ok(())
-            };
+            &event.atomize(&self.real_fs)?
+                .apply(&mut self.real_fs)?;
         }
         Ok(())
     }
@@ -75,25 +75,51 @@ impl Container {
 }
 
 impl ReadableFileSystem for Container {
-    type Result = EntryAdapter<VirtualStatus>;
+    type Item = EntryAdapter<VirtualStatus>;
 
-    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Result>,QueryError> {
+    fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Item>,QueryError> {
         self.virtual_fs.read_dir(path)
     }
 
-    fn status(&self, path: &Path) -> Result<Self::Result, QueryError> {
+    fn status(&self, path: &Path) -> Result<Self::Item, QueryError> {
         self.virtual_fs.status(path)
     }
 }
 
-impl Listener for Container {
-    fn emit(&mut self, event: Box<Event<Entry>>) -> Result<(), BusinessError> {
+impl Delayer<Box<RealEvent>> for Container {
+    fn delay(&mut self, event: Box<RealEvent>) {
+        self.transaction.push_back(event);
+    }
+}
+
+impl Listener<&VirtualEvent> for Container {
+    fn emit(&mut self, event: &VirtualEvent) -> Result<(), DomainError> {
         event.atomize(&self.virtual_fs)?
              .apply(&mut self.virtual_fs)?;
-
-        self.transaction.push_back(event);
         Ok(())
     }
 }
 
 
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{
+        event::CopyEvent
+    };
+
+    #[test]
+    fn test() {
+        let mut container = Container::new();
+        let event = CopyEvent::new(
+            Path::new("/test/source"),
+            Path::new("/test/destination"),
+            false,
+            false
+        );
+        container.emit(&event).unwrap();
+        container.delay(Box::new(event));
+    }
+}
