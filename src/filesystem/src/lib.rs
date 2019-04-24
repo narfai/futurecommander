@@ -18,18 +18,25 @@
  */
 
 mod event;
+
 mod port;
 mod infrastructure;
-
-pub mod kind;
-pub use self::kind::Kind;
-
+mod kind;
 mod errors;
-pub use self::errors::DomainError;
-
 mod container;
-pub use self::container::Container;
 
+pub use self::{
+    kind::Kind,
+    errors::{ DomainError, QueryError },
+    port::{
+        Listener,
+        Delayer,
+        Entry,
+        Event
+    },
+    event::*,
+    container::Container
+};
 
 #[cfg_attr(tarpaulin, skip)]
 pub mod sample;

@@ -22,7 +22,16 @@ use std::{
     path:: { Path, PathBuf }
 };
 
-use crate::Kind;
+use crate::{
+    Kind,
+    errors::{ DomainError },
+    port::{
+        Entry,
+        ReadableFileSystem,
+        Event,
+        AtomicTransaction
+    }
+};
 
 #[derive(Debug, Clone)]
 pub struct CreateEvent {
@@ -46,4 +55,11 @@ impl CreateEvent {
     pub fn kind(&self) -> Kind { self.kind }
     pub fn recursive(&self) -> bool { self.recursive }
     pub fn overwrite(&self) -> bool { self.overwrite }
+}
+
+impl <E, F> Event <E, F> for CreateEvent where F: ReadableFileSystem<Item=E>, E: Entry {
+    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
+        //Business
+        unimplemented!()
+    }
 }

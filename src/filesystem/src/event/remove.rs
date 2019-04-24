@@ -21,6 +21,16 @@ use std::{
     path:: { Path, PathBuf }
 };
 
+use crate::{
+    Kind,
+    errors::{ DomainError },
+    port::{
+        Entry,
+        ReadableFileSystem,
+        Event,
+        AtomicTransaction
+    }
+};
 
 #[derive(Debug, Clone)]
 pub struct RemoveEvent {
@@ -38,4 +48,11 @@ impl RemoveEvent {
 
     pub fn path(&self) -> &Path { self.path.as_path() }
     pub fn recursive(&self) -> bool { self.recursive }
+}
+
+impl <E, F> Event <E, F> for RemoveEvent where F: ReadableFileSystem<Item=E>, E: Entry {
+    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
+        //Business
+        unimplemented!()
+    }
 }

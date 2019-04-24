@@ -21,6 +21,17 @@ use std::{
     path:: { Path, PathBuf }
 };
 
+use crate::{
+    Kind,
+    errors::{ DomainError },
+    port::{
+        Entry,
+        ReadableFileSystem,
+        Event,
+        AtomicTransaction
+    }
+};
+
 #[derive(Debug, Clone)]
 pub struct MoveEvent {
     source: PathBuf,
@@ -43,4 +54,11 @@ impl MoveEvent {
     pub fn destination(&self) -> &Path { self.destination.as_path() }
     pub fn merge(&self) -> bool { self.merge }
     pub fn overwrite(&self) -> bool { self.overwrite }
+}
+
+impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: Entry {
+    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
+        //Business
+        unimplemented!()
+    }
 }
