@@ -85,9 +85,9 @@ mod test {
     fn reset_empty() {
         let mut vfs = VirtualFileSystem::default();
 
-        vfs.mut_add_state().attach(Path::new("virtualA"), None, Kind::Directory).unwrap();
-        vfs.mut_add_state().attach(Path::new("virtualB"), None, Kind::File).unwrap();
-        vfs.mut_sub_state().attach(Path::new("A"), None, Kind::Directory).unwrap();
+        vfs.mut_add_state().attach(Path::new("/virtualA"), None, Kind::Directory).unwrap();
+        vfs.mut_add_state().attach(Path::new("/virtualB"), None, Kind::File).unwrap();
+        vfs.mut_sub_state().attach(Path::new("/A"), None, Kind::Directory).unwrap();
 
         assert!(vfs.has_addition());
         assert!(vfs.has_subtraction());
