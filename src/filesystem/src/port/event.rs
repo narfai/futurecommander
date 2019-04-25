@@ -22,10 +22,7 @@ use crate::{
     port::{
         Entry,
         ReadableFileSystem,
-        WriteableFileSystem,
-        FileSystemTransaction,
         AtomicTransaction,
-        EntryAdapter
     }
 };
 

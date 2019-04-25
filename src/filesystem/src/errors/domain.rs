@@ -19,7 +19,6 @@
 
 
 use std::{
-    io,
     error,
     fmt,
     path::PathBuf
@@ -36,9 +35,7 @@ use crate::{
 
 #[derive(Debug)]
 pub enum DomainError {
-//    Io(io::Error),
     Infrastructure(InfrastructureError),
-//    Representation(RepresentationError),
     Query(QueryError),
 
     //Virtual Only
@@ -62,18 +59,6 @@ pub enum DomainError {
     Custom(String)
 }
 
-//impl From<io::Error> for BusinessError {
-//    fn from(error: io::Error) -> Self {
-//        BusinessError::Io(error)
-//    }
-//}
-
-//impl From<RepresentationError> for BusinessError {
-//    fn from(error: RepresentationError) -> Self {
-//        BusinessError::Representation(error)
-//    }
-//}
-//
 impl From<QueryError> for DomainError {
     fn from(error: QueryError) -> Self {
         DomainError::Query(error)
@@ -90,9 +75,7 @@ impl From<InfrastructureError> for DomainError {
 impl fmt::Display for DomainError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-//            BusinessError::Io(error) => write!(f, "Io error {}", error),
             DomainError::Infrastructure(error) => write!(f, "Infrastructure error {}", error),
-//            BusinessError::Representation(error) => write!(f, "Representation error {}", error),
             DomainError::Query(error) => write!(f, "Query error {}", error),
             //Virtual Only
             DomainError::CopyIntoItSelf(source, dst) => write!(f, "Cannot copy {} into itself {}", source.to_string_lossy(), dst.to_string_lossy()),
@@ -121,8 +104,6 @@ impl fmt::Display for DomainError {
 impl error::Error for DomainError {
     fn cause(&self) -> Option<&dyn error::Error> {
         match self {
-//            BusinessError::Io(err) => Some(err),
-//            BusinessError::Representation(err) => Some(err),
             DomainError::Query(err) => Some(err),
             DomainError::Infrastructure(err) => Some(err),
             _ => None

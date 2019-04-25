@@ -22,7 +22,6 @@ use std::{
 };
 
 use crate::{
-    Kind,
     errors::{ DomainError },
     port::{
         Entry,
@@ -106,7 +105,7 @@ impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: E
         } else {
             if source.is_dir() {
                 transaction.add(Atomic::CreateEmptyDirectory(destination.to_path()));
-                for child in fs.read_maintained(source.path())? {
+                for child in fs.read_dir(source.path())? {
                     transaction.merge(
                         MoveEvent::new(
                             child.path(),

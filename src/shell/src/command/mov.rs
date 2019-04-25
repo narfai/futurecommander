@@ -102,7 +102,6 @@ mod tests {
 
     use file_system::{
         sample::Samples,
-        DomainError,
         EntryAdapter
     };
 

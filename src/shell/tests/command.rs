@@ -66,8 +66,8 @@ mod command_integration {
         let collection_aprime = fs.read_dir(sample_path.join(&Path::new("APRIME")).as_path())
             .unwrap();
 
-        assert!(collection_aprime.contains(&EntryAdapter(sample_path.join("APRIME/C").as_path())));
         assert!(collection_aprime.contains(&EntryAdapter(sample_path.join("APRIME/B").as_path())));
+        assert!(collection_aprime.contains(&EntryAdapter(sample_path.join("APRIME/C").as_path())));
 
         let collection_aprime_b_d = fs.read_dir(sample_path.join(&Path::new("APRIME/B/D")).as_path())
             .unwrap();

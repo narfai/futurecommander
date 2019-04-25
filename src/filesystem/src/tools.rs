@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::{ Path, PathBuf, Component, MAIN_SEPARATOR };
+use std::path::{ Path, PathBuf, Component };
 
 pub fn absolute(cwd: &Path, path: &Path) -> PathBuf {
     normalize(&cwd.join(path) )

@@ -18,15 +18,13 @@
  */
 
 use std::{
-    path    ::{ Path, PathBuf },
+    path    ::{ PathBuf },
     vec     ::{ IntoIter }
 };
 
 use crate::{
-    errors  ::DomainError,
     port    ::{
-        WriteableFileSystem,
-        FileSystemTransaction
+        WriteableFileSystem
     },
     infrastructure::{ errors:: InfrastructureError }
 

@@ -18,9 +18,9 @@
  */
 
 use std::{
-    path::{ Path, PathBuf },
+    path::{ Path },
     io::{
-        BufReader, BufWriter, Error, ErrorKind,
+        BufReader, BufWriter, Error,
         prelude::*
     },
     fs::{
@@ -33,7 +33,6 @@ use std::{
 };
 
 use crate::{
-    errors::DomainError,
     port::{
         WriteableFileSystem,
         FileSystemAdapter
@@ -101,7 +100,7 @@ impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
     fn move_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{
         match rename(source, destination) {
             Err(error) => {
-                println!("WARNING SWITCH TO COPY / REMOVE");
+                println!("WARNING FALLBACK TO COPY / REMOVE {}", error);
                 self.copy_file_to_file(source, destination)?;
                 self.remove_file(source)
             },

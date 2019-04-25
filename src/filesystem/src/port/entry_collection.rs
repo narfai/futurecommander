@@ -92,7 +92,6 @@ mod tests {
 
     use crate::{
         port::{
-            Entry,
             EntryAdapter
         }
     };

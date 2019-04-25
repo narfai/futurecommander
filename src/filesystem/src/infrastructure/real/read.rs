@@ -11,8 +11,7 @@ use crate::{
         ReadableFileSystem,
         FileSystemAdapter,
         EntryAdapter,
-        EntryCollection,
-        Entry
+        EntryCollection
     },
     infrastructure::real::{
         RealFileSystem

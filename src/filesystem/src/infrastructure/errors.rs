@@ -21,8 +21,7 @@
 use std::{
     io,
     error,
-    fmt,
-    path::PathBuf
+    fmt
 };
 
 use crate::{

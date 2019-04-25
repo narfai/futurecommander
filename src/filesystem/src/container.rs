@@ -28,9 +28,7 @@ use crate::{
     port::{
         Listener,
         ReadableFileSystem,
-        WriteableFileSystem,
         FileSystemAdapter,
-        Entry,
         EntryAdapter,
         EntryCollection,
         Event,
@@ -77,6 +75,14 @@ impl Container {
     pub fn is_empty(&self) -> bool {
         self.virtual_fs.as_inner().is_empty()
     }
+
+    pub fn vfs(&self) -> &FileSystemAdapter<VirtualFileSystem> {
+        &self.virtual_fs
+    }
+
+    pub fn rfs(&self) -> &FileSystemAdapter<RealFileSystem> {
+        &self.real_fs
+    }
 }
 
 impl ReadableFileSystem for Container {
@@ -113,7 +119,8 @@ mod tests {
 
     use crate::{
         event::CopyEvent,
-        sample::Samples
+        sample::Samples,
+        Entry
     };
 
     #[test]

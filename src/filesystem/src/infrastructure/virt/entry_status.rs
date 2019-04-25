@@ -27,7 +27,6 @@ use crate::{
         representation  ::{
             VirtualPath, VirtualState
         },
-        VirtualFileSystem
     },
     port::{
         Entry,

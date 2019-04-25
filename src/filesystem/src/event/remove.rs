@@ -22,7 +22,6 @@ use std::{
 };
 
 use crate::{
-    Kind,
     errors::{ DomainError },
     port::{
         Entry,

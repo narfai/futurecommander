@@ -22,7 +22,6 @@ use std::{
 };
 
 use crate::{
-    Kind,
     errors::{DomainError},
     port::{
         Entry,
@@ -105,7 +104,7 @@ impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: E
             }
         } else {
             if source.is_dir() {
-                transaction.add(Atomic::BindDirectoryToDirectory(source.to_path(), destination.to_path()));//May this behavior break source tracking ... in which case Atomic / AtomicTransaction should be generized
+                transaction.add(Atomic::BindDirectoryToDirectory(source.to_path(), destination.to_path()));
                 for child in fs.read_maintained(source.path())? {
                     transaction.merge(
                         CopyEvent::new(
@@ -271,7 +270,8 @@ mod virtual_tests {
         },
         infrastructure::{
             VirtualFileSystem
-        }
+        },
+        Kind
     };
 
     #[test]

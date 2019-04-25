@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{ path::{ Path }, vec::IntoIter };
+use std::{ path::{ Path } };
 
 use crate::{
     Kind,
@@ -28,8 +28,7 @@ use crate::{
         ReadableFileSystem,
         FileSystemAdapter,
         EntryAdapter,
-        EntryCollection,
-        Entry
+        EntryCollection
     },
     infrastructure::virt::{
         VirtualFileSystem,
@@ -225,7 +224,6 @@ mod tests {
     use crate::{
         sample::Samples,
         port::{
-            Atomic,
             WriteableFileSystem,
             Entry
         }
@@ -364,7 +362,7 @@ mod tests {
         let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
         let z = sample_path.join("Z");
 
-        vfs.create_empty_directory(z.as_path());
+        vfs.create_empty_directory(z.as_path()).unwrap();
 
         let stated = vfs.status(z.as_path())
             .unwrap()

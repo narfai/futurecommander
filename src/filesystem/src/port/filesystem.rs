@@ -22,11 +22,10 @@ use std::{
 };
 
 use crate::{
-    errors::{QueryError, DomainError},
+    errors::{ QueryError },
     port::{
         Entry,
-        EntryCollection,
-        EntryAdapter
+        EntryCollection
     },
     infrastructure::errors::InfrastructureError
 };

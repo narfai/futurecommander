@@ -145,7 +145,7 @@ impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
     fn copy_file_to_file(&mut self, src: &Path, dst: &Path) -> Result<(), InfrastructureError>{
         let source = self.status(src)?;
         let destination = self.status(dst)?;
-        let parent = self.safe_parent(dst)?;
+        self.safe_parent(dst)?;
 
         if !source.exists() {
             return Err(InfrastructureError::Custom("Source does not exists".to_string()));
@@ -181,7 +181,7 @@ impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
         let source = self.status(src)?;
         let destination = self.status(dst)?;
 
-        let parent = self.safe_parent(dst)?;
+        self.safe_parent(dst)?;
 
         if !source.exists() {
             return Err(InfrastructureError::Custom("Source does not exists".to_string()));
