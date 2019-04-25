@@ -75,7 +75,7 @@ impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: E
                     if self.merge() {
                         for child in fs.read_dir(source.path())? {
                             transaction.merge(
-                                CopyEvent::new( //TODO here vfs
+                                CopyEvent::new(
                                     child.path(),
                                     destination.path()
                                         .join(child.name().unwrap())

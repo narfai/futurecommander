@@ -107,19 +107,25 @@ mod tests {
     use super::*;
 
     use crate::{
-        event::CopyEvent
+        event::CopyEvent,
+        sample::Samples
     };
 
     #[test]
-    fn test() {
+    fn copy_directory_recursively() {
+        let chroot = Samples::init_simple_chroot("container_copy_directory_recursively");
         let mut container = Container::new();
         let event = CopyEvent::new(
-            Path::new("/test/source"),
-            Path::new("/test/destination"),
+            chroot.join("RDIR").as_path(),
+            chroot.join("COPIED").as_path(),
             false,
             false
         );
         container.emit(&event).unwrap();
         container.delay(Box::new(event));
+
+        assert!(container.status(chroot.join("COPIED").as_path()).unwrap().exists());
+        assert!(container.status(chroot.join("COPIED/RFILEA").as_path()).unwrap().exists());
+        assert!(container.status(chroot.join("COPIED/RFILEB").as_path()).unwrap().exists());
     }
 }

@@ -37,6 +37,9 @@ pub trait ReadableFileSystem {
     type Item : Entry;
     fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Item>,QueryError>;
     fn status(&self, path: &Path) -> Result<Self::Item, QueryError>;
+    fn read_maintained(&self, path: &Path) -> Result<EntryCollection<Self::Item>,QueryError> {
+        self.read_dir(path)
+    }
 }
 
 pub trait WriteableFileSystem: ReadableFileSystem {

@@ -133,22 +133,3 @@ impl Query<&VirtualFileSystem> for StatusQuery{
 }
 
 
-#[cfg_attr(tarpaulin, skip)]
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    use crate::{
-        Samples
-    };
-
-    #[test]
-    fn status_query_relay_real_fs(){
-        let static_samples = Samples::static_samples_path();
-        let vfs = VirtualFileSystem::default();
-
-        let entry = StatusQuery::new(static_samples.as_path()).retrieve(&vfs).unwrap();
-        assert_eq!(entry.as_inner().state(), VirtualState::Exists);
-        assert!(entry.is_dir());
-    }
-}

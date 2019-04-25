@@ -19,7 +19,8 @@
 
 use std::{
     slice::Iter,
-    vec::IntoIter as VecIntoIter
+    vec::IntoIter as VecIntoIter,
+    iter::FromIterator
 };
 
 use crate::{
@@ -67,6 +68,16 @@ impl <T: Entry>IntoIterator for EntryCollection<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+impl <T: Entry>FromIterator<T> for EntryCollection<T> {
+    fn from_iter<I: IntoIterator<Item=T>>(iter: I) -> Self {
+        let mut c = EntryCollection::new();
+        for i in iter {
+            c.add(i);
+        }
+        c
     }
 }
 

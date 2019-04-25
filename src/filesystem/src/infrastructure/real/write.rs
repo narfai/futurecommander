@@ -19,6 +19,17 @@
 
 use std::{
     path::{ Path, PathBuf },
+    io::{
+        BufReader, BufWriter, Error, ErrorKind,
+        prelude::*
+    },
+    fs::{
+        File,
+        create_dir,
+        rename,
+        remove_file,
+        remove_dir
+    }
 };
 
 use crate::{
@@ -35,12 +46,159 @@ use crate::{
     }
 };
 
+impl FileSystemAdapter<RealFileSystem> {
+    fn _copy_file(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize)) -> Result<usize, Error> {
+        File::open(src)
+            .and_then(|src_file| Ok(BufReader::with_capacity(self.0.read_buffer_size,src_file)))
+            .and_then(|reader|
+                File::create(dst)
+                    .and_then(|dst_file| Ok((reader, BufWriter::with_capacity(self.0.write_buffer_size,dst_file) ) ) )
+            )
+            .and_then(|(mut reader, mut writer)| {
+                let mut read = 0;
+                loop {
+                    match {
+                        reader.fill_buf()
+                            .and_then(|buffer| {
+                                writer.write(&buffer)
+                                    .and(Ok(buffer.len()))
+                            })
+                    } {
+                        Ok(length) => {
+                            if length == 0 {
+                                break;
+                            }
+                            read += length;
+                            on_read(read);
+                            reader.consume(length);
+                        }
+                        Err(kind) => return Err(kind)
+                    }
+                }
+                writer.flush()
+                    .and(Ok(read))
+            })
+    }
+}
+
 impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
     //Write real specialization
-    fn create_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError> { unimplemented!() }
-    fn create_empty_file(&mut self, path: &Path) -> Result<(), InfrastructureError> { unimplemented!() }
-    fn copy_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{ unimplemented!() }
-    fn move_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{ unimplemented!() }
-    fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError> { unimplemented!() }
-    fn remove_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>{ unimplemented!() }
+    fn create_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        create_dir(path)?;
+        Ok(())
+    }
+    fn create_empty_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        File::create(path)?;
+        Ok(())
+    }
+    fn copy_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{
+        self._copy_file(source, destination, &|_|{})?;
+        Ok(())
+    }
+    fn move_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{
+        match rename(source, destination) {
+            Err(error) => {
+                println!("WARNING SWITCH TO COPY / REMOVE");
+                self.copy_file_to_file(source, destination)?;
+                self.remove_file(source)
+            },
+            Ok(_) => Ok(())
+        }
+    }
+    fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        remove_file(path)?;
+        Ok(())
+    }
+    fn remove_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>{
+        remove_dir(path)?;
+        Ok(())
+    }
 }
+
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{ sample::Samples };
+
+    #[test]
+    pub fn create_empty_file() {
+        let chroot = Samples::init_simple_chroot("create_empty_file");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        fs.create_empty_file(chroot.join("FILE").as_path()).unwrap();
+
+        assert!(chroot.join("FILE").exists());
+        assert!(chroot.join("FILE").is_file());
+    }
+
+    #[test]
+    pub fn create_empty_directory() {
+        let chroot = Samples::init_simple_chroot("create_empty_directory");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        fs.create_empty_directory(chroot.join("DIRECTORY").as_path()).unwrap();
+
+        assert!(chroot.join("DIRECTORY").exists());
+        assert!(chroot.join("DIRECTORY").is_dir());
+    }
+
+    #[test]
+    pub fn copy_file_to_file() {
+        let chroot = Samples::init_simple_chroot("copy_file_to_file");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        fs.copy_file_to_file(
+            chroot.join("RDIR/RFILEA").as_path(),
+            chroot.join("COPIED").as_path()
+        ).unwrap();
+
+        assert!(chroot.join("COPIED").exists());
+        assert!(chroot.join("COPIED").is_file());
+        assert!(chroot.join("COPIED").metadata().unwrap().len() > 1);
+    }
+
+    #[test]
+    pub fn remove_file() {
+        let chroot = Samples::init_simple_chroot("remove_file");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        fs.remove_file(chroot.join("RDIR/RFILEA").as_path()).unwrap();
+
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+    }
+
+    #[test]
+    pub fn remove_empty_directory() {
+        let chroot = Samples::init_simple_chroot("remove_empty_directory");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        fs.create_empty_directory(chroot.join("TEST").as_path()).unwrap();
+
+        assert!(chroot.join("TEST").exists());
+
+        fs.remove_empty_directory(chroot.join("TEST").as_path()).unwrap();
+
+        assert!(!chroot.join("TEST").exists());
+    }
+
+
+    #[test]
+    pub fn move_file_to_file() {
+        let chroot = Samples::init_simple_chroot("move_file_to_file");
+
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        fs.move_file_to_file(
+            chroot.join("RDIR/RFILEA").as_path(),
+            chroot.join("MOVED").as_path()
+        ).unwrap();
+
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+        assert!(chroot.join("MOVED").exists());
+    }
+}
+
