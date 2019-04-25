@@ -66,3 +66,112 @@ impl Entry for EntryAdapter<PathBuf> {
 
     fn exists(&self) -> bool { self.0.exists() }
 }
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{ sample::Samples };
+
+    #[test]
+    fn entry_adapter_path_directory() {
+        let static_samples = Samples::static_samples_path();
+
+        let a_path = static_samples.join("A");
+        let a = EntryAdapter(a_path.as_path());
+        assert!(a.exists());
+        assert!(a.is_dir());
+        assert!(!a.is_file());
+        assert_eq!(a.to_path(), a_path.clone());
+        assert_eq!(a.path(), a_path.as_path());
+        assert_eq!(a.name(), Some(OsStr::new("A")));
+        assert_eq!(a.as_inner(), &a_path.as_path());
+        assert_eq!(a.into_inner(), a_path.as_path());
+    }
+
+
+    #[test]
+    fn entry_adapter_path_file() {
+        let static_samples = Samples::static_samples_path();
+
+        let f_path = static_samples.join("F");
+        let f = EntryAdapter(f_path.as_path());
+        assert!(f.exists());
+        assert!(!f.is_dir());
+        assert!(f.is_file());
+        assert_eq!(f.to_path(), f_path.clone());
+        assert_eq!(f.path(), f_path.as_path());
+        assert_eq!(f.name(), Some(OsStr::new("F")));
+        assert_eq!(f.as_inner(), &f_path.as_path());
+        assert_eq!(f.into_inner(), f_path.as_path());
+    }
+
+
+    #[test]
+    fn entry_adapter_path_not_exists() {
+        let static_samples = Samples::static_samples_path();
+
+        let z_path = static_samples.join("Z");
+        let z = EntryAdapter(z_path.as_path());
+        assert!(!z.exists());
+        assert!(!z.is_dir());
+        assert!(!z.is_file());
+        assert_eq!(z.to_path(), z_path.clone());
+        assert_eq!(z.path(), z_path.as_path());
+        assert_eq!(z.name(), Some(OsStr::new("Z")));
+        assert_eq!(z.as_inner(), &z_path.as_path());
+        assert_eq!(z.into_inner(), z_path.as_path());
+    }
+
+    #[test]
+    fn entry_adapter_pathbuf_directory() {
+        let static_samples = Samples::static_samples_path();
+
+        let a_path = static_samples.join("A");
+        let a = EntryAdapter(a_path.clone());
+        assert!(a.exists());
+        assert!(a.is_dir());
+        assert!(!a.is_file());
+        assert_eq!(a.to_path(), a_path.clone());
+        assert_eq!(a.path(), a_path.as_path());
+        assert_eq!(a.name(), Some(OsStr::new("A")));
+        assert_eq!(a.as_inner(), &a_path.as_path());
+        assert_eq!(a.into_inner(), a_path.as_path());
+    }
+
+
+    #[test]
+    fn entry_adapter_pathbuf_file() {
+        let static_samples = Samples::static_samples_path();
+
+        let f_path = static_samples.join("F");
+        let f = EntryAdapter(f_path.clone());
+        assert!(f.exists());
+        assert!(!f.is_dir());
+        assert!(f.is_file());
+        assert_eq!(f.to_path(), f_path.clone());
+        assert_eq!(f.path(), f_path.as_path());
+        assert_eq!(f.name(), Some(OsStr::new("F")));
+        assert_eq!(f.as_inner(), &f_path.as_path());
+        assert_eq!(f.into_inner(), f_path.as_path());
+    }
+
+
+    #[test]
+    fn entry_adapter_pathbuf_not_exists() {
+        let static_samples = Samples::static_samples_path();
+
+        let z_path = static_samples.join("Z");
+        let z = EntryAdapter(z_path.clone());
+        assert!(!z.exists());
+        assert!(!z.is_dir());
+        assert!(!z.is_file());
+        assert_eq!(z.to_path(), z_path.clone());
+        assert_eq!(z.path(), z_path.as_path());
+        assert_eq!(z.name(), Some(OsStr::new("Z")));
+        assert_eq!(z.as_inner(), &z_path.as_path());
+        assert_eq!(z.into_inner(), z_path.as_path());
+    }
+}

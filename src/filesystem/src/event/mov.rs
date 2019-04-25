@@ -105,7 +105,7 @@ impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: E
         } else {
             if source.is_dir() {
                 transaction.add(Atomic::CreateEmptyDirectory(destination.to_path()));
-                for child in fs.read_dir(source.path())? {
+                for child in fs.read_maintained(source.path())? {
                     transaction.merge(
                         MoveEvent::new(
                             child.path(),
@@ -124,3 +124,221 @@ impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: E
         Ok(transaction)
     }
 }
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod real_tests {
+    use super::*;
+
+    use crate::{
+        sample::Samples,
+        port::{
+            FileSystemAdapter
+        },
+        infrastructure::{
+            RealFileSystem
+        }
+    };
+
+    #[test]
+    fn move_operation_dir(){
+        let chroot = Samples::init_simple_chroot("move_operation_dir");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        MoveEvent::new(
+            chroot.join("RDIR").as_path(),
+            chroot.join("MOVED").as_path(),
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!chroot.join("RDIR").exists());
+        assert!(chroot.join("MOVED").exists());
+        assert!(chroot.join("MOVED/RFILEA").exists());
+        assert!(chroot.join("MOVED/RFILEB").exists());
+    }
+
+    #[test]
+    fn move_operation_dir_merge_overwrite(){
+        let chroot = Samples::init_simple_chroot("move_operation_dir_merge_overwrite");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
+
+        MoveEvent::new(
+            chroot.join("RDIR").as_path(),
+            chroot.join("RDIR2").as_path(),
+            true,
+            true
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!chroot.join("RDIR").exists());
+        assert!(chroot.join("RDIR2/RFILEA").exists());
+        assert!(chroot.join("RDIR2/RFILEB").exists());
+        assert!(chroot.join("RDIR2/RFILEC").exists());
+        assert_eq!(
+            a_len,
+            chroot.join("RDIR2/RFILEA").metadata().unwrap().len()
+        )
+    }
+
+    #[test]
+    fn move_operation_file(){
+        let chroot = Samples::init_simple_chroot("move_operation_file");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
+
+        MoveEvent::new(
+            chroot.join("RDIR/RFILEA").as_path(),
+            chroot.join("MOVED").as_path(),
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+        assert!(chroot.join("MOVED").exists());
+        assert_eq!(
+            a_len,
+            chroot.join("MOVED").metadata().unwrap().len()
+        )
+    }
+
+    #[test]
+    fn move_operation_file_overwrite(){
+        let chroot = Samples::init_simple_chroot("move_operation_file_overwrite");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
+
+        MoveEvent::new(
+            chroot.join("RDIR/RFILEA").as_path(),
+            chroot.join("RDIR2/RFILEA").as_path(),
+            false,
+            true
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+        assert!(chroot.join("RDIR2/RFILEA").exists());
+        assert_eq!(
+            a_len,
+            chroot.join("RDIR2/RFILEA").metadata().unwrap().len()
+        )
+    }
+}
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod virtual_tests {
+    use super::*;
+
+    use crate::{
+        sample::Samples,
+        Kind,
+        port::{
+            FileSystemAdapter
+        },
+        infrastructure::{
+            VirtualFileSystem
+        }
+    };
+
+    #[test]
+    fn virtual_move_operation_directory(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        MoveEvent::new(
+            samples_path.join("A").as_path(),
+            samples_path.join("Z").as_path(),
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("A").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("Z").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_directory(samples_path.join("Z").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_move_operation_directory_merge(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        //Avoid need of override because of .gitkeep file present in both directory
+        let gitkeep = samples_path.join("B/.gitkeep");
+        fs.as_inner_mut().mut_sub_state().attach(gitkeep.as_path(),Some(gitkeep.as_path()), Kind::File).unwrap();
+
+        MoveEvent::new(
+            samples_path.join("B").as_path(),
+            samples_path.join("A").as_path(),
+            true,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("B").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("A/D").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_directory(samples_path.join("A/D").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_move_operation_file(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        MoveEvent::new(
+            samples_path.join("F").as_path(),
+            samples_path.join("Z").as_path(),
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("F").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("Z").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_file(samples_path.join("Z").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_move_operation_file_overwrite(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        MoveEvent::new(
+            samples_path.join("F").as_path(),
+            samples_path.join("A/C").as_path(),
+            false,
+            true
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("F").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("A/C").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_file(samples_path.join("A/C").as_path()).unwrap());
+    }
+}
+

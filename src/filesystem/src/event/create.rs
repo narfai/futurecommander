@@ -113,3 +113,199 @@ impl <E, F> Event <E, F> for CreateEvent where F: ReadableFileSystem<Item=E>, E:
         Ok(transaction)
     }
 }
+
+//Infrastructure -> Domain integration tests
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod real_tests {
+    use super::*;
+
+    use crate::{
+        sample::Samples,
+        port::{
+            FileSystemAdapter
+        },
+        infrastructure::{
+            RealFileSystem
+        }
+    };
+
+    #[test]
+    fn create_operation_directory(){
+        let chroot = Samples::init_simple_chroot("create_operation_directory");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        CreateEvent::new(
+            chroot.join("CREATED").as_path(),
+            Kind::Directory,
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(chroot.join("CREATED").is_dir());
+        assert!(chroot.join("CREATED").exists());
+    }
+
+
+    #[test]
+    fn create_operation_directory_recursive(){
+        let chroot = Samples::init_simple_chroot("create_operation_directory_recursive");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        CreateEvent::new(
+            chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
+            Kind::Directory,
+            true,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(chroot.join("CREATED/NESTED/DIRECTORY").exists());
+        assert!(chroot.join("CREATED/NESTED/DIRECTORY").is_dir());
+    }
+
+    #[test]
+    fn create_operation_file(){
+        let chroot = Samples::init_simple_chroot("create_operation_file");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        CreateEvent::new(
+            chroot.join("CREATED").as_path(),
+            Kind::File,
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(chroot.join("CREATED").exists());
+        assert!(chroot.join("CREATED").is_file());
+    }
+
+    #[test]
+    fn create_operation_file_overwrite(){
+        let chroot = Samples::init_simple_chroot("create_operation_file_overwrite");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
+
+        CreateEvent::new(
+            chroot.join("RDIR/RFILEA").as_path(),
+            Kind::File,
+            false,
+            true
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(chroot.join("RDIR/RFILEA").exists());
+        assert_ne!(a_len, chroot.join("RDIR/RFILEA").metadata().unwrap().len());
+    }
+}
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod virtual_tests {
+    use super::*;
+
+    use crate::{
+        sample::Samples,
+        port::{
+            FileSystemAdapter
+        },
+        infrastructure::{
+            VirtualFileSystem
+        }
+    };
+
+
+    #[test]
+    fn virtual_create_operation_directory(){
+        let chroot = Samples::init_simple_chroot("virtual_create_operation_directory");
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        CreateEvent::new(
+            chroot.join("CREATED").as_path(),
+            Kind::Directory,
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("CREATED").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_directory(chroot.join("CREATED").as_path()).unwrap());
+    }
+
+
+    #[test]
+    fn virtual_create_operation_directory_recursive(){
+        let chroot = Samples::init_simple_chroot("virtual_create_operation_directory_recursive");
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        CreateEvent::new(
+            chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
+            Kind::Directory,
+            true,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("CREATED/NESTED/DIRECTORY").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_directory(chroot.join("CREATED/NESTED/DIRECTORY").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_create_operation_file(){
+        let chroot = Samples::init_simple_chroot("virtual_create_operation_file");
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        CreateEvent::new(
+            chroot.join("CREATED").as_path(),
+            Kind::File,
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("CREATED").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_file(chroot.join("CREATED").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_create_operation_file_overwrite(){
+        let chroot = Samples::init_simple_chroot("virtual_create_operation_file_overwrite");
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        let opcodes = CreateEvent::new(
+            chroot.join("RDIR/RFILEA").as_path(),
+            Kind::File,
+            false,
+            true
+        ).atomize(&fs)
+            .unwrap();
+
+        opcodes.apply(&mut fs)
+            .unwrap();
+
+        let entry = fs.status(chroot.join("RDIR/RFILEA").as_path()).unwrap();
+
+        assert!(entry.exists());
+        assert!(entry.is_file());
+    }
+}
+

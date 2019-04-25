@@ -158,6 +158,37 @@ impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
         Ok(())
     }
 
+    fn bind_directory_to_directory(&mut self, src: &Path, dst: &Path) -> Result<(), InfrastructureError> {
+        let source = self.status(src)?;
+        let destination = self.status(dst)?;
+
+        let parent = self.safe_parent(dst)?;
+
+        if !source.exists() {
+            return Err(InfrastructureError::Custom("Source does not exists".to_string()));
+        }
+
+        if destination.exists() {
+            return Err(InfrastructureError::Custom("Destination already exists".to_string()));
+        }
+
+        if source.exists() && ! source.is_dir() {
+            return Err(InfrastructureError::Custom("Source path must be a directory".to_string()));
+        }
+
+        let source_identity = source.as_inner().as_virtual();
+
+        let new_identity = VirtualPath::from(
+            destination.to_path(),
+            source_identity.to_source(),
+            source_identity.to_kind()
+        )?;
+
+        self.0.mut_add_state().attach_virtual(&new_identity)?;
+        Ok(())
+    }
+
+
     fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
         self.remove(path)
     }

@@ -87,14 +87,17 @@ impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
         create_dir(path)?;
         Ok(())
     }
+
     fn create_empty_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
         File::create(path)?;
         Ok(())
     }
+
     fn copy_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{
         self._copy_file(source, destination, &|_|{})?;
         Ok(())
     }
+
     fn move_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{
         match rename(source, destination) {
             Err(error) => {
@@ -105,10 +108,16 @@ impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
             Ok(_) => Ok(())
         }
     }
+
+    fn bind_directory_to_directory(&mut self, _source: &Path, destination: &Path) -> Result<(), InfrastructureError> {
+        self.create_empty_directory(destination)
+    }
+
     fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
         remove_file(path)?;
         Ok(())
     }
+
     fn remove_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>{
         remove_dir(path)?;
         Ok(())

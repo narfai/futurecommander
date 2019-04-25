@@ -85,3 +85,135 @@ impl <E, F> Event <E, F> for RemoveEvent where F: ReadableFileSystem<Item=E>, E:
         Ok(transaction)
     }
 }
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod real_tests {
+    use super::*;
+
+    use crate::{
+        sample::Samples,
+        port::{
+            FileSystemAdapter
+        },
+        infrastructure::{
+            RealFileSystem
+        }
+    };
+
+    #[test]
+    fn remove_operation_file() {
+        let chroot = Samples::init_simple_chroot("remove_operation_file");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        RemoveEvent::new(
+            chroot.join("RDIR/RFILEA").as_path(),
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!chroot.join("RDIR/RFILEA").exists());
+    }
+
+    #[test]
+    fn remove_operation_directory() {
+        let chroot = Samples::init_simple_chroot("remove_operation_directory");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        RemoveEvent::new(
+            chroot.join("RDIR3").as_path(),
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!chroot.join("RDIR3").exists());
+    }
+
+    #[test]
+    fn remove_operation_directory_recursive() {
+        let chroot = Samples::init_simple_chroot("remove_operation_directory_recursive");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        RemoveEvent::new(
+            chroot.join("RDIR").as_path(),
+            true
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!chroot.join("RDIR").exists());
+    }
+}
+
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod virtual_tests {
+    use super::*;
+
+    use crate::{
+        sample::Samples,
+        port::{
+            FileSystemAdapter
+        },
+        infrastructure::{
+            VirtualFileSystem
+        }
+    };
+
+    #[test]
+    fn virtual_remove_operation_file() {
+        let chroot = Samples::init_simple_chroot("virtual_remove_operation_file");
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        RemoveEvent::new(
+            chroot.join("RDIR/RFILEA").as_path(),
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("RDIR/RFILEA").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_remove_operation_directory() {
+        let chroot = Samples::init_simple_chroot("virtual_remove_operation_directory");
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        RemoveEvent::new(
+            chroot.join("RDIR3").as_path(),
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("RDIR3").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_remove_operation_directory_recursive() {
+        let chroot = Samples::init_simple_chroot("virtual_remove_operation_directory_recursive");
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        RemoveEvent::new(
+            chroot.join("RDIR").as_path(),
+            true
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(!fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("RDIR").as_path()).unwrap());
+    }
+}
+

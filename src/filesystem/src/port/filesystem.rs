@@ -31,7 +31,18 @@ use crate::{
     infrastructure::errors::InfrastructureError
 };
 
+#[derive(Debug)]
 pub struct FileSystemAdapter<F>(pub F);
+
+impl <F> FileSystemAdapter<F> {
+    pub fn as_inner(&self) -> &F {
+        &self.0
+    }
+
+    pub fn as_inner_mut(&mut self) -> &mut F {
+        &mut self.0
+    }
+}
 
 pub trait ReadableFileSystem {
     type Item : Entry;
@@ -48,6 +59,7 @@ pub trait WriteableFileSystem: ReadableFileSystem {
     fn create_empty_file(&mut self, path: &Path) -> Result<(), InfrastructureError>;
     fn copy_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>;
     fn move_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>;
+    fn bind_directory_to_directory(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>;
     fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError>;
     fn remove_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>;
 }

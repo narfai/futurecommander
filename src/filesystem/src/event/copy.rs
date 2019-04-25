@@ -105,8 +105,8 @@ impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: E
             }
         } else {
             if source.is_dir() {
-                transaction.add(Atomic::CreateEmptyDirectory(destination.to_path()));
-                for child in fs.read_dir(source.path())? {
+                transaction.add(Atomic::BindDirectoryToDirectory(source.to_path(), destination.to_path()));//May this behavior break source tracking ... in which case Atomic / AtomicTransaction should be generized
+                for child in fs.read_maintained(source.path())? {
                     transaction.merge(
                         CopyEvent::new(
                             child.path(),
@@ -123,5 +123,234 @@ impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: E
             }
         }
         Ok(transaction)
+    }
+}
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod real_tests {
+    use super::*;
+
+    use crate::{
+        sample::Samples,
+        infrastructure::RealFileSystem,
+        port::{
+            FileSystemAdapter
+        }
+    };
+
+    #[test]
+    fn copy_operation_dir(){
+        let chroot = Samples::init_simple_chroot("copy_operation_dir");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        CopyEvent::new(
+            chroot.join("RDIR").as_path(),
+            chroot.join("COPIED").as_path(),
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(chroot.join("RDIR/RFILEA").exists());
+        assert!(chroot.join("COPIED/RFILEA").exists());
+    }
+
+    #[test]
+    fn copy_operation_dir_merge_overwrite(){
+        let chroot = Samples::init_simple_chroot("copy_operation_dir_merge_overwrite");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        CopyEvent::new(
+            chroot.join("RDIR").as_path(),
+            chroot.join("RDIR2").as_path(),
+            true,
+            true
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(chroot.join("RDIR/RFILEB").exists());
+        assert!(chroot.join("RDIR2/RFILEA").exists());
+        assert!(chroot.join("RDIR2/RFILEB").exists());
+        assert!(chroot.join("RDIR2/RFILEC").exists());
+        assert_eq!(
+            chroot.join("RDIR/RFILEA").metadata().unwrap().len(),
+            chroot.join("RDIR2/RFILEA").metadata().unwrap().len()
+        )
+    }
+
+    #[test]
+    fn copy_operation_file(){
+        let chroot = Samples::init_simple_chroot("copy_operation_file");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        CopyEvent::new(
+            chroot.join("RDIR/RFILEB").as_path(),
+            chroot.join("RDIR2/RFILEB").as_path(),
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(chroot.join("RDIR/RFILEB").exists());
+        assert!(chroot.join("RDIR2/RFILEB").exists());
+        assert_eq!(
+            chroot.join("RDIR/RFILEB").metadata().unwrap().len(),
+            chroot.join("RDIR2/RFILEB").metadata().unwrap().len()
+        )
+    }
+
+    #[test]
+    fn copy_operation_file_overwrite(){
+        let chroot = Samples::init_simple_chroot("copy_operation_file_overwrite");
+        let mut fs = FileSystemAdapter(RealFileSystem::default());
+
+        CopyEvent::new(
+            chroot.join("RDIR/RFILEB").as_path(),
+            chroot.join("RDIR2/RFILEB").as_path(),
+            false,
+            true
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(chroot.join("RDIR/RFILEB").exists());
+        assert!(chroot.join("RDIR2/RFILEB").exists());
+        assert_eq!(
+            chroot.join("RDIR/RFILEB").metadata().unwrap().len(),
+            chroot.join("RDIR2/RFILEB").metadata().unwrap().len()
+        )
+    }
+
+    //TODO replace len tests with md5 sum for copy & move
+}
+
+
+
+//    //Error testing
+//    #[test]
+//    fn copy_or_move_directory_into_itself_must_not_be_allowed() {
+//        let sample_path = Samples::static_samples_path();
+//        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+//
+//        let source = sample_path.join("B");
+//        let destination = sample_path.join("B/D/B");
+//        match CopyOperation::new(
+//            source.as_path(),
+//            destination.as_path(),
+//            true,
+//            false
+//        ).execute(&mut vfs) {
+//            Err(OperationError::CopyIntoItSelf(err_source, err_destination)) => {
+//                assert_eq!(source.as_path(), err_source.as_path());
+//                assert_eq!(destination.as_path(), err_destination.as_path());
+//            }
+//            Err(error) => panic!("{}", error),
+//            Ok(_) => panic!("Should not be able to copy into itself")
+//        };
+//    }
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod virtual_tests {
+    use super::*;
+
+    use crate::{
+        sample::Samples,
+        port::{
+            FileSystemAdapter
+        },
+        infrastructure::{
+            VirtualFileSystem
+        }
+    };
+
+    #[test]
+    fn virtual_copy_operation_directory(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        CopyEvent::new(
+            samples_path.join("A").as_path(),
+            samples_path.join("Z").as_path(),
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("Z").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_directory(samples_path.join("Z").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_copy_operation_directory_merge(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        //Avoid need of override because of .gitkeep file present in both directory
+        let gitkeep = samples_path.join("B/.gitkeep");
+        fs.as_inner_mut().mut_sub_state().attach(gitkeep.as_path(),Some(gitkeep.as_path()), Kind::File).unwrap();
+
+        CopyEvent::new(
+            samples_path.join("B").as_path(),
+            samples_path.join("A").as_path(),
+            true,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("A/D").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_directory(samples_path.join("A/D").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_copy_operation_file(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        CopyEvent::new(
+            samples_path.join("F").as_path(),
+            samples_path.join("Z").as_path(),
+            false,
+            false
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("Z").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_file(samples_path.join("Z").as_path()).unwrap());
+    }
+
+    #[test]
+    fn virtual_copy_operation_file_overwrite(){
+        let samples_path = Samples::static_samples_path();
+        let mut fs = FileSystemAdapter(VirtualFileSystem::default());
+
+        CopyEvent::new(
+            samples_path.join("F").as_path(),
+            samples_path.join("A/C").as_path(),
+            false,
+            true
+        ).atomize(&fs)
+            .unwrap()
+            .apply(&mut fs)
+            .unwrap();
+
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("A/C").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_file(samples_path.join("A/C").as_path()).unwrap());
     }
 }

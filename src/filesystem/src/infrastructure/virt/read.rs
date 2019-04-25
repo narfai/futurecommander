@@ -223,7 +223,12 @@ mod tests {
     use super::*;
 
     use crate::{
-        sample::Samples
+        sample::Samples,
+        port::{
+            Atomic,
+            WriteableFileSystem,
+            Entry
+        }
     };
 
     #[test]
@@ -290,5 +295,125 @@ mod tests {
                 )
             )
         );
+    }
+
+    #[test]
+    fn resolve() {
+        let sample_path = Samples::static_samples_path();
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+
+        let b = sample_path.join("B");
+        let ab = sample_path.join("A/B");
+        let abcdef = sample_path.join("A/B/C/D/E/F");
+
+        vfs.bind_directory_to_directory(b.as_path(), ab.as_path()).unwrap();
+
+        let virtual_state = vfs.as_inner().virtual_state().unwrap();
+
+        assert_eq!(
+            b.as_path(),
+            virtual_state.resolve(ab.as_path()).unwrap().unwrap()
+        );
+        assert_eq!(
+            b.join("C/D/E/F").as_path(),
+            virtual_state.resolve(abcdef.as_path()).unwrap().unwrap()
+        );
+    }
+
+    #[test]
+    fn resolve_through() {
+        let sample_path = Samples::static_samples_path();
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+
+        let b = sample_path.join("B");
+
+        let ab = sample_path.join("A/B");
+        let bd = sample_path.join("B/D");
+
+        vfs.bind_directory_to_directory(b.as_path(), ab.as_path()).unwrap();
+        vfs.bind_directory_to_directory(ab.as_path(), bd.join("B").as_path()).unwrap();
+        let virtual_state = vfs.as_inner().virtual_state().unwrap();
+
+        assert_eq!(
+            b.as_path(),
+            virtual_state.resolve(ab.as_path()).unwrap().unwrap()
+        );
+
+        assert_eq!(
+            b.as_path(),
+            virtual_state.resolve(bd.join("B").as_path()).unwrap().unwrap()
+        );
+    }
+
+    #[test]
+    fn stat_none_if_deleted() {
+        let sample_path = Samples::static_samples_path();
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let f = sample_path.join("F");
+
+        assert!(vfs.status(f.as_path()).unwrap().exists());
+
+        vfs.remove_file(f.as_path()).unwrap();
+
+        assert!(! vfs.status(f.as_path()).unwrap().exists());
+    }
+
+    #[test]
+    fn stat_virtual() {
+        let sample_path = Samples::static_samples_path();
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let z = sample_path.join("Z");
+
+        vfs.create_empty_directory(z.as_path());
+
+        let stated = vfs.status(z.as_path())
+            .unwrap()
+            .into_inner()
+            .into_existing_virtual()
+            .unwrap();
+
+        assert_eq!(stated.to_kind(), Kind::Directory);
+        assert_eq!(stated.as_identity(), z);
+        assert!(stated.as_source().is_none())
+    }
+
+    #[test]
+    fn stat_real() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let a = sample_path.join("A");
+
+        let stated = vfs.status(a.as_path())
+            .unwrap()
+            .into_inner()
+            .into_existing_virtual()
+            .unwrap();
+
+        assert_eq!(stated.to_kind(), Kind::Directory);
+        assert_eq!(stated.as_identity(), a.as_path());
+        assert_eq!(stated.as_source(), Some(a.as_path()))
+    }
+
+    #[test]
+    fn stat_related() {
+        let sample_path = Samples::static_samples_path();
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let abdg = sample_path.join("A/B/D/G");//Note : should exists in samples
+
+
+        vfs.bind_directory_to_directory(
+            sample_path.join("B").as_path(),
+            sample_path.join("A/B").as_path()
+        ).unwrap();
+
+        let stated = vfs.status(abdg.as_path())
+            .unwrap()
+            .into_inner()
+            .into_existing_virtual()
+            .unwrap();
+
+        assert_eq!(stated.to_kind(), Kind::Directory);
+        assert_eq!(stated.as_identity(), abdg.as_path());
+        assert_eq!(stated.as_source(), Some(sample_path.join("B/D/G").as_path()))
     }
 }
