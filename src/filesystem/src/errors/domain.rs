@@ -54,6 +54,7 @@ pub enum DomainError {
     CopyDirectoryIntoFile(PathBuf, PathBuf),
     MergeNotAllowed(PathBuf, PathBuf),
     OverwriteNotAllowed(PathBuf, PathBuf),
+    DeleteRecursiveNotAllowed(PathBuf),
     ParentDoesNotExists(PathBuf),
     ParentIsNotADirectory(PathBuf),
     SourceDoesNotExists(PathBuf),
@@ -109,6 +110,7 @@ impl fmt::Display for DomainError {
             DomainError::CopyDirectoryIntoFile(source, dst) => write!(f, "Cannot copy directory {} into file {}", source.to_string_lossy(), dst.to_string_lossy()),
             DomainError::OverwriteNotAllowed(source, dst) => write!(f, "Overwrite of {} into {} is not allowed", source.to_string_lossy(), dst.to_string_lossy()),
             DomainError::MergeNotAllowed(source, dst) => write!(f, "Merge of {} into {} is not allowed", source.to_string_lossy(), dst.to_string_lossy()),
+            DomainError::DeleteRecursiveNotAllowed(path) => write!(f, "Delete recursively {} is not allowed", path.to_string_lossy()),
             DomainError::DoesNotExists(path) => write!(f, "Path {} does not exists", path.to_string_lossy()),
             DomainError::Custom(s) => write!(f, "Custom error {}", s),
         }

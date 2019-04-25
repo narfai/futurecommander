@@ -35,8 +35,8 @@ use crate::{
 pub enum Atomic {
     CreateEmptyDirectory(PathBuf),
     CreateEmptyFile(PathBuf),
-    CopyFileIntoDirectory(PathBuf, PathBuf),
-    MoveFileIntoDirectory(PathBuf, PathBuf),
+    CopyFileToFile(PathBuf, PathBuf),
+    MoveFileToFile(PathBuf, PathBuf),
     RemoveFile(PathBuf),
     RemoveEmptyDirectory(PathBuf)
 }
@@ -47,8 +47,8 @@ impl Atomic {
         match self {
             CreateEmptyDirectory(path) => fs.create_empty_directory(path.as_path()),
             CreateEmptyFile(path) => fs.create_empty_file(path.as_path()),
-            CopyFileIntoDirectory(source, destination) => fs.copy_file_into_directory(source.as_path(), destination.as_path()),
-            MoveFileIntoDirectory(source, destination) => fs.move_file_into_directory(source.as_path(), destination.as_path()),
+            CopyFileToFile(source, destination) => fs.copy_file_to_file(source.as_path(), destination.as_path()),
+            MoveFileToFile(source, destination) => fs.move_file_to_file(source.as_path(), destination.as_path()),
             RemoveFile(path) => fs.remove_file(path.as_path()),
             RemoveEmptyDirectory(path) => fs.remove_empty_directory(path.as_path())
         }
@@ -58,6 +58,7 @@ impl Atomic {
     //TODO rollback & reverse there
 }
 
+#[derive(Default)]
 pub struct AtomicTransaction(pub Vec<Atomic>);
 
 impl AtomicTransaction {
@@ -70,6 +71,12 @@ impl AtomicTransaction {
             atomic.apply(fs)?
         }
         Ok(())
+    }
+
+    pub fn merge(&mut self, transaction: AtomicTransaction) {
+        for atomic in transaction {
+            self.add(atomic);
+        }
     }
 }
 

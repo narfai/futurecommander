@@ -19,7 +19,7 @@
 
 
 use std::{
-    path:: { Path, PathBuf }
+    path:: { Path, PathBuf, Ancestors }
 };
 
 use crate::{
@@ -29,6 +29,7 @@ use crate::{
         Entry,
         ReadableFileSystem,
         Event,
+        Atomic,
         AtomicTransaction
     }
 };
@@ -59,7 +60,56 @@ impl CreateEvent {
 
 impl <E, F> Event <E, F> for CreateEvent where F: ReadableFileSystem<Item=E>, E: Entry {
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
-        //Business
-        unimplemented!()
+        let entry = fs.status(self.path())?;
+        let mut transaction = AtomicTransaction::default();
+
+        fn recursive_dir_creation<E, F> (fs: &F, mut ancestors: &mut Ancestors<'_>) -> Result<AtomicTransaction, DomainError>
+            where F: ReadableFileSystem<Item=E>,
+                  E: Entry {
+            let mut transaction = AtomicTransaction::default();
+            if let Some(path) = ancestors.next() {
+                let entry = fs.status(path)?;
+                if !entry.exists() {
+                    transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
+                    transaction.add(Atomic::CreateEmptyDirectory(entry.to_path()));
+                }
+            }
+            Ok(transaction)
+        }
+
+        self.path().ancestors().next();
+        let mut ancestors = self.path().ancestors();
+
+        match self.kind() {
+            Kind::Directory => {
+                if entry.exists() {
+                    return Err(DomainError::Custom("Directory overwrite not allowed".to_string()))
+                } else {
+                    if self.recursive() {
+                        transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
+                    }
+                    transaction.add(Atomic::CreateEmptyDirectory(entry.to_path()));
+                }
+            },
+            Kind::File => {
+                if entry.exists() {
+                    if self.overwrite() {
+                        if self.recursive() {
+                            transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
+                        }
+                        transaction.add(Atomic::RemoveFile(entry.to_path()));
+                        transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
+                    } else {
+                        return Err(DomainError::Custom("Overwrite not allowed".to_string()))
+                    }
+                } else {
+                    transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
+                }
+            },
+            Kind::Unknown => {
+                return Err(DomainError::Custom("Cannot create with unknown kind".to_string()))
+            }
+        }
+        Ok(transaction)
     }
 }

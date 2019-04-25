@@ -39,8 +39,8 @@ impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
     //Write real specialization
     fn create_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError> { unimplemented!() }
     fn create_empty_file(&mut self, path: &Path) -> Result<(), InfrastructureError> { unimplemented!() }
-    fn copy_file_into_directory(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{ unimplemented!() }
-    fn move_file_into_directory(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{ unimplemented!() }
+    fn copy_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{ unimplemented!() }
+    fn move_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{ unimplemented!() }
     fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError> { unimplemented!() }
     fn remove_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>{ unimplemented!() }
 }

@@ -43,8 +43,8 @@ pub trait WriteableFileSystem: ReadableFileSystem {
     //Write API Interface
     fn create_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>;
     fn create_empty_file(&mut self, path: &Path) -> Result<(), InfrastructureError>;
-    fn copy_file_into_directory(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>;
-    fn move_file_into_directory(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>;
+    fn copy_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>;
+    fn move_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>;
     fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError>;
     fn remove_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>;
 }

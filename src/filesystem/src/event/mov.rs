@@ -28,6 +28,7 @@ use crate::{
         Entry,
         ReadableFileSystem,
         Event,
+        Atomic,
         AtomicTransaction
     }
 };
@@ -58,7 +59,68 @@ impl MoveEvent {
 
 impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: Entry {
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
-        //Business
-        unimplemented!()
+        let source = fs.status(self.source())?;
+
+        if !source.exists() {
+            return Err(DomainError::SourceDoesNotExists(self.source().to_path_buf()))
+        }
+
+        let mut transaction = AtomicTransaction::default();
+        let destination = fs.status(self.destination())?;
+
+        if destination.exists() {
+            if source.is_dir() {
+                if destination.is_dir() {
+                    if self.merge() {
+                        for child in fs.read_dir(source.path())? {
+                            transaction.merge(
+                                MoveEvent::new(
+                                    child.path(),
+                                    destination.path()
+                                        .join(child.name().unwrap())
+                                        .as_path(),
+                                    self.merge(),
+                                    self.overwrite()
+                                ).atomize(fs)?
+                            );
+                        }
+                    } else {
+                        return Err(DomainError::Custom("Merge not allowed".to_string()))
+                    }
+                } else {
+                    return Err(DomainError::Custom("Cannot merge file with directory".to_string()));
+                }
+            } else if source.is_file() {
+                if destination.is_file() {
+                    if self.overwrite() {
+                        transaction.add(Atomic::RemoveFile(destination.to_path()));
+                        transaction.add(Atomic::MoveFileToFile(source.to_path(), destination.to_path()));
+                    } else {
+                        return Err(DomainError::Custom("Overwrite not allowed".to_string()))
+                    }
+                } else {
+                    return Err(DomainError::Custom("Cannot overwrite directory with file".to_string()))
+                }
+            }
+        } else {
+            if source.is_dir() {
+                transaction.add(Atomic::CreateEmptyDirectory(destination.to_path()));
+                for child in fs.read_dir(source.path())? {
+                    transaction.merge(
+                        MoveEvent::new(
+                            child.path(),
+                            destination.path()
+                                .join(child.name().unwrap())
+                                .as_path(),
+                        self.merge(),
+                        self.overwrite()
+                    ).atomize(fs)?
+                    );
+                }
+            } else if source.is_file() {
+                transaction.add(Atomic::MoveFileToFile(source.to_path(), destination.to_path()));
+            }
+        }
+        Ok(transaction)
     }
 }
