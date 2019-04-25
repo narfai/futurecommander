@@ -83,47 +83,8 @@ impl FileSystemAdapter<VirtualFileSystem> where Self : ReadableFileSystem {
             Ok(parent_entry)
         }
     }
-}
 
-impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
-    //Write virtual specialization
-    fn create_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError> {
-        self.safe_parent(path)?;
-        self.0.mut_add_state().attach(path, None, Kind::Directory)?;
-        Ok(())
-    }
-
-    fn create_empty_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
-        self.safe_parent(path)?;
-        self.0.mut_add_state().attach(path, None, Kind::File)?;
-        Ok(())
-    }
-
-    fn copy_file_to_file(&mut self, src: &Path, dst: &Path) -> Result<(), InfrastructureError>{
-        let source = self.status(src)?;
-        let destination = self.status(dst)?;
-        let parent = self.safe_parent(dst)?;
-
-        if !source.exists() {
-            return Err(InfrastructureError::Custom("Source does not exists".to_string()));
-        }
-
-        if destination.exists() && ! destination.is_file() {
-            return Err(InfrastructureError::Custom("Destination path must be file".to_string()));
-        }
-
-        if source.exists() && ! source.is_file() {
-            return Err(InfrastructureError::Custom("Source path must be file".to_string()));
-        }
-
-        let source_identity = source.as_inner().as_virtual();
-
-        let new_identity = VirtualPath::from(
-            destination.to_path(),
-            source_identity.to_source(),
-            source_identity.to_kind()
-        )?;
-
+    fn create(&mut self, new_identity: VirtualPath, destination: EntryAdapter<VirtualStatus>) -> Result<(), InfrastructureError>{
         let state = destination.as_inner().state();
         match destination.into_inner() {
             VirtualStatus{ state: VirtualState::Exists, identity }
@@ -148,8 +109,66 @@ impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
                 self.0.mut_sub_state().detach(new_identity.as_identity())?;
                 self.0.mut_add_state().attach_virtual(&new_identity)?;
             },
-        }
+        };
         Ok(())
+    }
+}
+
+impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
+    //Write virtual specialization
+    fn create_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        self.safe_parent(path)?;
+        let existing = self.status(path)?;
+        self.create(
+            VirtualPath::from(
+                path.to_path_buf(),
+                None,
+                Kind::Directory
+            )?,
+            existing
+        )
+    }
+
+    fn create_empty_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        self.safe_parent(path)?;
+        let existing = self.status(path)?;
+        self.create(
+            VirtualPath::from(
+                path.to_path_buf(),
+                None,
+                Kind::File
+            )?,
+            existing
+        )
+    }
+
+    fn copy_file_to_file(&mut self, src: &Path, dst: &Path) -> Result<(), InfrastructureError>{
+        let source = self.status(src)?;
+        let destination = self.status(dst)?;
+        let parent = self.safe_parent(dst)?;
+
+        if !source.exists() {
+            return Err(InfrastructureError::Custom("Source does not exists".to_string()));
+        }
+
+        if destination.exists() && ! destination.is_file() {
+            return Err(InfrastructureError::Custom("Destination path must be file".to_string()));
+        }
+
+        if source.exists() && ! source.is_file() {
+            return Err(InfrastructureError::Custom("Source path must be file".to_string()));
+        }
+
+        let source_identity = source.as_inner().as_virtual();
+
+        self.create(
+            VirtualPath::from(
+                destination.to_path(),
+                source_identity.to_source(),
+                source_identity.to_kind()
+            )?,
+            destination
+        )
     }
 
     fn move_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{
@@ -178,14 +197,14 @@ impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
 
         let source_identity = source.as_inner().as_virtual();
 
-        let new_identity = VirtualPath::from(
-            destination.to_path(),
-            source_identity.to_source(),
-            source_identity.to_kind()
-        )?;
-
-        self.0.mut_add_state().attach_virtual(&new_identity)?;
-        Ok(())
+        self.create(
+            VirtualPath::from(
+                destination.to_path(),
+                source_identity.to_source(),
+                source_identity.to_kind()
+            )?,
+            destination
+        )
     }
 
 

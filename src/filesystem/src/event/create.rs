@@ -77,8 +77,8 @@ impl <E, F> Event <E, F> for CreateEvent where F: ReadableFileSystem<Item=E>, E:
             Ok(transaction)
         }
 
-        self.path().ancestors().next();
         let mut ancestors = self.path().ancestors();
+        ancestors.next();
 
         match self.kind() {
             Kind::Directory => {
@@ -253,14 +253,15 @@ mod virtual_tests {
         let chroot = Samples::init_simple_chroot("virtual_create_operation_directory_recursive");
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        CreateEvent::new(
+        let opcodes = CreateEvent::new(
             chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
             Kind::Directory,
             true,
             false
         ).atomize(&fs)
-            .unwrap()
-            .apply(&mut fs)
+            .unwrap();
+
+        opcodes.apply(&mut fs)
             .unwrap();
 
         assert!(fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("CREATED/NESTED/DIRECTORY").as_path()).unwrap());

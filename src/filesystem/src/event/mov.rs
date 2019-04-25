@@ -84,6 +84,7 @@ impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: E
                                 ).atomize(fs)?
                             );
                         }
+                        transaction.add(Atomic::RemoveEmptyDirectory(source.to_path()));
                     } else {
                         return Err(DomainError::Custom("Merge not allowed".to_string()))
                     }
@@ -117,6 +118,7 @@ impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: E
                     ).atomize(fs)?
                     );
                 }
+                transaction.add(Atomic::RemoveEmptyDirectory(source.to_path()));
             } else if source.is_file() {
                 transaction.add(Atomic::MoveFileToFile(source.to_path(), destination.to_path()));
             }
@@ -169,14 +171,16 @@ mod real_tests {
 
         let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
 
-        MoveEvent::new(
+        let opcodes = MoveEvent::new(
             chroot.join("RDIR").as_path(),
             chroot.join("RDIR2").as_path(),
             true,
             true
         ).atomize(&fs)
-            .unwrap()
-            .apply(&mut fs)
+            .unwrap();
+
+        println!("{:#?}", opcodes);
+        opcodes.apply(&mut fs)
             .unwrap();
 
         assert!(!chroot.join("RDIR").exists());
