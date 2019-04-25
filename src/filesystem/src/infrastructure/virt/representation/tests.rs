@@ -20,8 +20,6 @@
 #[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]
 mod representation_integration {
-    use super::*;
-
     #[allow(unused_imports)]
     use std::{
         str::FromStr
