@@ -17,6 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#[cfg(test)]
+mod tests;
+
 pub mod errors;
 
 mod path;

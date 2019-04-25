@@ -17,9 +17,8 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-extern crate futurecommander_file_system;
-
 #[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
 mod representation_integration {
     use super::*;
 
@@ -32,9 +31,9 @@ mod representation_integration {
         path::{ Path }
     };
 
-    use futurecommander_file_system::{
+    use crate::{
         Kind,
-        representation::{
+        infrastructure::virt::representation::{
             VirtualChildren,
             VirtualPath,
             VirtualDelta

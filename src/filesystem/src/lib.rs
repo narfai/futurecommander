@@ -41,6 +41,9 @@ pub use self::{
     container::Container
 };
 
+//Mainly for testing
+pub use self::infrastructure::VirtualState;
+
 pub mod tools;
 
 #[cfg_attr(tarpaulin, skip)]
