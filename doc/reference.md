@@ -132,3 +132,15 @@ https://github.com/rust-lang/rust/issues/48272
 ## Rust with Nix \o/
 
 https://docs.rs/nix/0.13.0/nix/
+
+
+## CI
+https://buildkite.com/features
+https://codeship.com/pricing
+https://buddy.works/pricing
+https://circleci.com/pricing/
+pro> https://semaphoreci.com/pricing
+
+## CD
+https://concourse-ci.org/
+https://www.spinnaker.io/concepts/
