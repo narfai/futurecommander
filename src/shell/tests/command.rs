@@ -40,15 +40,16 @@ mod command_integration {
     };
 
     use file_system::{
-        Samples,
-        HybridFileSystem,
-        query::{ Query, ReadDirQuery, EntryAdapter }
+        sample::Samples,
+        Container,
+        EntryAdapter,
+        ReadableFileSystem
     };
 
     #[test]
     fn virtual_shell_move_nested_virtual_identity() {
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::default();
+        let mut fs = Container::new();
 
         let move_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
@@ -62,15 +63,13 @@ mod command_integration {
         });
         move_a_as_aprime.execute(&mut fs).unwrap();
 
-        let collection_aprime = ReadDirQuery::new(sample_path.join(&Path::new("APRIME")).as_path())
-            .retrieve(fs.vfs())
+        let collection_aprime = fs.read_dir(sample_path.join(&Path::new("APRIME")).as_path())
             .unwrap();
 
         assert!(collection_aprime.contains(&EntryAdapter(sample_path.join("APRIME/C").as_path())));
         assert!(collection_aprime.contains(&EntryAdapter(sample_path.join("APRIME/B").as_path())));
 
-        let collection_aprime_b_d = ReadDirQuery::new(sample_path.join(&Path::new("APRIME/B/D")).as_path())
-            .retrieve(fs.vfs())
+        let collection_aprime_b_d = fs.read_dir(sample_path.join(&Path::new("APRIME/B/D")).as_path())
             .unwrap();
 
         assert!(collection_aprime_b_d.contains(&EntryAdapter(sample_path.join("APRIME/B/D/E").as_path())));
@@ -81,7 +80,7 @@ mod command_integration {
     #[test]
     fn virtual_shell_reference_virtual_children(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::default();
+        let mut fs = Container::new();
 
         let mkdir_z = Command(InitializedNewDirectoryCommand {
             path: sample_path.join(&Path::new("Z"))
@@ -100,8 +99,7 @@ mod command_integration {
         copy_test_to_z.execute(&mut fs).unwrap();
 
         assert!(
-            ReadDirQuery::new(sample_path.join(&Path::new("Z")).as_path())
-                .retrieve(fs.vfs())
+            fs.read_dir(sample_path.join(&Path::new("Z")).as_path())
                 .unwrap()
                 .contains(&EntryAdapter(sample_path.join("Z/TEST").as_path()))
         );

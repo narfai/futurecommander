@@ -1,6 +1,6 @@
 [package]
 name = "futurecommander_shell"
-version = "0.3.5"
+version = "0.3.7"
 authors = ["François Cadeillan <francois@azsystem.fr>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
@@ -8,4 +8,4 @@ license = "GPL-3.0-or-later"
 [dependencies]
 rustyline = "3.0.0"
 clap = { version =  "2.32.0", features = ["yaml"] }
-file_system = { package="futurecommander_filesystem", version = "0.3.5", path = "../filesystem" }
+file_system = { package="futurecommander_filesystem", version = "0.3.7", path = "../filesystem" }

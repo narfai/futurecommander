@@ -17,16 +17,15 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate clap;
+use std::path::{ PathBuf, Path, MAIN_SEPARATOR };
 
-extern crate rustyline;
+pub fn root_identity() -> PathBuf {
+    PathBuf::from(MAIN_SEPARATOR.to_string())
+}
 
-mod shell;
-mod helper;
-
-pub mod command;
-pub mod tools;
-
-pub use self::helper::*;
-pub use self::shell::Shell;
+pub fn get_parent_or_root(identity: &Path) -> PathBuf {
+    match identity.parent() {
+        Some(parent) => parent.to_path_buf(),
+        None => root_identity()
+    }
+}

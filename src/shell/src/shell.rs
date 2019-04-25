@@ -29,9 +29,10 @@ use rustyline::{ CompletionType, Config, EditMode, Editor };
 use clap::{ App, ArgMatches };
 
 use file_system::{
-    HybridFileSystem,
+    Container,
     Kind,
-    query::{Query, StatusQuery }
+    ReadableFileSystem,
+    tools::{ absolute }
 };
 
 use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
@@ -40,14 +41,14 @@ use crate::helper::VirtualHelper;
 
 pub struct Shell {
     cwd: PathBuf,
-    fs: HybridFileSystem,
+    fs: Container,
 }
 
 impl Default for Shell {
     fn default() -> Self {
         Shell {
             cwd: env::current_dir().unwrap(),
-            fs: HybridFileSystem::default(),
+            fs: Container::new(),
         }
     }
 }
@@ -61,16 +62,16 @@ impl Shell {
             ("debug_status",   Some(matches))  =>
                 match matches.value_of("path") {
                     Some(string_path) => {
-                        let path = file_system::path_helper::absolute(self.cwd.as_path(), Path::new(string_path));
-                        println!("STATUS : {:?}", StatusQuery::new(path.as_path()).retrieve(self.fs.vfs())?);
+                        let path = absolute(self.cwd.as_path(), Path::new(string_path));
+                        println!("STATUS : {:?}", self.fs.status(path.as_path())?);
                         Ok(())
                     },
                     None => Err(CommandError::InvalidCommand)
                 },
-            ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.fs.vfs().virtual_state().unwrap()); Ok(()) },
-            ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.fs.vfs().add_state()); Ok(()) },
-            ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.fs.vfs().sub_state()); Ok(()) },
-            ("debug_transaction",   Some(_matches)) => { println!("{:#?}", self.fs.transaction()); Ok(()) },
+//            ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.fs.vfs().virtual_state().unwrap()); Ok(()) },
+//            ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.fs.vfs().add_state()); Ok(()) },
+//            ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.fs.vfs().sub_state()); Ok(()) },
+//            ("debug_transaction",   Some(_matches)) => { println!("{:#?}", self.fs.transaction()); Ok(()) },
             ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
             ("reset",       Some(_matches)) => { self.fs.reset(); println!("Virtual state is now empty");  Ok(()) },
             ("ls",          Some(matches)) => Command::<ListCommand>::initialize(&self.cwd, matches)
@@ -108,7 +109,7 @@ impl Shell {
             for line in history.iter() { //@TODO find a better way
                 read_line_editor.add_history_entry(line.to_string());
             }
-            read_line_editor.set_helper(Some(VirtualHelper::new(self.fs.vfs(), self.cwd.to_path_buf())));
+            read_line_editor.set_helper(Some(VirtualHelper::new(&self.fs, self.cwd.to_path_buf())));
             let read_line = read_line_editor.readline(">> ");
 
             match read_line {
@@ -224,21 +225,17 @@ impl Shell {
     fn cd(&mut self, matches: &ArgMatches<'_>) -> Result<(), CommandError> {
         match matches.value_of("path") {
             Some(string_path) => {
-                let path = file_system::path_helper::absolute(self.cwd.as_path(), Path::new(string_path));
+                let path = absolute(self.cwd.as_path(), Path::new(string_path));
 
-                match StatusQuery::new(path.as_path()).retrieve(&self.fs.vfs()) {
-                    Ok(status) =>
-                        match status.into_inner().into_existing_virtual() {
-                            Some(virtual_identity) =>
-                                if virtual_identity.as_kind() == &Kind::Directory {
-                                    self.cwd = path;
-                                    Ok(())
-                                } else {
-                                    Err(CommandError::IsNotADirectory(path.to_path_buf()))
-                                },
-                            None => Err(CommandError::DoesNotExists(path.to_path_buf())),
+                match self.fs.status(path.as_path())?.into_inner().into_existing_virtual() {
+                    Some(virtual_identity) =>
+                        if virtual_identity.as_kind() == &Kind::Directory {
+                            self.cwd = path;
+                            Ok(())
+                        } else {
+                            Err(CommandError::IsNotADirectory(path.to_path_buf()))
                         },
-                    Err(error) => Err(CommandError::from(error))
+                    None => Err(CommandError::DoesNotExists(path.to_path_buf())),
                 }
             },
             None => Ok(())//TODO go to home directory ?

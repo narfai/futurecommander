@@ -179,7 +179,6 @@ mod real_tests {
         ).atomize(&fs)
             .unwrap();
 
-        println!("{:#?}", opcodes);
         opcodes.apply(&mut fs)
             .unwrap();
 

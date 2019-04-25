@@ -32,11 +32,16 @@ pub use self::{
         Listener,
         Delayer,
         Entry,
-        Event
+        Event,
+        ReadableFileSystem,
+        WriteableFileSystem,
+        EntryAdapter
     },
     event::*,
     container::Container
 };
+
+pub mod tools;
 
 #[cfg_attr(tarpaulin, skip)]
 pub mod sample;

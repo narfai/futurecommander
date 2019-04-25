@@ -237,7 +237,6 @@ impl VirtualDelta {
             None => Self::root_identity()
         }
     }
-
 }
 
 

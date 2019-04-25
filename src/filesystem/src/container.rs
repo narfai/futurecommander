@@ -61,7 +61,7 @@ impl Container {
         }
     }
 
-    fn apply(&mut self) -> Result<(), DomainError> {
+    pub fn apply(&mut self) -> Result<(), DomainError> {
         while let Some(event) = self.transaction.pop_front() {
             &event.atomize(&self.real_fs)?
                 .apply(&mut self.real_fs)?;
@@ -69,8 +69,13 @@ impl Container {
         Ok(())
     }
 
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
+        self.virtual_fs.as_inner_mut().reset();
         self.transaction.clear()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.virtual_fs.as_inner().is_empty()
     }
 }
 

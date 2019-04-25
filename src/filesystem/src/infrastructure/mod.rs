@@ -18,7 +18,6 @@
  */
 
 pub mod errors;
-pub mod path_helper;
 
 mod real;
 pub use self::real::RealFileSystem;

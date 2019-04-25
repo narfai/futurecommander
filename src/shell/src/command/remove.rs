@@ -22,11 +22,10 @@ use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 
 use file_system::{
-    HybridFileSystem,
-    operation::{
-        Operation,
-        RemoveOperation
-    }
+    Container,
+    RemoveEvent,
+    Listener,
+    Delayer
 };
 
 use crate::command::{
@@ -61,16 +60,12 @@ pub struct InitializedRemoveCommand {
 }
 
 impl Command<InitializedRemoveCommand> {
-    pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
-        let operation = RemoveOperation::new(self.0.path.as_path(), true);
+    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> {
+        let event = RemoveEvent::new(self.0.path.as_path(), true);
 
-        match operation.execute(fs.mut_vfs()) {
-            Ok(_)       => {
-                fs.mut_transaction().add_operation(Box::new(operation.clone()));
-                Ok(())
-            }
-            Err(error)  => Err(CommandError::from(error))
-        }
+        fs.emit(&event)?;
+        fs.delay(Box::new(event));
+        Ok(())
     }
 }
 
@@ -80,14 +75,15 @@ mod tests {
     use super::*;
 
     use file_system::{
-        Samples,
-        query::{ Query, StatusQuery, Entry }
+        sample::Samples,
+        ReadableFileSystem,
+        Entry
     };
 
     #[test]
     fn rm(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::default();
+        let mut fs = Container::new();
 
         let b_path = sample_path.join(&Path::new("B"));
 
@@ -97,10 +93,10 @@ mod tests {
 
         remove_b.execute(&mut fs).unwrap();
 
-        assert!(!StatusQuery::new(b_path.as_path())
-            .retrieve(fs.vfs())
-            .unwrap()
-            .exists()
+        assert!(
+            !fs.status(b_path.as_path())
+                .unwrap()
+                .exists()
         )
     }
 }

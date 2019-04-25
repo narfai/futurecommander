@@ -22,7 +22,7 @@ use std::path::{ PathBuf };
 use std::{ error, fmt };
 use file_system::{
     DomainError,
-    query::QueryError
+    QueryError
 };
 
 #[derive(Debug)]

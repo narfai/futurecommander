@@ -22,13 +22,10 @@ use std::path::PathBuf;
 use clap::ArgMatches;
 
 use file_system::{
-    HybridFileSystem,
-    query::{
-        QueryError,
-        Entry,
-        Query,
-        ReadDirQuery
-    },
+    QueryError,
+    Container,
+    ReadableFileSystem,
+    Entry
 };
 
 use crate::command::{ Command };
@@ -72,7 +69,7 @@ impl Command<InitializedTreeCommand> {
         }
     }
 
-    fn tree(fs: &HybridFileSystem, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), QueryError>{
+    fn tree(fs: &Container, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), QueryError>{
         let file_name = match identity.file_name() {
             Some(file_name) => file_name.to_string_lossy().to_string(),
             None => "/".to_string()
@@ -80,7 +77,7 @@ impl Command<InitializedTreeCommand> {
 
         Self::display_tree_line(&depth_list, parent_last, file_name);
 
-        match ReadDirQuery::new(identity).retrieve(fs.vfs()) {
+        match fs.read_dir(identity) {
             Ok(collection) => {
                 let new_depth_list = match depth_list {
                     Some(depth_list) => {
@@ -111,7 +108,7 @@ impl Command<InitializedTreeCommand> {
         Ok(())
     }
 
-    pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
+    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> {
         Self::tree(fs, self.0.path.as_path(), None, true)?;
         Ok(())
     }
