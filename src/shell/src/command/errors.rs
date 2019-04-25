@@ -21,14 +21,14 @@
 use std::path::{ PathBuf };
 use std::{ error, fmt };
 use file_system::{
-    OperationError,
-    query::QueryError
+    DomainError,
+    QueryError
 };
 
 #[derive(Debug)]
 pub enum CommandError {
     Exit,
-    Operation(OperationError),
+    Operation(DomainError),
     Query(QueryError),
     ArgumentMissing(String, String, String),
     InvalidCommand,
@@ -39,8 +39,8 @@ pub enum CommandError {
     DirectoryIntoAFile(PathBuf, PathBuf)
 }
 
-impl From<OperationError> for CommandError {
-    fn from(error: OperationError) -> Self {
+impl From<DomainError> for CommandError {
+    fn from(error: DomainError) -> Self {
         CommandError::Operation(error)
     }
 }

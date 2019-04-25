@@ -17,16 +17,18 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate clap;
+#[cfg(test)]
+mod tests;
 
-extern crate rustyline;
+pub mod errors;
 
-mod shell;
-mod helper;
+mod path;
+mod delta;
+mod state;
+mod children;
 
-pub mod command;
-pub mod tools;
+pub use self::path::VirtualPath;
+pub use self::delta::VirtualDelta;
+pub use self::state::VirtualState;
+pub use self::children::{ VirtualChildren, VirtualChildrenIterator };
 
-pub use self::helper::*;
-pub use self::shell::Shell;

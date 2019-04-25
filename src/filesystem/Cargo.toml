@@ -1,12 +1,8 @@
 [package]
-name = "futurecommander"
+name = "futurecommander_filesystem"
 version = "0.3.7"
 authors = ["François Cadeillan <francois@azsystem.fr>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
 
-[workspace]
-
 [dependencies]
-futurecommander_shell = { version = "0.3.7", path = "src/shell" }
-

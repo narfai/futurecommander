@@ -17,16 +17,14 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate clap;
+mod copy;
+mod create;
+mod mov;
+mod remove;
 
-extern crate rustyline;
-
-mod shell;
-mod helper;
-
-pub mod command;
-pub mod tools;
-
-pub use self::helper::*;
-pub use self::shell::Shell;
+pub use self::{
+    copy::CopyEvent,
+    create::CreateEvent,
+    mov::MoveEvent,
+    remove::RemoveEvent
+};

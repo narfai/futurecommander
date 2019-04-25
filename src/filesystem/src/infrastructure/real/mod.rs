@@ -17,16 +17,21 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate clap;
+mod entry_path;
+mod read;
+mod write;
 
-extern crate rustyline;
+#[derive(Debug, Default)]
+pub struct RealFileSystem {
+    read_buffer_size: usize,
+    write_buffer_size: usize
+}
 
-mod shell;
-mod helper;
-
-pub mod command;
-pub mod tools;
-
-pub use self::helper::*;
-pub use self::shell::Shell;
+impl RealFileSystem {
+    pub fn default() -> RealFileSystem {
+        RealFileSystem {
+            read_buffer_size: 10_485_760, //10 Mo,
+            write_buffer_size: 2_097_152 //2 Mo
+        }
+    }
+}

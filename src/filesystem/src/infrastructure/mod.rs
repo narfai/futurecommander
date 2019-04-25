@@ -17,16 +17,17 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate clap;
+pub mod errors;
 
-extern crate rustyline;
+mod real;
+pub use self::real::RealFileSystem;
 
-mod shell;
-mod helper;
+mod virt;
+pub use self::virt::{
+    VirtualFileSystem,
+    entry_status::VirtualStatus
+};
 
-pub mod command;
-pub mod tools;
+pub use self::virt::representation::VirtualState;
 
-pub use self::helper::*;
-pub use self::shell::Shell;
+

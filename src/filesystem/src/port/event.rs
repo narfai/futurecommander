@@ -17,16 +17,24 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate clap;
+use crate::{
+    errors::DomainError,
+    port::{
+        Entry,
+        ReadableFileSystem,
+        AtomicTransaction,
+    }
+};
 
-extern crate rustyline;
+pub trait Event<E, F> where F: ReadableFileSystem<Item=E>, E: Entry {
+    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError>;
+}
 
-mod shell;
-mod helper;
 
-pub mod command;
-pub mod tools;
+pub trait Listener<E> {
+    fn emit(&mut self, event: E) -> Result<(), DomainError>;
+}
 
-pub use self::helper::*;
-pub use self::shell::Shell;
+pub trait Delayer<E> {
+    fn delay(&mut self, event: E);
+}

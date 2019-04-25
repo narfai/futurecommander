@@ -17,16 +17,8 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate clap;
+mod domain;
+pub use self::domain::DomainError;
 
-extern crate rustyline;
-
-mod shell;
-mod helper;
-
-pub mod command;
-pub mod tools;
-
-pub use self::helper::*;
-pub use self::shell::Shell;
+mod query;
+pub use self::query::QueryError;

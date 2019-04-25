@@ -17,16 +17,34 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#[macro_use]
-extern crate clap;
+mod event;
 
-extern crate rustyline;
+mod port;
+mod infrastructure;
+mod kind;
+mod errors;
+mod container;
 
-mod shell;
-mod helper;
+pub use self::{
+    kind::Kind,
+    errors::{ DomainError, QueryError },
+    port::{
+        Listener,
+        Delayer,
+        Entry,
+        Event,
+        ReadableFileSystem,
+        WriteableFileSystem,
+        EntryAdapter
+    },
+    event::*,
+    container::Container
+};
 
-pub mod command;
+//Mainly for testing
+pub use self::infrastructure::VirtualState;
+
 pub mod tools;
 
-pub use self::helper::*;
-pub use self::shell::Shell;
+#[cfg_attr(tarpaulin, skip)]
+pub mod sample;

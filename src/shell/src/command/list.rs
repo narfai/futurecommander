@@ -22,12 +22,9 @@ use std::path::{ Path, PathBuf };
 use clap::ArgMatches;
 
 use file_system::{
-    HybridFileSystem,
-    query::{
-        Entry,
-        Query,
-        ReadDirQuery
-    }
+    ReadableFileSystem,
+    Container,
+    Entry
 };
 
 use crate::command::{
@@ -55,30 +52,26 @@ pub struct InitializedListCommand {
 }
 
 impl Command<InitializedListCommand> {
-    pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
-        match ReadDirQuery::new(self.0.path.as_path()).retrieve(&fs.vfs()) {
-            Ok(collection) => {
-                if ! collection.is_empty() {
-                    for child in collection.into_iter() {
-                        println!(
-                            "{}    {}",
-                           if child.is_dir() {
-                               "Directory"
-                           } else if child.is_file() {
-                               "File     "
-                           } else {
-                               "Unknown  "
-                           },
-                            child.name().unwrap().to_string_lossy()
-                        );
-                    }
-                } else {
-                    println!("Directory is empty");
-                }
-                Ok(())
-            },
-            Err(error) => Err(CommandError::from(error))
+    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> {
+        let collection = fs.read_dir(self.0.path.as_path())?;
+        if ! collection.is_empty() {
+            for child in collection.into_iter() {
+                println!(
+                    "{}    {}",
+                   if child.is_dir() {
+                       "Directory"
+                   } else if child.is_file() {
+                       "File     "
+                   } else {
+                       "Unknown  "
+                   },
+                    child.name().unwrap().to_string_lossy()
+                );
+            }
+        } else {
+            println!("Directory is empty");
         }
+        Ok(())
     }
 }
 

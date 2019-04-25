@@ -24,12 +24,11 @@ use crate::command::{ Command };
 use crate::command::errors::CommandError;
 
 use file_system::{
-    HybridFileSystem,
+    Container,
     Kind,
-    operation::{
-        Operation,
-        CreateOperation
-    },
+    CreateEvent,
+    Listener,
+    Delayer
 };
 
 pub struct NewDirectoryCommand {}
@@ -51,21 +50,17 @@ pub struct InitializedNewDirectoryCommand {
 }
 
 impl Command<InitializedNewDirectoryCommand> {
-    pub fn execute(&self, fs: &mut HybridFileSystem) -> Result<(), CommandError> {
-        let operation = CreateOperation::new(
+    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> {
+        let event = CreateEvent::new(
             self.0.path.as_path(),
             Kind::Directory,
             false,
             false
         );
 
-        match operation.execute(fs.mut_vfs()) {
-            Ok(_)       => {
-                fs.mut_transaction().add_operation(Box::new(operation.clone()));
-                Ok(())
-            }
-            Err(error)  => Err(CommandError::from(error))
-        }
+        fs.emit(&event)?;
+        fs.delay(Box::new(event));
+        Ok(())
     }
 }
 
@@ -75,14 +70,15 @@ mod tests {
     use super::*;
 
     use file_system::{
-        Samples,
-        query::{Query, ReadDirQuery, EntryAdapter}
+        sample::Samples,
+        EntryAdapter,
+        ReadableFileSystem
     };
 
     #[test]
     fn mkdir(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = HybridFileSystem::default();
+        let mut fs = Container::new();
 
         let new_bde_mkdired = Command(InitializedNewDirectoryCommand {
             path: sample_path.join(&Path::new("B/D/E/MKDIRED"))
@@ -91,8 +87,7 @@ mod tests {
         new_bde_mkdired.execute(&mut fs).unwrap();
 
         assert!(
-            ReadDirQuery::new(sample_path.join(&Path::new("B/D/E")).as_path())
-                .retrieve(fs.vfs())
+            fs.read_dir(sample_path.join(&Path::new("B/D/E")).as_path())
                 .unwrap()
                 .contains(&EntryAdapter(sample_path.join("B/D/E/MKDIRED").as_path()))
         );
