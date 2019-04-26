@@ -34,17 +34,51 @@ function build_linux {
 }
 
 function test_with_coverage {
-    su futurecommander -c "$CARGO tarpaulin --all --count --out Xml"
+
     bash <(curl -s https://codecov.io/bash)
 }
 
 function release {
+    if [ -z "${GITHUB_TOKEN}" ]; then
+        exit 1
+    fi
+    su futurecommander -c "$CARGO tarpaulin --all --count --out Xml"
     rm -Rf "${EXEC_DIR}/target/*"
+
     linux_file=build_linux
     windows_file=build_windows
+
     user_cargo clippy --all-targets --all-features -- -D warnings
-    test_with_coverage
-    #TODO send artifacts to github
+
+    bash <(curl -s https://codecov.io/bash)
+
+    branch=$(git branch | tr \/ _ )
+    git remote add release https://narfai:${GITHUB_TOKEN}@github.com/narfai/futurecommander.git
+    git tag "${branch}"
+    git push --tags release
+    gothub release \
+        --user narfai \
+        --repo futurecommander \
+        --tag "${branch}" \
+        --name "Build ok for ${branch}" \
+        --description "Build ok for ${branch}" \
+        --pre-release
+
+    gothub upload \
+        --user narfai \
+        --repo futurecommander \
+        --tag "${branch}" \
+        --name "futurecommander_linux64_${branch}" \
+        --file "$linux_file"
+        --replace
+
+    gothub upload \
+        --user narfai \
+        --repo futurecommander \
+        --tag "${branch}" \
+        --name "futurecommander_win64_${branch}.exe" \
+        --file "$windows_file"
+        --replace
 }
 
 useradd -u $(get_bare_uid /usr/src/futurecommander/target) -g staff -d /usr/src/futurecommander futurecommander
