@@ -50,6 +50,13 @@ pub struct Container {
     transaction: VecDeque<Box<RealEvent>>
 }
 
+impl Default for Container {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+
 impl Container {
     pub fn new() -> Container {
         Container {
@@ -61,9 +68,10 @@ impl Container {
 
     pub fn apply(&mut self) -> Result<(), DomainError> {
         while let Some(event) = self.transaction.pop_front() {
-            &event.atomize(&self.real_fs)?
+            event.atomize(&self.real_fs)?
                 .apply(&mut self.real_fs)?;
         }
+        self.reset();
         Ok(())
     }
 

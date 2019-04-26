@@ -102,24 +102,22 @@ impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: E
                     return Err(DomainError::Custom("Cannot overwrite directory with file".to_string()))
                 }
             }
-        } else {
-            if source.is_dir() {
-                transaction.add(Atomic::BindDirectoryToDirectory(source.to_path(), destination.to_path()));
-                for child in fs.read_maintained(source.path())? {
-                    transaction.merge(
-                        CopyEvent::new(
-                            child.path(),
-                            destination.path()
-                                .join(child.name().unwrap())
-                                .as_path(),
-                            self.merge(),
-                            self.overwrite()
-                        ).atomize(fs)?
-                    );
-                }
-            } else if source.is_file() {
-                transaction.add(Atomic::CopyFileToFile(source.to_path(), destination.to_path()));
+        } else if source.is_dir() {
+            transaction.add(Atomic::BindDirectoryToDirectory(source.to_path(), destination.to_path()));
+            for child in fs.read_maintained(source.path())? {
+                transaction.merge(
+                    CopyEvent::new(
+                        child.path(),
+                        destination.path()
+                            .join(child.name().unwrap())
+                            .as_path(),
+                        self.merge(),
+                        self.overwrite()
+                    ).atomize(fs)?
+                );
             }
+        } else if source.is_file() {
+            transaction.add(Atomic::CopyFileToFile(source.to_path(), destination.to_path()));
         }
         Ok(transaction)
     }
