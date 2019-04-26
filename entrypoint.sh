@@ -103,9 +103,9 @@ function release {
         --file "$windows_file" \
         --replace
 }
-
+echo "BARE UID"
 if [ ${BARE_UID} -ne 0 ]; then
-    useradd -u "${BARE_UID}" -g staff -d /usr/src/futurecommander futurecommander
+    useradd -u "${BARE_UID}" -g staff -d /usr/src/futurecommander futurecommander 2> /dev/null
     chown futurecommander Cargo.toml Cargo.lock
     chmod -R g+w  /usr/local
     chmod a+rw .
