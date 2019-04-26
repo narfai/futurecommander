@@ -65,11 +65,11 @@ https://trello.com/b/A2BvQdR9/futurecommander
 
 ### Linux x86_64
 
-https://bitbucket.org/kathreon/futurecommander/downloads/futurecommander_linux64_release_latest
+https://github.com/narfai/futurecommander/releases/download/vlatest/futurecommander_linux64_latest
 
 ### Windows x86_64 ( mingw-w64 )
 
-https://bitbucket.org/kathreon/futurecommander/downloads/futurecommander_win64_release_latest.exe
+https://github.com/narfai/futurecommander/releases/download/vlatest/futurecommander_win64_latest.exe
 
 
 
