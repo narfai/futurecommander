@@ -47,13 +47,13 @@ function release {
     branch=$(git rev-parse --abbrev-ref HEAD | tr \/ . | tr \_ .)
     build=$(date "+%y%m%d%s")
 
-    if [ ! -z "$($GOTHUB info -u narfai -r futurecommander | grep -i v${branch})" ]; then
+    if [ ! -z "$($GOTHUB info -u narfai -r futurecommander | grep -i ${branch})" ]; then
         echo "Release already exists, delete it"
 
         $GOTHUB delete \
             --user narfai \
             --repo futurecommander \
-            --tag "v$branch"
+            --tag "${branch}"
     fi
 
     user_cargo "tarpaulin --all --count --out Xml"
@@ -69,23 +69,23 @@ function release {
 
     bash <(curl -s https://codecov.io/bash)
 
-    if [ -z "$(git tag |grep -i v${branch})" ]; then
-        git tag "v${branch}"
+    if [ -z "$(git tag |grep -i ${branch})" ]; then
+        git tag "${branch}"
         git push --tags release
     fi
 
     $GOTHUB release \
         --user narfai \
         --repo futurecommander \
-        --tag "v${branch}" \
-        --name "v${branch}-$build" \
+        --tag "${branch}" \
+        --name "${branch}-$build" \
         --description "Auto-release ${branch} ( Build $build )" \
         --pre-release
 
     $GOTHUB upload \
         --user narfai \
         --repo futurecommander \
-        --tag "v${branch}" \
+        --tag "${branch}" \
         --name "futurecommander_linux64_${branch}" \
         --file "$linux_file" \
         --replace
@@ -93,7 +93,7 @@ function release {
     $GOTHUB upload \
         --user narfai \
         --repo futurecommander \
-        --tag "v${branch}" \
+        --tag "${branch}" \
         --name "futurecommander_win64_${branch}.exe" \
         --file "$windows_file" \
         --replace
