@@ -109,8 +109,8 @@ if [ ${BARE_UID} -ne 0 ]; then
     chown futurecommander Cargo.toml Cargo.lock
     chmod -R g+w  /usr/local
     chmod a+rw .
-    chmod -R a+rw samples
 fi
+chmod -R a+rw samples
 
 case "$1" in
     test)
