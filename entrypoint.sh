@@ -17,10 +17,15 @@ function get_bare_uid {
 
 CARGO=$(which cargo)
 GOTHUB="/usr/local/go/bin/gothub"
+BARE_UID=$(get_bare_uid /usr/src/futurecommander/target)
 
 function user_cargo {
     arg="$CARGO $1"
-    su futurecommander -c "$arg"
+    if [[ ${BARE_UID} -ne 0 ]]; then
+        su futurecommander -c "$arg"
+    else
+        $arg
+    fi
 }
 
 function build_windows {
@@ -99,11 +104,13 @@ function release {
         --replace
 }
 
-useradd -u $(get_bare_uid /usr/src/futurecommander/target) -g staff -d /usr/src/futurecommander futurecommander
-chown futurecommander Cargo.toml Cargo.lock
-chmod -R g+w  /usr/local
-chmod a+rw .
-chmod -R a+rw samples
+if [ ${BARE_UID} -ne 0 ]; then
+    useradd -u "${BARE_UID}" -g staff -d /usr/src/futurecommander futurecommander
+    chown futurecommander Cargo.toml Cargo.lock
+    chmod -R g+w  /usr/local
+    chmod a+rw .
+    chmod -R a+rw samples
+fi
 
 case "$1" in
     test)
