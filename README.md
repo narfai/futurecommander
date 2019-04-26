@@ -10,12 +10,35 @@ This is free software: you can redistribute it and/or modify it under the terms 
 
 ## Docker
 
+Build static image and interact with your build
+
 ```
 docker build -t futurecommander .
 docker run --security-opt seccomp=unconfined \
     --rm -v "$(pwd)/target-docker":/usr/src/futurecommander/target \
     futurecommander:latest \
     <command>
+```
+
+Or for live source editing
+
+```
+docker run --rm -ti \
+    -v "$(pwd)/src":/usr/src/futurecommander/src \
+    -v "$(pwd)/target-docker":/usr/src/futurecommander/target \
+    futurecommander test
+```
+
+Releases needs codecov & github token ( and no seccomp for code coverage )
+
+```
+docker run \
+    -e "CODECOV_TOKEN=..." \
+    -e "GITHUB_TOKEN=..." \
+    --security-opt seccomp=unconfined \
+    --rm \
+    -v "$(pwd)/target-docker":/usr/src/futurecommander/target \
+    futurecommander release
 ```
 
 Command can be :
@@ -29,6 +52,8 @@ Command can be :
 * build_windows
 
 * build_linux
+
+* cargo
 
 * release ( need `-e "CODECOV_TOKEN=..."` and `-e "GITHUB_TOKEN=..."` )
 
