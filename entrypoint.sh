@@ -110,7 +110,7 @@ if [ ${BARE_UID} -ne 0 ]; then
     chmod -R g+w  /usr/local
     chmod a+rw .
 fi
-chmod -R a+rw samples
+chmod -R a+rwx samples
 
 case "$1" in
     test)
