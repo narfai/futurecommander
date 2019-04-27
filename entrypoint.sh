@@ -57,7 +57,7 @@ function release {
 
     user_cargo "clippy --all-targets --all-features -- -D warnings"
 
-    if [ -z "$(git tag |grep -i ${branch})" ]; then
+    if [ -z "$(git ls-remote --tags release |grep -i ${branch})" ]; then
         git tag "${branch}"
         git push --tags release
     fi
