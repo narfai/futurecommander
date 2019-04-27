@@ -122,7 +122,7 @@ mod errors_tests {
     //Error testing
     #[test]
     fn error_path_does_not_exists() {
-        let sample_path = Samples::init_simple_chroot("error_path_does_not_exists");
+        let sample_path = Samples::init_advanced_chroot("error_path_does_not_exists");
         let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
         let mut rfs = FileSystemAdapter(RealFileSystem::default());
 
