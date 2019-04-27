@@ -209,10 +209,18 @@ impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
 
 
     fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        if ! self.status(path)?.exists() {
+            return Err(InfrastructureError::PathDoesNotExists(path.to_path_buf()));
+        }
+
         self.remove(path)
     }
 
     fn remove_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>{
+        if ! self.status(path)?.exists() {
+            return Err(InfrastructureError::PathDoesNotExists(path.to_path_buf()));
+        }
+
         if ! self.read_dir(path)?.is_empty() {
             return Err(InfrastructureError::DirectoryIsNotEmpty(path.to_path_buf()));
         }

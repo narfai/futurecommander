@@ -87,7 +87,6 @@ impl fmt::Display for InfrastructureError {
     }
 }
 
-
 impl error::Error for InfrastructureError {
     fn cause(&self) -> Option<&dyn error::Error> {
         match self {
@@ -96,5 +95,185 @@ impl error::Error for InfrastructureError {
             InfrastructureError::Query(err) => Some(err),
             _ => None
         }
+    }
+}
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod errors_tests {
+    use super::*;
+
+    use crate::{
+        sample::Samples,
+        port::{
+            FileSystemAdapter,
+            WriteableFileSystem
+        },
+        infrastructure::{
+            RealFileSystem,
+            VirtualFileSystem
+        }
+    };
+
+    fn assert_two_errors_equals(left: &impl error::Error, right: &impl error::Error) {
+        assert_eq!(format!("{}", left), format!("{}", right))
+    }
+
+    //Error testing
+    #[test]
+    fn error_path_does_not_exists() {
+        let sample_path = Samples::init_simple_chroot("error_path_does_not_exists");
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let mut rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let not_exists = sample_path.join("NOTEXISTS");
+        let expected_error = InfrastructureError::PathDoesNotExists(not_exists.clone());
+        assert_two_errors_equals(&vfs.remove_file(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.remove_empty_directory(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.remove_file(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.remove_empty_directory(not_exists.as_path()).err().unwrap(), &expected_error);
+    }
+
+    #[test]
+    fn error_parent_does_not_exists() {
+        let sample_path = Samples::init_advanced_chroot("error_parent_does_not_exists");
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let mut rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let existing_source = sample_path.join("F");
+        let not_exists = sample_path.join("NOTPARENT/NOTCHILD");
+        let expected_error = InfrastructureError::ParentDoesNotExists(not_exists.parent().unwrap().to_path_buf());
+
+        assert_two_errors_equals(&vfs.create_empty_directory(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.create_empty_file(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.copy_file_to_file(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.move_file_to_file(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.bind_directory_to_directory(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+
+        assert_two_errors_equals(&rfs.create_empty_directory(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.create_empty_file(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.copy_file_to_file(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.move_file_to_file(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.bind_directory_to_directory(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+    }
+
+    #[test]
+    fn error_parent_is_not_a_directory() {
+        let sample_path = Samples::init_advanced_chroot("error_parent_is_not_a_directory");
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let mut rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let existing_source = sample_path.join("A");
+        let not_exists = sample_path.join("F/NOTCHILD");
+        let expected_error = InfrastructureError::ParentIsNotADirectory(not_exists.parent().unwrap().to_path_buf());
+
+        assert_two_errors_equals(&vfs.create_empty_directory(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.create_empty_file(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.copy_file_to_file(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.move_file_to_file(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.bind_directory_to_directory(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+
+        assert_two_errors_equals(&rfs.create_empty_directory(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.create_empty_file(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.copy_file_to_file(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.move_file_to_file(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.bind_directory_to_directory(existing_source.as_path(), not_exists.as_path()).err().unwrap(), &expected_error);
+    }
+
+    #[test]
+    fn error_source_does_not_exists() {
+        let sample_path = Samples::init_advanced_chroot("error_source_does_not_exists");
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let mut rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let not_exists = sample_path.join("NOTEXISTS");
+        let existing_destination = sample_path.join("A");
+        let expected_error = InfrastructureError::SourceDoesNotExists(not_exists.clone());
+
+        assert_two_errors_equals(&vfs.copy_file_to_file(not_exists.as_path(), existing_destination.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.move_file_to_file(not_exists.as_path(), existing_destination.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.bind_directory_to_directory(not_exists.as_path(), existing_destination.as_path()).err().unwrap(), &expected_error);
+
+        assert_two_errors_equals(&rfs.copy_file_to_file(not_exists.as_path(), existing_destination.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.move_file_to_file(not_exists.as_path(), existing_destination.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.bind_directory_to_directory(not_exists.as_path(), existing_destination.as_path()).err().unwrap(), &expected_error);
+    }
+
+    #[test]
+    fn error_source_is_not_a_directory() {
+        let sample_path = Samples::init_advanced_chroot("error_source_is_not_a_directory");
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let mut rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let new_destination = sample_path.join("NEW");
+        let is_file = sample_path.join("F");
+        let expected_error = InfrastructureError::SourceIsNotADirectory(is_file.clone());
+
+        assert_two_errors_equals(&vfs.bind_directory_to_directory(is_file.as_path(), new_destination.as_path()).err().unwrap(), &expected_error);
+
+        assert_two_errors_equals(&rfs.bind_directory_to_directory(is_file.as_path(), new_destination.as_path()).err().unwrap(), &expected_error);
+    }
+
+    #[test]
+    fn error_source_is_not_a_file() {
+        let sample_path = Samples::init_advanced_chroot("error_source_is_not_a_file");
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let mut rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let not_a_file = sample_path.join("A");
+        let new_destination = sample_path.join("NEW");
+        let expected_error = InfrastructureError::SourceIsNotAFile(not_a_file.clone());
+
+        assert_two_errors_equals(&vfs.copy_file_to_file(not_a_file.as_path(), new_destination.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.move_file_to_file(not_a_file.as_path(), new_destination.as_path()).err().unwrap(), &expected_error);
+
+        assert_two_errors_equals(&rfs.copy_file_to_file(not_a_file.as_path(), new_destination.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.move_file_to_file(not_a_file.as_path(), new_destination.as_path()).err().unwrap(), &expected_error);
+    }
+
+    #[test]
+    fn error_destination_is_not_a_file() {
+        let sample_path = Samples::init_advanced_chroot("error_destination_is_not_a_file");
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let mut rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let not_a_file = sample_path.join("A");
+        let existing_source = sample_path.join("F");
+        let expected_error = InfrastructureError::DestinationIsNotAFile(not_a_file.clone());
+
+        assert_two_errors_equals(&vfs.copy_file_to_file(existing_source.as_path(), not_a_file.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&vfs.move_file_to_file(existing_source.as_path(), not_a_file.as_path()).err().unwrap(), &expected_error);
+
+        assert_two_errors_equals(&rfs.copy_file_to_file(existing_source.as_path(), not_a_file.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.move_file_to_file(existing_source.as_path(), not_a_file.as_path()).err().unwrap(), &expected_error);
+    }
+
+    #[test]
+    fn error_destination_already_exists() {
+        let sample_path = Samples::init_advanced_chroot("error_destination_already_exists");
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let mut rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let existing_destination = sample_path.join("A");
+        let existing_source = sample_path.join("B");
+        let expected_error = InfrastructureError::DestinationAlreadyExists(existing_destination.clone());
+
+        assert_two_errors_equals(&vfs.bind_directory_to_directory(existing_source.as_path(), existing_destination.as_path()).err().unwrap(), &expected_error);
+
+        assert_two_errors_equals(&rfs.bind_directory_to_directory(existing_source.as_path(), existing_destination.as_path()).err().unwrap(), &expected_error);
+    }
+
+    #[test]
+    fn error_directory_is_not_empty() {
+        let sample_path = Samples::init_advanced_chroot("error_directory_is_not_empty");
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let mut rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let not_empty = sample_path.join("A");
+        let expected_error = InfrastructureError::DirectoryIsNotEmpty(not_empty.clone());
+
+        assert_two_errors_equals(&vfs.remove_empty_directory(not_empty.as_path()).err().unwrap(), &expected_error);
+
+        assert_two_errors_equals(&rfs.remove_empty_directory(not_empty.as_path()).err().unwrap(), &expected_error);
     }
 }
