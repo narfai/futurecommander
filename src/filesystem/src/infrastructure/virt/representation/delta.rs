@@ -126,28 +126,6 @@ impl VirtualDelta {
         }
     }
 
-    //TODO unused but could be usefull
-    pub fn walk(&self, collection: &mut VirtualChildren, identity: &Path) -> Result<(), RepresentationError>{
-        match self.get(identity)? {
-            Some(virtual_identity) => match self.is_directory(identity) {
-                Ok(true)   => { self._walk(collection, virtual_identity); Ok(()) },
-                Ok(false)  => Err(RepresentationError::IsNotADirectory(identity.to_path_buf())),
-                Err(error) => Err(error)
-            },
-            None => Err(RepresentationError::DoesNotExists(identity.to_path_buf()))
-        }
-    }
-
-    //TODO unused but could be usefull
-    fn _walk(&self, collection: &mut VirtualChildren, virtual_identity: &VirtualPath){
-        collection.insert(virtual_identity.clone());
-        if let Some(children) = self.children(virtual_identity.as_identity()) {
-            for child in children.iter() {
-                self._walk(collection, &child);
-            }
-        };
-    }
-
     pub fn get(&self, identity: &Path) -> Result<Option<&VirtualPath>, RepresentationError> {
         match self.hierarchy.get(Self::get_parent_or_root(identity).as_path()) {
             Some(children) => {
@@ -169,17 +147,6 @@ impl VirtualDelta {
 
     pub fn is_empty(&self) -> bool {
         self.hierarchy.len() == 0
-    }
-
-    //TODO unused yet but seems useful at least for debugging
-    pub fn sub_delta(&self, identity: &Path) -> Result<Option<VirtualDelta>, RepresentationError> {
-        if self.get(identity)?.is_some() {
-            let mut collection = VirtualChildren::default();
-            self.walk(&mut collection, identity)?;
-            Ok(Some(collection.into_delta()?))
-        } else {
-            Ok(None)
-        }
     }
 
     pub fn resolve(&self, path: &Path) -> Result<Option<PathBuf>, RepresentationError> {

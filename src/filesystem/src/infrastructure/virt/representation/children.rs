@@ -23,9 +23,7 @@ use std::collections::{
 };
 
 use crate::infrastructure::virt::representation::{
-    VirtualPath,
-    VirtualDelta,
-    errors::RepresentationError
+    VirtualPath
 };
 
 #[derive(Debug, Clone, Default)]
@@ -54,15 +52,6 @@ impl VirtualChildren {
 
     pub fn iter(&self) -> VirtualChildrenIterator<'_> {
         VirtualChildrenIterator::new(self.set.iter())
-    }
-
-    //TODO unused yet but seems useful at least for debugging
-    pub fn into_delta(self) -> Result<VirtualDelta, RepresentationError> {
-        let mut delta = VirtualDelta::default();
-        for virtual_identity in self.iter() {
-            delta.attach_virtual(&virtual_identity)?;
-        }
-        Ok(delta)
     }
 }
 
