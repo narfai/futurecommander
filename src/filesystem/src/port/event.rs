@@ -26,7 +26,10 @@ use crate::{
     }
 };
 
-pub trait Event<E, F> where F: ReadableFileSystem<Item=E>, E: Entry {
+pub trait Event<E, F>
+    where F: ReadableFileSystem<Item=E>,
+          E: Entry {
+
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError>;
 }
 

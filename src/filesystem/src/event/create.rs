@@ -58,7 +58,10 @@ impl CreateEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
-impl <E, F> Event <E, F> for CreateEvent where F: ReadableFileSystem<Item=E>, E: Entry {
+impl <E, F> Event <E, F> for CreateEvent
+    where F: ReadableFileSystem<Item=E>,
+          E: Entry {
+
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
         let entry = fs.status(self.path())?;
         let mut transaction = AtomicTransaction::default();
@@ -66,6 +69,7 @@ impl <E, F> Event <E, F> for CreateEvent where F: ReadableFileSystem<Item=E>, E:
         fn recursive_dir_creation<E, F> (fs: &F, mut ancestors: &mut Ancestors<'_>) -> Result<AtomicTransaction, DomainError>
             where F: ReadableFileSystem<Item=E>,
                   E: Entry {
+
             let mut transaction = AtomicTransaction::default();
             if let Some(path) = ancestors.next() {
                 let entry = fs.status(path)?;

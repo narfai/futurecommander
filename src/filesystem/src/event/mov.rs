@@ -56,7 +56,10 @@ impl MoveEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
-impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: Entry {
+impl <E, F> Event <E, F> for MoveEvent
+    where F: ReadableFileSystem<Item=E>,
+          E: Entry {
+
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
         let source = fs.status(self.source())?;
 

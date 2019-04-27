@@ -50,7 +50,10 @@ impl RemoveEvent {
     pub fn recursive(&self) -> bool { self.recursive }
 }
 
-impl <E, F> Event <E, F> for RemoveEvent where F: ReadableFileSystem<Item=E>, E: Entry {
+impl <E, F> Event <E, F> for RemoveEvent
+    where F: ReadableFileSystem<Item=E>,
+          E: Entry {
+
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
         let entry = fs.status(self.path())?;
         let mut transaction = AtomicTransaction::default();
