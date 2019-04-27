@@ -119,6 +119,24 @@ mod errors_tests {
     }
 
     #[test]
+    fn error_query_error(){
+        let query_emock = QueryError::IsNotADirectory(PathBuf::from("/TEST"));
+        assert_two_errors_equals(
+            &DomainError::from(query_emock),
+            &DomainError::Query(QueryError::IsNotADirectory(PathBuf::from("/TEST")))
+        );
+    }
+
+    #[test]
+    fn error_infrastucture_error(){
+        let query_emock = QueryError::IsNotADirectory(PathBuf::from("/TEST"));
+        assert_two_errors_equals(
+            &DomainError::from(query_emock),
+            &DomainError::Query(QueryError::IsNotADirectory(PathBuf::from("/TEST")))
+        );
+    }
+
+    #[test]
     fn error_copy_into_itself() {
         let sample_path = Samples::static_samples_path();
         let vfs = FileSystemAdapter(VirtualFileSystem::default());

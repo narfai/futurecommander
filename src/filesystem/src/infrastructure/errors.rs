@@ -103,6 +103,11 @@ impl error::Error for InfrastructureError {
 mod errors_tests {
     use super::*;
 
+    use std::{
+        io::{ Error, ErrorKind },
+        path::{ PathBuf }
+    };
+
     use crate::{
         sample::Samples,
         port::{
@@ -117,6 +122,33 @@ mod errors_tests {
 
     fn assert_two_errors_equals(left: &impl error::Error, right: &impl error::Error) {
         assert_eq!(format!("{}", left), format!("{}", right))
+    }
+
+    #[test]
+    fn error_io_error(){
+        let io_emock = Error::new(ErrorKind::InvalidData, "test");
+        assert_two_errors_equals(
+            &InfrastructureError::from(io_emock),
+            &InfrastructureError::Io(Error::new(ErrorKind::InvalidData, "test"))
+        );
+    }
+
+    #[test]
+    fn error_representation_error(){
+        let representation_emock = RepresentationError::DoesNotExists(PathBuf::from("/TEST"));
+        assert_two_errors_equals(
+            &InfrastructureError::from(representation_emock),
+            &InfrastructureError::Representation(RepresentationError::DoesNotExists(PathBuf::from("/TEST")))
+        );
+    }
+
+    #[test]
+    fn error_query_error(){
+        let query_emock = QueryError::IsNotADirectory(PathBuf::from("/TEST"));
+        assert_two_errors_equals(
+            &InfrastructureError::from(query_emock),
+            &InfrastructureError::Query(QueryError::IsNotADirectory(PathBuf::from("/TEST")))
+        );
     }
 
     //Error testing
