@@ -78,26 +78,63 @@ impl FileSystemAdapter<RealFileSystem> {
                     .and(Ok(read))
             })
     }
+
+    fn safe_parent(&self, path: &Path) -> Result<(), InfrastructureError> {
+        match path.parent() {
+            Some(parent) =>
+                if ! parent.exists() {
+                    Err(InfrastructureError::ParentDoesNotExists(parent.to_path_buf()))
+                } else if !parent.is_dir() {
+                    Err(InfrastructureError::ParentIsNotADirectory(parent.to_path_buf()))
+                } else {
+                    Ok(())
+                }
+            None => {
+                Ok(())
+            }
+        }
+    }
+
+    fn safe_file_translation(&self, source: &Path, destination: &Path) -> Result<(), InfrastructureError> {
+        self.safe_parent(destination)?;
+
+        if !source.exists() {
+            return Err(InfrastructureError::SourceDoesNotExists(source.to_path_buf()));
+        }
+
+        if destination.exists() && ! destination.is_file() {
+            return Err(InfrastructureError::DestinationIsNotAFile(destination.to_path_buf()));
+        }
+
+        if source.exists() && ! source.is_file() {
+            return Err(InfrastructureError::SourceIsNotAFile(source.to_path_buf()));
+        }
+        Ok(())
+    }
 }
 
 impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
     //Write real specialization
     fn create_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        self.safe_parent(path)?;
         create_dir(path)?;
         Ok(())
     }
 
     fn create_empty_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        self.safe_parent(path)?;
         File::create(path)?;
         Ok(())
     }
 
     fn copy_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{
+        self.safe_file_translation(source, destination)?;
         self._copy_file(source, destination, &|_|{})?;
         Ok(())
     }
 
     fn move_file_to_file(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>{
+        self.safe_file_translation(source, destination)?;
         match rename(source, destination) {
             Err(error) => {
                 println!("WARNING FALLBACK TO COPY / REMOVE {}", error);
@@ -108,16 +145,36 @@ impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
         }
     }
 
-    fn bind_directory_to_directory(&mut self, _source: &Path, destination: &Path) -> Result<(), InfrastructureError> {
+    fn bind_directory_to_directory(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError> {
+        self.safe_parent(destination)?;
+
+        if !source.exists() {
+            return Err(InfrastructureError::SourceDoesNotExists(source.to_path_buf()));
+        }
+
+        if destination.exists() {
+            return Err(InfrastructureError::DestinationAlreadyExists(destination.to_path_buf()));
+        }
+
+        if source.exists() && ! source.is_dir() {
+            return Err(InfrastructureError::SourceIsNotADirectory(source.to_path_buf()));
+        }
+
         self.create_empty_directory(destination)
     }
 
     fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        if ! path.exists() {
+            return Err(InfrastructureError::PathDoesNotExists(path.to_path_buf()));
+        }
         remove_file(path)?;
         Ok(())
     }
 
     fn remove_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>{
+        if ! path.exists() {
+            return Err(InfrastructureError::PathDoesNotExists(path.to_path_buf()));
+        }
         remove_dir(path)?;
         Ok(())
     }

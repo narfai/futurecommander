@@ -21,7 +21,8 @@
 use std::{
     io,
     error,
-    fmt
+    fmt,
+    path::{ PathBuf }
 };
 
 use crate::{
@@ -36,6 +37,14 @@ pub enum InfrastructureError {
     Io(io::Error),
     Representation(RepresentationError),
     Query(QueryError),
+    PathDoesNotExists(PathBuf),
+    ParentDoesNotExists(PathBuf),
+    ParentIsNotADirectory(PathBuf),
+    SourceDoesNotExists(PathBuf),
+    SourceIsNotADirectory(PathBuf),
+    SourceIsNotAFile(PathBuf),
+    DestinationIsNotAFile(PathBuf),
+    DestinationAlreadyExists(PathBuf),
     Custom(String)
 }
 
@@ -63,6 +72,14 @@ impl fmt::Display for InfrastructureError {
             InfrastructureError::Io(error) => write!(f, "Io error {}", error),
             InfrastructureError::Representation(error) => write!(f, "Representation error {}", error),
             InfrastructureError::Query(error) => write!(f, "Query error {}", error),
+            InfrastructureError::PathDoesNotExists(path) => write!(f, "Path {} does not exists", path.to_string_lossy()),
+            InfrastructureError::ParentDoesNotExists(path) => write!(f, "Parent path {} does not exists", path.to_string_lossy()),
+            InfrastructureError::ParentIsNotADirectory(path) => write!(f, "Parent path {} is not a directory", path.to_string_lossy()),
+            InfrastructureError::SourceDoesNotExists(path) => write!(f, "Source path {} does not exists", path.to_string_lossy()),
+            InfrastructureError::SourceIsNotADirectory(path) => write!(f, "Source path {} is not a directory", path.to_string_lossy()),
+            InfrastructureError::SourceIsNotAFile(path) => write!(f, "Source path {} is not a file", path.to_string_lossy()),
+            InfrastructureError::DestinationIsNotAFile(path) => write!(f, "Destination path {} is not a file", path.to_string_lossy()),
+            InfrastructureError::DestinationAlreadyExists(path) => write!(f, "Destination path {} already exists", path.to_string_lossy()),
             InfrastructureError::Custom(message) => write!(f, "Custom message {}", message),
         }
     }
