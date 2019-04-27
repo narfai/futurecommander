@@ -6,7 +6,7 @@ EXEC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 function usage {
     echo -e "Usage:
-    fc  {[run]|release|test|shell|build_windows|build_linux|lint}"
+    fc  {[run]|release|test|shell|build_windows|build_linux|lint|check|coverage}"
     exit 1
 }
 
@@ -38,11 +38,6 @@ function build_linux {
     echo "$EXEC_DIR/target/release/futurecommander"
 }
 
-function test_with_coverage {
-
-    bash <(curl -s https://codecov.io/bash)
-}
-
 function release {
     if [ -z "${GITHUB_TOKEN}" ]; then
         exit 1
@@ -61,7 +56,6 @@ function release {
             --tag "${branch}"
     fi
 
-    user_cargo "tarpaulin --all --count --out Xml"
     rm -Rf "${EXEC_DIR}/target/*"
 
     linux_file=$(build_linux)
@@ -71,8 +65,6 @@ function release {
     echo "Build $windows_file OK"
 
     user_cargo "clippy --all-targets --all-features -- -D warnings"
-
-    bash <(curl -s https://codecov.io/bash)
 
     if [ -z "$(git tag |grep -i ${branch})" ]; then
         git tag "${branch}"
@@ -131,6 +123,10 @@ case "$1" in
     check)
         user_cargo "clippy --all-targets --all-features -- -D warnings"
         user_cargo "test --all -v"
+        ;;
+    coverage)
+        user_cargo "tarpaulin --all --count --out Xml"
+        bash <(curl -s https://codecov.io/bash)
         ;;
     release)
         release

@@ -13,11 +13,11 @@ This is free software: you can redistribute it and/or modify it under the terms 
 
 ## Docker
 
-Build static image and interact with your build
+Build static image ( with embed source ) and interact with your target binaries
 
 ```
 docker build -t futurecommander .
-docker run --security-opt seccomp=unconfined \
+docker run \
     --rm -v "$(pwd)/target-docker":/usr/src/futurecommander/target \
     futurecommander:latest \
     <command>
@@ -26,39 +26,50 @@ docker run --security-opt seccomp=unconfined \
 Or for live source editing
 
 ```
-docker run --rm -ti \
+docker run --rm -t \
     -v "$(pwd)/src":/usr/src/futurecommander/src \
     -v "$(pwd)/target-docker":/usr/src/futurecommander/target \
     futurecommander test
 ```
 
-Releases needs codecov & github token ( and no seccomp for code coverage )
+Releases needs github token
+
+```
+docker run \
+    -e "GITHUB_TOKEN=..." \
+    --rm -t \
+    futurecommander release
+```
+
+Coverage needs codecov token( and no seccomp for code coverage )
 
 ```
 docker run \
     -e "CODECOV_TOKEN=..." \
-    -e "GITHUB_TOKEN=..." \
     --security-opt seccomp=unconfined \
-    --rm \
-    -v "$(pwd)/target-docker":/usr/src/futurecommander/target \
-    futurecommander release
+    --rm -t \
+    futurecommander coverage
 ```
 
 Command can be :
 
-* run
+* run : run the shell
 
-* test
+* test : check tests
 
-* lint
+* lint : check lint
 
-* build_windows
+* build_windows : build windows 64 bit binary
 
-* build_linux
+* build_linux : build linux 64 bit binary
 
-* cargo
+* cargo : run any cargo command
 
-* release ( need `-e "CODECOV_TOKEN=..."` and `-e "GITHUB_TOKEN=..."` )
+* check : test & lint
+
+* coverage ( needs `-e "CODECOV_TOKEN=..."` and `--security-opt seccomp=unconfined`) : send test coverage to dovecot
+
+* release ( needs `-e "GITHUB_TOKEN=..."` ) : test, lint and generate a pre-release on github containing both binaries
 
 ## Trello
 
