@@ -83,7 +83,7 @@ impl <E, F> Event <E, F> for CreateEvent where F: ReadableFileSystem<Item=E>, E:
         match self.kind() {
             Kind::Directory => {
                 if entry.exists() {
-                    return Err(DomainError::Custom("Directory overwrite not allowed".to_string()))
+                    return Err(DomainError::DirectoryOverwriteNotAllowed(entry.to_path()))
                 } else {
                     if self.recursive() {
                         transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
@@ -100,14 +100,14 @@ impl <E, F> Event <E, F> for CreateEvent where F: ReadableFileSystem<Item=E>, E:
                         transaction.add(Atomic::RemoveFile(entry.to_path()));
                         transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
                     } else {
-                        return Err(DomainError::Custom("Overwrite not allowed".to_string()))
+                        return Err(DomainError::OverwriteNotAllowed(entry.to_path()))
                     }
                 } else {
                     transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
                 }
             },
             Kind::Unknown => {
-                return Err(DomainError::Custom("Cannot create with unknown kind".to_string()))
+                return Err(DomainError::CreateUnknown(entry.to_path()))
             }
         }
         Ok(transaction)

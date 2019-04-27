@@ -45,6 +45,7 @@ pub enum InfrastructureError {
     SourceIsNotAFile(PathBuf),
     DestinationIsNotAFile(PathBuf),
     DestinationAlreadyExists(PathBuf),
+    DirectoryIsNotEmpty(PathBuf),
     Custom(String)
 }
 
@@ -80,6 +81,7 @@ impl fmt::Display for InfrastructureError {
             InfrastructureError::SourceIsNotAFile(path) => write!(f, "Source path {} is not a file", path.to_string_lossy()),
             InfrastructureError::DestinationIsNotAFile(path) => write!(f, "Destination path {} is not a file", path.to_string_lossy()),
             InfrastructureError::DestinationAlreadyExists(path) => write!(f, "Destination path {} already exists", path.to_string_lossy()),
+            InfrastructureError::DirectoryIsNotEmpty(path) => write!(f, "Directory {} is not empty", path.to_string_lossy()),
             InfrastructureError::Custom(message) => write!(f, "Custom message {}", message),
         }
     }

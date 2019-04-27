@@ -89,10 +89,10 @@ impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: E
                         }
                         transaction.add(Atomic::RemoveEmptyDirectory(source.to_path()));
                     } else {
-                        return Err(DomainError::Custom("Merge not allowed".to_string()))
+                        return Err(DomainError::MergeNotAllowed(source.to_path(), destination.to_path()))
                     }
                 } else {
-                    return Err(DomainError::Custom("Cannot merge file with directory".to_string()));
+                    return Err(DomainError::MergeFileWithDirectory(source.to_path(), destination.to_path()));
                 }
             } else if source.is_file() {
                 if destination.is_file() {
@@ -100,10 +100,10 @@ impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: E
                         transaction.add(Atomic::RemoveFile(destination.to_path()));
                         transaction.add(Atomic::MoveFileToFile(source.to_path(), destination.to_path()));
                     } else {
-                        return Err(DomainError::Custom("Overwrite not allowed".to_string()))
+                        return Err(DomainError::OverwriteNotAllowed(destination.to_path()))
                     }
                 } else {
-                    return Err(DomainError::Custom("Cannot overwrite directory with file".to_string()))
+                    return Err(DomainError::OverwriteDirectoryWithFile(source.to_path(), destination.to_path()))
                 }
             }
         } else if source.is_dir() {

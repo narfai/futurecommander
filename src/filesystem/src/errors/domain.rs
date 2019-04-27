@@ -38,24 +38,19 @@ pub enum DomainError {
     Infrastructure(InfrastructureError),
     Query(QueryError),
 
-    //Virtual Only
     CopyIntoItSelf(PathBuf, PathBuf),
 
-    //Real Only
-    AlreadyExists(PathBuf),
-    DirectoryIsNotEmpty(PathBuf),
-    SourceIsNotAFile(PathBuf),
-
-    //Common
-    OverwriteDirectoryWithFile(PathBuf, PathBuf),
-    CopyDirectoryIntoFile(PathBuf, PathBuf),
     MergeNotAllowed(PathBuf, PathBuf),
-    OverwriteNotAllowed(PathBuf, PathBuf),
-    DeleteRecursiveNotAllowed(PathBuf),
-    ParentDoesNotExists(PathBuf),
-    ParentIsNotADirectory(PathBuf),
-    SourceDoesNotExists(PathBuf),
+    OverwriteNotAllowed(PathBuf),
+    DirectoryOverwriteNotAllowed(PathBuf),
+
+    MergeFileWithDirectory(PathBuf, PathBuf),
+    OverwriteDirectoryWithFile(PathBuf, PathBuf),
+
+    CreateUnknown(PathBuf),
     DoesNotExists(PathBuf),
+    DeleteRecursiveNotAllowed(PathBuf),
+    SourceDoesNotExists(PathBuf),
     Custom(String)
 }
 
@@ -77,24 +72,16 @@ impl fmt::Display for DomainError {
         match self {
             DomainError::Infrastructure(error) => write!(f, "Infrastructure error {}", error),
             DomainError::Query(error) => write!(f, "Query error {}", error),
-            //Virtual Only
             DomainError::CopyIntoItSelf(source, dst) => write!(f, "Cannot copy {} into itself {}", source.to_string_lossy(), dst.to_string_lossy()),
-
-            //Real Only
-            DomainError::AlreadyExists(path) => write!(f, "Path {} already exists", path.to_string_lossy()),
-            DomainError::DirectoryIsNotEmpty(path) => write!(f, "Directory {} is not empty", path.to_string_lossy()),
-            DomainError::SourceIsNotAFile(source) => write!(f, "Source {} is not a file", source.to_string_lossy()),
-
-            //Common
-            DomainError::ParentDoesNotExists(parent) => write!(f, "Parent {} does not exists", parent.to_string_lossy()),
-            DomainError::ParentIsNotADirectory(parent) => write!(f, "Parent {} is not a directory", parent.to_string_lossy()),
-            DomainError::SourceDoesNotExists(source) => write!(f, "Source {} does not exists", source.to_string_lossy()),
-            DomainError::OverwriteDirectoryWithFile(source, dst) => write!(f, "Cannot overwrite directory {} with file {}", source.to_string_lossy(), dst.to_string_lossy()),
-            DomainError::CopyDirectoryIntoFile(source, dst) => write!(f, "Cannot copy directory {} into file {}", source.to_string_lossy(), dst.to_string_lossy()),
-            DomainError::OverwriteNotAllowed(source, dst) => write!(f, "Overwrite of {} into {} is not allowed", source.to_string_lossy(), dst.to_string_lossy()),
             DomainError::MergeNotAllowed(source, dst) => write!(f, "Merge of {} into {} is not allowed", source.to_string_lossy(), dst.to_string_lossy()),
-            DomainError::DeleteRecursiveNotAllowed(path) => write!(f, "Delete recursively {} is not allowed", path.to_string_lossy()),
+            DomainError::OverwriteNotAllowed(dst) => write!(f, "Overwrite of {} is not allowed", dst.to_string_lossy()),
+            DomainError::DirectoryOverwriteNotAllowed(path) => write!(f, "Directory overwrite of {} is not allowed", path.to_string_lossy()),
+            DomainError::MergeFileWithDirectory(source, destination) => write!(f, "Cannot merge file {} with directory {} is not allowed", source.to_string_lossy(), destination.to_string_lossy()),
+            DomainError::OverwriteDirectoryWithFile(source, dst) => write!(f, "Cannot overwrite directory {} with file {}", source.to_string_lossy(), dst.to_string_lossy()),
+            DomainError::CreateUnknown(path) => write!(f, "Cannot create unknown kind at path {}", path.to_string_lossy()),
             DomainError::DoesNotExists(path) => write!(f, "Path {} does not exists", path.to_string_lossy()),
+            DomainError::DeleteRecursiveNotAllowed(path) => write!(f, "Delete recursively {} is not allowed", path.to_string_lossy()),
+            DomainError::SourceDoesNotExists(source) => write!(f, "Source {} does not exists", source.to_string_lossy()),
             DomainError::Custom(s) => write!(f, "Custom error {}", s),
         }
     }

@@ -175,6 +175,11 @@ impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
         if ! path.exists() {
             return Err(InfrastructureError::PathDoesNotExists(path.to_path_buf()));
         }
+
+        if path.read_dir()?.count() != 0 {
+            return Err(InfrastructureError::DirectoryIsNotEmpty(path.to_path_buf()));
+        }
+
         remove_dir(path)?;
         Ok(())
     }
