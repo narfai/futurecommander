@@ -56,7 +56,10 @@ impl MoveEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
-impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: Entry {
+impl <E, F> Event <E, F> for MoveEvent
+    where F: ReadableFileSystem<Item=E>,
+          E: Entry {
+
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
         let source = fs.status(self.source())?;
 
@@ -66,6 +69,10 @@ impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: E
 
         let mut transaction = AtomicTransaction::default();
         let destination = fs.status(self.destination())?;
+
+        if source.is_dir() && destination.is_contained_by(&source) {
+            return Err(DomainError::CopyIntoItSelf(source.to_path(), destination.to_path()));
+        }
 
         if destination.exists() {
             if source.is_dir() {
@@ -85,10 +92,10 @@ impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: E
                         }
                         transaction.add(Atomic::RemoveEmptyDirectory(source.to_path()));
                     } else {
-                        return Err(DomainError::Custom("Merge not allowed".to_string()))
+                        return Err(DomainError::MergeNotAllowed(source.to_path(), destination.to_path()))
                     }
                 } else {
-                    return Err(DomainError::Custom("Cannot merge file with directory".to_string()));
+                    return Err(DomainError::MergeFileWithDirectory(source.to_path(), destination.to_path()));
                 }
             } else if source.is_file() {
                 if destination.is_file() {
@@ -96,10 +103,10 @@ impl <E, F> Event <E, F> for MoveEvent where F: ReadableFileSystem<Item=E>, E: E
                         transaction.add(Atomic::RemoveFile(destination.to_path()));
                         transaction.add(Atomic::MoveFileToFile(source.to_path(), destination.to_path()));
                     } else {
-                        return Err(DomainError::Custom("Overwrite not allowed".to_string()))
+                        return Err(DomainError::OverwriteNotAllowed(destination.to_path()))
                     }
                 } else {
-                    return Err(DomainError::Custom("Cannot overwrite directory with file".to_string()))
+                    return Err(DomainError::OverwriteDirectoryWithFile(source.to_path(), destination.to_path()))
                 }
             }
         } else if source.is_dir() {

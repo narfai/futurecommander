@@ -40,5 +40,60 @@ impl fmt::Display for RepresentationError {
     }
 }
 
-
 impl error::Error for RepresentationError {}
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod errors_tests {
+    use super::*;
+
+    use std::{
+        path::{ Path, PathBuf }
+    };
+
+    use crate::{
+        Kind,
+        infrastructure::virt::representation::*
+    };
+
+    fn assert_two_errors_equals(left: &impl error::Error, right: &impl error::Error) {
+        assert_eq!(format!("{}", left), format!("{}", right))
+    }
+
+    #[test]
+    fn error_already_exists(){
+        let mut delta = VirtualDelta::default();
+        delta.attach(Path::new("/TEST"), None, Kind::File).unwrap();
+        assert_two_errors_equals(
+            &delta.attach(Path::new("/TEST"), None, Kind::File).err().unwrap(),
+            &RepresentationError::AlreadyExists(PathBuf::from("/TEST"))
+        );
+    }
+
+    #[test]
+    fn error_virtual_parent_is_a_file(){
+        let mut delta = VirtualDelta::default();
+        delta.attach(Path::new("/PARENT"), None, Kind::File).unwrap();
+        assert_two_errors_equals(
+             &delta.attach(Path::new("/PARENT/CHILD"), None, Kind::File).err().unwrap(),
+            &RepresentationError::VirtualParentIsAFile(PathBuf::from("/PARENT/CHILD"))
+        );
+    }
+
+    #[test]
+    fn error_does_not_exists(){
+        let mut delta = VirtualDelta::default();
+        assert_two_errors_equals(
+            &delta.detach(Path::new("/DOES/NOT/EXISTS")).err().unwrap(),
+            &RepresentationError::DoesNotExists(PathBuf::from("/DOES/NOT/EXISTS"))
+        );
+    }
+
+    #[test]
+    fn error_is_relative_path(){
+        assert_two_errors_equals(
+            &VirtualPath::from(PathBuf::from("RELATIVE"), None, Kind::Unknown).err().unwrap(),
+            &RepresentationError::IsRelativePath(PathBuf::from("RELATIVE"))
+        )
+    }
+}

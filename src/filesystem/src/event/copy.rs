@@ -57,7 +57,10 @@ impl CopyEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
-impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: Entry {
+impl <E, F> Event <E, F> for CopyEvent
+    where F: ReadableFileSystem<Item=E>,
+          E: Entry {
+
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
         let source = fs.status(self.source())?;
 
@@ -67,6 +70,10 @@ impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: E
 
         let mut transaction = AtomicTransaction::default();
         let destination = fs.status(self.destination())?;
+
+        if source.is_dir() && destination.is_contained_by(&source) {
+            return Err(DomainError::CopyIntoItSelf(source.to_path(), destination.to_path()));
+        }
 
         if destination.exists() {
             if source.is_dir() {
@@ -85,10 +92,10 @@ impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: E
                             );
                         }
                     } else {
-                        return Err(DomainError::Custom("Merge not allowed".to_string()))
+                        return Err(DomainError::MergeNotAllowed(source.to_path(), destination.to_path()))
                     }
                 } else {
-                    return Err(DomainError::Custom("Cannot merge file with directory".to_string()));
+                    return Err(DomainError::MergeFileWithDirectory(source.to_path(), destination.to_path()))
                 }
             } else if source.is_file() {
                 if destination.is_file() {
@@ -96,10 +103,10 @@ impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: E
                         transaction.add(Atomic::RemoveFile(destination.to_path()));
                         transaction.add(Atomic::CopyFileToFile(source.to_path(), destination.to_path()));
                     } else {
-                        return Err(DomainError::Custom("Overwrite not allowed".to_string()))
+                        return Err(DomainError::OverwriteNotAllowed(destination.to_path()))
                     }
                 } else {
-                    return Err(DomainError::Custom("Cannot overwrite directory with file".to_string()))
+                    return Err(DomainError::OverwriteDirectoryWithFile(source.to_path(), destination.to_path()))
                 }
             }
         } else if source.is_dir() {
@@ -229,32 +236,6 @@ mod real_tests {
 
     //TODO replace len tests with md5 sum for copy & move
 }
-
-
-
-//    //Error testing
-//    #[test]
-//    fn copy_or_move_directory_into_itself_must_not_be_allowed() {
-//        let sample_path = Samples::static_samples_path();
-//        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
-//
-//        let source = sample_path.join("B");
-//        let destination = sample_path.join("B/D/B");
-//        match CopyOperation::new(
-//            source.as_path(),
-//            destination.as_path(),
-//            true,
-//            false
-//        ).execute(&mut vfs) {
-//            Err(OperationError::CopyIntoItSelf(err_source, err_destination)) => {
-//                assert_eq!(source.as_path(), err_source.as_path());
-//                assert_eq!(destination.as_path(), err_destination.as_path());
-//            }
-//            Err(error) => panic!("{}", error),
-//            Ok(_) => panic!("Should not be able to copy into itself")
-//        };
-//    }
-
 
 #[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]

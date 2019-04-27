@@ -201,15 +201,6 @@ impl VirtualPath {
             kind
         )
     }
-
-    pub fn is_contained_by(&self, other: &VirtualPath) -> bool {
-        for ancestor in self.identity.ancestors() {
-            if other.as_identity() == ancestor {
-                return true;
-            }
-        }
-        false
-    }
 }
 
 

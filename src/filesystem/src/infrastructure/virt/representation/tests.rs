@@ -32,7 +32,6 @@ mod representation_integration {
     use crate::{
         Kind,
         infrastructure::virt::representation::{
-            VirtualChildren,
             VirtualPath,
             VirtualDelta
         }
@@ -114,26 +113,6 @@ mod representation_integration {
     }
 
     #[test]
-    fn walk(){
-        let mut delta = VirtualDelta::default();
-        delta.attach(Path::new("/R"), None, Kind::Directory).unwrap();
-        delta.attach(Path::new("/R/to_replace"), None, Kind::Directory).unwrap();
-        delta.attach(Path::new("/R/to_not_change"), None, Kind::File).unwrap();
-        delta.attach(Path::new("/R/to_complete"), None, Kind::Directory).unwrap();
-        delta.attach(Path::new("/R/to_complete/D"), None, Kind::Directory).unwrap();
-        delta.attach(Path::new("/R/to_complete/E"), None, Kind::Directory).unwrap();
-
-        let mut collection = VirtualChildren::default();
-        delta.walk(&mut collection, &Path::new("/R")).unwrap();
-        assert!(collection.contains(&VirtualPath::from_str("/R").unwrap()));
-        assert!(collection.contains(&VirtualPath::from_str("/R/to_replace").unwrap()));
-        assert!(collection.contains(&VirtualPath::from_str("/R/to_not_change").unwrap()));
-        assert!(collection.contains(&VirtualPath::from_str("/R/to_complete").unwrap()));
-        assert!(collection.contains(&VirtualPath::from_str("/R/to_complete/D").unwrap()));
-        assert!(collection.contains(&VirtualPath::from_str("/R/to_complete/E").unwrap()));
-    }
-
-    #[test]
     fn attach_detach_idempotent(){
         let mut delta = VirtualDelta::default();
         delta.attach(Path::new("/R"), None, Kind::Directory).unwrap();
@@ -200,30 +179,5 @@ mod representation_integration {
         );
 
         assert!(delta.get(Path::new("/C")).unwrap().is_none());
-    }
-
-    #[test]
-    fn generate_sub_delta(){
-        let mut delta = VirtualDelta::default();
-        delta.attach(Path::new("/A"), None, Kind::Directory).unwrap();
-        delta.attach(Path::new("/B"), None, Kind::Directory).unwrap();
-        delta.attach(Path::new("/B/C"), None, Kind::Directory).unwrap();
-        delta.attach(Path::new("/B/D"), None, Kind::File).unwrap();
-
-        let sub_delta = delta.sub_delta(Path::new("/B")).unwrap().unwrap();
-
-        assert!(sub_delta.get(Path::new("/B/C")).unwrap().is_some());
-        assert_eq!(
-            sub_delta.get(Path::new("/B/C")).unwrap().unwrap().to_kind(),
-            Kind::Directory
-        );
-
-        assert!(sub_delta.get(Path::new("/B/D")).unwrap().is_some());
-        assert_eq!(
-            sub_delta.get(Path::new("/B/D")).unwrap().unwrap().to_kind(),
-            Kind::File
-        );
-
-        assert!(sub_delta.get(Path::new("/A")).unwrap().is_none());
     }
 }

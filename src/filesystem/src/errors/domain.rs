@@ -37,25 +37,16 @@ use crate::{
 pub enum DomainError {
     Infrastructure(InfrastructureError),
     Query(QueryError),
-
-    //Virtual Only
     CopyIntoItSelf(PathBuf, PathBuf),
-
-    //Real Only
-    AlreadyExists(PathBuf),
-    DirectoryIsNotEmpty(PathBuf),
-    SourceIsNotAFile(PathBuf),
-
-    //Common
-    OverwriteDirectoryWithFile(PathBuf, PathBuf),
-    CopyDirectoryIntoFile(PathBuf, PathBuf),
     MergeNotAllowed(PathBuf, PathBuf),
-    OverwriteNotAllowed(PathBuf, PathBuf),
-    DeleteRecursiveNotAllowed(PathBuf),
-    ParentDoesNotExists(PathBuf),
-    ParentIsNotADirectory(PathBuf),
-    SourceDoesNotExists(PathBuf),
+    OverwriteNotAllowed(PathBuf),
+    DirectoryOverwriteNotAllowed(PathBuf),
+    MergeFileWithDirectory(PathBuf, PathBuf),
+    OverwriteDirectoryWithFile(PathBuf, PathBuf),
+    CreateUnknown(PathBuf),
     DoesNotExists(PathBuf),
+    DeleteRecursiveNotAllowed(PathBuf),
+    SourceDoesNotExists(PathBuf),
     Custom(String)
 }
 
@@ -77,24 +68,16 @@ impl fmt::Display for DomainError {
         match self {
             DomainError::Infrastructure(error) => write!(f, "Infrastructure error {}", error),
             DomainError::Query(error) => write!(f, "Query error {}", error),
-            //Virtual Only
             DomainError::CopyIntoItSelf(source, dst) => write!(f, "Cannot copy {} into itself {}", source.to_string_lossy(), dst.to_string_lossy()),
-
-            //Real Only
-            DomainError::AlreadyExists(path) => write!(f, "Path {} already exists", path.to_string_lossy()),
-            DomainError::DirectoryIsNotEmpty(path) => write!(f, "Directory {} is not empty", path.to_string_lossy()),
-            DomainError::SourceIsNotAFile(source) => write!(f, "Source {} is not a file", source.to_string_lossy()),
-
-            //Common
-            DomainError::ParentDoesNotExists(parent) => write!(f, "Parent {} does not exists", parent.to_string_lossy()),
-            DomainError::ParentIsNotADirectory(parent) => write!(f, "Parent {} is not a directory", parent.to_string_lossy()),
-            DomainError::SourceDoesNotExists(source) => write!(f, "Source {} does not exists", source.to_string_lossy()),
-            DomainError::OverwriteDirectoryWithFile(source, dst) => write!(f, "Cannot overwrite directory {} with file {}", source.to_string_lossy(), dst.to_string_lossy()),
-            DomainError::CopyDirectoryIntoFile(source, dst) => write!(f, "Cannot copy directory {} into file {}", source.to_string_lossy(), dst.to_string_lossy()),
-            DomainError::OverwriteNotAllowed(source, dst) => write!(f, "Overwrite of {} into {} is not allowed", source.to_string_lossy(), dst.to_string_lossy()),
             DomainError::MergeNotAllowed(source, dst) => write!(f, "Merge of {} into {} is not allowed", source.to_string_lossy(), dst.to_string_lossy()),
-            DomainError::DeleteRecursiveNotAllowed(path) => write!(f, "Delete recursively {} is not allowed", path.to_string_lossy()),
+            DomainError::OverwriteNotAllowed(dst) => write!(f, "Overwrite of {} is not allowed", dst.to_string_lossy()),
+            DomainError::DirectoryOverwriteNotAllowed(path) => write!(f, "Directory overwrite of {} is not allowed", path.to_string_lossy()),
+            DomainError::MergeFileWithDirectory(source, destination) => write!(f, "Cannot merge file {} with directory {} is not allowed", source.to_string_lossy(), destination.to_string_lossy()),
+            DomainError::OverwriteDirectoryWithFile(source, dst) => write!(f, "Cannot overwrite directory {} with file {}", source.to_string_lossy(), dst.to_string_lossy()),
+            DomainError::CreateUnknown(path) => write!(f, "Cannot create unknown kind at path {}", path.to_string_lossy()),
             DomainError::DoesNotExists(path) => write!(f, "Path {} does not exists", path.to_string_lossy()),
+            DomainError::DeleteRecursiveNotAllowed(path) => write!(f, "Delete recursively {} is not allowed", path.to_string_lossy()),
+            DomainError::SourceDoesNotExists(source) => write!(f, "Source {} does not exists", source.to_string_lossy()),
             DomainError::Custom(s) => write!(f, "Custom error {}", s),
         }
     }
@@ -108,5 +91,491 @@ impl error::Error for DomainError {
             DomainError::Infrastructure(err) => Some(err),
             _ => None
         }
+    }
+}
+
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod errors_tests {
+    use super::*;
+
+    use crate::{
+        Kind,
+        sample::Samples,
+        event::*,
+        port::{
+            FileSystemAdapter,
+            Event
+        },
+        infrastructure::{
+            RealFileSystem,
+            VirtualFileSystem
+        }
+    };
+
+    fn assert_two_errors_equals(left: &impl error::Error, right: &impl error::Error) {
+        assert_eq!(format!("{}", left), format!("{}", right))
+    }
+
+    #[test]
+    fn error_query_error(){
+        let query_emock = QueryError::IsNotADirectory(PathBuf::from("/TEST"));
+        assert_two_errors_equals(
+            &DomainError::from(query_emock),
+            &DomainError::Query(QueryError::IsNotADirectory(PathBuf::from("/TEST")))
+        );
+    }
+
+    #[test]
+    fn error_infrastucture_error(){
+        let query_emock = QueryError::IsNotADirectory(PathBuf::from("/TEST"));
+        assert_two_errors_equals(
+            &DomainError::from(query_emock),
+            &DomainError::Query(QueryError::IsNotADirectory(PathBuf::from("/TEST")))
+        );
+    }
+
+    #[test]
+    fn error_copy_into_itself() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+        let source = sample_path.join("B");
+        let destination = sample_path.join("B/D/B");
+
+        let expected_error = DomainError::CopyIntoItSelf(source.clone(), destination.clone());
+        assert_two_errors_equals(
+            &MoveEvent::new(
+            source.as_path(),
+            destination.as_path(),
+            true,
+            false
+                ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &MoveEvent::new(
+            source.as_path(),
+            destination.as_path(),
+            true,
+            false
+                ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+            source.as_path(),
+            destination.as_path(),
+            true,
+            false
+                ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+            source.as_path(),
+            destination.as_path(),
+            true,
+            false
+                ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+    }
+
+    #[test]
+    fn error_merge_not_allowed() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let source = sample_path.join("B");
+        let destination = sample_path.join("A");
+
+        let expected_error = DomainError::MergeNotAllowed(source.clone(), destination.clone());
+        assert_two_errors_equals(
+            &MoveEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                false,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &MoveEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                false,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                false,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                false,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+    }
+
+    #[test]
+    fn error_overwrite_not_allowed() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let source = sample_path.join("F");
+        let destination = sample_path.join("A/C");
+
+        let expected_error = DomainError::OverwriteNotAllowed(destination.clone());
+        assert_two_errors_equals(
+            &MoveEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &MoveEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CreateEvent::new(
+                destination.as_path(),
+                Kind::File,
+                false,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CreateEvent::new(
+                destination.as_path(),
+                Kind::File,
+                false,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+    }
+
+    #[test]
+    fn error_directory_overwrite_not_allowed() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let to_overwrite = sample_path.join("A/C");
+
+        let expected_error = DomainError::DirectoryOverwriteNotAllowed(to_overwrite.clone());
+
+        assert_two_errors_equals(
+            &CreateEvent::new(
+                to_overwrite.as_path(),
+                Kind::Directory,
+                false,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CreateEvent::new(
+                to_overwrite.as_path(),
+                Kind::Directory,
+                false,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+    }
+
+    #[test]
+    fn error_merge_file_with_directory() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let source = sample_path.join("B");
+        let destination = sample_path.join("A/C");
+
+        let expected_error = DomainError::MergeFileWithDirectory(source.clone(), destination.clone());
+        assert_two_errors_equals(
+            &MoveEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &MoveEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+    }
+
+    #[test]
+    fn error_overwrite_directory_with_file() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+
+        let source = sample_path.join("A/C");
+        let destination = sample_path.join("B");
+
+        let expected_error = DomainError::OverwriteDirectoryWithFile(source.clone(), destination.clone());
+        assert_two_errors_equals(
+            &MoveEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                true
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &MoveEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                true
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                true
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                true
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+    }
+
+    #[test]
+    fn error_create_unknown() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let dummy = sample_path.join("A");
+
+        let expected_error = DomainError::CreateUnknown(dummy.clone());
+
+        assert_two_errors_equals(
+            &CreateEvent::new(
+                dummy.as_path(),
+                Kind::Unknown,
+                false,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CreateEvent::new(
+                dummy.as_path(),
+                Kind::Unknown,
+                false,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+    }
+
+    #[test]
+    fn error_does_not_exists() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let not_exists = sample_path.join("NOTEXISTS");
+
+        let expected_error = DomainError::DoesNotExists(not_exists.clone());
+
+        assert_two_errors_equals(
+            &RemoveEvent::new(
+                not_exists.as_path(),
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &RemoveEvent::new(
+                not_exists.as_path(),
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+    }
+
+    #[test]
+    fn error_delete_recursive_not_allowed() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let not_empty_dir = sample_path.join("A");
+
+        let expected_error = DomainError::DeleteRecursiveNotAllowed(not_empty_dir.clone());
+
+        assert_two_errors_equals(
+            &RemoveEvent::new(
+                not_empty_dir.as_path(),
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &RemoveEvent::new(
+                not_empty_dir.as_path(),
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+
+    }
+
+    #[test]
+    fn error_source_does_not_exists() {
+        let sample_path = Samples::static_samples_path();
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let not_existing_source = sample_path.join("NOTEXISTS");
+        let destination = sample_path.join("NEW");
+
+        let expected_error = DomainError::SourceDoesNotExists(not_existing_source.clone());
+        assert_two_errors_equals(
+            &MoveEvent::new(
+                not_existing_source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &MoveEvent::new(
+                not_existing_source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+                not_existing_source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&vfs).err().unwrap(),
+            &expected_error
+        );
+
+        assert_two_errors_equals(
+            &CopyEvent::new(
+                not_existing_source.as_path(),
+                destination.as_path(),
+                true,
+                false
+            ).atomize(&rfs).err().unwrap(),
+            &expected_error
+        );
     }
 }

@@ -67,7 +67,7 @@ impl FileSystemAdapter<VirtualFileSystem> where Self : ReadableFileSystem {
             VirtualStatus{ state: VirtualState::NotExists, .. }
             | VirtualStatus{ state: VirtualState::Removed, .. }
             | VirtualStatus{ state: VirtualState::RemovedVirtually, .. } =>
-                return Err(InfrastructureError::Custom("Delete path does not exists".to_string()))
+                return Err(InfrastructureError::PathDoesNotExists(path.to_path_buf()))
             ,
         }
         Ok(())
@@ -76,9 +76,9 @@ impl FileSystemAdapter<VirtualFileSystem> where Self : ReadableFileSystem {
     fn safe_parent(&self, path: &Path) -> Result<EntryAdapter<VirtualStatus>, InfrastructureError> {
         let parent_entry = self.status(VirtualDelta::get_parent_or_root(path).as_path())?;
         if ! parent_entry.exists() {
-            Err(InfrastructureError::Custom("Parent does not exists".to_string()))
+            Err(InfrastructureError::ParentDoesNotExists(parent_entry.to_path()))
         } else if !parent_entry.is_dir() {
-            Err(InfrastructureError::Custom("Parent is not a directory".to_string()))
+            Err(InfrastructureError::ParentIsNotADirectory(parent_entry.to_path()))
         } else {
             Ok(parent_entry)
         }
@@ -148,15 +148,15 @@ impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
         self.safe_parent(dst)?;
 
         if !source.exists() {
-            return Err(InfrastructureError::Custom("Source does not exists".to_string()));
+            return Err(InfrastructureError::SourceDoesNotExists(source.to_path()));
         }
 
         if destination.exists() && ! destination.is_file() {
-            return Err(InfrastructureError::Custom("Destination path must be file".to_string()));
+            return Err(InfrastructureError::DestinationIsNotAFile(destination.to_path()));
         }
 
         if source.exists() && ! source.is_file() {
-            return Err(InfrastructureError::Custom("Source path must be file".to_string()));
+            return Err(InfrastructureError::SourceIsNotAFile(source.to_path()));
         }
 
         let source_identity = source.as_inner().as_virtual();
@@ -184,15 +184,15 @@ impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
         self.safe_parent(dst)?;
 
         if !source.exists() {
-            return Err(InfrastructureError::Custom("Source does not exists".to_string()));
+            return Err(InfrastructureError::SourceDoesNotExists(source.to_path()));
         }
 
         if destination.exists() {
-            return Err(InfrastructureError::Custom("Destination already exists".to_string()));
+            return Err(InfrastructureError::DestinationAlreadyExists(destination.to_path()));
         }
 
         if source.exists() && ! source.is_dir() {
-            return Err(InfrastructureError::Custom("Source path must be a directory".to_string()));
+            return Err(InfrastructureError::SourceIsNotADirectory(source.to_path()));
         }
 
         let source_identity = source.as_inner().as_virtual();
@@ -209,10 +209,22 @@ impl WriteableFileSystem for FileSystemAdapter<VirtualFileSystem> {
 
 
     fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        if ! self.status(path)?.exists() {
+            return Err(InfrastructureError::PathDoesNotExists(path.to_path_buf()));
+        }
+
         self.remove(path)
     }
 
     fn remove_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>{
+        if ! self.status(path)?.exists() {
+            return Err(InfrastructureError::PathDoesNotExists(path.to_path_buf()));
+        }
+
+        if ! self.read_dir(path)?.is_empty() {
+            return Err(InfrastructureError::DirectoryIsNotEmpty(path.to_path_buf()));
+        }
+
         self.remove(path)
     }
 }

@@ -73,3 +73,70 @@ impl error::Error for QueryError {
         }
     }
 }
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod errors_tests {
+    use super::*;
+
+    use std::{
+        path::{
+            Path,
+            PathBuf
+        }
+    };
+
+    use crate::{
+        Kind,
+        sample::Samples,
+        port::{
+            FileSystemAdapter,
+            ReadableFileSystem
+        },
+        infrastructure::{
+            RealFileSystem,
+            VirtualFileSystem
+        }
+    };
+
+    fn assert_two_errors_equals(left: &impl error::Error, right: &impl error::Error) {
+        assert_eq!(format!("{}", left), format!("{}", right))
+    }
+
+    #[test]
+    fn error_is_not_a_directory() {
+        let sample_path = Samples::init_advanced_chroot("error_is_not_a_directory");
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let is_not_a_directory = sample_path.join("F");
+        let expected_error = QueryError::IsNotADirectory(is_not_a_directory.clone());
+
+        assert_two_errors_equals(&vfs.read_dir(is_not_a_directory.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.read_dir(is_not_a_directory.as_path()).err().unwrap(), &expected_error);
+    }
+
+    #[test]
+    fn error_read_target_does_not_exists() {
+        let sample_path = Samples::init_advanced_chroot("error_read_target_does_not_exists");
+        let vfs = FileSystemAdapter(VirtualFileSystem::default());
+        let rfs = FileSystemAdapter(RealFileSystem::default());
+
+        let not_exists = sample_path.join("NOTEXISTS");
+        let expected_error = QueryError::ReadTargetDoesNotExists(not_exists.clone());
+
+        assert_two_errors_equals(&vfs.read_dir(not_exists.as_path()).err().unwrap(), &expected_error);
+        assert_two_errors_equals(&rfs.read_dir(not_exists.as_path()).err().unwrap(), &expected_error);
+    }
+
+    #[test]
+    fn error_add_sub_dangling(){
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+        vfs.as_inner_mut().mut_add_state().attach(Path::new("/TEST"), None, Kind::Directory).unwrap();
+        vfs.as_inner_mut().mut_sub_state().attach(Path::new("/TEST"), None, Kind::Directory).unwrap();
+
+        let expected_error = QueryError::AddSubDanglingVirtualPath(PathBuf::from("/TEST"));
+
+        assert_two_errors_equals(&vfs.status(Path::new("/TEST")).err().unwrap(), &expected_error);
+    }
+}

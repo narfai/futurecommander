@@ -44,6 +44,14 @@ pub trait Entry {
     fn is_dir(&self) -> bool;
     fn is_file(&self) -> bool;
     fn exists(&self) -> bool;
+    fn is_contained_by(&self, other: &Entry) -> bool {
+        for ancestor in self.path().ancestors() {
+            if other.path() == ancestor {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 impl Eq for Entry {}
