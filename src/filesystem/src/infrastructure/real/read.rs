@@ -32,18 +32,11 @@ impl ReadableFileSystem for FileSystemAdapter<RealFileSystem> {
 
         let mut entry_collection = EntryCollection::new();
 
-        match path.read_dir() {
-            Ok(results) => {
-                for result in results {
-                    match result {
-                        Ok(result) => entry_collection.add(EntryAdapter(result.path())),
-                        Err(error) => return Err(QueryError::from(error))
-                    };
-                }
-                Ok(entry_collection)
-            },
-            Err(error) => Err(QueryError::from(error))
+        for result in path.read_dir()? {
+            entry_collection.add(EntryAdapter(result?.path()));
         }
+
+        Ok(entry_collection)
     }
 
     fn status(&self, path: &Path) -> Result<Self::Item, QueryError> {
