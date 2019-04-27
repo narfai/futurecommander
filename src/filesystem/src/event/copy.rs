@@ -68,6 +68,10 @@ impl <E, F> Event <E, F> for CopyEvent where F: ReadableFileSystem<Item=E>, E: E
         let mut transaction = AtomicTransaction::default();
         let destination = fs.status(self.destination())?;
 
+        if source.is_dir() && destination.is_contained_by(&source) {
+            return Err(DomainError::CopyIntoItSelf(source.to_path(), destination.to_path()));
+        }
+
         if destination.exists() {
             if source.is_dir() {
                 if destination.is_dir() {
@@ -230,32 +234,6 @@ mod real_tests {
     //TODO replace len tests with md5 sum for copy & move
 }
 
-
-
-//    //Error testing
-//    #[test]
-//    fn copy_or_move_directory_into_itself_must_not_be_allowed() {
-//        let sample_path = Samples::static_samples_path();
-//        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
-//
-//        let source = sample_path.join("B");
-//        let destination = sample_path.join("B/D/B");
-//        match CopyOperation::new(
-//            source.as_path(),
-//            destination.as_path(),
-//            true,
-//            false
-//        ).execute(&mut vfs) {
-//            Err(OperationError::CopyIntoItSelf(err_source, err_destination)) => {
-//                assert_eq!(source.as_path(), err_source.as_path());
-//                assert_eq!(destination.as_path(), err_destination.as_path());
-//            }
-//            Err(error) => panic!("{}", error),
-//            Ok(_) => panic!("Should not be able to copy into itself")
-//        };
-//    }
-
-
 #[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]
 mod virtual_tests {
@@ -350,5 +328,28 @@ mod virtual_tests {
 
         assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("A/C").as_path()).unwrap());
         assert!(fs.as_inner().virtual_state().unwrap().is_file(samples_path.join("A/C").as_path()).unwrap());
+    }
+
+    //Error testing
+    #[test]
+    fn copy_directory_into_itself_must_not_be_allowed() {
+        let sample_path = Samples::static_samples_path();
+        let mut vfs = FileSystemAdapter(VirtualFileSystem::default());
+
+        let source = sample_path.join("B");
+        let destination = sample_path.join("B/D/B");
+        match CopyEvent::new(
+            source.as_path(),
+            destination.as_path(),
+            true,
+            false
+        ).atomize(&mut vfs) {
+            Err(DomainError::CopyIntoItSelf(err_source, err_destination)) => {
+                assert_eq!(source.as_path(), err_source.as_path());
+                assert_eq!(destination.as_path(), err_destination.as_path());
+            }
+            Err(error) => panic!("{}", error),
+            Ok(_) => panic!("Should not be able to copy into itself")
+        };
     }
 }
