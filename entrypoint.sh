@@ -47,15 +47,6 @@ function release {
     branch=$(git rev-parse --abbrev-ref HEAD | tr \/ . | tr \_ .)
     build=$(date "+%y%m%d%s")
 
-    if [ ! -z "$($GOTHUB info -u narfai -r futurecommander | grep -i ${branch})" ]; then
-        echo "Release already exists, delete it"
-
-        $GOTHUB delete \
-            --user narfai \
-            --repo futurecommander \
-            --tag "${branch}"
-    fi
-
     rm -Rf "${EXEC_DIR}/target/*"
 
     linux_file=$(build_linux)
@@ -71,14 +62,26 @@ function release {
         git push --tags release
     fi
 
-    $GOTHUB release \
-        --user narfai \
-        --repo futurecommander \
-        --tag "${branch}" \
-        --name "${branch}-$build" \
-        --description "Auto-release ${branch} ( Build $build )" \
-        --pre-release
+    if [ -z "$($GOTHUB info -u narfai -r futurecommander | grep -i ${branch})" ]; then
+        echo "Create new release"
+        $GOTHUB release \
+           --user narfai \
+           --repo futurecommander \
+           --tag "${branch}" \
+           --name "${branch}-$build" \
+           --description "Auto-release ${branch} ( Build $build )" \
+           --pre-release
+    else
+        echo "Update existing release"
+        $GOTHUB edit \
+            --user narfai \
+            --repo futurecommander \
+            --tag "${branch}" \
+            --name "${branch}-$build" \
+            --description "Auto-release ${branch} ( Build $build )"
+    fi
 
+    echo "Upload $linux_file"
     $GOTHUB upload \
         --user narfai \
         --repo futurecommander \
@@ -87,6 +90,7 @@ function release {
         --file "$linux_file" \
         --replace
 
+    echo "Upload $windows_file"
     $GOTHUB upload \
         --user narfai \
         --repo futurecommander \
@@ -95,6 +99,7 @@ function release {
         --file "$windows_file" \
         --replace
 }
+
 echo "BARE UID"
 if [ ${BARE_UID} -ne 0 ]; then
     useradd -u "${BARE_UID}" -g staff -d /usr/src/futurecommander futurecommander 2> /dev/null
