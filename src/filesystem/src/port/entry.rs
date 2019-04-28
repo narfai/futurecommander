@@ -23,7 +23,6 @@ use std::{
     cmp ::{ Ordering }
 };
 
-
 #[derive(Debug)]
 pub struct EntryAdapter<T>(pub T);
 impl <T>EntryAdapter<T> {
@@ -34,7 +33,6 @@ impl <T>EntryAdapter<T> {
         &self.0
     }
 }
-
 
 pub trait Entry {
     fn path(&self) -> &Path;
