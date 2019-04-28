@@ -18,8 +18,7 @@
  */
 
 use std::{
-    fs::{ File, read_to_string },
-    io::prelude::*,
+    fs::{ read_to_string },
     path::{ Path, PathBuf }
 };
 
