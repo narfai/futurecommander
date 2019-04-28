@@ -47,8 +47,6 @@ function release {
     branch=$(git rev-parse --abbrev-ref HEAD | tr \/ . | tr \_ .)
     build=$(date "+%y%m%d%s")
 
-    rm -Rf "${EXEC_DIR}/target/*"
-
     linux_file=$(build_linux)
     echo "Build $linux_file OK"
 
@@ -109,6 +107,7 @@ if [ ${BARE_UID} -ne 0 ]; then
     chmod a+rw .
 fi
 chmod -R a+rwx samples
+rm -Rf "${EXEC_DIR}/target/*"
 
 case "$1" in
     test)
