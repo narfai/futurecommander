@@ -25,11 +25,12 @@ use serde::{ Serialize, Deserialize };
 
 use crate::{
     errors::{ DomainError },
+    event::{
+        Event
+    },
     port::{
         Entry,
         ReadableFileSystem,
-        Event,
-        SerializableEvent,
         Atomic,
         AtomicTransaction
     }
@@ -59,12 +60,6 @@ impl MoveEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
-#[typetag::serde]
-impl SerializableEvent for MoveEvent {
-    fn serializable(&self) -> Box<SerializableEvent> {
-        Box::new(self.clone())
-    }
-}
 
 impl <E, F> Event <E, F> for MoveEvent
     where F: ReadableFileSystem<Item=E>,

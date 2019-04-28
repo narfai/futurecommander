@@ -28,11 +28,13 @@ mod container;
 pub use self::{
     kind::Kind,
     errors::{ DomainError, QueryError },
-    port::{
+    event::{
         Listener,
         Delayer,
+        Event
+    },
+    port::{
         Entry,
-        Event,
         ReadableFileSystem,
         WriteableFileSystem,
         EntryAdapter

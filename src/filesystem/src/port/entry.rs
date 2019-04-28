@@ -26,16 +26,15 @@ use std::{
 
 #[derive(Debug)]
 pub struct EntryAdapter<T>(pub T);
-
-impl <T> EntryAdapter<T> {
+impl <T>EntryAdapter<T> {
     pub fn into_inner(self) -> T {
         self.0
     }
-
     pub fn as_inner(&self) -> &T {
         &self.0
     }
 }
+
 
 pub trait Entry {
     fn path(&self) -> &Path;

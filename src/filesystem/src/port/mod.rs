@@ -19,16 +19,12 @@
 
 mod entry;
 mod entry_collection;
-mod event;
 mod filesystem;
 mod atomic;
 
 pub use self::{
     entry_collection::{ EntryCollection },
     entry::{ EntryAdapter, Entry },
-    event::{ Event, Listener, Delayer, SerializableEvent },
     filesystem::{ FileSystemAdapter, WriteableFileSystem, ReadableFileSystem, FileSystemTransaction },
     atomic::{ AtomicTransaction, Atomic }
 };
-
-

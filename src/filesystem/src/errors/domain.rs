@@ -113,9 +113,11 @@ mod errors_tests {
         Kind,
         sample::Samples,
         event::*,
+        event::{
+            Event
+        },
         port::{
             FileSystemAdapter,
-            Event
         },
         infrastructure::{
             RealFileSystem,
