@@ -180,4 +180,24 @@ mod tests {
         assert!(container.status(chroot.join("COPIED/RFILEA").as_path()).unwrap().exists());
         assert!(container.status(chroot.join("COPIED/RFILEB").as_path()).unwrap().exists());
     }
+
+    #[test]
+    fn can_export_virtual_state_into_json_string() {
+        let chroot = Samples::init_simple_chroot("can_export_virtual_state_into_json_string");
+        let mut container = Container::new();
+        let event = CopyEvent::new(
+            chroot.join("RDIR").as_path(),
+            chroot.join("COPIED").as_path(),
+            false,
+            false
+        );
+        container.delay(Box::new(event));
+        let expected : String = format!(
+            "[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}}]",
+            chroot.join("RDIR").to_string_lossy(),
+            chroot.join("COPIED").to_string_lossy(),
+        );
+
+        assert_eq!(container.to_json().unwrap(), expected);
+    }
 }
