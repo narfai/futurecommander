@@ -67,7 +67,13 @@ subcommands:
             help: Path of the new file
             takes_value: true
   - save:
-      about: Store the virtual state into a json file
+      about: Store virtual state into json file
+      args:
+      - path:
+            help: path of the file ( default to ".fc.json" in current working directory )
+            takes_value: true
+  - import:
+      about: Import virtual state from json file
       args:
       - path:
             help: path of the file ( default to ".fc.json" in current working directory )

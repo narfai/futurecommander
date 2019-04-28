@@ -90,6 +90,8 @@ impl Shell {
                 .and_then(|c| c.execute(&mut self.fs)),
             ("save",        Some(matches)) => Command::<SaveCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
+            ("import",        Some(matches)) => Command::<ImportCommand>::initialize(&self.cwd, matches)
+                .and_then(|c| c.execute(&mut self.fs)),
             ("apply",        Some(_matches)) => self.apply(),
             _ => Err(CommandError::InvalidCommand)
         }
