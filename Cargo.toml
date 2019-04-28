@@ -8,5 +8,5 @@ license = "GPL-3.0-or-later"
 [workspace]
 
 [dependencies]
-futurecommander_shell = { version = "0.3.8", path = "src/shell" }
+futurecommander_shell = { version = "0.3.9", path = "src/shell" }
 
