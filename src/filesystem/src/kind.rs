@@ -19,7 +19,9 @@
 
 use std::path::{ PathBuf, Path };
 
-#[derive(Clone, Debug, Copy)]
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Clone, Debug, Copy)]
 pub enum Kind {
     File,
     Directory,

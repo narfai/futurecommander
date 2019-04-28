@@ -22,6 +22,8 @@ use std::{
     path:: { Path, PathBuf, Ancestors }
 };
 
+use serde::{ Serialize, Deserialize };
+
 use crate::{
     Kind,
     errors::{ DomainError },
@@ -29,12 +31,14 @@ use crate::{
         Entry,
         ReadableFileSystem,
         Event,
+        SerializableEvent,
         Atomic,
         AtomicTransaction
     }
 };
 
-#[derive(Debug, Clone)]
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreateEvent {
     path: PathBuf,
     kind: Kind,
@@ -56,6 +60,13 @@ impl CreateEvent {
     pub fn kind(&self) -> Kind { self.kind }
     pub fn recursive(&self) -> bool { self.recursive }
     pub fn overwrite(&self) -> bool { self.overwrite }
+}
+
+#[typetag::serde]
+impl SerializableEvent for CreateEvent {
+    fn serializable(&self) -> Box<SerializableEvent> {
+        Box::new(self.clone())
+    }
 }
 
 impl <E, F> Event <E, F> for CreateEvent

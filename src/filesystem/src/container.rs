@@ -16,15 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-
 use std::{
     path::{ Path, PathBuf },
     collections::vec_deque::VecDeque
 };
 
 use crate::{
-    errors:: {DomainError, QueryError },
+    errors:: { DomainError, QueryError },
     port::{
         Listener,
         ReadableFileSystem,
@@ -32,6 +30,7 @@ use crate::{
         EntryAdapter,
         EntryCollection,
         Event,
+        SerializableEvent,
         Delayer
     },
     infrastructure::{
@@ -44,10 +43,41 @@ use crate::{
 type RealEvent      = Event<EntryAdapter<PathBuf>,          FileSystemAdapter<RealFileSystem>>;
 type VirtualEvent   = Event<EntryAdapter<VirtualStatus>,    FileSystemAdapter<VirtualFileSystem>> ;
 
+pub struct EventQueue(VecDeque<Box<RealEvent>>);
+
+impl Default for EventQueue {
+    fn default() -> EventQueue {
+        EventQueue(VecDeque::new())
+    }
+}
+
+impl EventQueue {
+    pub fn pop_front(&mut self) -> Option<Box<RealEvent>>{
+        self.0.pop_front()
+    }
+
+    pub fn push_back(&mut self, event: Box<RealEvent>){
+        self.0.push_back(event)
+    }
+
+    pub fn clear(&mut self) {
+        self.0.clear()
+    }
+
+    pub fn serialize(&self) -> Result<String, serde_json::Error> {
+        let mut serializable : Vec<Box<SerializableEvent>> = Vec::new();
+        for event in self.0.iter() {
+            serializable.push(event.serializable());
+        }
+        serde_json::to_string(&serializable)
+    }
+}
+
+
 pub struct Container {
     virtual_fs: FileSystemAdapter<VirtualFileSystem>,
     real_fs:    FileSystemAdapter<RealFileSystem>,
-    transaction: VecDeque<Box<RealEvent>>
+    event_queue: EventQueue
 }
 
 impl Default for Container {
@@ -56,18 +86,17 @@ impl Default for Container {
     }
 }
 
-
 impl Container {
     pub fn new() -> Container {
         Container {
             virtual_fs: FileSystemAdapter(VirtualFileSystem::default()),
             real_fs:    FileSystemAdapter(RealFileSystem::default()),
-            transaction: VecDeque::new()
+            event_queue: EventQueue::default()
         }
     }
 
     pub fn apply(&mut self) -> Result<(), DomainError> {
-        while let Some(event) = self.transaction.pop_front() {
+        while let Some(event) = self.event_queue.pop_front() {
             event.atomize(&self.real_fs)?
                 .apply(&mut self.real_fs)?;
         }
@@ -77,7 +106,7 @@ impl Container {
 
     pub fn reset(&mut self) {
         self.virtual_fs.as_inner_mut().reset();
-        self.transaction.clear()
+        self.event_queue.clear()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -90,6 +119,10 @@ impl Container {
 
     pub fn rfs(&self) -> &FileSystemAdapter<RealFileSystem> {
         &self.real_fs
+    }
+
+    pub fn to_json(&self) -> Result<String, DomainError> {
+        Ok(self.event_queue.serialize()?)
     }
 }
 
@@ -107,7 +140,7 @@ impl ReadableFileSystem for Container {
 
 impl Delayer<Box<RealEvent>> for Container {
     fn delay(&mut self, event: Box<RealEvent>) {
-        self.transaction.push_back(event);
+        self.event_queue.push_back(event);
     }
 }
 
@@ -118,7 +151,6 @@ impl Listener<&VirtualEvent> for Container {
         Ok(())
     }
 }
-
 
 #[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]

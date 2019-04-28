@@ -21,18 +21,21 @@ use std::{
     path:: { Path, PathBuf }
 };
 
+use serde::{ Serialize, Deserialize };
+
 use crate::{
     errors::{ DomainError },
     port::{
         Entry,
         ReadableFileSystem,
         Event,
+        SerializableEvent,
         Atomic,
         AtomicTransaction
     }
 };
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MoveEvent {
     source: PathBuf,
     destination: PathBuf,
@@ -54,6 +57,13 @@ impl MoveEvent {
     pub fn destination(&self) -> &Path { self.destination.as_path() }
     pub fn merge(&self) -> bool { self.merge }
     pub fn overwrite(&self) -> bool { self.overwrite }
+}
+
+#[typetag::serde]
+impl SerializableEvent for MoveEvent {
+    fn serializable(&self) -> Box<SerializableEvent> {
+        Box::new(self.clone())
+    }
 }
 
 impl <E, F> Event <E, F> for MoveEvent
@@ -111,7 +121,7 @@ impl <E, F> Event <E, F> for MoveEvent
             }
         } else if source.is_dir() {
             transaction.add(Atomic::CreateEmptyDirectory(destination.to_path()));
-            for child in fs.read_dir(source.path())? {
+            for child in fs.read_dir(source.path())? {//TODO find a way to put back read_maintained ...
                 transaction.merge(
                     MoveEvent::new(
                         child.path(),

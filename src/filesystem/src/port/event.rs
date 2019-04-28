@@ -26,7 +26,12 @@ use crate::{
     }
 };
 
-pub trait Event<E, F>
+#[typetag::serde(tag = "type")]
+pub trait SerializableEvent {
+    fn serializable(&self) -> Box<SerializableEvent>;
+}
+
+pub trait Event<E, F> : SerializableEvent
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 

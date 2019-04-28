@@ -26,7 +26,7 @@ mod atomic;
 pub use self::{
     entry_collection::{ EntryCollection },
     entry::{ EntryAdapter, Entry },
-    event::{ Event, Listener, Delayer },
+    event::{ Event, Listener, Delayer, SerializableEvent },
     filesystem::{ FileSystemAdapter, WriteableFileSystem, ReadableFileSystem, FileSystemTransaction },
     atomic::{ AtomicTransaction, Atomic }
 };

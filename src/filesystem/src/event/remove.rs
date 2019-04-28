@@ -21,18 +21,22 @@ use std::{
     path:: { Path, PathBuf }
 };
 
+
+use serde::{ Serialize, Deserialize };
+
 use crate::{
     errors::{ DomainError },
     port::{
         Entry,
         ReadableFileSystem,
         Event,
+        SerializableEvent,
         Atomic,
         AtomicTransaction
     }
 };
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RemoveEvent {
     path: PathBuf,
     recursive: bool
@@ -48,6 +52,13 @@ impl RemoveEvent {
 
     pub fn path(&self) -> &Path { self.path.as_path() }
     pub fn recursive(&self) -> bool { self.recursive }
+}
+
+#[typetag::serde]
+impl SerializableEvent for RemoveEvent {
+    fn serializable(&self) -> Box<SerializableEvent> {
+        Box::new(self.clone())
+    }
 }
 
 impl <E, F> Event <E, F> for RemoveEvent

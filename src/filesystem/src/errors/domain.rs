@@ -35,6 +35,7 @@ use crate::{
 
 #[derive(Debug)]
 pub enum DomainError {
+    JsonError(serde_json::Error),
     Infrastructure(InfrastructureError),
     Query(QueryError),
     CopyIntoItSelf(PathBuf, PathBuf),
@@ -48,6 +49,12 @@ pub enum DomainError {
     DeleteRecursiveNotAllowed(PathBuf),
     SourceDoesNotExists(PathBuf),
     Custom(String)
+}
+
+impl From<serde_json::Error> for DomainError {
+    fn from(error: serde_json::Error) -> Self {
+        DomainError::JsonError(error)
+    }
 }
 
 impl From<QueryError> for DomainError {
@@ -66,6 +73,7 @@ impl From<InfrastructureError> for DomainError {
 impl fmt::Display for DomainError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            DomainError::JsonError(error) => write!(f, "Json error {}", error),
             DomainError::Infrastructure(error) => write!(f, "Infrastructure error {}", error),
             DomainError::Query(error) => write!(f, "Query error {}", error),
             DomainError::CopyIntoItSelf(source, dst) => write!(f, "Cannot copy {} into itself {}", source.to_string_lossy(), dst.to_string_lossy()),
@@ -87,6 +95,7 @@ impl fmt::Display for DomainError {
 impl error::Error for DomainError {
     fn cause(&self) -> Option<&dyn error::Error> {
         match self {
+            DomainError::JsonError(err) => Some(err),
             DomainError::Query(err) => Some(err),
             DomainError::Infrastructure(err) => Some(err),
             _ => None
