@@ -35,7 +35,7 @@ use file_system::{
     tools::{ absolute }
 };
 
-use crate::command::{ Command, CopyCommand, ListCommand, MoveCommand, NewDirectoryCommand, NewFileCommand, RemoveCommand, TreeCommand, CommandError };
+use crate::command::*;
 use crate::helper::VirtualHelper;
 
 
@@ -68,10 +68,10 @@ impl Shell {
                     },
                     None => Err(CommandError::InvalidCommand)
                 },
-//            ("debug_virtual_state", Some(_matches)) => { println!("{:#?}", self.fs.vfs().virtual_state().unwrap()); Ok(()) },
-//            ("debug_add_state",     Some(_matches)) => { println!("{:#?}", self.fs.vfs().add_state()); Ok(()) },
-//            ("debug_sub_state",     Some(_matches)) => { println!("{:#?}", self.fs.vfs().sub_state()); Ok(()) },
-//            ("debug_transaction",   Some(_matches)) => { println!("{:#?}", self.fs.transaction()); Ok(()) },
+            ("debug_virtual_state", Some(_matches)) => unimplemented!(),
+            ("debug_add_state",     Some(_matches)) => unimplemented!(),
+            ("debug_sub_state",     Some(_matches)) => unimplemented!(),
+            ("debug_transaction",   Some(_matches)) => unimplemented!(),
             ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
             ("reset",       Some(_matches)) => { self.fs.reset(); println!("Virtual state is now empty");  Ok(()) },
             ("ls",          Some(matches)) => Command::<ListCommand>::initialize(&self.cwd, matches)
@@ -87,6 +87,8 @@ impl Shell {
             ("touch",       Some(matches)) => Command::<NewFileCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
             ("tree",        Some(matches)) => Command::<TreeCommand>::initialize(&self.cwd, matches)
+                .and_then(|c| c.execute(&mut self.fs)),
+            ("save",        Some(matches)) => Command::<SaveCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
             ("apply",        Some(_matches)) => self.apply(),
             _ => Err(CommandError::InvalidCommand)

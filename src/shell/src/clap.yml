@@ -66,6 +66,12 @@ subcommands:
       - path:
             help: Path of the new file
             takes_value: true
+  - save:
+      about: Store the virtual state into a json file
+      args:
+      - path:
+            help: path of the file ( default to ".fc.json" in current working directory )
+            takes_value: true
   - reset:
       about: Reset virtual state
   - apply:
@@ -79,8 +85,8 @@ subcommands:
   - debug_transaction:
       about: show transaction
   - debug_status:
-          about: Display virtual status of path
-          args:
-          - path:
-                  help: Path to debug
-                  takes_value: true
+      about: Display virtual status of path
+      args:
+      - path:
+            help: Path to debug
+            takes_value: true

@@ -18,8 +18,13 @@
  */
 
 
-use std::path::{ PathBuf };
-use std::{ error, fmt };
+use std::{
+    error,
+    fmt,
+    io::Error,
+    path::{ PathBuf }
+};
+
 use file_system::{
     DomainError,
     QueryError
@@ -28,10 +33,12 @@ use file_system::{
 #[derive(Debug)]
 pub enum CommandError {
     Exit,
+    Io(Error),
     Operation(DomainError),
     Query(QueryError),
     ArgumentMissing(String, String, String),
     InvalidCommand,
+    AlreadyExists(PathBuf),
     IsNotADirectory(PathBuf),
     DoesNotExists(PathBuf),
     CwdIsInside(PathBuf),
@@ -42,6 +49,12 @@ pub enum CommandError {
 impl From<DomainError> for CommandError {
     fn from(error: DomainError) -> Self {
         CommandError::Operation(error)
+    }
+}
+
+impl From<Error> for CommandError {
+    fn from(error: Error) -> Self {
+        CommandError::Io(error)
     }
 }
 
@@ -56,9 +69,11 @@ impl fmt::Display for CommandError {
         match self {
             CommandError::Exit => write!(f, "Exit program"),
             CommandError::Operation(error) => write!(f, "Fs operation error: {}", error),
+            CommandError::Io(error) => write!(f, "Input / output error : {}", error),
             CommandError::Query(error) => write!(f, "Fs query error: {}", error),
             CommandError::ArgumentMissing(command, argument, usage) => write!(f, "{} missing {} argument \n {}", command, argument, usage),
             CommandError::InvalidCommand => write!(f, "Invalid command"),
+            CommandError::AlreadyExists(path) => write!(f, "Path {} already exists", path.to_string_lossy()),
             CommandError::IsNotADirectory(path) => write!(f, "{} is not a directory", path.to_string_lossy()),
             CommandError::DoesNotExists(path) => write!(f, "{} does not exists", path.to_string_lossy()),
             CommandError::CwdIsInside(path) => write!(f, "current working directory is inside {}", path.to_string_lossy()),
@@ -71,6 +86,7 @@ impl fmt::Display for CommandError {
 impl error::Error for CommandError {
     fn cause(&self) -> Option<&dyn error::Error> {
         match self {
+            CommandError::Io(err) => Some(err),
             CommandError::Operation(err) => Some(err),
             CommandError::Query(err) => Some(err),
             _ => None
