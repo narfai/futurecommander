@@ -23,13 +23,15 @@ use std::{
 
 use serde::{ Serialize, Deserialize };
 
+
 use crate::{
     errors::{DomainError},
+    event::{
+        Event
+    },
     port::{
         Entry,
         ReadableFileSystem,
-        Event,
-        SerializableEvent,
         AtomicTransaction,
         Atomic
     }
@@ -58,13 +60,6 @@ impl CopyEvent {
     pub fn destination(&self) -> &Path { self.destination.as_path() }
     pub fn merge(&self) -> bool { self.merge }
     pub fn overwrite(&self) -> bool { self.overwrite }
-}
-
-#[typetag::serde]
-impl SerializableEvent for CopyEvent {
-    fn serializable(&self) -> Box<SerializableEvent> {
-        Box::new(self.clone())
-    }
 }
 
 impl <E, F> Event <E, F> for CopyEvent

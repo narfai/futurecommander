@@ -37,7 +37,8 @@ mod command_integration {
             InitializedNewDirectoryCommand,
             InitializedNewFileCommand,
             InitializedCopyCommand,
-            InitializedSaveCommand
+            InitializedSaveCommand,
+            InitializedImportCommand
         },
     };
 
@@ -45,7 +46,8 @@ mod command_integration {
         sample::Samples,
         Container,
         EntryAdapter,
-        ReadableFileSystem
+        ReadableFileSystem,
+        Entry
     };
 
     #[test]
@@ -133,5 +135,36 @@ mod command_integration {
         assert!(sample_path.join("virtual_state.json").exists());
 
         assert_eq!(read_to_string(sample_path.join("virtual_state.json")).unwrap(), expected);
+    }
+
+    #[test]
+    fn can_import_virtual_state_from_a_file(){
+        let mut fs = Container::new();
+        let sample_path = Samples::init_advanced_chroot("can_import_virtual_state_from_a_file");
+        let copy_command = Command(InitializedCopyCommand {
+            source: sample_path.join("A"),
+            destination: sample_path.join("APRIME")
+        });
+
+        copy_command.execute(&mut fs).unwrap();
+
+        let save_command = Command(InitializedSaveCommand {
+            path: sample_path.join("virtual_state.json")
+        });
+
+        save_command.execute(&mut fs).unwrap();
+
+        let import_command = Command(InitializedImportCommand {
+            path: sample_path.join("virtual_state.json")
+        });
+
+        let mut container_b = Container::new();
+
+        import_command.execute(&mut container_b).unwrap();
+
+        assert!(!container_b.is_empty());
+        let b_stat = fs.status(sample_path.join("APRIME").as_path()).unwrap();
+        assert!(b_stat.exists());
+        assert!(b_stat.is_dir());
     }
 }

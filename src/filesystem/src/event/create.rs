@@ -27,16 +27,16 @@ use serde::{ Serialize, Deserialize };
 use crate::{
     Kind,
     errors::{ DomainError },
+    event::{
+        Event
+    },
     port::{
         Entry,
         ReadableFileSystem,
-        Event,
-        SerializableEvent,
         Atomic,
         AtomicTransaction
-    }
+    },
 };
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreateEvent {
@@ -62,12 +62,6 @@ impl CreateEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
-#[typetag::serde]
-impl SerializableEvent for CreateEvent {
-    fn serializable(&self) -> Box<SerializableEvent> {
-        Box::new(self.clone())
-    }
-}
 
 impl <E, F> Event <E, F> for CreateEvent
     where F: ReadableFileSystem<Item=E>,

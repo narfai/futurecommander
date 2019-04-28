@@ -21,10 +21,74 @@ mod copy;
 mod create;
 mod mov;
 mod remove;
+mod serializable;
 
 pub use self::{
     copy::CopyEvent,
     create::CreateEvent,
     mov::MoveEvent,
-    remove::RemoveEvent
+    remove::RemoveEvent,
+    serializable::SerializableEvent
 };
+
+use std::{
+    fmt::Debug,
+    path::PathBuf
+};
+
+use crate::{
+    errors::DomainError,
+    port::{
+        Entry,
+        EntryAdapter,
+        FileSystemAdapter,
+        ReadableFileSystem,
+        AtomicTransaction
+    },
+    infrastructure::{
+        VirtualStatus,
+        VirtualFileSystem,
+        RealFileSystem
+    }
+};
+
+pub trait Event<E, F> : SerializableEvent + Debug
+    where F: ReadableFileSystem<Item=E>,
+          E: Entry {
+
+    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError>;
+}
+
+pub type RawVirtualEvent = Event<EntryAdapter<VirtualStatus>, FileSystemAdapter<VirtualFileSystem>>;
+pub struct VirtualEvent(pub Box<RawVirtualEvent>);
+impl VirtualEvent {
+    pub fn as_inner(&self) -> &RawVirtualEvent {
+        &*self.0
+    }
+    pub fn into_inner(self) -> Box<RawVirtualEvent>{
+        self.0
+    }
+}
+
+pub type RawRealEvent = Event<EntryAdapter<PathBuf>, FileSystemAdapter<RealFileSystem>>;
+
+#[derive(Debug)]
+pub struct RealEvent(pub Box<RawRealEvent>);
+impl RealEvent {
+    pub fn as_inner(&self) -> &RawRealEvent {
+        &*self.0
+    }
+    pub fn into_inner(self) -> Box<RawRealEvent> {
+        self.0
+    }
+}
+
+
+pub trait Listener<E> {
+    fn emit(&mut self, event: E) -> Result<(), DomainError>;
+}
+
+pub trait Delayer {
+    type Event;
+    fn delay(&mut self, event: Self::Event);
+}

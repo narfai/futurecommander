@@ -144,3 +144,7 @@ pro> https://semaphoreci.com/pricing
 ## CD
 https://concourse-ci.org/
 https://www.spinnaker.io/concepts/
+
+## Serialize, Deserialize
+https://github.com/dtolnay/typetag
+https://serde.rs/

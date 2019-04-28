@@ -32,8 +32,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct FileSystemAdapter<F>(pub F);
-
-impl <F> FileSystemAdapter<F> {
+impl <F>FileSystemAdapter<F> {
     pub fn as_inner(&self) -> &F {
         &self.0
     }

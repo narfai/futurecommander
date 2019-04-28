@@ -17,21 +17,26 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 use std::{
-    path::{ Path, PathBuf },
+    path::{ Path },
     collections::vec_deque::VecDeque
 };
 
 use crate::{
     errors:: { DomainError, QueryError },
-    port::{
+    event::{
         Listener,
+        Delayer,
+        RealEvent,
+        SerializableEvent,
+        RawRealEvent,
+        RawVirtualEvent
+    },
+    port::{
         ReadableFileSystem,
         FileSystemAdapter,
         EntryAdapter,
-        EntryCollection,
-        Event,
-        SerializableEvent,
-        Delayer
+        EntryCollection
+
     },
     infrastructure::{
         VirtualFileSystem,
@@ -40,10 +45,8 @@ use crate::{
     }
 };
 
-type RealEvent      = Event<EntryAdapter<PathBuf>,          FileSystemAdapter<RealFileSystem>>;
-type VirtualEvent   = Event<EntryAdapter<VirtualStatus>,    FileSystemAdapter<VirtualFileSystem>> ;
-
-pub struct EventQueue(VecDeque<Box<RealEvent>>);
+#[derive(Debug)]
+pub struct EventQueue(VecDeque<RealEvent>);
 
 impl Default for EventQueue {
     fn default() -> EventQueue {
@@ -52,11 +55,11 @@ impl Default for EventQueue {
 }
 
 impl EventQueue {
-    pub fn pop_front(&mut self) -> Option<Box<RealEvent>>{
+    pub fn pop_front(&mut self) -> Option<RealEvent>{
         self.0.pop_front()
     }
 
-    pub fn push_back(&mut self, event: Box<RealEvent>){
+    pub fn push_back(&mut self, event: RealEvent){
         self.0.push_back(event)
     }
 
@@ -67,13 +70,13 @@ impl EventQueue {
     pub fn serialize(&self) -> Result<String, serde_json::Error> {
         let mut serializable : Vec<Box<SerializableEvent>> = Vec::new();
         for event in self.0.iter() {
-            serializable.push(event.serializable());
+            serializable.push(event.as_inner().serializable());
         }
         serde_json::to_string(&serializable)
     }
 }
 
-
+#[derive(Debug)]
 pub struct Container {
     virtual_fs: FileSystemAdapter<VirtualFileSystem>,
     real_fs:    FileSystemAdapter<RealFileSystem>,
@@ -96,7 +99,7 @@ impl Container {
     }
 
     pub fn apply(&mut self) -> Result<(), DomainError> {
-        while let Some(event) = self.event_queue.pop_front() {
+        while let Some(RealEvent(event)) = self.event_queue.pop_front() {
             event.atomize(&self.real_fs)?
                 .apply(&mut self.real_fs)?;
         }
@@ -124,6 +127,15 @@ impl Container {
     pub fn to_json(&self) -> Result<String, DomainError> {
         Ok(self.event_queue.serialize()?)
     }
+
+    pub fn emit_json(&mut self, json: String) -> Result<(), DomainError> {
+        let events : Vec<Box<SerializableEvent>> = serde_json::from_str(json.as_str()).unwrap();
+        for event in events {
+            self.emit(&*event.virt().into_inner())?;
+            self.delay(event.real().into_inner());
+        }
+        Ok(())
+    }
 }
 
 impl ReadableFileSystem for Container {
@@ -138,14 +150,16 @@ impl ReadableFileSystem for Container {
     }
 }
 
-impl Delayer<Box<RealEvent>> for Container {
-    fn delay(&mut self, event: Box<RealEvent>) {
-        self.event_queue.push_back(event);
+impl Delayer for Container {
+    type Event = Box<RawRealEvent>;
+    fn delay(&mut self, event: Self::Event) {
+        self.event_queue.push_back(RealEvent(event));
     }
 }
 
-impl Listener<&VirtualEvent> for Container {
-    fn emit(&mut self, event: &VirtualEvent) -> Result<(), DomainError> {
+
+impl Listener<&RawVirtualEvent> for Container {
+    fn emit(&mut self, event: &RawVirtualEvent) -> Result<(), DomainError> {
         event.atomize(&self.virtual_fs)?
              .apply(&mut self.virtual_fs)?;
         Ok(())
@@ -199,5 +213,34 @@ mod tests {
         );
 
         assert_eq!(container.to_json().unwrap(), expected);
+    }
+
+    #[test]
+    fn can_import_virtual_state_from_json_string() {
+        let chroot = Samples::init_simple_chroot("can_import_virtual_state_from_json_string");
+        let mut container_a = Container::new();
+        let event = CopyEvent::new(
+            chroot.join("RDIR").as_path(),
+            chroot.join("COPIED").as_path(),
+            false,
+            false
+        );
+
+        container_a.emit(&event).unwrap();
+        assert!(!container_a.is_empty());
+        let a_stat = container_a.status(chroot.join("COPIED").as_path()).unwrap();
+        assert!(a_stat.exists());
+        assert!(a_stat.is_dir());
+
+        container_a.delay(Box::new(event));
+
+        let mut container_b = Container::new();
+
+        container_b.emit_json(container_a.to_json().unwrap()).unwrap();
+
+        assert!(!container_b.is_empty());
+        let b_stat = container_b.status(chroot.join("COPIED").as_path()).unwrap();
+        assert!(b_stat.exists());
+        assert!(b_stat.is_dir());
     }
 }

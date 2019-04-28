@@ -44,6 +44,9 @@ pub use self::tree::{ InitializedTreeCommand, TreeCommand };
 pub mod save;
 pub use self::save::{ InitializedSaveCommand, SaveCommand };
 
+pub mod import;
+pub use self::import::{ InitializedImportCommand, ImportCommand };
+
 use clap::ArgMatches;
 use std::path::{ Path, PathBuf, MAIN_SEPARATOR };
 
