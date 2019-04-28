@@ -41,6 +41,9 @@ pub use self::remove::{ InitializedRemoveCommand, RemoveCommand };
 pub mod tree;
 pub use self::tree::{ InitializedTreeCommand, TreeCommand };
 
+pub mod save;
+pub use self::save::{ InitializedSaveCommand, SaveCommand };
+
 use clap::ArgMatches;
 use std::path::{ Path, PathBuf, MAIN_SEPARATOR };
 
