@@ -121,7 +121,8 @@ mod command_integration {
         copy_command.execute(&mut fs).unwrap();
 
         let save_command = Command(InitializedSaveCommand {
-            path: sample_path.join("virtual_state.json")
+            path: sample_path.join("virtual_state.json"),
+            overwrite: false
         });
 
         save_command.execute(&mut fs).unwrap();
@@ -149,7 +150,8 @@ mod command_integration {
         copy_command.execute(&mut fs).unwrap();
 
         let save_command = Command(InitializedSaveCommand {
-            path: sample_path.join("virtual_state.json")
+            path: sample_path.join("virtual_state.json"),
+            overwrite: false
         });
 
         save_command.execute(&mut fs).unwrap();

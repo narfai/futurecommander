@@ -18,9 +18,14 @@
  */
 
 use futurecommander_shell::Shell;
-
+use std::env;
 
 fn main() {
     let mut shell = Shell::default();
-    shell.run_readline()
+    let args = env::args().skip(1);
+    if args.len() < 1 {
+        shell.run_readline()
+    } else {
+        shell.run_single()
+    }
 }

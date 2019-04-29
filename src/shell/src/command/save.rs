@@ -40,7 +40,8 @@ impl Command<SaveCommand> {
             Command(
                 InitializedSaveCommand {
                     path:
-                    Self::extract_path_from_args(cwd, args, "path").unwrap_or_else(|_| cwd.to_path_buf().join(".fc.json"))
+                    Self::extract_path_from_args(cwd, args, "path").unwrap_or_else(|_| cwd.to_path_buf().join(".fc.json")),
+                    overwrite: args.is_present("o")
                 }
             )
         )
@@ -48,12 +49,13 @@ impl Command<SaveCommand> {
 }
 
 pub struct InitializedSaveCommand {
-    pub path: PathBuf
+    pub path: PathBuf,
+    pub overwrite: bool
 }
 
 impl Command<InitializedSaveCommand> {
     pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> { //TODO consume command with "execute(self,"
-        if self.0.path.exists() {
+        if ! self.0.overwrite && self.0.path.exists() {
             return Err(CommandError::AlreadyExists(self.0.path.clone()));
         }
         let mut file = File::create(self.0.path.as_path())?;

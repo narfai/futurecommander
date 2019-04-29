@@ -17,10 +17,11 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::io::{ stdin, stdout };
-use std::io::Write;
-use std::env;
-use std::path::{ Path, PathBuf };
+use std::{
+    env::{ args, current_dir },
+    path::{ Path, PathBuf },
+    io::{ stdin, stdout, Write }
+};
 
 use rustyline::error::ReadlineError;
 use rustyline::config::OutputStreamType;
@@ -47,7 +48,7 @@ pub struct Shell {
 impl Default for Shell {
     fn default() -> Self {
         Shell {
-            cwd: env::current_dir().unwrap(),
+            cwd: current_dir().unwrap(),
             fs: Container::new(),
         }
     }
@@ -94,6 +95,50 @@ impl Shell {
                 .and_then(|c| c.execute(&mut self.fs)),
             ("apply",        Some(_matches)) => self.apply(),
             _ => Err(CommandError::InvalidCommand)
+        }
+    }
+
+    pub fn run_single(&mut self) {
+        let yaml = load_yaml!("clap.yml");
+        let matches = &App::from_yaml(yaml).get_matches_from_safe(args().skip(1)).unwrap();
+
+        let mut current_state_file = None;
+
+        if matches.value_of("state").is_some() {
+            let path = Command::<ImportCommand>::extract_path_from_args(&self.cwd, matches, "state").unwrap();
+
+            if path.exists() {
+                Command(InitializedImportCommand {
+                    path: path.clone()
+                }).execute(&mut self.fs)
+                    .unwrap();
+
+            }
+            current_state_file = Some(path);
+        }
+
+        match self.send_matches(&matches) {
+            Ok(_) => { /*SUCCESS*/ },
+            Err(error) =>
+                match error {
+                    CommandError::InvalidCommand => eprintln!("{} {}", error, matches.usage()),
+                    CommandError::ArgumentMissing(command, _, _) => {
+                        //Trick to get proper subcommand help
+                        match App::from_yaml(yaml).get_matches_from_safe(vec![command, "--help".to_string()]) {
+                            Ok(_) => {},
+                            Err(error) => eprintln!("{}", error)
+                        };
+                    },
+                    error => { eprintln!("Error : {}", error) }
+                }
+        }
+
+        if current_state_file.is_some() && matches.is_present("write_state") {
+            Command(InitializedSaveCommand {
+                path: current_state_file.unwrap(),
+                overwrite: true
+            }).execute(&mut self.fs)
+                .unwrap();
         }
     }
 
