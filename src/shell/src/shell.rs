@@ -18,7 +18,7 @@
  */
 
 use std::{
-    env::{ args, current_dir },
+    env::{ current_dir },
     path::{ Path, PathBuf },
     io::{ stdin, stdout, Write }
 };
@@ -69,7 +69,7 @@ impl Shell {
                     },
                     None => Err(CommandError::InvalidCommand)
                 },
-            ("debug_virtual_state", Some(_matches)) => unimplemented!(),
+            ("debug_container",     Some(_matches)) => { println!("{:#?}", self.fs); Ok(()) },
             ("debug_add_state",     Some(_matches)) => unimplemented!(),
             ("debug_sub_state",     Some(_matches)) => unimplemented!(),
             ("debug_transaction",   Some(_matches)) => unimplemented!(),
@@ -98,9 +98,9 @@ impl Shell {
         }
     }
 
-    pub fn run_single(&mut self) {
+    pub fn run_single<T>(&mut self, args: T) where T : Iterator<Item = String> {
         let yaml = load_yaml!("clap.yml");
-        let matches = &App::from_yaml(yaml).get_matches_from_safe(args().skip(1)).unwrap();
+        let matches = &App::from_yaml(yaml).get_matches_from_safe(args.skip(1)).unwrap();
 
         let mut current_state_file = None;
 

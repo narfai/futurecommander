@@ -26,6 +26,6 @@ fn main() {
     if args.len() < 1 {
         shell.run_readline()
     } else {
-        shell.run_single()
+        shell.run_single(env::args())
     }
 }
