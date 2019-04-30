@@ -18,14 +18,24 @@
  */
 
 use futurecommander_shell::Shell;
-use std::env;
+use std::{
+    env,
+    io::Write
+};
 
 fn main() {
     let mut shell = Shell::default();
     let args = env::args().skip(1);
+
+    let mut stdout = std::io::stdout();
+    let mut stderr = std::io::stderr();
+
     if args.len() < 1 {
-        shell.run_readline()
+        shell.run_readline(&mut stdout, &mut stderr)
     } else {
-        shell.run_single(env::args())
+        match shell.run_single(env::args(), &mut stdout, &mut stderr) {
+            Ok(_) => {},//Exit gracefully
+            Err(error) => write!(&mut stderr, "{}", error).unwrap()
+        }
     }
 }

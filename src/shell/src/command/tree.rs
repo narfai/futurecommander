@@ -16,8 +16,10 @@
 */
 
 
-use std::path::Path;
-use std::path::PathBuf;
+use std::{
+    path::{ Path, PathBuf },
+    io::Write
+};
 
 use clap::ArgMatches;
 
@@ -28,8 +30,10 @@ use file_system::{
     Entry
 };
 
-use crate::command::{ Command };
-use crate::command::errors::CommandError;
+use crate::command::{
+    Command,
+    errors::CommandError
+};
 
 pub struct TreeCommand {}
 
@@ -50,9 +54,10 @@ pub struct InitializedTreeCommand {
 }
 
 impl Command<InitializedTreeCommand> {
-    fn display_tree_line(depth_list: &Option<Vec<bool>>, parent_last: bool, file_name: String){
+    fn display_tree_line<W: Write>(out: &mut W, depth_list: &Option<Vec<bool>>, parent_last: bool, file_name: String){
         if let Some(depth_list) = &depth_list {
-            println!(
+            writeln!(
+                out,
                 "{}{}── {}",
                 depth_list.
                     iter().fold(
@@ -64,18 +69,18 @@ impl Command<InitializedTreeCommand> {
                 file_name
             );
         } else {
-            println!("{}", file_name);
-            println!("│");
+            writeln!(out, "{}", file_name);
+            writeln!(out, "│");
         }
     }
 
-    fn tree(fs: &Container, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), QueryError>{
+    fn tree<W: Write>(out: &mut W, fs: &Container, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), QueryError>{
         let file_name = match identity.file_name() {
             Some(file_name) => file_name.to_string_lossy().to_string(),
             None => "/".to_string()
         };
 
-        Self::display_tree_line(&depth_list, parent_last, file_name);
+        Self::display_tree_line(out, &depth_list, parent_last, file_name);
 
         match fs.read_dir(identity) {
             Ok(collection) => {
@@ -91,6 +96,7 @@ impl Command<InitializedTreeCommand> {
                 let length = collection.len();
                 for (index, child) in collection.into_iter().enumerate() {
                     if let Err(error) = Self::tree(
+                        out,
                         fs,
                         child.path(),
                         Some(new_depth_list.clone()),
@@ -108,8 +114,8 @@ impl Command<InitializedTreeCommand> {
         Ok(())
     }
 
-    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> {
-        Self::tree(fs, self.0.path.as_path(), None, true)?;
+    pub fn execute<W: Write>(&self, out: &mut W, fs: &mut Container) -> Result<(), CommandError> {
+        Self::tree(out, fs, self.0.path.as_path(), None, true)?;
         Ok(())
     }
 }

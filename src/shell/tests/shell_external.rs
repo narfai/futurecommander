@@ -47,6 +47,7 @@ mod shell {
     }
 
     #[test]
+    #[ignore]
     fn regular_list() -> Result<(), Box<std::error::Error>> {
         let sample_path = Samples::static_samples_path();
         let mut command = Command::cargo_bin("futurecommander")?;
@@ -62,6 +63,7 @@ mod shell {
 
 
     #[test]
+    #[ignore]
     fn regular_tree() -> Result<(), Box<std::error::Error>> {
         let sample_path = Samples::static_samples_path();
         let mut command = Command::cargo_bin("futurecommander")?;
@@ -75,6 +77,7 @@ mod shell {
     }
 
     #[test]
+    #[ignore]
     fn regular_new_directory() -> Result<(), Box<std::error::Error>> {
         let sample_path = Samples::init_advanced_chroot("shell_regular_new_directory");
         let state_file = sample_path.join("state.json");
@@ -103,6 +106,7 @@ mod shell {
     }
 
     #[test]
+    #[ignore]
     fn regular_new_file() -> Result<(), Box<std::error::Error>> {
         let sample_path = Samples::init_advanced_chroot("shell_regular_new_file");
         let state_file = sample_path.join("state.json");
@@ -131,6 +135,7 @@ mod shell {
     }
 
     #[test]
+    #[ignore]
     fn regular_remove() -> Result<(), Box<std::error::Error>> {
         let sample_path = Samples::init_advanced_chroot("shell_regular_remove");
         let state_file = sample_path.join("state.json");
@@ -159,6 +164,7 @@ mod shell {
     }
 
     #[test]
+    #[ignore]
     fn regular_mov() -> Result<(), Box<std::error::Error>> {
         let sample_path = Samples::init_advanced_chroot("shell_regular_mov");
         let state_file = sample_path.join("state.json");
@@ -198,6 +204,7 @@ mod shell {
     }
 
     #[test]
+    #[ignore]
     fn regular_copy() -> Result<(), Box<std::error::Error>> {
         let sample_path = Samples::init_advanced_chroot("shell_regular_copy");
         let state_file = sample_path.join("state.json");

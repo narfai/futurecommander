@@ -17,7 +17,10 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::{ Path, PathBuf };
+use std::{
+    io::Write,
+    path::{ Path, PathBuf }
+};
 
 use clap::ArgMatches;
 
@@ -52,11 +55,12 @@ pub struct InitializedListCommand {
 }
 
 impl Command<InitializedListCommand> {
-    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> {
+    pub fn execute<W : Write>(&self, out: &mut W, fs: &mut Container) -> Result<(), CommandError> {
         let collection = fs.read_dir(self.0.path.as_path())?;
         if ! collection.is_empty() {
             for child in collection.into_iter() {
-                println!(
+                writeln!(
+                    out,
                     "{}    {}",
                    if child.is_dir() {
                        "Directory"
@@ -69,7 +73,7 @@ impl Command<InitializedListCommand> {
                 );
             }
         } else {
-            println!("Directory is empty");
+            writeln!(out, "Directory is empty");
         }
         Ok(())
     }
