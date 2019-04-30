@@ -149,29 +149,4 @@ mod tests {
                 .contains(&EntryAdapter(sample_path.join("B/F").as_path()))
         );
     }
-
-    //Error testing
-//    @TODO
-//    #[test]
-//    fn virtual_shell_move_directory_into_itself_must_not_be_allowed(){
-//        let sample_path = Samples::static_samples_path();
-//        let mut fs = Container::new();
-//
-//        let source = sample_path.join(&Path::new("B"));
-//        let destination = sample_path.join("B/D");
-//
-//        let move_b_to_bd = Command(InitializedMoveCommand {
-//            source: source.clone(),
-//            destination: destination.clone()
-//        });
-//
-//        match move_b_to_bd.execute(&mut fs){
-//            Err(CommandError::Operation(DomainError::CopyIntoItSelf(err_source, err_destination))) => {
-//                assert_eq!(source, err_source);
-//                assert_eq!(destination.join("B"), err_destination);
-//            },
-//            Err(unwanted_error) => panic!("{}", unwanted_error),
-//            Ok(_) => panic!("Should not be able to move into itself")
-//        };
-//    }
 }

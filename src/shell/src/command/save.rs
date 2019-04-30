@@ -64,3 +64,50 @@ impl Command<InitializedSaveCommand> {
     }
 }
 
+#[cfg_attr(tarpaulin, skip)]
+mod tests {
+    use super::*;
+
+    use std::{
+        fs::read_to_string
+    };
+
+    use crate::{
+        command::{
+            InitializedCopyCommand
+        },
+    };
+
+    use file_system::{
+        sample::Samples
+    };
+
+    #[test]
+    fn can_export_virtual_state_into_a_file(){
+        let mut fs = Container::new();
+        let sample_path = Samples::init_advanced_chroot("can_export_virtual_state_into_a_file");
+        let copy_command = Command(InitializedCopyCommand {
+            source: sample_path.join("A"),
+            destination: sample_path.join("APRIME")
+        });
+
+        copy_command.execute(&mut fs).unwrap();
+
+        let save_command = Command(InitializedSaveCommand {
+            path: sample_path.join("virtual_state.json"),
+            overwrite: false
+        });
+
+        save_command.execute(&mut fs).unwrap();
+
+        let expected : String = format!(
+            "[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":true,\"overwrite\":false}}]",
+            sample_path.join("A").to_string_lossy(),
+            sample_path.join("APRIME").to_string_lossy(),
+        );
+
+        assert!(sample_path.join("virtual_state.json").exists());
+
+        assert_eq!(read_to_string(sample_path.join("virtual_state.json")).unwrap(), expected);
+    }
+}
