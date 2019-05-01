@@ -168,14 +168,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "futurecommander"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
- "futurecommander_shell 0.3.9",
+ "futurecommander_shell 0.3.10",
 ]
 
 [[package]]
 name = "futurecommander_filesystem"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -184,10 +184,10 @@ dependencies = [
 
 [[package]]
 name = "futurecommander_shell"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "futurecommander_filesystem 0.3.9",
+ "futurecommander_filesystem 0.3.10",
  "rustyline 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
