@@ -54,7 +54,7 @@ pub struct InitializedTreeCommand {
 }
 
 impl Command<InitializedTreeCommand> {
-    fn display_tree_line<W: Write>(out: &mut W, depth_list: &Option<Vec<bool>>, parent_last: bool, file_name: String){
+    fn display_tree_line<W: Write>(out: &mut W, depth_list: &Option<Vec<bool>>, parent_last: bool, file_name: String) -> Result<(), CommandError> {
         if let Some(depth_list) = &depth_list {
             writeln!(
                 out,
@@ -67,20 +67,21 @@ impl Command<InitializedTreeCommand> {
                 ),
                 if parent_last { '└' } else { '├' },
                 file_name
-            );
+            )?;
         } else {
-            writeln!(out, "{}", file_name);
-            writeln!(out, "│");
+            writeln!(out, "{}", file_name)?;
+            writeln!(out, "│")?;
         }
+        Ok(())
     }
 
-    fn tree<W: Write>(out: &mut W, fs: &Container, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), QueryError>{
+    fn tree<W: Write>(out: &mut W, fs: &Container, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), CommandError>{
         let file_name = match identity.file_name() {
             Some(file_name) => file_name.to_string_lossy().to_string(),
             None => "/".to_string()
         };
 
-        Self::display_tree_line(out, &depth_list, parent_last, file_name);
+        Self::display_tree_line(out, &depth_list, parent_last, file_name)?;
 
         match fs.read_dir(identity) {
             Ok(collection) => {
@@ -108,7 +109,7 @@ impl Command<InitializedTreeCommand> {
             },
             Err(error) => match error {
                 QueryError::ReadTargetDoesNotExists(_) | QueryError::IsNotADirectory(_) => {},
-                error => return Err(error)
+                error => return Err(CommandError::from(error))
             }
         }
         Ok(())

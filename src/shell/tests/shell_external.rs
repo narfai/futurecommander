@@ -26,220 +26,350 @@ mod shell {
     use super::*;
 
 
-    use std::{
-        process::{
-            Command
-        },
-        thread,
-        io::Result as IoResult
-    };
 
-    use assert_cmd::prelude::*;
-    use predicates::prelude::*;
+    use std::{
+        str::from_utf8
+    };
 
     use file_system::{
         sample::Samples
     };
 
-    fn _debug_command(command: &mut Command) -> IoResult<()> {
-        println!("{}", String::from_utf8_lossy(&command.output()?.stdout));
-        Ok(())
-    }
+    use futurecommander_shell::{
+        Shell
+    };
 
     #[test]
-    #[ignore]
-    fn regular_list() -> Result<(), Box<std::error::Error>> {
+    fn regular_list() {
         let sample_path = Samples::static_samples_path();
-        let mut command = Command::cargo_bin("futurecommander")?;
-        //Mystic macro behavior - expect both 1 and 2 arguments
-        let predicate = predicate::str::contains("Directory    A\nDirectory    B\nFile         F");
-        command.arg("ls")
-            .arg(sample_path)
-            .assert()
-            .success()
-            .stdout(predicate);
-        Ok(())
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let args = vec!["futurecommander", "ls", sample_path.to_str().unwrap()];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        let expected = "Directory    A\nDirectory    B\nFile         F\n".to_string();
+        assert_eq!(expected, from_utf8(&stdout).unwrap());
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
     }
 
 
     #[test]
-    #[ignore]
-    fn regular_tree() -> Result<(), Box<std::error::Error>> {
+    fn regular_tree() {
         let sample_path = Samples::static_samples_path();
-        let mut command = Command::cargo_bin("futurecommander")?;
-        let expected = predicate::str::contains("A\n│\n├── .gitkeep\n└── C");
-        command.arg("tree")
-            .arg(sample_path.join("A"))
-            .assert()
-            .success()
-            .stdout(expected);
-        Ok(())
+        let target = sample_path.join("A");
+
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let args = vec!["futurecommander", "tree", target.to_str().unwrap()];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        let expected = "A\n│\n├── .gitkeep\n└── C\n".to_string();
+        assert_eq!(expected, from_utf8(&stdout).unwrap());
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
     }
 
     #[test]
-    #[ignore]
-    fn regular_new_directory() -> Result<(), Box<std::error::Error>> {
-        let sample_path = Samples::init_advanced_chroot("shell_regular_new_directory");
+    fn regular_new_directory() {
+        let sample_path = Samples::init_advanced_chroot("regular_new_directory");
         let state_file = sample_path.join("state.json");
-        let mut mkdir_command = Command::cargo_bin("futurecommander")?;
-        let expected = predicate::str::contains("");
-        mkdir_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("-w")
-            .arg("mkdir")
-            .arg(sample_path.join("NEWDIRECTORY"))
-            .assert()
-            .success()
-            .stdout(expected);
+        let state_arg = format!("-s {}", state_file.to_string_lossy());
+        let target = sample_path.join("NEWDIRECTORY");
 
-        let mut ls_command = Command::cargo_bin("futurecommander")?;
-        let predicate = predicate::str::contains("NEWDIRECTORY");
-        ls_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("ls")
-            .arg(sample_path)
-            .assert()
-            .success()
-            .stdout(predicate);
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
 
-        Ok(())
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "-w",
+            "mkdir",
+            target.to_str().unwrap()
+        ];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        assert_eq!("".to_string(), from_utf8(&stdout).unwrap());
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
+
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "ls",
+            sample_path.to_str().unwrap()
+        ];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        assert!(from_utf8(&stdout).unwrap().contains("Directory    NEWDIRECTORY"));
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
     }
 
     #[test]
-    #[ignore]
-    fn regular_new_file() -> Result<(), Box<std::error::Error>> {
-        let sample_path = Samples::init_advanced_chroot("shell_regular_new_file");
+    fn regular_new_file() {
+        let sample_path = Samples::init_advanced_chroot("regular_new_file");
         let state_file = sample_path.join("state.json");
-        let mut mkdir_command = Command::cargo_bin("futurecommander")?;
-        let expected = predicate::str::contains("");
-        mkdir_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("-w")
-            .arg("touch")
-            .arg(sample_path.join("NEWFILE"))
-            .assert()
-            .success()
-            .stdout(expected);
+        let state_arg = format!("-s {}", state_file.to_string_lossy());
+        let target = sample_path.join("NEWFILE");
 
-        let mut ls_command = Command::cargo_bin("futurecommander")?;
-        let predicate = predicate::str::contains("NEWFILE");
-        ls_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("ls")
-            .arg(sample_path)
-            .assert()
-            .success()
-            .stdout(predicate);
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
 
-        Ok(())
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "-w",
+            "touch",
+            target.to_str().unwrap()
+        ];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        assert_eq!("".to_string(), from_utf8(&stdout).unwrap());
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
+
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "ls",
+            sample_path.to_str().unwrap()
+        ];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        assert!(from_utf8(&stdout).unwrap().contains("File         NEWFILE"));
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
     }
 
     #[test]
-    #[ignore]
-    fn regular_remove() -> Result<(), Box<std::error::Error>> {
-        let sample_path = Samples::init_advanced_chroot("shell_regular_remove");
+    fn regular_remove() {
+        let sample_path = Samples::init_advanced_chroot("regular_remove");
         let state_file = sample_path.join("state.json");
-        let mut rm_command = Command::cargo_bin("futurecommander")?;
-        let expected = predicate::str::contains("");
-        rm_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("-w")
-            .arg("rm")
-            .arg(sample_path.join("F"))
-            .assert()
-            .success()
-            .stdout(expected);
+        let state_arg = format!("-s {}", state_file.to_string_lossy());
+        let target = sample_path.join("F");
 
-        let mut ls_command = Command::cargo_bin("futurecommander")?;
-        let predicate = predicate::str::contains("File         F").not();
-        ls_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("ls")
-            .arg(sample_path)
-            .assert()
-            .success()
-            .stdout(predicate);
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
 
-        Ok(())
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "-w",
+            "rm",
+            target.to_str().unwrap()
+        ];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        assert_eq!("".to_string(), from_utf8(&stdout).unwrap());
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
+
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "ls",
+            sample_path.to_str().unwrap()
+        ];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        assert!(!from_utf8(&stdout).unwrap().contains("File         F"));
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
     }
 
     #[test]
-    #[ignore]
-    fn regular_mov() -> Result<(), Box<std::error::Error>> {
-        let sample_path = Samples::init_advanced_chroot("shell_regular_mov");
+    fn regular_mov() {
+        let sample_path = Samples::init_advanced_chroot("regular_mov");
         let state_file = sample_path.join("state.json");
-        let mut mov_command = Command::cargo_bin("futurecommander")?;
-        let expected = predicate::str::contains("");
-        mov_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("-w")
-            .arg("mv")
-            .arg(sample_path.join("A"))
-            .arg(sample_path.join("B"))
-            .assert()
-            .success()
-            .stdout(expected);
+        let state_arg = format!("-s {}", state_file.to_string_lossy());
+        let source = sample_path.join("A");
+        let destination = sample_path.join("B");
 
-        let mut ls_command = Command::cargo_bin("futurecommander")?;
-        let predicate = predicate::str::contains("Directory    A").not();
-        ls_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("ls")
-            .arg(sample_path.as_path())
-            .assert()
-            .success()
-            .stdout(predicate);
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
 
-        let mut ls_command = Command::cargo_bin("futurecommander")?;
-        let predicate = predicate::str::contains("Directory    A");
-        ls_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("ls")
-            .arg(sample_path.join("B"))
-            .assert()
-            .success()
-            .stdout(predicate);
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "-w",
+            "mv",
+            source.to_str().unwrap(),
+            destination.to_str().unwrap()
+        ];
 
-        Ok(())
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        assert_eq!("".to_string(), from_utf8(&stdout).unwrap());
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
+
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "ls",
+            sample_path.to_str().unwrap()
+        ];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        assert!(!from_utf8(&stdout).unwrap().contains("Directory    A"));
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());  let mut shell = Shell::default();
+
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "ls",
+            destination.to_str().unwrap()
+        ];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        println!("{:?}", from_utf8(&stdout).unwrap());
+
+        assert!(from_utf8(&stdout).unwrap().contains("Directory    A"));
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
     }
 
     #[test]
-    #[ignore]
-    fn regular_copy() -> Result<(), Box<std::error::Error>> {
-        let sample_path = Samples::init_advanced_chroot("shell_regular_copy");
+    fn regular_copy() {
+        let sample_path = Samples::init_advanced_chroot("regular_copy");
         let state_file = sample_path.join("state.json");
-        let mut copy_command = Command::cargo_bin("futurecommander")?;
-        let expected = predicate::str::contains("");
-        copy_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("-w")
-            .arg("cp")
-            .arg(sample_path.join("A"))
-            .arg(sample_path.join("B"))
-            .assert()
-            .success()
-            .stdout(expected);
+        let state_arg = format!("-s {}", state_file.to_string_lossy());
+        let source = sample_path.join("A");
+        let destination = sample_path.join("B");
 
-        let mut ls_command = Command::cargo_bin("futurecommander")?;
-        let predicate = predicate::str::contains("Directory    A");
-        ls_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("ls")
-            .arg(sample_path.as_path())
-            .assert()
-            .success()
-            .stdout(predicate);
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
 
-        let mut ls_command = Command::cargo_bin("futurecommander")?;
-        let predicate = predicate::str::contains("Directory    A");
-        ls_command
-            .arg(format!("-s {}", state_file.to_string_lossy()))
-            .arg("ls")
-            .arg(sample_path.join("B"))
-            .assert()
-            .success()
-            .stdout(predicate);
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "-w",
+            "cp",
+            source.to_str().unwrap(),
+            destination.to_str().unwrap()
+        ];
 
-        Ok(())
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        assert_eq!("".to_string(), from_utf8(&stdout).unwrap());
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
+
+        let mut shell = Shell::default();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "ls",
+            sample_path.to_str().unwrap()
+        ];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        assert!(from_utf8(&stdout).unwrap().contains("Directory    A"));
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());  let mut shell = Shell::default();
+
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let args = vec![
+            "futurecommander",
+            state_arg.as_str(),
+            "ls",
+            destination.to_str().unwrap()
+        ];
+
+        shell.run_single(
+            args.iter().map(|s| s.to_string()),
+            &mut stdout,
+            &mut stderr
+        ).unwrap();
+
+        println!("{:?}", from_utf8(&stdout).unwrap());
+
+        assert!(from_utf8(&stdout).unwrap().contains("Directory    A"));
+        assert_eq!("".to_string(), from_utf8(&stderr).unwrap());
     }
 }

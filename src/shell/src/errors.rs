@@ -68,6 +68,12 @@ impl From<CommandError> for ShellError {//TODO ex : filesystem::query::error
     }
 }
 
+impl From<fmt::Error> for ShellError {//TODO ex : filesystem::query::error
+    fn from(error: fmt::Error) -> Self {
+        ShellError::Format(error)
+    }
+}
+
 impl fmt::Display for ShellError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

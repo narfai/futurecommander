@@ -300,39 +300,3 @@ impl Shell {
     }
 }
 
-
-#[cfg_attr(tarpaulin, skip)]
-mod shell {
-    use super::*;
-
-//    use std::{
-//        io::Result as IoResult
-//    };
-
-    use file_system::{
-        sample::Samples
-    };
-
-    #[test]
-    fn regular_list() -> Result<(), Box<std::error::Error>> { unimplemented!() }
-
-
-    #[test]
-    fn regular_tree() -> Result<(), Box<std::error::Error>> { unimplemented!() }
-
-    #[test]
-    fn regular_new_directory() -> Result<(), Box<std::error::Error>> { unimplemented!() }
-
-    #[test]
-    fn regular_new_file() -> Result<(), Box<std::error::Error>> { unimplemented!() }
-
-    #[test]
-    fn regular_remove() -> Result<(), Box<std::error::Error>> { unimplemented!() }
-
-    #[test]
-    fn regular_mov() -> Result<(), Box<std::error::Error>> { unimplemented!() }
-
-    #[test]
-    fn regular_copy() -> Result<(), Box<std::error::Error>> { unimplemented!() }
-}
-

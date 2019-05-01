@@ -70,10 +70,10 @@ impl Command<InitializedListCommand> {
                        "Unknown  "
                    },
                     child.name().unwrap().to_string_lossy()
-                );
+                )?;
             }
         } else {
-            writeln!(out, "Directory is empty");
+            writeln!(out, "Directory is empty")?;
         }
         Ok(())
     }
