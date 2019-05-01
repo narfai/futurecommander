@@ -21,8 +21,7 @@
 use std::{
     error,
     fmt,
-    io,
-    path::{ PathBuf }
+    io
 };
 
 use file_system::{

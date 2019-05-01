@@ -64,6 +64,7 @@ impl Command<InitializedSaveCommand> {
     }
 }
 
+#[cfg(test)]
 #[cfg_attr(tarpaulin, skip)]
 mod tests {
     use super::*;

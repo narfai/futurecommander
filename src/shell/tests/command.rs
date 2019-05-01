@@ -21,13 +21,13 @@ extern crate futurecommander_shell;
 extern crate file_system;
 
 
+#[cfg(test)]
 #[cfg_attr(tarpaulin, skip)]
 mod command_integration {
     use super::*;
 
     use std::{
-        path::Path,
-        fs::read_to_string
+        path::Path
     };
 
     use futurecommander_shell::{
@@ -36,9 +36,7 @@ mod command_integration {
             InitializedMoveCommand,
             InitializedNewDirectoryCommand,
             InitializedNewFileCommand,
-            InitializedCopyCommand,
-            InitializedSaveCommand,
-            InitializedImportCommand
+            InitializedCopyCommand
         },
     };
 
@@ -46,8 +44,7 @@ mod command_integration {
         sample::Samples,
         Container,
         EntryAdapter,
-        ReadableFileSystem,
-        Entry
+        ReadableFileSystem
     };
 
     #[test]

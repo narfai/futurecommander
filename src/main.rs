@@ -31,7 +31,10 @@ fn main() {
     let mut stderr = std::io::stderr();
 
     if args.len() < 1 {
-        shell.run_readline(&mut stdout, &mut stderr)
+        match shell.run_readline(&mut stdout, &mut stderr) {
+            Ok(_) => {},//Exit gracefully
+            Err(error) => write!(&mut stderr, "{}", error).unwrap()
+        }
     } else {
         match shell.run_single(env::args(), &mut stdout, &mut stderr) {
             Ok(_) => {},//Exit gracefully

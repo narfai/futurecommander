@@ -18,7 +18,6 @@
  */
 
 use std::{
-    error::Error,
     env::{ current_dir },
     path::{ Path, PathBuf },
     io::{ stdin, stdout, Write }
@@ -143,7 +142,7 @@ impl Shell {
         Ok(())
     }
 
-    pub fn run_readline<W: Write, E: Write>(&mut self, out: &mut W, err: &mut E) {
+    pub fn run_readline<W: Write, E: Write>(&mut self, out: &mut W, err: &mut E) -> Result<(), ShellError> {
         let config = Config::builder()
             .history_ignore_space(true)
             .completion_type(CompletionType::List)
@@ -179,7 +178,7 @@ impl Shell {
                             match matches.subcommand_matches("history") {
                                 Some(_) => {
                                     for line in history.iter() {
-                                        writeln!(out, "{}", line);
+                                        writeln!(out, "{}", line)?;
                                     }
                                 },
                                 _ =>
@@ -188,30 +187,33 @@ impl Shell {
                                         Err(error) =>
                                             match error {
                                                 ShellError::Command(CommandError::Exit) => break,
-                                                ShellError::Command(CommandError::InvalidCommand) => eprintln!("{} {}", error, matches.usage()),
+                                                ShellError::Command(CommandError::InvalidCommand) => {
+                                                    eprintln!("{} {}", error, matches.usage());
+                                                },
                                                 ShellError::Command(CommandError::ArgumentMissing(command, _, _)) => {
                                                     //Trick to get proper subcommand help
                                                     match App::from_yaml(yaml).get_matches_from_safe(vec![command, "--help".to_string()]) {
                                                         Ok(_) => {},
-                                                        Err(error) => eprintln!("{}", error)
+                                                        Err(error) => { writeln!(err, "{}", error)?; }
                                                     };
                                                 },
-                                                error => { eprintln!("Error : {}", error) }
+                                                error => { writeln!(err, "Error : {}", error)?; }
                                             }
                                     }
                             }
-                        Err(error) => eprintln!("Error: {}", error)
+                        Err(error) => { writeln!(err, "Error: {}", error)?; }
                     }
                 },
                 Err(ReadlineError::Interrupted) => break,
                 Err(ReadlineError::Eof) => break,
-                Err(err) => {
-                    eprintln!("Error: {:?}", err);
+                Err(error) => {
+                    writeln!(err, "Error: {:?}", error)?;
                     break
                 }
             }
-            println!();
+            writeln!(out)?;
         }
+        Ok(())
     }
 
 

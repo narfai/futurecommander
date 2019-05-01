@@ -20,7 +20,7 @@
 extern crate futurecommander_shell;
 extern crate file_system;
 
-
+#[cfg(test)]
 #[cfg_attr(tarpaulin, skip)]
 mod shell {
     use super::*;
