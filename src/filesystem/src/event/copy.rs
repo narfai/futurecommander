@@ -106,7 +106,10 @@ impl <E, F> Event <E, F> for CopyEvent
                 if destination.is_file() {
                     if self.overwrite() {
                         transaction.add(Atomic::RemoveFile(destination.to_path()));
-                        transaction.add(Atomic::CopyFileToFile(source.to_path(), destination.to_path()));
+                        transaction.add(Atomic::CopyFileToFile {
+                            source: source.to_path(),
+                            destination: destination.to_path()
+                        });
                     } else {
                         return Err(DomainError::OverwriteNotAllowed(destination.to_path()))
                     }
@@ -115,7 +118,10 @@ impl <E, F> Event <E, F> for CopyEvent
                 }
             }
         } else if source.is_dir() {
-            transaction.add(Atomic::BindDirectoryToDirectory(source.to_path(), destination.to_path()));
+            transaction.add(Atomic::BindDirectoryToDirectory {
+                source: source.to_path(),
+                destination: destination.to_path()
+            });
             for child in fs.read_maintained(source.path())? {
                 transaction.merge(
                     CopyEvent::new(
@@ -129,7 +135,10 @@ impl <E, F> Event <E, F> for CopyEvent
                 );
             }
         } else if source.is_file() {
-            transaction.add(Atomic::CopyFileToFile(source.to_path(), destination.to_path()));
+            transaction.add(Atomic::CopyFileToFile{
+                source: source.to_path(),
+                destination: destination.to_path()
+            });
         }
         Ok(transaction)
     }

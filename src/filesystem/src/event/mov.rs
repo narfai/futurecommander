@@ -60,6 +60,12 @@ impl MoveEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
+/*
+Use atomic transaction as a scope indicator ? Makes it comparable ?
+Or as an event emitter ? Maybe it is already.
+Transform errors in transaction item ?
+*/
+
 
 impl <E, F> Event <E, F> for MoveEvent
     where F: ReadableFileSystem<Item=E>,
@@ -106,7 +112,10 @@ impl <E, F> Event <E, F> for MoveEvent
                 if destination.is_file() {
                     if self.overwrite() {
                         transaction.add(Atomic::RemoveFile(destination.to_path()));
-                        transaction.add(Atomic::MoveFileToFile(source.to_path(), destination.to_path()));
+                        transaction.add(Atomic::MoveFileToFile {
+                            source: source.to_path(),
+                            destination: destination.to_path()
+                        });
                     } else {
                         return Err(DomainError::OverwriteNotAllowed(destination.to_path()))
                     }
@@ -115,7 +124,10 @@ impl <E, F> Event <E, F> for MoveEvent
                 }
             }
         } else if source.is_dir() {
-            transaction.add(Atomic::BindDirectoryToDirectory(source.to_path(), destination.to_path()));
+            transaction.add(Atomic::BindDirectoryToDirectory {
+                source: source.to_path(),
+                destination: destination.to_path()
+            });
             for child in fs.read_maintained(source.path())? {
                 transaction.merge(
                     MoveEvent::new(
@@ -130,7 +142,10 @@ impl <E, F> Event <E, F> for MoveEvent
             }
             transaction.add(Atomic::RemoveMaintainedEmptyDirectory(source.to_path()));
         } else if source.is_file() {
-            transaction.add(Atomic::MoveFileToFile(source.to_path(), destination.to_path()));
+            transaction.add(Atomic::MoveFileToFile {
+                source: source.to_path(),
+                destination: destination.to_path()
+            });
         }
         Ok(transaction)
     }
