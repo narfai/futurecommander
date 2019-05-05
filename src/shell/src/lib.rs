@@ -30,3 +30,6 @@ pub mod tools;
 
 pub use self::helper::*;
 pub use self::shell::Shell;
+
+pub mod errors;
+

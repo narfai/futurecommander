@@ -36,6 +36,7 @@ pub enum CommandError {
     Io(Error),
     Operation(DomainError),
     Query(QueryError),
+    Format(fmt::Error),
     ArgumentMissing(String, String, String),
     InvalidCommand,
     AlreadyExists(PathBuf),
@@ -64,6 +65,12 @@ impl From<QueryError> for CommandError {
     }
 }
 
+impl From<fmt::Error> for CommandError {//TODO ex : filesystem::query::error
+    fn from(error: fmt::Error) -> Self {
+      CommandError::Format(error)
+    }
+}
+
 impl fmt::Display for CommandError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -71,6 +78,7 @@ impl fmt::Display for CommandError {
             CommandError::Operation(error) => write!(f, "Fs operation error: {}", error),
             CommandError::Io(error) => write!(f, "Input / output error : {}", error),
             CommandError::Query(error) => write!(f, "Fs query error: {}", error),
+            CommandError::Format(error) => write!(f, "Format error : {}", error),
             CommandError::ArgumentMissing(command, argument, usage) => write!(f, "{} missing {} argument \n {}", command, argument, usage),
             CommandError::InvalidCommand => write!(f, "Invalid command"),
             CommandError::AlreadyExists(path) => write!(f, "Path {} already exists", path.to_string_lossy()),
@@ -89,6 +97,7 @@ impl error::Error for CommandError {
             CommandError::Io(err) => Some(err),
             CommandError::Operation(err) => Some(err),
             CommandError::Query(err) => Some(err),
+            CommandError::Format(err) => Some(err),
             _ => None
         }
     }

@@ -40,7 +40,8 @@ impl Command<SaveCommand> {
             Command(
                 InitializedSaveCommand {
                     path:
-                    Self::extract_path_from_args(cwd, args, "path").unwrap_or_else(|_| cwd.to_path_buf().join(".fc.json"))
+                    Self::extract_path_from_args(cwd, args, "path").unwrap_or_else(|_| cwd.to_path_buf().join(".fc.json")),
+                    overwrite: args.is_present("o")
                 }
             )
         )
@@ -48,12 +49,13 @@ impl Command<SaveCommand> {
 }
 
 pub struct InitializedSaveCommand {
-    pub path: PathBuf
+    pub path: PathBuf,
+    pub overwrite: bool
 }
 
 impl Command<InitializedSaveCommand> {
     pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> { //TODO consume command with "execute(self,"
-        if self.0.path.exists() {
+        if ! self.0.overwrite && self.0.path.exists() {
             return Err(CommandError::AlreadyExists(self.0.path.clone()));
         }
         let mut file = File::create(self.0.path.as_path())?;
@@ -62,3 +64,51 @@ impl Command<InitializedSaveCommand> {
     }
 }
 
+#[cfg(test)]
+#[cfg_attr(tarpaulin, skip)]
+mod tests {
+    use super::*;
+
+    use std::{
+        fs::read_to_string
+    };
+
+    use crate::{
+        command::{
+            InitializedCopyCommand
+        },
+    };
+
+    use file_system::{
+        sample::Samples
+    };
+
+    #[test]
+    fn can_export_virtual_state_into_a_file(){
+        let mut fs = Container::new();
+        let sample_path = Samples::init_advanced_chroot("can_export_virtual_state_into_a_file");
+        let copy_command = Command(InitializedCopyCommand {
+            source: sample_path.join("A"),
+            destination: sample_path.join("APRIME")
+        });
+
+        copy_command.execute(&mut fs).unwrap();
+
+        let save_command = Command(InitializedSaveCommand {
+            path: sample_path.join("virtual_state.json"),
+            overwrite: false
+        });
+
+        save_command.execute(&mut fs).unwrap();
+
+        let expected : String = format!(
+            "[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":true,\"overwrite\":false}}]",
+            sample_path.join("A").to_string_lossy(),
+            sample_path.join("APRIME").to_string_lossy(),
+        );
+
+        assert!(sample_path.join("virtual_state.json").exists());
+
+        assert_eq!(read_to_string(sample_path.join("virtual_state.json")).unwrap(), expected);
+    }
+}

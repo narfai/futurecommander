@@ -2,6 +2,17 @@ name: FutureCommander
 version: "0.1.0"
 author: François Cadeillan <francois@azsystem.fr>
 about: Perform user-delayed filesystem operations
+args:
+    - state:
+        short: s
+        long: state
+        help: JSON file with initial state
+        takes_value: true
+    - write_state:
+        short: w
+        long: write
+        help: write new state into state file if specified
+        takes_value: false
 settings:
   - ArgRequiredElseHelp
   - NoBinaryName
@@ -72,6 +83,10 @@ subcommands:
       - path:
             help: path of the file ( default to ".fc.json" in current working directory )
             takes_value: true
+      - overwrite:
+            help: Erase the file if exists
+            short: o
+            takes_value: false
   - import:
       about: Import virtual state from json file
       args:
@@ -82,8 +97,8 @@ subcommands:
       about: Reset virtual state
   - apply:
       about: Apply Operations to real file system
-  - debug_virtual_state:
-      about: show vfs current state
+  - debug_container:
+      about: show current container state
   - debug_add_state:
       about: show add delta current state
   - debug_sub_state:

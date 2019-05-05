@@ -70,7 +70,7 @@ https://manishearth.github.io/blog/2015/05/27/wrapper-types-in-rust-choosing-you
 ## TUI / GUI
 
 https://crates.io/crates/cursive
-https://github.com/maps4print/azul
+https://github.com/maps4print/azul / https://azul.rs/
 
 ## OO Pattern
 
@@ -89,6 +89,7 @@ https://stackoverflow.com/questions/24635146/can-this-code-be-written-without-ge
 ## crates
 
 CLI testing :  https://crates.io/crates/assert_cmd
+https://rust-lang-nursery.github.io/cli-wg/index.html
 
 ## Rendering ( & gaming )
 
@@ -148,3 +149,6 @@ https://www.spinnaker.io/concepts/
 ## Serialize, Deserialize
 https://github.com/dtolnay/typetag
 https://serde.rs/
+
+## An OS in rust ( seriously )
+https://os.phil-opp.com/

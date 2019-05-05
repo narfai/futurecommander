@@ -17,10 +17,11 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::io::{ stdin, stdout };
-use std::io::Write;
-use std::env;
-use std::path::{ Path, PathBuf };
+use std::{
+    env::{ current_dir },
+    path::{ Path, PathBuf },
+    io::{ stdin, stdout, Write }
+};
 
 use rustyline::error::ReadlineError;
 use rustyline::config::OutputStreamType;
@@ -35,9 +36,11 @@ use file_system::{
     tools::{ absolute }
 };
 
-use crate::command::*;
-use crate::helper::VirtualHelper;
-
+use crate::{
+    helper::VirtualHelper,
+    command::*,
+    errors::ShellError
+};
 
 pub struct Shell {
     cwd: PathBuf,
@@ -47,7 +50,7 @@ pub struct Shell {
 impl Default for Shell {
     fn default() -> Self {
         Shell {
-            cwd: env::current_dir().unwrap(),
+            cwd: current_dir().unwrap(),
             fs: Container::new(),
         }
     }
@@ -55,7 +58,7 @@ impl Default for Shell {
 
 
 impl Shell {
-    fn send_matches(&mut self, matches: &ArgMatches) -> Result<(), CommandError>{
+    fn send_matches<W: Write>(&mut self, matches: &ArgMatches, out: &mut W) -> Result<(), ShellError> {
         match matches.subcommand() {
             ("exit", Some(_matches)) => Err(CommandError::Exit),
             ("cd",   Some(matches))  => self.cd(matches),
@@ -68,14 +71,14 @@ impl Shell {
                     },
                     None => Err(CommandError::InvalidCommand)
                 },
-            ("debug_virtual_state", Some(_matches)) => unimplemented!(),
+            ("debug_container",     Some(_matches)) => { println!("{:#?}", self.fs); Ok(()) },
             ("debug_add_state",     Some(_matches)) => unimplemented!(),
             ("debug_sub_state",     Some(_matches)) => unimplemented!(),
             ("debug_transaction",   Some(_matches)) => unimplemented!(),
             ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
-            ("reset",       Some(_matches)) => { self.fs.reset(); println!("Virtual state is now empty");  Ok(()) },
+            ("reset",       Some(_matches)) => { self.fs.reset(); writeln!(out, "Virtual state is now empty")?;  Ok(()) },
             ("ls",          Some(matches)) => Command::<ListCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(&mut self.fs)),
+                .and_then(|c| c.execute(out, &mut self.fs)),
             ("cp",          Some(matches)) => Command::<CopyCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
             ("mv",          Some(matches)) => Command::<MoveCommand>::initialize(&self.cwd, matches)
@@ -87,17 +90,59 @@ impl Shell {
             ("touch",       Some(matches)) => Command::<NewFileCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
             ("tree",        Some(matches)) => Command::<TreeCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(&mut self.fs)),
+                .and_then(|c| c.execute(out,&mut self.fs)),
             ("save",        Some(matches)) => Command::<SaveCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
             ("import",        Some(matches)) => Command::<ImportCommand>::initialize(&self.cwd, matches)
                 .and_then(|c| c.execute(&mut self.fs)),
             ("apply",        Some(_matches)) => self.apply(),
             _ => Err(CommandError::InvalidCommand)
-        }
+        }?;
+        Ok(())
     }
 
-    pub fn run_readline(&mut self) {
+    pub fn run_single<T, W : Write, E: Write>(&mut self, args: T, out: &mut W, err: &mut E) -> Result<(), ShellError> where T : Iterator<Item = String> {
+        let yaml = load_yaml!("clap.yml");
+        let matches = &App::from_yaml(yaml).get_matches_from_safe(args.skip(1)).unwrap();
+
+        let mut current_state_file = None;
+
+        if matches.value_of("state").is_some() {
+            let path = Command::<ImportCommand>::extract_path_from_args(&self.cwd, matches, "state").unwrap();
+
+            if path.exists() {
+                Command(InitializedImportCommand {
+                    path: path.clone()
+                }).execute(&mut self.fs)?;
+            }
+            current_state_file = Some(path);
+        }
+
+        match self.send_matches(&matches, out) {
+            Ok(_) => { /*SUCCESS*/ },
+            Err(error) =>
+                match error {
+                    ShellError::Command(CommandError::InvalidCommand) => writeln!(err, "{} {}", error, matches.usage())?,
+                    ShellError::Command(CommandError::ArgumentMissing(command, _, _)) => {
+                        match App::from_yaml(yaml).get_matches_from_safe(vec![command, "--help".to_string()]) {
+                            Ok(_) => {},
+                            Err(error) => write!(err, "{}", error)?
+                        }
+                    },
+                    error => writeln!(err, "Unhandled error : {}", error)?
+                }
+        }
+
+        if current_state_file.is_some() && matches.is_present("write_state") {
+            Command(InitializedSaveCommand {
+                path: current_state_file.unwrap(),
+                overwrite: true
+            }).execute(&mut self.fs)?;
+        }
+        Ok(())
+    }
+
+    pub fn run_readline<W: Write, E: Write>(&mut self, out: &mut W, err: &mut E) -> Result<(), ShellError> {
         let config = Config::builder()
             .history_ignore_space(true)
             .completion_type(CompletionType::List)
@@ -133,39 +178,42 @@ impl Shell {
                             match matches.subcommand_matches("history") {
                                 Some(_) => {
                                     for line in history.iter() {
-                                        println!("{}", line);
+                                        writeln!(out, "{}", line)?;
                                     }
                                 },
                                 _ =>
-                                    match self.send_matches(&matches) {
+                                    match self.send_matches(&matches, out) {
                                         Ok(_) => { /*SUCCESS*/ },
                                         Err(error) =>
                                             match error {
-                                                CommandError::Exit => break,
-                                                CommandError::InvalidCommand => eprintln!("{} {}", error, matches.usage()),
-                                                CommandError::ArgumentMissing(command, _, _) => {
+                                                ShellError::Command(CommandError::Exit) => break,
+                                                ShellError::Command(CommandError::InvalidCommand) => {
+                                                    eprintln!("{} {}", error, matches.usage());
+                                                },
+                                                ShellError::Command(CommandError::ArgumentMissing(command, _, _)) => {
                                                     //Trick to get proper subcommand help
                                                     match App::from_yaml(yaml).get_matches_from_safe(vec![command, "--help".to_string()]) {
                                                         Ok(_) => {},
-                                                        Err(error) => eprintln!("{}", error)
+                                                        Err(error) => { writeln!(err, "{}", error)?; }
                                                     };
                                                 },
-                                                error => { eprintln!("Error : {}", error) }
+                                                error => { writeln!(err, "Error : {}", error)?; }
                                             }
                                     }
                             }
-                        Err(error) => eprintln!("Error: {}", error)
+                        Err(error) => { writeln!(err, "Error: {}", error)?; }
                     }
                 },
                 Err(ReadlineError::Interrupted) => break,
                 Err(ReadlineError::Eof) => break,
-                Err(err) => {
-                    eprintln!("Error: {:?}", err);
+                Err(error) => {
+                    writeln!(err, "Error: {:?}", error)?;
                     break
                 }
             }
-            println!();
+            writeln!(out)?;
         }
+        Ok(())
     }
 
 
@@ -200,12 +248,12 @@ impl Shell {
                                 }
                             },
                             _ =>
-                                match self.send_matches(&matches) {
+                                match self.send_matches(&matches, &mut std::io::stdout()) {
                                     Ok(_)      => {/*SUCCESS*/},
                                     Err(error) =>
                                         match error {
-                                            CommandError::InvalidCommand => eprintln!("{} {}", error, matches.usage()),
-                                            CommandError::ArgumentMissing(command, _, _) => {
+                                            ShellError::Command(CommandError::InvalidCommand) => eprintln!("{} {}", error, matches.usage()),
+                                            ShellError::Command(CommandError::ArgumentMissing(command, _, _)) => {
                                                 //Trick to get proper subcommand help
                                                 match App::from_yaml(yaml).get_matches_from_safe(vec![command, "--help".to_string()]) {
                                                     Ok(_) => {},
@@ -253,3 +301,4 @@ impl Shell {
         }
     }
 }
+
