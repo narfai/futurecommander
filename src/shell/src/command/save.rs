@@ -54,7 +54,7 @@ pub struct InitializedSaveCommand {
 }
 
 impl Command<InitializedSaveCommand> {
-    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> { //TODO consume command with "execute(self,"
+    pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
         if ! self.0.overwrite && self.0.path.exists() {
             return Err(CommandError::AlreadyExists(self.0.path.clone()));
         }

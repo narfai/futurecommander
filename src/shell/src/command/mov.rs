@@ -57,7 +57,7 @@ pub struct InitializedMoveCommand {
 }
 
 impl Command<InitializedMoveCommand> {
-    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> {
+    pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
         let source = fs.status(self.0.source.as_path())?;
         let destination = fs.status(self.0.destination.as_path())?;
 

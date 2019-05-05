@@ -60,7 +60,7 @@ pub struct InitializedRemoveCommand {
 }
 
 impl Command<InitializedRemoveCommand> {
-    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> {
+    pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
         let event = RemoveEvent::new(self.0.path.as_path(), true);
 
         fs.emit(&event)?;

@@ -51,7 +51,7 @@ pub struct InitializedImportCommand {
 }
 
 impl Command<InitializedImportCommand> {
-    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> {
+    pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
         if ! self.0.path.exists() {
             return Err(CommandError::DoesNotExists(self.0.path.clone()));
         }
@@ -65,10 +65,6 @@ impl Command<InitializedImportCommand> {
 #[cfg_attr(tarpaulin, skip)]
 mod tests {
     use super::*;
-
-    use std::{
-        fs::read_to_string
-    };
 
     use crate::{
         command::{

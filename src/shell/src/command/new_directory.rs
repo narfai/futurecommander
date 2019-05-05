@@ -50,7 +50,7 @@ pub struct InitializedNewDirectoryCommand {
 }
 
 impl Command<InitializedNewDirectoryCommand> {
-    pub fn execute(&self, fs: &mut Container) -> Result<(), CommandError> {
+    pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
         let event = CreateEvent::new(
             self.0.path.as_path(),
             Kind::Directory,
