@@ -186,7 +186,7 @@ impl  <'a>VirtualHelper<'a>  {
             .filter(| &(score, _, _)|  score == &max_score )
             .count();
 
-        if most_matchings_count > 1 {
+        if most_matchings_count > 0 {
             return Self::score_and_pos_to_pairs(
                 scores.into_iter()
                     .filter(| &(score, _, pos)|  score >= pos )
