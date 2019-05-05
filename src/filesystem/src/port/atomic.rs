@@ -38,7 +38,8 @@ pub enum Atomic {
     CopyFileToFile(PathBuf, PathBuf),
     MoveFileToFile(PathBuf, PathBuf),
     RemoveFile(PathBuf),
-    RemoveEmptyDirectory(PathBuf)
+    RemoveEmptyDirectory(PathBuf),
+    RemoveMaintainedEmptyDirectory(PathBuf)
 }
 
 impl Atomic {
@@ -51,7 +52,8 @@ impl Atomic {
             CopyFileToFile(source, destination) => fs.copy_file_to_file(source.as_path(), destination.as_path()),
             MoveFileToFile(source, destination) => fs.move_file_to_file(source.as_path(), destination.as_path()),
             RemoveFile(path) => fs.remove_file(path.as_path()),
-            RemoveEmptyDirectory(path) => fs.remove_empty_directory(path.as_path())
+            RemoveEmptyDirectory(path) => fs.remove_empty_directory(path.as_path()),
+            RemoveMaintainedEmptyDirectory(path) => fs.remove_maintained_empty_directory(path.as_path())
         }
     }
 

@@ -60,6 +60,9 @@ pub trait WriteableFileSystem: ReadableFileSystem {
     fn bind_directory_to_directory(&mut self, source: &Path, destination: &Path) -> Result<(), InfrastructureError>;
     fn remove_file(&mut self, path: &Path) -> Result<(), InfrastructureError>;
     fn remove_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError>;
+    fn remove_maintained_empty_directory(&mut self, path: &Path) -> Result<(), InfrastructureError> {
+        self.remove_empty_directory(path)
+    }
 }
 
 pub trait FileSystemTransaction<F: WriteableFileSystem> {

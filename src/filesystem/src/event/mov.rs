@@ -115,8 +115,8 @@ impl <E, F> Event <E, F> for MoveEvent
                 }
             }
         } else if source.is_dir() {
-            transaction.add(Atomic::CreateEmptyDirectory(destination.to_path()));
-            for child in fs.read_dir(source.path())? {//TODO find a way to put back read_maintained ...
+            transaction.add(Atomic::BindDirectoryToDirectory(source.to_path(), destination.to_path()));
+            for child in fs.read_maintained(source.path())? {
                 transaction.merge(
                     MoveEvent::new(
                         child.path(),
@@ -125,10 +125,10 @@ impl <E, F> Event <E, F> for MoveEvent
                             .as_path(),
                     self.merge(),
                     self.overwrite()
-                ).atomize(fs)?
+                    ).atomize(fs)?
                 );
             }
-            transaction.add(Atomic::RemoveEmptyDirectory(source.to_path()));
+            transaction.add(Atomic::RemoveMaintainedEmptyDirectory(source.to_path()));
         } else if source.is_file() {
             transaction.add(Atomic::MoveFileToFile(source.to_path(), destination.to_path()));
         }
@@ -285,7 +285,7 @@ mod virtual_tests {
             .unwrap();
 
         assert!(!fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("A").as_path()).unwrap());
-        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("Z").as_path()).unwrap());
+        assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("Z/A").as_path()).unwrap());
         assert!(fs.as_inner().virtual_state().unwrap().is_directory(samples_path.join("Z").as_path()).unwrap());
     }
 
