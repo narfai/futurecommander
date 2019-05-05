@@ -65,7 +65,7 @@ impl From<QueryError> for CommandError {
     }
 }
 
-impl From<fmt::Error> for CommandError {//TODO ex : filesystem::query::error
+impl From<fmt::Error> for CommandError {
     fn from(error: fmt::Error) -> Self {
       CommandError::Format(error)
     }

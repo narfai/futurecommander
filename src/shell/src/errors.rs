@@ -43,31 +43,31 @@ pub enum ShellError {
     Command(CommandError),
 }
 
-impl From<DomainError> for ShellError {//TODO ex : filesystem::error
+impl From<DomainError> for ShellError {
     fn from(error: DomainError) -> Self {
         ShellError::Operation(error)
     }
 }
 
-impl From<io::Error> for ShellError {//TODO <= apply that namespacing good practise every where ( and move errors into theirs respective domains )
+impl From<io::Error> for ShellError {
     fn from(error: io::Error) -> Self {
         ShellError::Io(error)
     }
 }
 
-impl From<QueryError> for ShellError {//TODO ex : filesystem::query::error
+impl From<QueryError> for ShellError {
     fn from(error: QueryError) -> Self {
         ShellError::Query(error)
     }
 }
 
-impl From<CommandError> for ShellError {//TODO ex : filesystem::query::error
+impl From<CommandError> for ShellError {
     fn from(error: CommandError) -> Self {
         ShellError::Command(error)
     }
 }
 
-impl From<fmt::Error> for ShellError {//TODO ex : filesystem::query::error
+impl From<fmt::Error> for ShellError {
     fn from(error: fmt::Error) -> Self {
         ShellError::Format(error)
     }
