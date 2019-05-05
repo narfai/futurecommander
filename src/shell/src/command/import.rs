@@ -85,7 +85,9 @@ mod tests {
         let sample_path = Samples::init_advanced_chroot("can_import_virtual_state_from_a_file");
         let copy_command = Command(InitializedCopyCommand {
             source: sample_path.join("A"),
-            destination: sample_path.join("APRIME")
+            destination: sample_path.join("APRIME"),
+            merge: false,
+            overwrite: false
         });
 
         copy_command.execute(&mut fs).unwrap();

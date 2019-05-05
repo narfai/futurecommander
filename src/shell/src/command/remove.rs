@@ -48,7 +48,8 @@ impl Command<RemoveCommand> {
         Ok(
             Command(
                 InitializedRemoveCommand {
-                    path
+                    path,
+                    recursive: args.is_present("recursive")
                 }
             )
         )
@@ -56,12 +57,13 @@ impl Command<RemoveCommand> {
 }
 
 pub struct InitializedRemoveCommand {
-    pub path: PathBuf
+    pub path: PathBuf,
+    pub recursive: bool
 }
 
 impl Command<InitializedRemoveCommand> {
     pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
-        let event = RemoveEvent::new(self.0.path.as_path(), true);
+        let event = RemoveEvent::new(self.0.path.as_path(), self.0.recursive);
 
         fs.emit(&event)?;
         fs.delay(Box::new(event));
@@ -88,7 +90,8 @@ mod tests {
         let b_path = sample_path.join(&Path::new("B"));
 
         let remove_b = Command(InitializedRemoveCommand {
-            path: b_path.to_path_buf()
+            path: b_path.to_path_buf(),
+            recursive: true
         });
 
         remove_b.execute(&mut fs).unwrap();

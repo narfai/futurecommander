@@ -54,13 +54,17 @@ mod command_integration {
 
         let move_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            merge: false,
+            overwrite: false
         });
         move_b_to_a.execute(&mut fs).unwrap();
 
         let move_a_as_aprime = Command(InitializedMoveCommand {
             source: sample_path.join("A"),
-            destination: sample_path.join("APRIME")
+            destination: sample_path.join("APRIME"),
+            merge: false,
+            overwrite: false
         });
         move_a_as_aprime.execute(&mut fs).unwrap();
 
@@ -84,18 +88,24 @@ mod command_integration {
         let mut fs = Container::new();
 
         let mkdir_z = Command(InitializedNewDirectoryCommand {
-            path: sample_path.join(&Path::new("Z"))
+            path: sample_path.join(&Path::new("Z")),
+            recursive: false,
+            overwrite: false
         });
         mkdir_z.execute(&mut fs).unwrap();
 
         let touch_test = Command(InitializedNewFileCommand {
-            path: sample_path.join(&Path::new("TEST"))
+            path: sample_path.join(&Path::new("TEST")),
+            recursive: false,
+            overwrite: false
         });
         touch_test.execute(&mut fs).unwrap();
 
         let copy_test_to_z = Command(InitializedCopyCommand {
             source: sample_path.join("TEST"),
-            destination: sample_path.join("Z")
+            destination: sample_path.join("Z"),
+            merge: false,
+            overwrite: false
         });
         copy_test_to_z.execute(&mut fs).unwrap();
 

@@ -50,6 +50,14 @@ subcommands:
       - destination:
             help: Destination directory
             takes_value: true
+      - merge:
+            short: m
+            help: Allow directory merge
+            takes_value: false
+      - overwrite:
+            short: o
+            help: Allow file overwrite
+            takes_value: false
   - mv:
       about: Virtually move a file to a directory
       args:
@@ -59,24 +67,59 @@ subcommands:
       - destination:
             help: Destination directory
             takes_value: true
+      - merge:
+            short: m
+            long: merge
+            help: Allow directory merge
+            takes_value: false
+      - overwrite:
+            short: o
+            long: overwrite
+            help: Allow file overwrite
+            takes_value: false
   - rm:
       about: Virtually delete a file or directory
       args:
       - path:
             help: Source file or directory to delete
             takes_value: true
+      - recursive:
+            short: r
+            long: recursive
+            help: Allow deletion of not-empty directories
+            takes_value: false
   - mkdir:
       about: Virtually create an empty directory
       args:
       - path:
             help: Path of the new directory
             takes_value: true
+      - recursive:
+            short: r
+            long: recursive
+            help: Also creates non-existing ancestors
+            takes_value: false
+      - overwrite:
+            short: o
+            long: overwrite
+            help: Allow file overwrite
+            takes_value: false
   - touch:
       about: Virtually create an empty file
       args:
       - path:
             help: Path of the new file
             takes_value: true
+      - recursive:
+            short: r
+            long: recursive
+            help: Also creates non-existing ancestors
+            takes_value: false
+      - overwrite:
+            short: o
+            long: overwrite
+            help: Allow file overwrite
+            takes_value: false
   - save:
       about: Store virtual state into json file
       args:

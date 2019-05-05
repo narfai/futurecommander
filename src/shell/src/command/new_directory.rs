@@ -38,7 +38,9 @@ impl Command<NewDirectoryCommand> {
         Ok(
             Command(
                 InitializedNewDirectoryCommand {
-                    path: Self::extract_path_from_args(cwd, args, "path")?
+                    path: Self::extract_path_from_args(cwd, args, "path")?,
+                    recursive: args.is_present("recursive"),
+                    overwrite: args.is_present("overwrite")
                 }
             )
         )
@@ -46,7 +48,9 @@ impl Command<NewDirectoryCommand> {
 }
 
 pub struct InitializedNewDirectoryCommand {
-    pub path: PathBuf
+    pub path: PathBuf,
+    pub recursive: bool,
+    pub overwrite: bool
 }
 
 impl Command<InitializedNewDirectoryCommand> {
@@ -54,8 +58,8 @@ impl Command<InitializedNewDirectoryCommand> {
         let event = CreateEvent::new(
             self.0.path.as_path(),
             Kind::Directory,
-            false,
-            false
+            self.0.recursive,
+            self.0.overwrite
         );
 
         fs.emit(&event)?;
@@ -81,7 +85,9 @@ mod tests {
         let mut fs = Container::new();
 
         let new_bde_mkdired = Command(InitializedNewDirectoryCommand {
-            path: sample_path.join(&Path::new("B/D/E/MKDIRED"))
+            path: sample_path.join(&Path::new("B/D/E/MKDIRED")),
+            recursive: false,
+            overwrite: false
         });
 
         new_bde_mkdired.execute(&mut fs).unwrap();

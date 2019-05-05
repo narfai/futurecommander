@@ -44,7 +44,9 @@ impl Command<CopyCommand> {
         Ok(
             Command(InitializedCopyCommand {
                 source,
-                destination
+                destination,
+                merge: args.is_present("merge"),
+                overwrite: args.is_present("overwrite")
             })
         )
     }
@@ -52,7 +54,9 @@ impl Command<CopyCommand> {
 
 pub struct InitializedCopyCommand {
     pub source: PathBuf,
-    pub destination: PathBuf
+    pub destination: PathBuf,
+    pub merge: bool,
+    pub overwrite: bool
 }
 
 impl Command<InitializedCopyCommand> {
@@ -71,8 +75,8 @@ impl Command<InitializedCopyCommand> {
                     self.0.destination
                         .join(self.0.source.file_name().unwrap())
                         .as_path(),
-                    true,
-                    false
+                    self.0.merge,
+                    self.0.overwrite
                 )
             } else if source.is_dir() {
                 return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
@@ -80,7 +84,7 @@ impl Command<InitializedCopyCommand> {
                 return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
             }
         } else {
-            CopyEvent::new(self.0.source.as_path(), self.0.destination.as_path(), true, false)
+            CopyEvent::new(self.0.source.as_path(), self.0.destination.as_path(), self.0.merge, self.0.overwrite)
         };
 
         fs.emit(&event)?;
@@ -106,14 +110,18 @@ mod tests {
 
         let copy_a_to_b = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            merge: false,
+            overwrite: false
         });
 
         copy_a_to_b.execute(&mut fs).unwrap();
 
         let copy_ab_to_abd = Command(InitializedCopyCommand {
             source: sample_path.join("A/B/D"),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            merge: false,
+            overwrite: false
         });
 
         copy_ab_to_abd.execute(&mut fs).unwrap();
@@ -133,21 +141,27 @@ mod tests {
 
         let copy_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            merge: false,
+            overwrite: false
         });
 
         copy_b_to_a.execute(&mut fs).unwrap();
 
         let copy_f_to_b = Command(InitializedCopyCommand {
             source: sample_path.join("F"),
-            destination: sample_path.join("B")
+            destination: sample_path.join("B"),
+            merge: false,
+            overwrite: false
         });
 
         copy_f_to_b.execute(&mut fs).unwrap();
 
         let copy_bf_to_bde = Command(InitializedCopyCommand {
             source: sample_path.join("B/F"),
-            destination: sample_path.join("B/D/E")
+            destination: sample_path.join("B/D/E"),
+            merge: false,
+            overwrite: false
         });
 
         copy_bf_to_bde.execute(&mut fs).unwrap();
@@ -164,13 +178,17 @@ mod tests {
 
         let copy_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            merge: false,
+            overwrite: false
         });
         copy_b_to_a.execute(&mut fs).unwrap();
 
         let copy_a_as_aprime = Command(InitializedCopyCommand {
             source: sample_path.join("A"),
-            destination: sample_path.join("APRIME")
+            destination: sample_path.join("APRIME"),
+            merge: false,
+            overwrite: false
         });
         copy_a_as_aprime.execute(&mut fs).unwrap();
 
@@ -194,25 +212,33 @@ mod tests {
 
         let copy_b_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("B"),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            merge: false,
+            overwrite: false
         });
         copy_b_to_a.execute(&mut fs).unwrap();
 
         let copy_a_as_aprime = Command(InitializedCopyCommand {
             source: sample_path.join("A"),
-            destination: sample_path.join("APRIME").to_path_buf()
+            destination: sample_path.join("APRIME").to_path_buf(),
+            merge: false,
+            overwrite: false
         });
         copy_a_as_aprime.execute(&mut fs).unwrap();
 
         let copy_aprime_as_abeta = Command(InitializedCopyCommand {
             source: sample_path.join("APRIME"),
-            destination: sample_path.join("ABETA").clone()
+            destination: sample_path.join("ABETA").clone(),
+            merge: false,
+            overwrite: false
         });
         copy_aprime_as_abeta.execute(&mut fs).unwrap();
 
         let copy_abeta_to_a = Command(InitializedCopyCommand {
             source: sample_path.join("ABETA"),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            merge: false,
+            overwrite: false
         });
         copy_abeta_to_a.execute(&mut fs).unwrap();
 

@@ -45,7 +45,9 @@ impl Command<MoveCommand> {
         Ok(
             Command(InitializedMoveCommand {
                 source,
-                destination
+                destination,
+                merge: args.is_present("merge"),
+                overwrite: args.is_present("overwrite")
             })
         )
     }
@@ -53,7 +55,9 @@ impl Command<MoveCommand> {
 
 pub struct InitializedMoveCommand {
     pub source: PathBuf,
-    pub destination: PathBuf
+    pub destination: PathBuf,
+    pub merge: bool,
+    pub overwrite: bool
 }
 
 impl Command<InitializedMoveCommand> {
@@ -72,8 +76,8 @@ impl Command<InitializedMoveCommand> {
                     self.0.destination
                         .join(self.0.source.file_name().unwrap())
                         .as_path(),
-                    false,
-                    false
+                    self.0.merge,
+                    self.0.overwrite
                 )
             } else if source.is_dir() {
                 return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
@@ -84,8 +88,8 @@ impl Command<InitializedMoveCommand> {
             MoveEvent::new(
                 self.0.source.as_path(),
                 self.0.destination.as_path(),
-                false,
-                false
+                self.0.merge,
+                self.0.overwrite
             )
         };
 
@@ -112,21 +116,27 @@ mod tests {
 
         let move_f_to_a = Command(InitializedMoveCommand {
             source: sample_path.join(&Path::new("F")),
-            destination: sample_path.join("A")
+            destination: sample_path.join("A"),
+            merge: false,
+            overwrite: false
         });
 
         move_f_to_a.execute(&mut fs).unwrap();
 
         let move_af_to_b = Command(InitializedMoveCommand {
             source: sample_path.join("A/F"),
-            destination: sample_path.join("B")
+            destination: sample_path.join("B"),
+            merge: false,
+            overwrite: false
         });
 
         move_af_to_b.execute(&mut fs).unwrap();
 
         let move_bf_to_bde = Command(InitializedMoveCommand {
             source: sample_path.join("B/F"),
-            destination: sample_path.join("B/D/E")
+            destination: sample_path.join("B/D/E"),
+            merge: false,
+            overwrite: false
         });
 
         move_bf_to_bde.execute(&mut fs).unwrap();

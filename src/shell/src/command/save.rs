@@ -41,7 +41,7 @@ impl Command<SaveCommand> {
                 InitializedSaveCommand {
                     path:
                     Self::extract_path_from_args(cwd, args, "path").unwrap_or_else(|_| cwd.to_path_buf().join(".fc.json")),
-                    overwrite: args.is_present("o")
+                    overwrite: args.is_present("overwrite")
                 }
             )
         )
@@ -89,7 +89,9 @@ mod tests {
         let sample_path = Samples::init_advanced_chroot("can_export_virtual_state_into_a_file");
         let copy_command = Command(InitializedCopyCommand {
             source: sample_path.join("A"),
-            destination: sample_path.join("APRIME")
+            destination: sample_path.join("APRIME"),
+            merge: false,
+            overwrite: false
         });
 
         copy_command.execute(&mut fs).unwrap();
@@ -102,7 +104,7 @@ mod tests {
         save_command.execute(&mut fs).unwrap();
 
         let expected : String = format!(
-            "[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":true,\"overwrite\":false}}]",
+            "[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}}]",
             sample_path.join("A").to_string_lossy(),
             sample_path.join("APRIME").to_string_lossy(),
         );

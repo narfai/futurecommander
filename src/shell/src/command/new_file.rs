@@ -42,7 +42,9 @@ impl Command<NewFileCommand> {
         Ok(
             Command(
                 InitializedNewFileCommand {
-                    path: Self::extract_path_from_args(cwd, args, "path")?
+                    path: Self::extract_path_from_args(cwd, args, "path")?,
+                    recursive: args.is_present("recursive"),
+                    overwrite: args.is_present("overwrite")
                 }
             )
         )
@@ -50,7 +52,9 @@ impl Command<NewFileCommand> {
 }
 
 pub struct InitializedNewFileCommand {
-    pub path: PathBuf
+    pub path: PathBuf,
+    pub recursive: bool,
+    pub overwrite: bool
 }
 
 impl Command<InitializedNewFileCommand> {
@@ -58,8 +62,8 @@ impl Command<InitializedNewFileCommand> {
         let event = CreateEvent::new(
             self.0.path.as_path(),
             Kind::File,
-            false,
-            false
+            self.0.recursive,
+            self.0.overwrite
         );
 
         fs.emit(&event)?;
@@ -85,7 +89,9 @@ mod tests {
         let mut fs = Container::new();
 
         let new_bde_touched = Command(InitializedNewFileCommand {
-            path: sample_path.join(&Path::new("B/D/E/TOUCHED"))
+            path: sample_path.join(&Path::new("B/D/E/TOUCHED")),
+            recursive: false,
+            overwrite: false
         });
 
         new_bde_touched.execute(&mut fs).unwrap();
