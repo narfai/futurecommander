@@ -113,9 +113,7 @@ mod errors_tests {
         Kind,
         sample::Samples,
         event::*,
-        event::{
-            Event
-        },
+        capability::*,
         port::{
             FileSystemAdapter,
         },
@@ -162,7 +160,7 @@ mod errors_tests {
             destination.as_path(),
             true,
             false
-                ).atomize(&vfs).err().unwrap(),
+                ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -172,7 +170,7 @@ mod errors_tests {
             destination.as_path(),
             true,
             false
-                ).atomize(&rfs).err().unwrap(),
+                ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -182,7 +180,7 @@ mod errors_tests {
             destination.as_path(),
             true,
             false
-                ).atomize(&vfs).err().unwrap(),
+                ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -192,7 +190,7 @@ mod errors_tests {
             destination.as_path(),
             true,
             false
-                ).atomize(&rfs).err().unwrap(),
+                ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -213,7 +211,7 @@ mod errors_tests {
                 destination.as_path(),
                 false,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -223,7 +221,7 @@ mod errors_tests {
                 destination.as_path(),
                 false,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -233,7 +231,7 @@ mod errors_tests {
                 destination.as_path(),
                 false,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -243,7 +241,7 @@ mod errors_tests {
                 destination.as_path(),
                 false,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -264,7 +262,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -274,7 +272,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -284,7 +282,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -294,7 +292,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -304,7 +302,7 @@ mod errors_tests {
                 Kind::File,
                 false,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -314,7 +312,7 @@ mod errors_tests {
                 Kind::File,
                 false,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -335,7 +333,7 @@ mod errors_tests {
                 Kind::Directory,
                 false,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -345,7 +343,7 @@ mod errors_tests {
                 Kind::Directory,
                 false,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -366,7 +364,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -376,7 +374,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -386,7 +384,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -396,7 +394,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -418,7 +416,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 true
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -428,7 +426,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 true
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -438,7 +436,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 true
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -448,7 +446,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 true
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -469,7 +467,7 @@ mod errors_tests {
                 Kind::Unknown,
                 false,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -479,7 +477,7 @@ mod errors_tests {
                 Kind::Unknown,
                 false,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -498,7 +496,7 @@ mod errors_tests {
             &RemoveEvent::new(
                 not_exists.as_path(),
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -506,7 +504,7 @@ mod errors_tests {
             &RemoveEvent::new(
                 not_exists.as_path(),
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -525,7 +523,7 @@ mod errors_tests {
             &RemoveEvent::new(
                 not_empty_dir.as_path(),
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -533,7 +531,7 @@ mod errors_tests {
             &RemoveEvent::new(
                 not_empty_dir.as_path(),
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -555,7 +553,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -565,7 +563,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -575,7 +573,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -585,7 +583,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }

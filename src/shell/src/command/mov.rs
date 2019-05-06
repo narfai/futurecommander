@@ -27,7 +27,10 @@ use file_system::{
     ReadableFileSystem,
     Entry,
     Listener,
-    Delayer
+    Delayer,
+    capability::{
+        RegistrarGuard
+    }
 };
 
 use crate::command::{
@@ -93,8 +96,8 @@ impl Command<InitializedMoveCommand> {
             )
         };
 
-        fs.emit(&event)?;
-        fs.delay(Box::new(event));
+        let guard = fs.emit(&event, RegistrarGuard::default())?;
+        fs.delay(Box::new(event), guard);
         Ok(())
     }
 }

@@ -26,11 +26,13 @@ use serde::{ Serialize, Deserialize };
 
 use crate::{
     errors::{DomainError},
-    event::{
-        Event,
+    capability::{
         Guard,
-        DefaultGuard,
+        ZealedGuard,
         Capability
+    },
+    event::{
+        Event
     },
     port::{
         Entry,
@@ -69,11 +71,7 @@ impl <E, F> Event <E, F> for CopyEvent
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
-    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
-        self.atomize_guarded(fs, &DefaultGuard)
-    }
-
-    fn atomize_guarded(&self, fs: &F, guard: &Guard) -> Result<AtomicTransaction, DomainError> {
+    fn atomize(&self, fs: &F, guard: &mut Guard) -> Result<AtomicTransaction, DomainError> {
         let source = fs.status(self.source())?;
 
         if !source.exists() {
@@ -100,7 +98,7 @@ impl <E, F> Event <E, F> for CopyEvent
                                         .as_path(),
                                     self.merge(),
                                     self.overwrite()
-                                ).atomize(fs)?
+                                ).atomize(fs, guard)?
                             );
                         }
                     }
@@ -134,7 +132,7 @@ impl <E, F> Event <E, F> for CopyEvent
                             .as_path(),
                         self.merge(),
                         self.overwrite()
-                    ).atomize(fs)?
+                    ).atomize(fs, guard)?
                 );
             }
         } else if source.is_file() {
@@ -171,7 +169,7 @@ mod real_tests {
             chroot.join("COPIED").as_path(),
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -190,7 +188,7 @@ mod real_tests {
             chroot.join("RDIR2").as_path(),
             true,
             true
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -215,7 +213,7 @@ mod real_tests {
             chroot.join("RDIR2/RFILEB").as_path(),
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -238,7 +236,7 @@ mod real_tests {
             chroot.join("RDIR2/RFILEB").as_path(),
             false,
             true
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -280,7 +278,7 @@ mod virtual_tests {
             samples_path.join("Z").as_path(),
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -303,7 +301,7 @@ mod virtual_tests {
             samples_path.join("A").as_path(),
             true,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -322,7 +320,7 @@ mod virtual_tests {
             samples_path.join("Z").as_path(),
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -341,7 +339,7 @@ mod virtual_tests {
             samples_path.join("A/C").as_path(),
             false,
             true
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();

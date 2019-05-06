@@ -28,7 +28,8 @@ use file_system::{
     Kind,
     CreateEvent,
     Listener,
-    Delayer
+    Delayer,
+    capability::RegistrarGuard
 };
 
 pub struct NewDirectoryCommand {}
@@ -62,8 +63,8 @@ impl Command<InitializedNewDirectoryCommand> {
             self.0.overwrite
         );
 
-        fs.emit(&event)?;
-        fs.delay(Box::new(event));
+        let guard = fs.emit(&event, RegistrarGuard::default())?;
+        fs.delay(Box::new(event), guard);
         Ok(())
     }
 }

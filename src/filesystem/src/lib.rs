@@ -32,7 +32,7 @@ pub use self::{
         Listener,
         Delayer,
         Event,
-        Guard
+        capability
     },
     port::{
         Entry,

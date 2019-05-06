@@ -23,6 +23,8 @@ mod mov;
 mod remove;
 mod serializable;
 
+pub mod capability;
+
 pub use self::{
     copy::CopyEvent,
     create::CreateEvent,
@@ -38,6 +40,10 @@ use std::{
 
 use crate::{
     errors::DomainError,
+    capability::{
+        RegistrarGuard,
+        Guard
+    },
     port::{
         Entry,
         EntryAdapter,
@@ -56,8 +62,7 @@ pub trait Event<E, F> : SerializableEvent + Debug
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
-    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError>;
-    fn atomize_guarded(&self, fs: &F, guard: &Guard) -> Result<AtomicTransaction, DomainError>;
+    fn atomize(&self, fs: &F, guard: &mut capability::Guard) -> Result<AtomicTransaction, DomainError>;
 }
 
 pub type RawVirtualEvent = Event<EntryAdapter<VirtualStatus>, FileSystemAdapter<VirtualFileSystem>>;
@@ -86,63 +91,10 @@ impl RealEvent {
 
 
 pub trait Listener<E> {
-    fn emit(&mut self, event: E) -> Result<(), DomainError>;
+    fn emit(&mut self, event: &RawVirtualEvent, guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError>;
 }
 
 pub trait Delayer {
     type Event;
-    fn delay(&mut self, event: Self::Event);
-}
-
-
-pub enum Capability {
-    Merge,
-    Overwrite,
-    Recursive
-}
-
-pub trait Guard {
-    fn authorize(&self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError>;
-}
-
-pub struct DefaultGuard;
-
-impl Guard for DefaultGuard {
-    fn authorize(&self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError> {
-        match capability {
-            Capability::Merge => {
-                if default {
-                    Ok(true)
-                } else {
-                    Err(
-                        DomainError::MergeNotAllowed(
-                            target.to_path_buf()
-                        )
-                    )
-                }
-            },
-            Capability::Overwrite => {
-                if default {
-                    Ok(true)
-                } else {
-                    Err(
-                        DomainError::OverwriteNotAllowed(
-                            target.to_path_buf()
-                        )
-                    )
-                }
-            },
-            Capability::Recursive => {
-                if default {
-                    Ok(true)
-                } else {
-                    Err(
-                        DomainError::RecursiveNotAllowed(
-                            target.to_path_buf()
-                        )
-                    )
-                }
-            }
-        }
-    }
+    fn delay(&mut self, event: Self::Event, guard: RegistrarGuard);
 }

@@ -25,7 +25,8 @@ use file_system::{
     Container,
     RemoveEvent,
     Listener,
-    Delayer
+    Delayer,
+    capability::RegistrarGuard
 };
 
 use crate::command::{
@@ -65,8 +66,8 @@ impl Command<InitializedRemoveCommand> {
     pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
         let event = RemoveEvent::new(self.0.path.as_path(), self.0.recursive);
 
-        fs.emit(&event)?;
-        fs.delay(Box::new(event));
+        let guard = fs.emit(&event, RegistrarGuard::default())?;
+        fs.delay(Box::new(event), guard);
         Ok(())
     }
 }
