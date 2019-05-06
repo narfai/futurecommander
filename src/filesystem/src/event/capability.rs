@@ -96,14 +96,6 @@ pub trait Guard : Debug {
     fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError>;
 }
 
-/**
-A guard should be able to :
-* throw an error
-* unblocking skip behavior
-* allow a behavior
-* persist its own data
-*/
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ZealedGuard;
 
