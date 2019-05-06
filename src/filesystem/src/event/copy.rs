@@ -27,7 +27,10 @@ use serde::{ Serialize, Deserialize };
 use crate::{
     errors::{DomainError},
     event::{
-        Event
+        Event,
+        Guard,
+        DefaultGuard,
+        Capability
     },
     port::{
         Entry,
@@ -67,6 +70,10 @@ impl <E, F> Event <E, F> for CopyEvent
           E: Entry {
 
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
+        self.atomize_guarded(fs, &DefaultGuard)
+    }
+
+    fn atomize_guarded(&self, fs: &F, guard: &Guard) -> Result<AtomicTransaction, DomainError> {
         let source = fs.status(self.source())?;
 
         if !source.exists() {
@@ -83,7 +90,7 @@ impl <E, F> Event <E, F> for CopyEvent
         if destination.exists() {
             if source.is_dir() {
                 if destination.is_dir() {
-                    if self.merge() {
+                    if guard.authorize(Capability::Merge, self.merge(), self.destination())? {
                         for child in fs.read_dir(source.path())? {
                             transaction.merge(
                                 CopyEvent::new(
@@ -96,22 +103,18 @@ impl <E, F> Event <E, F> for CopyEvent
                                 ).atomize(fs)?
                             );
                         }
-                    } else {
-                        return Err(DomainError::MergeNotAllowed(source.to_path(), destination.to_path()))
                     }
                 } else {
                     return Err(DomainError::MergeFileWithDirectory(source.to_path(), destination.to_path()))
                 }
             } else if source.is_file() {
                 if destination.is_file() {
-                    if self.overwrite() {
+                    if guard.authorize(Capability::Overwrite, self.overwrite(), self.destination())? {
                         transaction.add(Atomic::RemoveFile(destination.to_path()));
                         transaction.add(Atomic::CopyFileToFile {
                             source: source.to_path(),
                             destination: destination.to_path()
                         });
-                    } else {
-                        return Err(DomainError::OverwriteNotAllowed(destination.to_path()))
                     }
                 } else {
                     return Err(DomainError::OverwriteDirectoryWithFile(source.to_path(), destination.to_path()))

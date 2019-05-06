@@ -28,7 +28,10 @@ use crate::{
     Kind,
     errors::{ DomainError },
     event::{
-        Event
+        Event,
+        Guard,
+        DefaultGuard,
+        Capability
     },
     port::{
         Entry,
@@ -68,6 +71,10 @@ impl <E, F> Event <E, F> for CreateEvent
           E: Entry {
 
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
+        self.atomize_guarded(fs, &DefaultGuard)
+    }
+
+    fn atomize_guarded(&self, fs: &F, guard: &Guard) -> Result<AtomicTransaction, DomainError> {
         let entry = fs.status(self.path())?;
         let mut transaction = AtomicTransaction::default();
 
@@ -102,14 +109,12 @@ impl <E, F> Event <E, F> for CreateEvent
             },
             Kind::File => {
                 if entry.exists() {
-                    if self.overwrite() {
+                    if guard.authorize(Capability::Overwrite, self.overwrite(), self.path())? {
                         if self.recursive() {
                             transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
                         }
                         transaction.add(Atomic::RemoveFile(entry.to_path()));
                         transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
-                    } else {
-                        return Err(DomainError::OverwriteNotAllowed(entry.to_path()))
                     }
                 } else {
                     transaction.add(Atomic::CreateEmptyFile(entry.to_path()));

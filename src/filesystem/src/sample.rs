@@ -70,7 +70,7 @@ impl Samples {
     }
 
     pub fn init_empty_chroot(arbitrary_identifier: &str) -> PathBuf {
-        let chroot = Self::dynamic_samples_path().join(format!("adv_chroot_{}", arbitrary_identifier));
+        let chroot = Self::dynamic_samples_path().join(format!("chroot_{}", arbitrary_identifier));
 
         if chroot.exists() {
             remove_dir_all(chroot.as_path()).unwrap();

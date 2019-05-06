@@ -33,7 +33,7 @@ pub use self::{
 
 use std::{
     fmt::Debug,
-    path::PathBuf
+    path::{ PathBuf, Path }
 };
 
 use crate::{
@@ -57,6 +57,7 @@ pub trait Event<E, F> : SerializableEvent + Debug
           E: Entry {
 
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError>;
+    fn atomize_guarded(&self, fs: &F, guard: &Guard) -> Result<AtomicTransaction, DomainError>;
 }
 
 pub type RawVirtualEvent = Event<EntryAdapter<VirtualStatus>, FileSystemAdapter<VirtualFileSystem>>;
@@ -91,4 +92,57 @@ pub trait Listener<E> {
 pub trait Delayer {
     type Event;
     fn delay(&mut self, event: Self::Event);
+}
+
+
+pub enum Capability {
+    Merge,
+    Overwrite,
+    Recursive
+}
+
+pub trait Guard {
+    fn authorize(&self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError>;
+}
+
+pub struct DefaultGuard;
+
+impl Guard for DefaultGuard {
+    fn authorize(&self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError> {
+        match capability {
+            Capability::Merge => {
+                if default {
+                    Ok(true)
+                } else {
+                    Err(
+                        DomainError::MergeNotAllowed(
+                            target.to_path_buf()
+                        )
+                    )
+                }
+            },
+            Capability::Overwrite => {
+                if default {
+                    Ok(true)
+                } else {
+                    Err(
+                        DomainError::OverwriteNotAllowed(
+                            target.to_path_buf()
+                        )
+                    )
+                }
+            },
+            Capability::Recursive => {
+                if default {
+                    Ok(true)
+                } else {
+                    Err(
+                        DomainError::RecursiveNotAllowed(
+                            target.to_path_buf()
+                        )
+                    )
+                }
+            }
+        }
+    }
 }

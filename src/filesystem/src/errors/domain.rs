@@ -39,14 +39,14 @@ pub enum DomainError {
     Infrastructure(InfrastructureError),
     Query(QueryError),
     CopyIntoItSelf(PathBuf, PathBuf),
-    MergeNotAllowed(PathBuf, PathBuf),
+    MergeNotAllowed(PathBuf),
     OverwriteNotAllowed(PathBuf),
     DirectoryOverwriteNotAllowed(PathBuf),
     MergeFileWithDirectory(PathBuf, PathBuf),
     OverwriteDirectoryWithFile(PathBuf, PathBuf),
     CreateUnknown(PathBuf),
     DoesNotExists(PathBuf),
-    DeleteRecursiveNotAllowed(PathBuf),
+    RecursiveNotAllowed(PathBuf),
     SourceDoesNotExists(PathBuf),
     Custom(String)
 }
@@ -77,14 +77,14 @@ impl fmt::Display for DomainError {
             DomainError::Infrastructure(error) => write!(f, "Infrastructure error {}", error),
             DomainError::Query(error) => write!(f, "Query error {}", error),
             DomainError::CopyIntoItSelf(source, dst) => write!(f, "Cannot copy {} into itself {}", source.to_string_lossy(), dst.to_string_lossy()),
-            DomainError::MergeNotAllowed(source, dst) => write!(f, "Merge of {} into {} is not allowed", source.to_string_lossy(), dst.to_string_lossy()),
+            DomainError::MergeNotAllowed(dst) => write!(f, "Merge into {} is not allowed", dst.to_string_lossy()),
             DomainError::OverwriteNotAllowed(dst) => write!(f, "Overwrite of {} is not allowed", dst.to_string_lossy()),
             DomainError::DirectoryOverwriteNotAllowed(path) => write!(f, "Directory overwrite of {} is not allowed", path.to_string_lossy()),
             DomainError::MergeFileWithDirectory(source, destination) => write!(f, "Cannot merge file {} with directory {} is not allowed", source.to_string_lossy(), destination.to_string_lossy()),
             DomainError::OverwriteDirectoryWithFile(source, dst) => write!(f, "Cannot overwrite directory {} with file {}", source.to_string_lossy(), dst.to_string_lossy()),
             DomainError::CreateUnknown(path) => write!(f, "Cannot create unknown kind at path {}", path.to_string_lossy()),
             DomainError::DoesNotExists(path) => write!(f, "Path {} does not exists", path.to_string_lossy()),
-            DomainError::DeleteRecursiveNotAllowed(path) => write!(f, "Delete recursively {} is not allowed", path.to_string_lossy()),
+            DomainError::RecursiveNotAllowed(path) => write!(f, "Delete recursively {} is not allowed", path.to_string_lossy()),
             DomainError::SourceDoesNotExists(source) => write!(f, "Source {} does not exists", source.to_string_lossy()),
             DomainError::Custom(s) => write!(f, "Custom error {}", s),
         }
@@ -206,7 +206,7 @@ mod errors_tests {
         let source = sample_path.join("B");
         let destination = sample_path.join("A");
 
-        let expected_error = DomainError::MergeNotAllowed(source.clone(), destination.clone());
+        let expected_error = DomainError::MergeNotAllowed(destination.clone());
         assert_two_errors_equals(
             &MoveEvent::new(
                 source.as_path(),
@@ -519,7 +519,7 @@ mod errors_tests {
 
         let not_empty_dir = sample_path.join("A");
 
-        let expected_error = DomainError::DeleteRecursiveNotAllowed(not_empty_dir.clone());
+        let expected_error = DomainError::RecursiveNotAllowed(not_empty_dir.clone());
 
         assert_two_errors_equals(
             &RemoveEvent::new(

@@ -27,7 +27,10 @@ use serde::{ Serialize, Deserialize };
 use crate::{
     errors::{ DomainError },
     event::{
-        Event
+        Event,
+        Guard,
+        DefaultGuard,
+        Capability
     },
     port::{
         Entry,
@@ -60,6 +63,10 @@ impl <E, F> Event <E, F> for RemoveEvent
           E: Entry {
 
     fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
+        self.atomize_guarded(fs, &DefaultGuard)
+    }
+
+    fn atomize_guarded(&self, fs: &F, guard: &Guard) -> Result<AtomicTransaction, DomainError> {
         let entry = fs.status(self.path())?;
         let mut transaction = AtomicTransaction::default();
 
@@ -74,7 +81,7 @@ impl <E, F> Event <E, F> for RemoveEvent
 
             if children.is_empty() {
                 transaction.add(Atomic::RemoveEmptyDirectory(entry.path().to_path_buf()))
-            } else if self.recursive(){
+            } else if guard.authorize(Capability::Recursive, self.recursive(), self.path())? {
                 for child in children {
                     transaction.merge(
                         RemoveEvent::new(
@@ -84,8 +91,6 @@ impl <E, F> Event <E, F> for RemoveEvent
                     )
                 }
                 transaction.add(Atomic::RemoveEmptyDirectory(entry.path().to_path_buf()))
-            } else {
-                return Err(DomainError::DeleteRecursiveNotAllowed(entry.path().to_path_buf()))
             }
         }
 
