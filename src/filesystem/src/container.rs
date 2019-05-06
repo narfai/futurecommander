@@ -84,9 +84,6 @@ impl EventQueue {
     }
 }
 
-//TODO may guards should be attached to Event ... With generics though => guard has to be attached to an "emitment"
-//TODO Guard must be persisted if it contains pre-defined user choices ? Could cause big trouble with ser/deser
-
 #[derive(Debug)]
 pub struct Container {
     virtual_fs  : FileSystemAdapter<VirtualFileSystem>,
