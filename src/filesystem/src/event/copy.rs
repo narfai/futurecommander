@@ -267,7 +267,10 @@ mod virtual_tests {
         infrastructure::{
             VirtualFileSystem
         },
-        Kind
+        Kind,
+        capability::{
+            ZealedGuard
+        }
     };
 
     #[test]
