@@ -29,7 +29,6 @@ use crate::{
     errors::{ DomainError },
     capability::{
         Guard,
-        ZealedGuard,
         Capability
     },
     event::{
@@ -140,6 +139,9 @@ mod real_tests {
         },
         infrastructure::{
             RealFileSystem
+        },
+        capability::{
+            ZealedGuard
         }
     };
 

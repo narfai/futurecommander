@@ -19,7 +19,7 @@
 
 use std::{
     io::{ stdin },
-    path::{ Path, PathBuf }
+    path::{ Path }
 };
 
 use serde::{ Serialize, Deserialize };

@@ -23,7 +23,7 @@ mod interactive_guard;
 mod registrar_guard;
 
 use std::{
-    fmt::{ Debug, Display, Formatter, Result as FmtResult }
+    fmt::{ Display, Formatter, Result as FmtResult }
 };
 
 pub use self::{

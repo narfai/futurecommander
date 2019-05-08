@@ -104,7 +104,7 @@ mod tests {
         save_command.execute(&mut fs).unwrap();
 
         let expected : String = format!(
-            "[[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}},{{\"inner\":{{\"type\":\"ZealedGuard\"}},\"registry\":{{}}}}]]",
+            "[[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}},{{\"inner\":{{\"type\":\"InteractiveGuard\",\"skip_all\":{{\"merge\":false,\"overwrite\":false,\"recursive\":false}},\"allow_all\":{{\"merge\":false,\"overwrite\":false,\"recursive\":false}}}},\"registry\":{{}}}}]]",
             sample_path.join("A").to_string_lossy(),
             sample_path.join("APRIME").to_string_lossy(),
         );

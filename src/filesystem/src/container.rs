@@ -24,9 +24,6 @@ use std::{
 use crate::{
     errors:: { DomainError, QueryError },
     capability::{
-        Guard,
-        ZealedGuard,
-        BlindGuard,
         RegistrarGuard
     },
     event::{
@@ -182,7 +179,10 @@ mod tests {
     use crate::{
         event::CopyEvent,
         sample::Samples,
-        Entry
+        Entry,
+        capability::{
+            ZealedGuard
+        }
     };
 
     #[test]

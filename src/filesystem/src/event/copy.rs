@@ -27,9 +27,8 @@ use serde::{ Serialize, Deserialize };
 use crate::{
     errors::{DomainError},
     capability::{
-        Guard,
-        ZealedGuard,
-        Capability
+        Capability,
+        Guard
     },
     event::{
         Event
@@ -156,6 +155,9 @@ mod real_tests {
         infrastructure::RealFileSystem,
         port::{
             FileSystemAdapter
+        },
+        capability::{
+            ZealedGuard
         }
     };
 

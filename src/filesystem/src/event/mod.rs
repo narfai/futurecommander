@@ -35,14 +35,13 @@ pub use self::{
 
 use std::{
     fmt::Debug,
-    path::{ PathBuf, Path }
+    path::{ PathBuf }
 };
 
 use crate::{
     errors::DomainError,
     capability::{
-        RegistrarGuard,
-        Guard
+        RegistrarGuard
     },
     port::{
         Entry,

@@ -18,8 +18,8 @@
  */
 
 use std::{
-    path::{ Path, PathBuf },
-    fmt::{ Debug, Display, Formatter, Result as FmtResult }
+    path::{ Path },
+    fmt::{ Debug }
 };
 
 
