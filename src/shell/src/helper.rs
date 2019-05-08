@@ -47,7 +47,7 @@ const fn available_commands() -> [&'static str; 18] {
         "exit",
         "cd",
         "debug_status",
-        "debug_virtual_state",
+        "debug_container",
         "debug_add_state",
         "debug_sub_state",
         "debug_transaction",

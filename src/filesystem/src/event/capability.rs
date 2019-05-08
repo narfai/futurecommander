@@ -17,8 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 use std::{
+    io::{ stdin },
     path::{ Path, PathBuf },
-    fmt::Debug,
+    fmt::{ Debug, Display, Formatter, Result as FmtResult },
     collections::HashMap,
     ops::{ Add, Sub }
 };
@@ -34,6 +35,20 @@ pub enum Capability {
     Merge,
     Overwrite,
     Recursive
+}
+
+impl Display for Capability {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(
+            f,
+            "{}",
+            match self {
+                Capability::Merge => "merge",
+                Capability::Recursive => "recursive",
+                Capability::Overwrite => "overwrite"
+            }
+        )
+    }
 }
 
 impl Eq for Capability {}
@@ -187,6 +202,10 @@ impl RegistrarGuard {
             registry: HashMap::new()
         }
     }
+
+    pub fn interactive() -> Self {
+        Self::from(Box::new(InteractiveGuard::default()))
+    }
 }
 
 #[typetag::serde]
@@ -202,6 +221,48 @@ impl Guard for RegistrarGuard {
             Ok(true)
         } else {
             Ok(false)
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Default, Debug)]
+pub struct InteractiveGuard {
+    skip_all: Capabilities,
+    allow_all: Capabilities
+}
+
+#[typetag::serde]
+impl Guard for InteractiveGuard {
+    fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError> {
+        if self.skip_all.authorize(capability) {
+            return Ok(false)
+        }
+
+        if ! default && ! self.allow_all.authorize(capability) {
+            let mut input = String::new();
+            println!("Allow {} for target {} ?([skip]/skip_all/allow/allow_all/cancel) : ", capability, target.to_string_lossy());
+            stdin().read_line(&mut input)?;
+
+            println!("INPUT : {}", input);
+
+            match input.trim() {
+                "skip" => Ok(false),
+                "allow" => Ok(true),
+                "skip_all" => {
+                    self.skip_all = self.skip_all + capability;
+                    Ok(false)
+                },
+                "allow_all" => {
+                    self.allow_all = self.allow_all + capability;
+                    Ok(true)
+                },
+                "cancel" =>
+                    Err(DomainError::UserCancelled)
+                ,
+                _ => Ok(false)
+            }
+        } else {
+            Ok(true)
         }
     }
 }

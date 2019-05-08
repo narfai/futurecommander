@@ -39,6 +39,11 @@ mod shell {
         Shell
     };
 
+    //TODO test mkdir B/A; cp A/B
+    //TODO test all scenarios merge / overwrite / recursive cross skip/skipall/allow/allowall/cancel
+    //TODO add samples to PR
+    //TODO split up capability properly
+
     #[test]
     fn regular_list() {
         let sample_path = Samples::static_samples_path();

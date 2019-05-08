@@ -66,7 +66,7 @@ impl Command<InitializedRemoveCommand> {
     pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
         let event = RemoveEvent::new(self.0.path.as_path(), self.0.recursive);
 
-        let guard = fs.emit(&event, RegistrarGuard::default())?;
+        let guard = fs.emit(&event, RegistrarGuard::interactive())?;
         fs.delay(Box::new(event), guard);
         Ok(())
     }

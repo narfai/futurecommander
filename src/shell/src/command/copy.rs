@@ -90,7 +90,7 @@ impl Command<InitializedCopyCommand> {
             CopyEvent::new(self.0.source.as_path(), self.0.destination.as_path(), self.0.merge, self.0.overwrite)
         };
 
-        let guard = fs.emit(&event, RegistrarGuard::default())?;
+        let guard = fs.emit(&event, RegistrarGuard::interactive())?;
         fs.delay(Box::new(event), guard);
         Ok(())
     }

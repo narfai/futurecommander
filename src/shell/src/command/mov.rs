@@ -96,7 +96,7 @@ impl Command<InitializedMoveCommand> {
             )
         };
 
-        let guard = fs.emit(&event, RegistrarGuard::default())?;
+        let guard = fs.emit(&event, RegistrarGuard::interactive())?;
         fs.delay(Box::new(event), guard);
         Ok(())
     }

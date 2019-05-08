@@ -19,6 +19,7 @@
 
 
 use std::{
+    io,
     error,
     fmt,
     path::PathBuf
@@ -35,6 +36,7 @@ use crate::{
 
 #[derive(Debug)]
 pub enum DomainError {
+    IoError(io::Error),
     JsonError(serde_json::Error),
     Infrastructure(InfrastructureError),
     Query(QueryError),
@@ -48,12 +50,19 @@ pub enum DomainError {
     DoesNotExists(PathBuf),
     RecursiveNotAllowed(PathBuf),
     SourceDoesNotExists(PathBuf),
+    UserCancelled,
     Custom(String)
 }
 
 impl From<serde_json::Error> for DomainError {
     fn from(error: serde_json::Error) -> Self {
         DomainError::JsonError(error)
+    }
+}
+
+impl From<io::Error> for DomainError {
+    fn from(error: io::Error) -> Self {
+        DomainError::IoError(error)
     }
 }
 
@@ -73,6 +82,7 @@ impl From<InfrastructureError> for DomainError {
 impl fmt::Display for DomainError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            DomainError::IoError(error) => write!(f, "I/O error {}", error),
             DomainError::JsonError(error) => write!(f, "Json error {}", error),
             DomainError::Infrastructure(error) => write!(f, "Infrastructure error {}", error),
             DomainError::Query(error) => write!(f, "Query error {}", error),
@@ -86,6 +96,7 @@ impl fmt::Display for DomainError {
             DomainError::DoesNotExists(path) => write!(f, "Path {} does not exists", path.to_string_lossy()),
             DomainError::RecursiveNotAllowed(path) => write!(f, "Delete recursively {} is not allowed", path.to_string_lossy()),
             DomainError::SourceDoesNotExists(source) => write!(f, "Source {} does not exists", source.to_string_lossy()),
+            DomainError::UserCancelled => write!(f, "User cancelled operation"),
             DomainError::Custom(s) => write!(f, "Custom error {}", s),
         }
     }
@@ -95,6 +106,7 @@ impl fmt::Display for DomainError {
 impl error::Error for DomainError {
     fn cause(&self) -> Option<&dyn error::Error> {
         match self {
+            DomainError::IoError(err) => Some(err),
             DomainError::JsonError(err) => Some(err),
             DomainError::Query(err) => Some(err),
             DomainError::Infrastructure(err) => Some(err),

@@ -90,6 +90,7 @@ impl <E, F> Event <E, F> for CopyEvent
                 if destination.is_dir() {
                     if guard.authorize(Capability::Merge, self.merge(), self.destination())? {
                         for child in fs.read_dir(source.path())? {
+                            println!("SOURCE CHILD {:?}", child.path());
                             transaction.merge(
                                 CopyEvent::new(
                                     child.path(),
