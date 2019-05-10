@@ -18,7 +18,7 @@
  */
 
 use std::{
-    ops::{ Add, Sub }
+    ops::{ Add }
 };
 
 use serde::{ Serialize, Deserialize };
@@ -70,14 +70,28 @@ impl Add<Capability> for Capabilities {
     }
 }
 
-impl Sub<Capability> for Capabilities {
-    type Output = Capabilities;
 
-    fn sub(self, right_cap: Capability) -> Capabilities {
-        Capabilities {
-            merge: self.merge() && right_cap != Capability::Merge,
-            overwrite: self.overwrite() && right_cap != Capability::Overwrite,
-            recursive: self.recursive() && right_cap != Capability::Recursive,
-        }
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn add_capability() {
+        let mut caps = Capabilities::default();
+        caps = caps + Capability::Overwrite;
+        assert!(caps.authorize(Capability::Overwrite));
+        assert!(!caps.authorize(Capability::Merge));
+        assert!(!caps.authorize(Capability::Recursive));
+
+        caps = caps + Capability::Merge;
+        assert!(caps.authorize(Capability::Overwrite));
+        assert!(caps.authorize(Capability::Merge));
+        assert!(!caps.authorize(Capability::Recursive));
+
+        caps = caps + Capability::Recursive;
+        assert!(caps.authorize(Capability::Overwrite));
+        assert!(caps.authorize(Capability::Merge));
+        assert!(caps.authorize(Capability::Recursive));
     }
 }

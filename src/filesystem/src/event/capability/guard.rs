@@ -42,12 +42,8 @@ pub struct BlindGuard;
 
 #[typetag::serde]
 impl Guard for BlindGuard {
-    fn authorize(&mut self, capability: Capability, _default: bool, _target: &Path) -> Result<bool, DomainError> {
-        match capability {
-            Capability::Merge => Ok(true),
-            Capability::Overwrite => Ok(true),
-            Capability::Recursive => Ok(true)
-        }
+    fn authorize(&mut self, _capability: Capability, _default: bool, _target: &Path) -> Result<bool, DomainError> {
+        Ok(true)
     }
 }
 
@@ -57,12 +53,8 @@ pub struct QuietGuard;
 
 #[typetag::serde]
 impl Guard for QuietGuard {
-    fn authorize(&mut self, capability: Capability, default: bool, _target: &Path) -> Result<bool, DomainError> {
-        match capability {
-            Capability::Merge => Ok(default),
-            Capability::Overwrite => Ok(default),
-            Capability::Recursive => Ok(default)
-        }
+    fn authorize(&mut self, _capability: Capability, default: bool, _target: &Path) -> Result<bool, DomainError> {
+        Ok(default)
     }
 }
 
@@ -108,5 +100,82 @@ impl Guard for ZealedGuard {
                 }
             }
         }
+    }
+}
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::{
+        error
+    };
+
+    fn assert_two_errors_equals(left: &impl error::Error, right: &impl error::Error) {
+        assert_eq!(format!("{}", left), format!("{}", right))
+    }
+
+    #[test]
+    fn all_guards_let_default_through(){
+        let target = Path::new("/virtual/directory");
+        let default = true;
+
+        let mut zealed = ZealedGuard;
+        assert!(zealed.authorize(Capability::Overwrite, default, target).unwrap());
+        assert!(zealed.authorize(Capability::Merge, default, target).unwrap());
+        assert!(zealed.authorize(Capability::Recursive, default, target).unwrap());
+
+        let mut blind = BlindGuard;
+        assert!(blind.authorize(Capability::Overwrite, default, target).unwrap());
+        assert!(blind.authorize(Capability::Merge, default, target).unwrap());
+        assert!(blind.authorize(Capability::Recursive, default, target).unwrap());
+
+        let mut quiet = QuietGuard;
+        assert!(quiet.authorize(Capability::Overwrite, default, target).unwrap());
+        assert!(quiet.authorize(Capability::Merge, default, target).unwrap());
+        assert!(quiet.authorize(Capability::Recursive, default, target).unwrap());
+    }
+
+    #[test]
+    fn zealed_guard_block_sensible_operation(){
+        let mut guard = ZealedGuard;
+        let target = Path::new("/virtual/directory");
+        let default = false;
+
+        assert_two_errors_equals(
+            &guard.authorize(Capability::Overwrite, default, target).err().unwrap(),
+            &DomainError::OverwriteNotAllowed(target.to_path_buf())
+        );
+        assert_two_errors_equals(
+            &guard.authorize(Capability::Merge, default, target).err().unwrap(),
+            &DomainError::MergeNotAllowed(target.to_path_buf())
+        );
+        assert_two_errors_equals(
+            &guard.authorize(Capability::Recursive, default, target).err().unwrap(),
+            &DomainError::RecursiveNotAllowed(target.to_path_buf())
+        );
+    }
+
+    #[test]
+    fn quiet_guard_skip_sensible_operation(){
+        let mut guard = QuietGuard;
+        let target = Path::new("/virtual/directory");
+        let default = false;
+
+        assert_eq!(guard.authorize(Capability::Overwrite, default, target).unwrap(), false);
+        assert_eq!(guard.authorize(Capability::Merge, default, target).unwrap(), false);
+        assert_eq!(guard.authorize(Capability::Recursive, default, target).unwrap(), false);
+    }
+
+    #[test]
+    fn blind_guard_let_any_sensible_operation_through(){
+        let mut guard = BlindGuard;
+        let target = Path::new("/virtual/directory");
+        let default = false;
+
+        assert_eq!(guard.authorize(Capability::Overwrite, default, target).unwrap(), true);
+        assert_eq!(guard.authorize(Capability::Merge, default, target).unwrap(), true);
+        assert_eq!(guard.authorize(Capability::Recursive, default, target).unwrap(), true);
     }
 }

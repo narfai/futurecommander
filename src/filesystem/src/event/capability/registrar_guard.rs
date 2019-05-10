@@ -70,3 +70,50 @@ impl Guard for RegistrarGuard {
         }
     }
 }
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::{
+        event::{
+            capability::{
+                BlindGuard,
+                QuietGuard
+            }
+        }
+    };
+
+    #[test]
+    fn registrar_persist_choice_for_target(){
+        let mut registrar = RegistrarGuard::from(Box::new(BlindGuard));
+        let target = Path::new("/virtual/directory");
+        let default = false;
+
+        assert!(registrar.authorize(Capability::Overwrite, default, target).unwrap());
+        assert!(registrar.registry.get(&target.to_path_buf()).unwrap().overwrite());
+
+        assert!(registrar.authorize(Capability::Merge, default, target).unwrap());
+        assert!(registrar.registry.get(&target.to_path_buf()).unwrap().merge());
+
+        assert!(registrar.authorize(Capability::Recursive, default, target).unwrap());
+        assert!(registrar.registry.get(&target.to_path_buf()).unwrap().recursive());
+    }
+
+    #[test]
+    fn registrar_register_only_authorized(){
+        let mut registrar = RegistrarGuard::from(Box::new(QuietGuard));
+        let target = Path::new("/virtual/directory");
+        let default = false;
+
+        assert!(!registrar.authorize(Capability::Overwrite, default, target).unwrap());
+        assert!(registrar.registry.get(&target.to_path_buf()).is_none());
+
+        assert!(!registrar.authorize(Capability::Merge, default, target).unwrap());
+        assert!(registrar.registry.get(&target.to_path_buf()).is_none());
+
+        assert!(!registrar.authorize(Capability::Recursive, default, target).unwrap());
+        assert!(registrar.registry.get(&target.to_path_buf()).is_none());
+    }
+}
