@@ -42,7 +42,6 @@ function release {
     if [ -z "${GITHUB_TOKEN}" ]; then
         exit 1
     fi
-    git remote add release https://narfai:${GITHUB_TOKEN}@github.com/narfai/futurecommander.git
 
     branch=$(git rev-parse --abbrev-ref HEAD | tr \/ . | tr \_ .)
     build=$(date "+%y%m%d%s")
@@ -57,8 +56,10 @@ function release {
 
     echo "REMOTE TAGS : $(git ls-remote --tags release |grep -i ${branch})"
     if [ -z "$(git ls-remote --tags release |grep -i ${branch})" ]; then
+        git remote add release https://narfai:${GITHUB_TOKEN}@github.com/narfai/futurecommander.git
         git tag "${branch}"
         git push --tags release
+        git remote remove release
     fi
 
     if [ -z "$($GOTHUB info -u narfai -r futurecommander | grep -i ${branch})" ]; then
