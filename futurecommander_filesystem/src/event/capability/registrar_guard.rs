@@ -92,13 +92,13 @@ mod tests {
         let default = false;
 
         assert!(registrar.authorize(Capability::Overwrite, default, target).unwrap());
-        assert!(registrar.registry.get(&target.to_path_buf()).unwrap().overwrite());
+        assert!(registrar.registry[&target.to_path_buf()].overwrite());
 
         assert!(registrar.authorize(Capability::Merge, default, target).unwrap());
-        assert!(registrar.registry.get(&target.to_path_buf()).unwrap().merge());
+        assert!(registrar.registry[&target.to_path_buf()].merge());
 
         assert!(registrar.authorize(Capability::Recursive, default, target).unwrap());
-        assert!(registrar.registry.get(&target.to_path_buf()).unwrap().recursive());
+        assert!(registrar.registry[&target.to_path_buf()].recursive());
     }
 
     #[test]
