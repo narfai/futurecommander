@@ -30,7 +30,8 @@ use file_system::{
 
 use crate::command::{
     Command,
-    errors::CommandError
+    errors::CommandError,
+    AvailableGuard
 };
 
 
@@ -49,7 +50,8 @@ impl Command<RemoveCommand> {
             Command(
                 InitializedRemoveCommand {
                     path,
-                    recursive: args.is_present("recursive")
+                    recursive: args.is_present("recursive"),
+                    guard: Self::extract_available_guard(args, "guard")?
                 }
             )
         )
@@ -58,15 +60,16 @@ impl Command<RemoveCommand> {
 
 pub struct InitializedRemoveCommand {
     pub path: PathBuf,
-    pub recursive: bool
+    pub recursive: bool,
+    pub guard: AvailableGuard
 }
 
 impl Command<InitializedRemoveCommand> {
-    pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
+    pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
         let event = RemoveEvent::new(self.0.path.as_path(), self.0.recursive);
 
-        fs.emit(&event)?;
-        fs.delay(Box::new(event));
+        let guard = container.emit(&event, self.0.guard.registrar())?;
+        container.delay(Box::new(event), guard);
         Ok(())
     }
 }
@@ -85,19 +88,20 @@ mod tests {
     #[test]
     fn rm(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = Container::new();
+        let mut container = Container::new();
 
         let b_path = sample_path.join(&Path::new("B"));
 
         let remove_b = Command(InitializedRemoveCommand {
             path: b_path.to_path_buf(),
-            recursive: true
+            recursive: true,
+            guard: AvailableGuard::Zealed
         });
 
-        remove_b.execute(&mut fs).unwrap();
+        remove_b.execute(&mut container).unwrap();
 
         assert!(
-            !fs.status(b_path.as_path())
+            !container.status(b_path.as_path())
                 .unwrap()
                 .exists()
         )

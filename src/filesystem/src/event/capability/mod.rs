@@ -17,37 +17,41 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod event;
+mod capabilities;
+mod guard;
+mod registrar_guard;
 
-mod port;
-mod infrastructure;
-mod kind;
-mod errors;
-mod container;
-
-pub use self::{
-    kind::Kind,
-    errors::{ DomainError, QueryError },
-    event::{
-        Listener,
-        Delayer,
-        Event,
-        capability
-    },
-    port::{
-        Entry,
-        ReadableFileSystem,
-        WriteableFileSystem,
-        EntryAdapter
-    },
-    event::*,
-    container::Container
+use std::{
+    fmt::{ Display, Formatter, Result as FmtResult }
 };
 
-//Mainly for testing
-pub use self::infrastructure::VirtualState;
+pub use self::{
+    capabilities::Capabilities,
+    guard::{ Guard, ZealedGuard, BlindGuard, QuietGuard },
+    registrar_guard::{ RegistrarGuard }
+};
 
-pub mod tools;
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Capability {
+    Merge,
+    Overwrite,
+    Recursive
+}
 
-#[cfg_attr(tarpaulin, skip)]
-pub mod sample;
+impl Display for Capability {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(
+            f,
+            "{}",
+            match self {
+                Capability::Merge => "merge",
+                Capability::Recursive => "recursive",
+                Capability::Overwrite => "overwrite"
+            }
+        )
+    }
+}
+
+impl Eq for Capability {}
+
+

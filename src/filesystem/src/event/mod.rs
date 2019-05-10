@@ -23,6 +23,8 @@ mod mov;
 mod remove;
 mod serializable;
 
+pub mod capability;
+
 pub use self::{
     copy::CopyEvent,
     create::CreateEvent,
@@ -33,11 +35,14 @@ pub use self::{
 
 use std::{
     fmt::Debug,
-    path::PathBuf
+    path::{ PathBuf }
 };
 
 use crate::{
     errors::DomainError,
+    capability::{
+        RegistrarGuard
+    },
     port::{
         Entry,
         EntryAdapter,
@@ -56,7 +61,7 @@ pub trait Event<E, F> : SerializableEvent + Debug
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
-    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError>;
+    fn atomize(&self, fs: &F, guard: &mut capability::Guard) -> Result<AtomicTransaction, DomainError>;
 }
 
 pub type RawVirtualEvent = Event<EntryAdapter<VirtualStatus>, FileSystemAdapter<VirtualFileSystem>>;
@@ -85,10 +90,10 @@ impl RealEvent {
 
 
 pub trait Listener<E> {
-    fn emit(&mut self, event: E) -> Result<(), DomainError>;
+    fn emit(&mut self, event: &RawVirtualEvent, guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError>;
 }
 
 pub trait Delayer {
     type Event;
-    fn delay(&mut self, event: Self::Event);
+    fn delay(&mut self, event: Self::Event, guard: RegistrarGuard);
 }

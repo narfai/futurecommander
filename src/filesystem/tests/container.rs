@@ -35,7 +35,10 @@ mod container_integration {
         Listener,
         Delayer,
         VirtualState,
-        Entry
+        Entry,
+        capability::{
+            RegistrarGuard
+        }
     };
 
     #[test]
@@ -63,16 +66,16 @@ mod container_integration {
             false
         );
 
-        fs.emit(&cp_a_aprime).unwrap();
-        fs.delay(Box::new(cp_a_aprime));
+        let guard = fs.emit(&cp_a_aprime, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(cp_a_aprime), guard);
 
         let rm_a = RemoveEvent::new(
             chroot.join("A").as_path(),
             true
         );
 
-        fs.emit(&rm_a).unwrap();
-        fs.delay(Box::new(rm_a));
+        let guard = fs.emit(&rm_a, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(rm_a), guard);
 
         let cp_aprime_chroot = CopyEvent::new(
             chroot.join("APRIME").as_path(),
@@ -81,16 +84,16 @@ mod container_integration {
             false
         );
 
-        fs.emit(&cp_aprime_chroot).unwrap();
-        fs.delay(Box::new(cp_aprime_chroot));
+        let guard = fs.emit(&cp_aprime_chroot, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(cp_aprime_chroot), guard);
 
         let rm_aprime = RemoveEvent::new(
             chroot.join("APRIME").as_path(),
             true
         );
 
-        fs.emit(&rm_aprime).unwrap();
-        fs.delay(Box::new(rm_aprime));
+        let guard = fs.emit(&rm_aprime, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(rm_aprime), guard);
 
         let stated_a = fs.status(chroot.join("A").as_path())
             .unwrap()
@@ -146,16 +149,16 @@ mod container_integration {
             false
         );
 
-        fs.emit(&cp_ac_chroot).unwrap();
-        fs.delay(Box::new(cp_ac_chroot));
+        let guard = fs.emit(&cp_ac_chroot, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(cp_ac_chroot), guard);
 
         let rm_ac = RemoveEvent::new(
             chroot.join("A/C").as_path(),
             true
         );
 
-        fs.emit(&rm_ac).unwrap();
-        fs.delay(Box::new(rm_ac));
+        let guard = fs.emit(&rm_ac, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(rm_ac), guard);
 
         let cp_c_z = CopyEvent::new(
             chroot.join("C").as_path(),
@@ -164,8 +167,8 @@ mod container_integration {
             false
         );
 
-        fs.emit(&cp_c_z).unwrap();
-        fs.delay(Box::new(cp_c_z));
+        let guard = fs.emit(&cp_c_z, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(cp_c_z), guard);
 
 
         let rm_c = RemoveEvent::new(
@@ -173,8 +176,8 @@ mod container_integration {
             true
         );
 
-        fs.emit(&rm_c).unwrap();
-        fs.delay(Box::new(rm_c));
+        let guard = fs.emit(&rm_c, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(rm_c), guard);
 
         let cp_b_c = CopyEvent::new(
             chroot.join("B").as_path(),
@@ -183,16 +186,16 @@ mod container_integration {
             false
         );
 
-        fs.emit(&cp_b_c).unwrap();
-        fs.delay(Box::new(cp_b_c));
+        let guard = fs.emit(&cp_b_c, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(cp_b_c), guard);
 
         let rm_b = RemoveEvent::new(
             chroot.join("B").as_path(),
             true
         );
 
-        fs.emit(&rm_b).unwrap();
-        fs.delay(Box::new(rm_b));
+        let guard = fs.emit(&rm_b, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(rm_b), guard);
 
         let cp_z_b = CopyEvent::new(
             chroot.join("Z").as_path(),
@@ -201,8 +204,8 @@ mod container_integration {
             false
         );
 
-        fs.emit(&cp_z_b).unwrap();
-        fs.delay(Box::new(cp_z_b));
+        let guard = fs.emit(&cp_z_b, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(cp_z_b), guard);
 
 
         let rm_z = RemoveEvent::new(
@@ -210,8 +213,8 @@ mod container_integration {
             true
         );
 
-        fs.emit(&rm_z).unwrap();
-        fs.delay(Box::new(rm_z));
+        let guard = fs.emit(&rm_z, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(rm_z), guard);
 
 
         let stated_b = fs.status(chroot.join("B").as_path())
@@ -253,8 +256,8 @@ mod container_integration {
             false
         );
 
-        fs.emit(&cp_c_a).unwrap();
-        fs.delay(Box::new(cp_c_a));
+        let guard = fs.emit(&cp_c_a, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(cp_c_a), guard);
 
         let cp_acd_a = CopyEvent::new(
             chroot.join("A/C/D").as_path(),
@@ -263,15 +266,15 @@ mod container_integration {
             false
         );
 
-        fs.emit(&cp_acd_a).unwrap();
-        fs.delay(Box::new(cp_acd_a));
+        let guard = fs.emit(&cp_acd_a, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(cp_acd_a), guard);
 
         let rm_adg = RemoveEvent::new(
             chroot.join("A/D/G").as_path(),
             true
         );
-        fs.emit(&rm_adg).unwrap();
-        fs.delay(Box::new(rm_adg));
+        let guard = fs.emit(&rm_adg, RegistrarGuard::default()).unwrap();
+        fs.delay(Box::new(rm_adg), guard);
 
         let stated_ad = fs.status(chroot.join("A/D").as_path())
             .unwrap()

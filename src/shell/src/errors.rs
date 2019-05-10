@@ -77,9 +77,9 @@ impl fmt::Display for ShellError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ShellError::Exit => write!(f, "Exit program"),
-            ShellError::Operation(error) => write!(f, "Fs operation error: {}", error),
+            ShellError::Operation(error) => write!(f, "container operation error: {}", error),
             ShellError::Io(error) => write!(f, "Input / output error : {}", error),
-            ShellError::Query(error) => write!(f, "Fs query error: {}", error),
+            ShellError::Query(error) => write!(f, "container query error: {}", error),
             ShellError::Format(error) => write!(f, "Format error : {}", error),
             ShellError::Command(error) => write!(f, "Command error : {}", error),
         }

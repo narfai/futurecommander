@@ -75,7 +75,7 @@ impl Command<InitializedTreeCommand> {
         Ok(())
     }
 
-    fn tree<W: Write>(out: &mut W, fs: &Container, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), CommandError>{
+    fn tree<W: Write>(out: &mut W, container: &Container, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), CommandError>{
         let file_name = match identity.file_name() {
             Some(file_name) => file_name.to_string_lossy().to_string(),
             None => "/".to_string()
@@ -83,7 +83,7 @@ impl Command<InitializedTreeCommand> {
 
         Self::display_tree_line(out, &depth_list, parent_last, file_name)?;
 
-        match fs.read_dir(identity) {
+        match container.read_dir(identity) {
             Ok(collection) => {
                 let new_depth_list = match depth_list {
                     Some(depth_list) => {
@@ -98,7 +98,7 @@ impl Command<InitializedTreeCommand> {
                 for (index, child) in collection.into_iter().enumerate() {
                     if let Err(error) = Self::tree(
                         out,
-                        fs,
+                        container,
                         child.path(),
                         Some(new_depth_list.clone()),
                         index == (length - 1)
@@ -115,8 +115,8 @@ impl Command<InitializedTreeCommand> {
         Ok(())
     }
 
-    pub fn execute<W: Write>(self, out: &mut W, fs: &mut Container) -> Result<(), CommandError> {
-        Self::tree(out, fs, self.0.path.as_path(), None, true)?;
+    pub fn execute<W: Write>(self, out: &mut W, container: &mut Container) -> Result<(), CommandError> {
+        Self::tree(out, container, self.0.path.as_path(), None, true)?;
         Ok(())
     }
 }

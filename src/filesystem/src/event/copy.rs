@@ -26,6 +26,10 @@ use serde::{ Serialize, Deserialize };
 
 use crate::{
     errors::{DomainError},
+    capability::{
+        Capability,
+        Guard
+    },
     event::{
         Event
     },
@@ -66,7 +70,7 @@ impl <E, F> Event <E, F> for CopyEvent
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
-    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
+    fn atomize(&self, fs: &F, guard: &mut Guard) -> Result<AtomicTransaction, DomainError> {
         let source = fs.status(self.source())?;
 
         if !source.exists() {
@@ -83,7 +87,7 @@ impl <E, F> Event <E, F> for CopyEvent
         if destination.exists() {
             if source.is_dir() {
                 if destination.is_dir() {
-                    if self.merge() {
+                    if guard.authorize(Capability::Merge, self.merge(), self.destination())? {
                         for child in fs.read_dir(source.path())? {
                             transaction.merge(
                                 CopyEvent::new(
@@ -93,29 +97,31 @@ impl <E, F> Event <E, F> for CopyEvent
                                         .as_path(),
                                     self.merge(),
                                     self.overwrite()
-                                ).atomize(fs)?
+                                ).atomize(fs, guard)?
                             );
                         }
-                    } else {
-                        return Err(DomainError::MergeNotAllowed(source.to_path(), destination.to_path()))
                     }
                 } else {
                     return Err(DomainError::MergeFileWithDirectory(source.to_path(), destination.to_path()))
                 }
             } else if source.is_file() {
                 if destination.is_file() {
-                    if self.overwrite() {
+                    if guard.authorize(Capability::Overwrite, self.overwrite(), self.destination())? {
                         transaction.add(Atomic::RemoveFile(destination.to_path()));
-                        transaction.add(Atomic::CopyFileToFile(source.to_path(), destination.to_path()));
-                    } else {
-                        return Err(DomainError::OverwriteNotAllowed(destination.to_path()))
+                        transaction.add(Atomic::CopyFileToFile {
+                            source: source.to_path(),
+                            destination: destination.to_path()
+                        });
                     }
                 } else {
                     return Err(DomainError::OverwriteDirectoryWithFile(source.to_path(), destination.to_path()))
                 }
             }
         } else if source.is_dir() {
-            transaction.add(Atomic::BindDirectoryToDirectory(source.to_path(), destination.to_path()));
+            transaction.add(Atomic::BindDirectoryToDirectory {
+                source: source.to_path(),
+                destination: destination.to_path()
+            });
             for child in fs.read_maintained(source.path())? {
                 transaction.merge(
                     CopyEvent::new(
@@ -125,11 +131,14 @@ impl <E, F> Event <E, F> for CopyEvent
                             .as_path(),
                         self.merge(),
                         self.overwrite()
-                    ).atomize(fs)?
+                    ).atomize(fs, guard)?
                 );
             }
         } else if source.is_file() {
-            transaction.add(Atomic::CopyFileToFile(source.to_path(), destination.to_path()));
+            transaction.add(Atomic::CopyFileToFile{
+                source: source.to_path(),
+                destination: destination.to_path()
+            });
         }
         Ok(transaction)
     }
@@ -146,6 +155,9 @@ mod real_tests {
         infrastructure::RealFileSystem,
         port::{
             FileSystemAdapter
+        },
+        capability::{
+            ZealedGuard
         }
     };
 
@@ -159,7 +171,7 @@ mod real_tests {
             chroot.join("COPIED").as_path(),
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -178,7 +190,7 @@ mod real_tests {
             chroot.join("RDIR2").as_path(),
             true,
             true
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -203,7 +215,7 @@ mod real_tests {
             chroot.join("RDIR2/RFILEB").as_path(),
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -226,7 +238,7 @@ mod real_tests {
             chroot.join("RDIR2/RFILEB").as_path(),
             false,
             true
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -255,7 +267,10 @@ mod virtual_tests {
         infrastructure::{
             VirtualFileSystem
         },
-        Kind
+        Kind,
+        capability::{
+            ZealedGuard
+        }
     };
 
     #[test]
@@ -268,7 +283,7 @@ mod virtual_tests {
             samples_path.join("Z").as_path(),
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -291,7 +306,7 @@ mod virtual_tests {
             samples_path.join("A").as_path(),
             true,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -310,7 +325,7 @@ mod virtual_tests {
             samples_path.join("Z").as_path(),
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -329,7 +344,7 @@ mod virtual_tests {
             samples_path.join("A/C").as_path(),
             false,
             true
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();

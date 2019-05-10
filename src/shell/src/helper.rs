@@ -47,7 +47,7 @@ const fn available_commands() -> [&'static str; 18] {
         "exit",
         "cd",
         "debug_status",
-        "debug_virtual_state",
+        "debug_container",
         "debug_add_state",
         "debug_sub_state",
         "debug_transaction",
@@ -67,15 +67,15 @@ const fn available_commands() -> [&'static str; 18] {
 
 pub struct VirtualHelper<'a>  {
     highlighter: MatchingBracketHighlighter,
-    fs: &'a Container,
+    container: &'a Container,
     cwd: PathBuf
 }
 
 impl  <'a>VirtualHelper<'a>  {
-    pub fn new(fs: &'a Container, cwd: PathBuf) -> VirtualHelper  {
+    pub fn new(container: &'a Container, cwd: PathBuf) -> VirtualHelper  {
         VirtualHelper{
             highlighter: MatchingBracketHighlighter::new(),
-            fs,
+            container,
             cwd
         }
     }
@@ -153,7 +153,7 @@ impl  <'a>VirtualHelper<'a>  {
         let given_path = self.cwd.join(given);
         let parent = get_parent_or_root(given_path.as_path());
 
-        match self.fs.read_dir(given_path.as_path()) {
+        match self.container.read_dir(given_path.as_path()) {
             Ok(collection) => {
                 for entry in collection.iter() {
                     let path = entry.path().strip_prefix(&self.cwd).unwrap_or_else(|_| entry.path());
@@ -167,7 +167,7 @@ impl  <'a>VirtualHelper<'a>  {
                 }
             },
             Err(_) =>
-                if let Ok(collection) = self.fs.read_dir(parent.as_path()) {
+                if let Ok(collection) = self.container.read_dir(parent.as_path()) {
                     for entry in collection.iter() {
                         let path = entry.path().strip_prefix(&self.cwd).unwrap_or_else(|_| entry.path());
                         let path_str = path.as_os_str().to_str().unwrap();
@@ -228,7 +228,7 @@ impl <'a> Highlighter for VirtualHelper<'a>  {
     }
 
     fn highlight_prompt<'p>(&self, _prompt: &'p str) -> Cow<'p, str> {
-        if self.fs.is_empty() {
+        if self.container.is_empty() {
             Borrowed(WHITE_PROMPT)
         } else {
             Borrowed(RED_PROMPT)

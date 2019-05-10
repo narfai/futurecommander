@@ -26,6 +26,10 @@ use serde::{ Serialize, Deserialize };
 
 use crate::{
     errors::{ DomainError },
+    capability::{
+        Guard,
+        Capability
+    },
     event::{
         Event
     },
@@ -59,7 +63,7 @@ impl <E, F> Event <E, F> for RemoveEvent
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
-    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
+    fn atomize(&self, fs: &F, guard: &mut Guard) -> Result<AtomicTransaction, DomainError> {
         let entry = fs.status(self.path())?;
         let mut transaction = AtomicTransaction::default();
 
@@ -74,18 +78,16 @@ impl <E, F> Event <E, F> for RemoveEvent
 
             if children.is_empty() {
                 transaction.add(Atomic::RemoveEmptyDirectory(entry.path().to_path_buf()))
-            } else if self.recursive(){
+            } else if guard.authorize(Capability::Recursive, self.recursive(), self.path())? {
                 for child in children {
                     transaction.merge(
                         RemoveEvent::new(
                             child.path(),
                             true
-                        ).atomize(fs)?
+                        ).atomize(fs, guard)?
                     )
                 }
                 transaction.add(Atomic::RemoveEmptyDirectory(entry.path().to_path_buf()))
-            } else {
-                return Err(DomainError::DeleteRecursiveNotAllowed(entry.path().to_path_buf()))
             }
         }
 
@@ -106,6 +108,9 @@ mod real_tests {
         },
         infrastructure::{
             RealFileSystem
+        },
+        capability::{
+            ZealedGuard
         }
     };
 
@@ -117,7 +122,7 @@ mod real_tests {
         RemoveEvent::new(
             chroot.join("RDIR/RFILEA").as_path(),
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -133,7 +138,7 @@ mod real_tests {
         RemoveEvent::new(
             chroot.join("RDIR3").as_path(),
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -149,7 +154,7 @@ mod real_tests {
         RemoveEvent::new(
             chroot.join("RDIR").as_path(),
             true
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -172,6 +177,9 @@ mod virtual_tests {
         },
         infrastructure::{
             VirtualFileSystem
+        },
+        capability::{
+            ZealedGuard
         }
     };
 
@@ -183,7 +191,7 @@ mod virtual_tests {
         RemoveEvent::new(
             chroot.join("RDIR/RFILEA").as_path(),
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -199,7 +207,7 @@ mod virtual_tests {
         RemoveEvent::new(
             chroot.join("RDIR3").as_path(),
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -215,7 +223,7 @@ mod virtual_tests {
         RemoveEvent::new(
             chroot.join("RDIR").as_path(),
             true
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();

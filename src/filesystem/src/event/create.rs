@@ -27,6 +27,10 @@ use serde::{ Serialize, Deserialize };
 use crate::{
     Kind,
     errors::{ DomainError },
+    capability::{
+        Guard,
+        Capability
+    },
     event::{
         Event
     },
@@ -67,7 +71,7 @@ impl <E, F> Event <E, F> for CreateEvent
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
-    fn atomize(&self, fs: &F) -> Result<AtomicTransaction, DomainError> {
+    fn atomize(&self, fs: &F, guard: &mut Guard) -> Result<AtomicTransaction, DomainError> {
         let entry = fs.status(self.path())?;
         let mut transaction = AtomicTransaction::default();
 
@@ -102,14 +106,12 @@ impl <E, F> Event <E, F> for CreateEvent
             },
             Kind::File => {
                 if entry.exists() {
-                    if self.overwrite() {
+                    if guard.authorize(Capability::Overwrite, self.overwrite(), self.path())? {
                         if self.recursive() {
                             transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
                         }
                         transaction.add(Atomic::RemoveFile(entry.to_path()));
                         transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
-                    } else {
-                        return Err(DomainError::OverwriteNotAllowed(entry.to_path()))
                     }
                 } else {
                     transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
@@ -123,8 +125,6 @@ impl <E, F> Event <E, F> for CreateEvent
     }
 }
 
-//Infrastructure -> Domain integration tests
-
 #[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]
 mod real_tests {
@@ -137,6 +137,9 @@ mod real_tests {
         },
         infrastructure::{
             RealFileSystem
+        },
+        capability::{
+            ZealedGuard
         }
     };
 
@@ -150,7 +153,7 @@ mod real_tests {
             Kind::Directory,
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -170,7 +173,7 @@ mod real_tests {
             Kind::Directory,
             true,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -189,7 +192,7 @@ mod real_tests {
             Kind::File,
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -210,7 +213,7 @@ mod real_tests {
             Kind::File,
             false,
             true
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -233,6 +236,9 @@ mod virtual_tests {
         },
         infrastructure::{
             VirtualFileSystem
+        },
+        capability::{
+            ZealedGuard
         }
     };
 
@@ -247,7 +253,7 @@ mod virtual_tests {
             Kind::Directory,
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -267,7 +273,7 @@ mod virtual_tests {
             Kind::Directory,
             true,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap();
 
         opcodes.apply(&mut fs)
@@ -287,7 +293,7 @@ mod virtual_tests {
             Kind::File,
             false,
             false
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap()
             .apply(&mut fs)
             .unwrap();
@@ -306,7 +312,7 @@ mod virtual_tests {
             Kind::File,
             false,
             true
-        ).atomize(&fs)
+        ).atomize(&fs, &mut ZealedGuard)
             .unwrap();
 
         opcodes.apply(&mut fs)

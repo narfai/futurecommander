@@ -19,6 +19,7 @@
 
 
 use std::{
+    io,
     error,
     fmt,
     path::PathBuf
@@ -35,25 +36,33 @@ use crate::{
 
 #[derive(Debug)]
 pub enum DomainError {
+    IoError(io::Error),
     JsonError(serde_json::Error),
     Infrastructure(InfrastructureError),
     Query(QueryError),
     CopyIntoItSelf(PathBuf, PathBuf),
-    MergeNotAllowed(PathBuf, PathBuf),
+    MergeNotAllowed(PathBuf),
     OverwriteNotAllowed(PathBuf),
     DirectoryOverwriteNotAllowed(PathBuf),
     MergeFileWithDirectory(PathBuf, PathBuf),
     OverwriteDirectoryWithFile(PathBuf, PathBuf),
     CreateUnknown(PathBuf),
     DoesNotExists(PathBuf),
-    DeleteRecursiveNotAllowed(PathBuf),
+    RecursiveNotAllowed(PathBuf),
     SourceDoesNotExists(PathBuf),
+    UserCancelled,
     Custom(String)
 }
 
 impl From<serde_json::Error> for DomainError {
     fn from(error: serde_json::Error) -> Self {
         DomainError::JsonError(error)
+    }
+}
+
+impl From<io::Error> for DomainError {
+    fn from(error: io::Error) -> Self {
+        DomainError::IoError(error)
     }
 }
 
@@ -73,19 +82,21 @@ impl From<InfrastructureError> for DomainError {
 impl fmt::Display for DomainError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            DomainError::IoError(error) => write!(f, "I/O error {}", error),
             DomainError::JsonError(error) => write!(f, "Json error {}", error),
             DomainError::Infrastructure(error) => write!(f, "Infrastructure error {}", error),
             DomainError::Query(error) => write!(f, "Query error {}", error),
             DomainError::CopyIntoItSelf(source, dst) => write!(f, "Cannot copy {} into itself {}", source.to_string_lossy(), dst.to_string_lossy()),
-            DomainError::MergeNotAllowed(source, dst) => write!(f, "Merge of {} into {} is not allowed", source.to_string_lossy(), dst.to_string_lossy()),
+            DomainError::MergeNotAllowed(dst) => write!(f, "Merge into {} is not allowed", dst.to_string_lossy()),
             DomainError::OverwriteNotAllowed(dst) => write!(f, "Overwrite of {} is not allowed", dst.to_string_lossy()),
             DomainError::DirectoryOverwriteNotAllowed(path) => write!(f, "Directory overwrite of {} is not allowed", path.to_string_lossy()),
             DomainError::MergeFileWithDirectory(source, destination) => write!(f, "Cannot merge file {} with directory {} is not allowed", source.to_string_lossy(), destination.to_string_lossy()),
             DomainError::OverwriteDirectoryWithFile(source, dst) => write!(f, "Cannot overwrite directory {} with file {}", source.to_string_lossy(), dst.to_string_lossy()),
             DomainError::CreateUnknown(path) => write!(f, "Cannot create unknown kind at path {}", path.to_string_lossy()),
             DomainError::DoesNotExists(path) => write!(f, "Path {} does not exists", path.to_string_lossy()),
-            DomainError::DeleteRecursiveNotAllowed(path) => write!(f, "Delete recursively {} is not allowed", path.to_string_lossy()),
+            DomainError::RecursiveNotAllowed(path) => write!(f, "Delete recursively {} is not allowed", path.to_string_lossy()),
             DomainError::SourceDoesNotExists(source) => write!(f, "Source {} does not exists", source.to_string_lossy()),
+            DomainError::UserCancelled => write!(f, "User cancelled operation"),
             DomainError::Custom(s) => write!(f, "Custom error {}", s),
         }
     }
@@ -95,6 +106,7 @@ impl fmt::Display for DomainError {
 impl error::Error for DomainError {
     fn cause(&self) -> Option<&dyn error::Error> {
         match self {
+            DomainError::IoError(err) => Some(err),
             DomainError::JsonError(err) => Some(err),
             DomainError::Query(err) => Some(err),
             DomainError::Infrastructure(err) => Some(err),
@@ -113,9 +125,7 @@ mod errors_tests {
         Kind,
         sample::Samples,
         event::*,
-        event::{
-            Event
-        },
+        capability::*,
         port::{
             FileSystemAdapter,
         },
@@ -162,7 +172,7 @@ mod errors_tests {
             destination.as_path(),
             true,
             false
-                ).atomize(&vfs).err().unwrap(),
+                ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -172,7 +182,7 @@ mod errors_tests {
             destination.as_path(),
             true,
             false
-                ).atomize(&rfs).err().unwrap(),
+                ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -182,7 +192,7 @@ mod errors_tests {
             destination.as_path(),
             true,
             false
-                ).atomize(&vfs).err().unwrap(),
+                ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -192,7 +202,7 @@ mod errors_tests {
             destination.as_path(),
             true,
             false
-                ).atomize(&rfs).err().unwrap(),
+                ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -206,14 +216,14 @@ mod errors_tests {
         let source = sample_path.join("B");
         let destination = sample_path.join("A");
 
-        let expected_error = DomainError::MergeNotAllowed(source.clone(), destination.clone());
+        let expected_error = DomainError::MergeNotAllowed(destination.clone());
         assert_two_errors_equals(
             &MoveEvent::new(
                 source.as_path(),
                 destination.as_path(),
                 false,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -223,7 +233,7 @@ mod errors_tests {
                 destination.as_path(),
                 false,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -233,7 +243,7 @@ mod errors_tests {
                 destination.as_path(),
                 false,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -243,7 +253,7 @@ mod errors_tests {
                 destination.as_path(),
                 false,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -264,7 +274,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -274,7 +284,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -284,7 +294,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -294,7 +304,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -304,7 +314,7 @@ mod errors_tests {
                 Kind::File,
                 false,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -314,7 +324,7 @@ mod errors_tests {
                 Kind::File,
                 false,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -335,7 +345,7 @@ mod errors_tests {
                 Kind::Directory,
                 false,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -345,7 +355,7 @@ mod errors_tests {
                 Kind::Directory,
                 false,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -366,7 +376,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -376,7 +386,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -386,7 +396,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -396,7 +406,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -418,7 +428,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 true
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -428,7 +438,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 true
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -438,7 +448,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 true
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -448,7 +458,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 true
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -469,7 +479,7 @@ mod errors_tests {
                 Kind::Unknown,
                 false,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -479,7 +489,7 @@ mod errors_tests {
                 Kind::Unknown,
                 false,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -498,7 +508,7 @@ mod errors_tests {
             &RemoveEvent::new(
                 not_exists.as_path(),
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -506,7 +516,7 @@ mod errors_tests {
             &RemoveEvent::new(
                 not_exists.as_path(),
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -519,13 +529,13 @@ mod errors_tests {
 
         let not_empty_dir = sample_path.join("A");
 
-        let expected_error = DomainError::DeleteRecursiveNotAllowed(not_empty_dir.clone());
+        let expected_error = DomainError::RecursiveNotAllowed(not_empty_dir.clone());
 
         assert_two_errors_equals(
             &RemoveEvent::new(
                 not_empty_dir.as_path(),
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -533,7 +543,7 @@ mod errors_tests {
             &RemoveEvent::new(
                 not_empty_dir.as_path(),
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -555,7 +565,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -565,7 +575,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -575,7 +585,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&vfs).err().unwrap(),
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
@@ -585,7 +595,7 @@ mod errors_tests {
                 destination.as_path(),
                 true,
                 false
-            ).atomize(&rfs).err().unwrap(),
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
