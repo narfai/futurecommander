@@ -37,19 +37,19 @@ pub struct Capabilities {
 }
 
 impl Capabilities {
-    pub fn merge(&self) -> bool {
+    pub fn merge(self) -> bool {
         self.merge
     }
 
-    pub fn overwrite(&self) -> bool {
+    pub fn overwrite(self) -> bool {
         self.overwrite
     }
 
-    pub fn recursive(&self) -> bool {
+    pub fn recursive(self) -> bool {
         self.recursive
     }
 
-    pub fn authorize(&self, capability: Capability) -> bool {
+    pub fn authorize(self, capability: Capability) -> bool {
         match capability {
             Capability::Merge => self.merge(),
             Capability::Recursive => self.recursive(),

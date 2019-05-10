@@ -105,9 +105,7 @@ impl Shell {
         let yaml = load_yaml!("clap.yml");
         let matches = &App::from_yaml(yaml).get_matches_from_safe(args.skip(1)).unwrap();
 
-        let mut current_state_file = None;
-
-        if matches.value_of("state").is_some() {
+        let current_state_file = if matches.value_of("state").is_some() {
             let path = Command::<ImportCommand>::extract_path_from_args(&self.cwd, matches, "state").unwrap();
 
             if path.exists() {
@@ -115,8 +113,10 @@ impl Shell {
                     path: path.clone()
                 }).execute(&mut self.container)?;
             }
-            current_state_file = Some(path);
-        }
+            Some(path)
+        } else {
+            None
+        };
 
         match self.send_matches(&matches, out) {
             Ok(_) => { /*SUCCESS*/ },

@@ -179,10 +179,7 @@ mod tests {
     use crate::{
         event::CopyEvent,
         sample::Samples,
-        Entry,
-        capability::{
-            ZealedGuard
-        }
+        Entry
     };
 
     #[test]
