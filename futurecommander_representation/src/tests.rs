@@ -31,10 +31,8 @@ mod representation_integration {
 
     use crate::{
         Kind,
-        infrastructure::virt::representation::{
-            VirtualPath,
-            VirtualDelta
-        }
+        VirtualPath,
+        VirtualDelta
     };
 
 

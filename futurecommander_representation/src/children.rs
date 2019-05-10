@@ -22,7 +22,7 @@ use std::collections::{
     hash_set::Iter as HashSetIter
 };
 
-use crate::infrastructure::virt::representation::{
+use crate::{
     VirtualPath
 };
 

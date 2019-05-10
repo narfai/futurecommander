@@ -18,6 +18,12 @@
  */
 use std::{ path::{ Path } };
 
+use futurecommander_representation::{
+    VirtualState,
+    VirtualDelta,
+    VirtualPath
+};
+
 use crate::{
     Kind,
     port::{
@@ -33,12 +39,7 @@ use crate::{
         },
         virt::{
             VirtualFileSystem,
-            entry_status::{ VirtualStatus },
-            representation::{
-                VirtualState,
-                VirtualDelta,
-                VirtualPath
-            }
+            entry_status::{ VirtualStatus }
         }
     }
 };

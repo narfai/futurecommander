@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "futurecommander",
+    "futurecommander_shell",
     "futurecommander_filesystem",
-    "futurecommander_shell"
+    "futurecommander_representation"
 ]

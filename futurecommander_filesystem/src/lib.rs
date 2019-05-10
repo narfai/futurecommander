@@ -21,12 +21,12 @@ mod event;
 
 mod port;
 mod infrastructure;
-mod kind;
 mod errors;
 mod container;
 
+pub use futurecommander_representation::Kind;
+
 pub use self::{
-    kind::Kind,
     errors::{ DomainError, QueryError },
     event::{
         Listener,

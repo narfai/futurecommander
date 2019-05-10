@@ -21,6 +21,10 @@ use std::{
     fmt::Debug
 };
 
+use serde::{Serialize, Deserialize};
+
+use futurecommander_representation::Kind;
+
 use crate::{
     event::{
         VirtualEvent,
@@ -54,7 +58,6 @@ impl SerializableEvent for CreateEvent {
     fn real(&self) -> RealEvent { RealEvent(Box::new(self.clone())) }
 }
 
-
 #[typetag::serde]
 impl SerializableEvent for MoveEvent {
     fn serializable(&self) -> Box<SerializableEvent> {
@@ -71,4 +74,31 @@ impl SerializableEvent for RemoveEvent {
     }
     fn virt(&self) -> VirtualEvent { VirtualEvent(Box::new(self.clone())) }
     fn real(&self) -> RealEvent { RealEvent(Box::new(self.clone())) }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Copy)]
+pub enum SerializableKind {
+    File,
+    Directory,
+    Unknown
+}
+
+impl From<Kind> for SerializableKind {
+    fn from(kind: Kind) -> Self {
+        match kind {
+            Kind::File => SerializableKind::File,
+            Kind::Directory => SerializableKind::Directory,
+            Kind::Unknown => SerializableKind::Unknown,
+        }
+    }
+}
+
+impl From<SerializableKind> for Kind {
+    fn from(kind: SerializableKind) -> Self {
+        match kind {
+            SerializableKind::File => Kind::File,
+            SerializableKind::Directory => Kind::Directory,
+            SerializableKind::Unknown => Kind::Unknown,
+        }
+    }
 }

@@ -51,10 +51,7 @@ mod errors_tests {
         path::{ Path, PathBuf }
     };
 
-    use crate::{
-        Kind,
-        infrastructure::virt::representation::*
-    };
+    use crate::*;
 
     fn assert_two_errors_equals(left: &impl error::Error, right: &impl error::Error) {
         assert_eq!(format!("{}", left), format!("{}", right))

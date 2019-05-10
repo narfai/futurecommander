@@ -28,6 +28,6 @@ pub use self::virt::{
     entry_status::VirtualStatus
 };
 
-pub use self::virt::representation::VirtualState;
+pub use futurecommander_representation::VirtualState;
 
 

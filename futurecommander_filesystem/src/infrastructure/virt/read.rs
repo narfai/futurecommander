@@ -19,6 +19,11 @@
 
 use std::{ path::{ Path } };
 
+use futurecommander_representation::{
+    VirtualPath,
+    VirtualState
+};
+
 use crate::{
     Kind,
     errors::{
@@ -32,11 +37,7 @@ use crate::{
     },
     infrastructure::virt::{
         VirtualFileSystem,
-        entry_status::{ VirtualStatus },
-        representation::{
-            VirtualState,
-            VirtualPath
-        }
+        entry_status::{ VirtualStatus }
     }
 };
 

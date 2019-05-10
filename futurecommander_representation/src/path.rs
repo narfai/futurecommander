@@ -32,9 +32,7 @@ use std::{
 
 use crate::{
     Kind,
-    infrastructure::virt::representation:: {
-        errors::RepresentationError
-    }
+    errors::RepresentationError
 };
 
 

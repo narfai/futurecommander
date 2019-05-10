@@ -1,0 +1,6 @@
+[package]
+name = "futurecommander_representation"
+version = "0.4.0"
+authors = ["François Cadeillan <francois@azsystem.fr>"]
+edition = "2018"
+license = "GPL-3.0-or-later"

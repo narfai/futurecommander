@@ -25,6 +25,10 @@ mod container_integration {
         path:: { Path }
     };
 
+    use futurecommander_representation::{
+        VirtualState
+    };
+
     use futurecommander_filesystem::{
         Container,
         sample::Samples,
@@ -34,7 +38,6 @@ mod container_integration {
         RemoveEvent,
         Listener,
         Delayer,
-        VirtualState,
         Entry,
         capability::{
             RegistrarGuard

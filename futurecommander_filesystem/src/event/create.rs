@@ -32,7 +32,8 @@ use crate::{
         Capability
     },
     event::{
-        Event
+        Event,
+        SerializableKind
     },
     port::{
         Entry,
@@ -45,7 +46,7 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreateEvent {
     path: PathBuf,
-    kind: Kind,
+    kind: SerializableKind,
     recursive: bool,
     overwrite: bool
 }
@@ -54,14 +55,14 @@ impl CreateEvent {
     pub fn new(path: &Path, kind: Kind, recursive: bool, overwrite: bool) -> CreateEvent {
         CreateEvent {
             path: path.to_path_buf(),
-            kind,
+            kind: kind.into(),
             recursive,
             overwrite
         }
     }
 
     pub fn path(&self) -> &Path { self.path.as_path() }
-    pub fn kind(&self) -> Kind { self.kind }
+    pub fn kind(&self) -> Kind { self.kind.into() }
     pub fn recursive(&self) -> bool { self.recursive }
     pub fn overwrite(&self) -> bool { self.overwrite }
 }

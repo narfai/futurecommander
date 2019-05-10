@@ -30,7 +30,7 @@ pub use self::{
     create::CreateEvent,
     mov::MoveEvent,
     remove::RemoveEvent,
-    serializable::SerializableEvent
+    serializable::{ SerializableEvent, SerializableKind }
 };
 
 use std::{

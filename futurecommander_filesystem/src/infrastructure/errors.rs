@@ -30,7 +30,7 @@ use crate::{
 };
 
 //Representation error convenient re-export
-pub use crate::infrastructure::virt::representation::errors::RepresentationError;
+pub use futurecommander_representation::errors::RepresentationError;
 
 #[derive(Debug)]
 pub enum InfrastructureError {

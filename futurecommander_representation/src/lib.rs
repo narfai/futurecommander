@@ -26,9 +26,13 @@ mod path;
 mod delta;
 mod state;
 mod children;
+mod kind;
 
-pub use self::path::VirtualPath;
-pub use self::delta::VirtualDelta;
-pub use self::state::VirtualState;
-pub use self::children::{ VirtualChildren, VirtualChildrenIterator };
+pub use self::{
+    kind::Kind,
+    path::VirtualPath,
+    delta::VirtualDelta,
+    state::VirtualState,
+    children::{ VirtualChildren, VirtualChildrenIterator }
+};
 

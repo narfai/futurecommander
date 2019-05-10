@@ -20,14 +20,13 @@
 use std::path::{ Path, PathBuf };
 use std::ffi::OsStr;
 
-use crate::Kind;
+use futurecommander_representation::{
+    VirtualPath,
+    VirtualState
+};
 
 use crate::{
-    infrastructure::virt::{
-        representation  ::{
-            VirtualPath, VirtualState
-        },
-    },
+    Kind,
     port::{
         Entry,
         EntryAdapter

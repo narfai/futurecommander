@@ -177,10 +177,15 @@ dependencies = [
 name = "futurecommander_filesystem"
 version = "0.4.0"
 dependencies = [
+ "futurecommander_representation 0.4.0",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
  "typetag 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "futurecommander_representation"
+version = "0.4.0"
 
 [[package]]
 name = "futurecommander_shell"

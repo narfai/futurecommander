@@ -27,11 +27,9 @@ use std::{
 
 use crate::{
     Kind,
-    infrastructure::virt::representation::{
-        errors::RepresentationError,
-        VirtualChildren,
-        VirtualPath
-    }
+    errors::RepresentationError,
+    VirtualChildren,
+    VirtualPath
 };
 
 #[derive(Debug, Clone, Default)]

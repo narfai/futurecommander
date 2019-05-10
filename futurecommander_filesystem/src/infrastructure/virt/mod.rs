@@ -20,13 +20,10 @@
 pub mod entry_status;
 pub mod read;
 pub mod write;
-pub mod representation;
 
-use crate::infrastructure::virt::{
-    representation::{
-        VirtualDelta,
-        errors::RepresentationError
-    }
+use futurecommander_representation::{
+    VirtualDelta,
+    errors::RepresentationError
 };
 
 #[derive(Debug, Default)]
