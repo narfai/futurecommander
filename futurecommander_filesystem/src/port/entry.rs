@@ -18,9 +18,9 @@
  */
 
 use std::{
+    cmp ::{ Ordering },
     ffi ::{ OsStr },
     path::{ Path, PathBuf },
-    cmp ::{ Ordering }
 };
 
 #[derive(Debug)]

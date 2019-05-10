@@ -95,7 +95,7 @@ impl Command<InitializedTreeCommand> {
                 };
 
                 let length = collection.len();
-                for (index, child) in collection.into_iter().enumerate() {
+                for (index, child) in collection.sort().into_iter().enumerate() {
                     if let Err(error) = Self::tree(
                         out,
                         container,

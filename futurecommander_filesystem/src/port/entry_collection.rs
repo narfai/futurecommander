@@ -20,7 +20,8 @@
 use std::{
     slice::Iter,
     vec::IntoIter as VecIntoIter,
-    iter::FromIterator
+    iter::FromIterator,
+    cmp::Ord
 };
 
 use crate::{
@@ -60,6 +61,11 @@ impl <T: Entry> EntryCollection<T> {
     }
 
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
+
+    pub fn sort(mut self) -> Self {
+        self.0.sort_by(|left, right| left.path().cmp(right.path()));
+        self
+    }
 }
 
 impl <T: Entry>IntoIterator for EntryCollection<T> {
