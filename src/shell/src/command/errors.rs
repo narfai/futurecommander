@@ -44,7 +44,8 @@ pub enum CommandError {
     DoesNotExists(PathBuf),
     CwdIsInside(PathBuf),
     CustomError(String),
-    DirectoryIntoAFile(PathBuf, PathBuf)
+    DirectoryIntoAFile(PathBuf, PathBuf),
+    InvalidGuard(String)
 }
 
 impl From<DomainError> for CommandError {
@@ -75,9 +76,9 @@ impl fmt::Display for CommandError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CommandError::Exit => write!(f, "Exit program"),
-            CommandError::Operation(error) => write!(f, "Fs operation error: {}", error),
+            CommandError::Operation(error) => write!(f, "container operation error: {}", error),
             CommandError::Io(error) => write!(f, "Input / output error : {}", error),
-            CommandError::Query(error) => write!(f, "Fs query error: {}", error),
+            CommandError::Query(error) => write!(f, "container query error: {}", error),
             CommandError::Format(error) => write!(f, "Format error : {}", error),
             CommandError::ArgumentMissing(command, argument, usage) => write!(f, "{} missing {} argument \n {}", command, argument, usage),
             CommandError::InvalidCommand => write!(f, "Invalid command"),
@@ -87,6 +88,7 @@ impl fmt::Display for CommandError {
             CommandError::CwdIsInside(path) => write!(f, "current working directory is inside {}", path.to_string_lossy()),
             CommandError::DirectoryIntoAFile(src, dst) => write!(f, "Directory {} into a file {}", src.to_string_lossy(), dst.to_string_lossy()),
             CommandError::CustomError(custom_message) => write!(f, "Custom error message {}", custom_message),
+            CommandError::InvalidGuard(guard) => write!(f, "Invalid guard {}", guard),
         }
     }
 }

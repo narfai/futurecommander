@@ -24,12 +24,16 @@ use std::{
 
 use serde::{ Serialize, Deserialize };
 
-use crate::{
+use file_system::{
     DomainError,
     capability::{
         Capabilities,
         Guard,
-        Capability
+        Capability,
+        RegistrarGuard,
+        ZealedGuard,
+        BlindGuard,
+        QuietGuard
     }
 };
 
@@ -47,11 +51,9 @@ impl Guard for InteractiveGuard {
         }
 
         if ! default && ! self.allow_all.authorize(capability) {
-            //TODO put that into a callback and interface with an enum
             let mut input = String::new();
             println!("Allow {} for target {} ?([skip]/skip_all/allow/allow_all/cancel) : ", capability, target.to_string_lossy());
             stdin().read_line(&mut input)?;
-            //
 
             match input.trim() {
                 "skip" => Ok(false),
@@ -72,5 +74,45 @@ impl Guard for InteractiveGuard {
         } else {
             Ok(true)
         }
+    }
+}
+
+pub enum AvailableGuard {
+    Zealed,
+    Blind,
+    Quiet,
+    Interactive
+}
+
+impl AvailableGuard {
+    pub fn registrar(&self) -> RegistrarGuard {
+        match self {
+            AvailableGuard::Zealed => RegistrarGuard::from(Box::new(ZealedGuard)),
+            AvailableGuard::Blind => RegistrarGuard::from(Box::new(BlindGuard)),
+            AvailableGuard::Quiet => RegistrarGuard::from(Box::new(QuietGuard)),
+            AvailableGuard::Interactive => RegistrarGuard::from(Box::new(InteractiveGuard::default())),
+        }
+    }
+
+    pub fn available(s: &str) -> bool {
+        vec!["interactive", "zealed", "quiet", "blind"].contains(&s)
+    }
+}
+
+impl From<&str> for AvailableGuard {
+    fn from(s: &str) -> AvailableGuard {
+        match s.trim() {
+            "interactive" => AvailableGuard::Interactive,
+            "zealed" => AvailableGuard::Zealed,
+            "quiet" => AvailableGuard::Quiet,
+            "blind" => AvailableGuard::Blind,
+            _ => Self::default()
+        }
+    }
+}
+
+impl Default for AvailableGuard {
+    fn default() -> AvailableGuard {
+        AvailableGuard::Interactive
     }
 }

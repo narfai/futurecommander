@@ -24,48 +24,36 @@ subcommands:
       args:
         - path:
             help: Directory to display
+            value_name: PATH
             takes_value: true
   - tree:
       about: Recursively List content of a directory like it would be AFTER apply
       args:
       - path:
             help: Directory to display
+            value_name: PATH
             takes_value: true
   - cd:
       about: Change working directory
       args:
         - path:
             help: Target directory
+            value_name: PATH
             takes_value: true
   - pwd:
       about: Show current directory
   - exit:
       about: Exit program
   - cp:
-      about: Virtually copy a file to a directory
+      about: Virtually copy file or directory
       args:
       - source:
             help: Source file or directory to copy
+            value_name: PATH
             takes_value: true
       - destination:
             help: Destination directory
-            takes_value: true
-      - merge:
-            short: m
-            help: Allow directory merge
-            takes_value: false
-      - overwrite:
-            short: o
-            help: Allow file overwrite
-            takes_value: false
-  - mv:
-      about: Virtually move a file to a directory
-      args:
-      - source:
-            help: Source file or directory to move
-            takes_value: true
-      - destination:
-            help: Destination directory
+            value_name: PATH
             takes_value: true
       - merge:
             short: m
@@ -77,22 +65,63 @@ subcommands:
             long: overwrite
             help: Allow file overwrite
             takes_value: false
+      - guard:
+            short: g
+            long: guard
+            help: Allow to specify a behavior over sensible operations
+            value_name: "[interactive] | zealed | quiet | blind"
+            takes_value: true
+  - mv:
+      about: Virtually move a file to a directory
+      args:
+      - source:
+            help: Source file or directory to move
+            value_name: PATH
+            takes_value: true
+      - destination:
+            help: Destination directory
+            value_name: PATH
+            takes_value: true
+      - merge:
+            short: m
+            long: merge
+            help: Allow directory merge
+            takes_value: false
+      - overwrite:
+            short: o
+            long: overwrite
+            help: Allow file overwrite
+            takes_value: false
+      - guard:
+            short: g
+            long: guard
+            help: Allow to specify a behavior over sensible operations
+            value_name: "[interactive] | zealed | quiet | blind"
+            takes_value: true
   - rm:
       about: Virtually delete a file or directory
       args:
       - path:
             help: Source file or directory to delete
+            value_name: PATH
             takes_value: true
       - recursive:
             short: r
             long: recursive
             help: Allow deletion of not-empty directories
             takes_value: false
+      - guard:
+            short: g
+            long: guard
+            help: Allow to specify a behavior over sensible operations
+            value_name: "[interactive] | zealed | quiet | blind"
+            takes_value: true
   - mkdir:
       about: Virtually create an empty directory
       args:
       - path:
             help: Path of the new directory
+            value_name: PATH
             takes_value: true
       - recursive:
             short: r
@@ -104,11 +133,18 @@ subcommands:
             long: overwrite
             help: Allow file overwrite
             takes_value: false
+      - guard:
+            short: g
+            long: guard
+            help: Allow to specify a behavior over sensible operations
+            value_name: "[interactive] | zealed | quiet | blind"
+            takes_value: true
   - touch:
       about: Virtually create an empty file
       args:
       - path:
             help: Path of the new file
+            value_name: PATH
             takes_value: true
       - recursive:
             short: r
@@ -120,21 +156,30 @@ subcommands:
             long: overwrite
             help: Allow file overwrite
             takes_value: false
+      - guard:
+            short: g
+            long: guard
+            help: Allow to specify a behavior over sensible operations
+            value_name: "[interactive] | zealed | quiet | blind"
+            takes_value: true
   - save:
       about: Store virtual state into json file
       args:
       - path:
             help: path of the file ( default to ".fc.json" in current working directory )
+            value_name: PATH
             takes_value: true
       - overwrite:
             help: Erase the file if exists
             short: o
+            long: overwrite
             takes_value: false
   - import:
       about: Import virtual state from json file
       args:
       - path:
             help: path of the file ( default to ".fc.json" in current working directory )
+            value_name: PATH
             takes_value: true
   - reset:
       about: Reset virtual state

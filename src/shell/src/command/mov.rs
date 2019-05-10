@@ -27,15 +27,13 @@ use file_system::{
     ReadableFileSystem,
     Entry,
     Listener,
-    Delayer,
-    capability::{
-        RegistrarGuard
-    }
+    Delayer
 };
 
 use crate::command::{
     Command,
-    errors::CommandError
+    errors::CommandError,
+    AvailableGuard
 };
 
 pub struct MoveCommand {}
@@ -50,7 +48,8 @@ impl Command<MoveCommand> {
                 source,
                 destination,
                 merge: args.is_present("merge"),
-                overwrite: args.is_present("overwrite")
+                overwrite: args.is_present("overwrite"),
+                guard: Self::extract_available_guard(args, "guard")?
             })
         )
     }
@@ -60,13 +59,14 @@ pub struct InitializedMoveCommand {
     pub source: PathBuf,
     pub destination: PathBuf,
     pub merge: bool,
-    pub overwrite: bool
+    pub overwrite: bool,
+    pub guard: AvailableGuard
 }
 
 impl Command<InitializedMoveCommand> {
-    pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
-        let source = fs.status(self.0.source.as_path())?;
-        let destination = fs.status(self.0.destination.as_path())?;
+    pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
+        let source = container.status(self.0.source.as_path())?;
+        let destination = container.status(self.0.destination.as_path())?;
 
         if ! source.exists() {
             return Err(CommandError::DoesNotExists(self.0.source.to_path_buf()));
@@ -96,8 +96,8 @@ impl Command<InitializedMoveCommand> {
             )
         };
 
-        let guard = fs.emit(&event, RegistrarGuard::interactive())?;
-        fs.delay(Box::new(event), guard);
+        let guard = container.emit(&event, self.0.guard.registrar())?;
+        container.delay(Box::new(event), guard);
         Ok(())
     }
 }
@@ -115,49 +115,52 @@ mod tests {
     #[test]
     fn mv(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = Container::new();
+        let mut container = Container::new();
 
         let move_f_to_a = Command(InitializedMoveCommand {
             source: sample_path.join(&Path::new("F")),
             destination: sample_path.join("A"),
             merge: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Zealed
         });
 
-        move_f_to_a.execute(&mut fs).unwrap();
+        move_f_to_a.execute(&mut container).unwrap();
 
         let move_af_to_b = Command(InitializedMoveCommand {
             source: sample_path.join("A/F"),
             destination: sample_path.join("B"),
             merge: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Zealed
         });
 
-        move_af_to_b.execute(&mut fs).unwrap();
+        move_af_to_b.execute(&mut container).unwrap();
 
         let move_bf_to_bde = Command(InitializedMoveCommand {
             source: sample_path.join("B/F"),
             destination: sample_path.join("B/D/E"),
             merge: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Zealed
         });
 
-        move_bf_to_bde.execute(&mut fs).unwrap();
+        move_bf_to_bde.execute(&mut container).unwrap();
 
         assert!(
-            fs.read_dir(sample_path.join(&Path::new("B/D/E")).as_path())
+            container.read_dir(sample_path.join(&Path::new("B/D/E")).as_path())
                 .unwrap()
                 .contains(&EntryAdapter(sample_path.join("B/D/E/F").as_path()))
         );
 
         assert!(
-            !fs.read_dir(sample_path.join(&Path::new("A")).as_path())
+            !container.read_dir(sample_path.join(&Path::new("A")).as_path())
                 .unwrap()
                 .contains(&EntryAdapter(sample_path.join("A/F").as_path()))
         );
 
         assert!(
-            !fs.read_dir(sample_path.join(&Path::new("B")).as_path())
+            !container.read_dir(sample_path.join(&Path::new("B")).as_path())
                 .unwrap()
                 .contains(&EntryAdapter(sample_path.join("B/F").as_path()))
         );

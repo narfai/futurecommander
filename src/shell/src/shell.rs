@@ -44,14 +44,14 @@ use crate::{
 
 pub struct Shell {
     cwd: PathBuf,
-    fs: Container,
+    container: Container,
 }
 
 impl Default for Shell {
     fn default() -> Self {
         Shell {
             cwd: current_dir().unwrap(),
-            fs: Container::new(),
+            container: Container::new(),
         }
     }
 }
@@ -66,35 +66,35 @@ impl Shell {
                 match matches.value_of("path") {
                     Some(string_path) => {
                         let path = absolute(self.cwd.as_path(), Path::new(string_path));
-                        println!("STATUS : {:?}", self.fs.status(path.as_path())?);
+                        println!("STATUS : {:?}", self.container.status(path.as_path())?);
                         Ok(())
                     },
                     None => Err(CommandError::InvalidCommand)
                 },
-            ("debug_container",     Some(_matches)) => { println!("{:#?}", self.fs); Ok(()) },
+            ("debug_container",     Some(_matches)) => { println!("{:#?}", self.container); Ok(()) },
             ("debug_add_state",     Some(_matches)) => unimplemented!(),
             ("debug_sub_state",     Some(_matches)) => unimplemented!(),
             ("debug_transaction",   Some(_matches)) => unimplemented!(),
             ("pwd",         Some(_matches)) => { println!("{}", self.cwd.to_string_lossy()); Ok(()) },
-            ("reset",       Some(_matches)) => { self.fs.reset(); writeln!(out, "Virtual state is now empty")?;  Ok(()) },
+            ("reset",       Some(_matches)) => { self.container.reset(); writeln!(out, "Virtual state is now empty")?;  Ok(()) },
             ("ls",          Some(matches)) => Command::<ListCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(out, &mut self.fs)),
+                .and_then(|c| c.execute(out, &mut self.container)),
             ("cp",          Some(matches)) => Command::<CopyCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(&mut self.fs)),
+                .and_then(|c| c.execute(&mut self.container)),
             ("mv",          Some(matches)) => Command::<MoveCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(&mut self.fs)),
+                .and_then(|c| c.execute(&mut self.container)),
             ("rm",          Some(matches)) => Command::<RemoveCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(&mut self.fs)),
+                .and_then(|c| c.execute(&mut self.container)),
             ("mkdir",       Some(matches)) => Command::<NewDirectoryCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(&mut self.fs)),
+                .and_then(|c| c.execute(&mut self.container)),
             ("touch",       Some(matches)) => Command::<NewFileCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(&mut self.fs)),
+                .and_then(|c| c.execute(&mut self.container)),
             ("tree",        Some(matches)) => Command::<TreeCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(out,&mut self.fs)),
+                .and_then(|c| c.execute(out,&mut self.container)),
             ("save",        Some(matches)) => Command::<SaveCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(&mut self.fs)),
+                .and_then(|c| c.execute(&mut self.container)),
             ("import",        Some(matches)) => Command::<ImportCommand>::initialize(&self.cwd, matches)
-                .and_then(|c| c.execute(&mut self.fs)),
+                .and_then(|c| c.execute(&mut self.container)),
             ("apply",        Some(_matches)) => self.apply(),
             _ => Err(CommandError::InvalidCommand)
         }?;
@@ -113,7 +113,7 @@ impl Shell {
             if path.exists() {
                 Command(InitializedImportCommand {
                     path: path.clone()
-                }).execute(&mut self.fs)?;
+                }).execute(&mut self.container)?;
             }
             current_state_file = Some(path);
         }
@@ -137,7 +137,7 @@ impl Shell {
             Command(InitializedSaveCommand {
                 path: current_state_file.unwrap(),
                 overwrite: true
-            }).execute(&mut self.fs)?;
+            }).execute(&mut self.container)?;
         }
         Ok(())
     }
@@ -158,7 +158,7 @@ impl Shell {
             for line in history.iter() { //@TODO find a better way
                 read_line_editor.add_history_entry(line.to_string());
             }
-            read_line_editor.set_helper(Some(VirtualHelper::new(&self.fs, self.cwd.to_path_buf())));
+            read_line_editor.set_helper(Some(VirtualHelper::new(&self.container, self.cwd.to_path_buf())));
             let read_line = read_line_editor.readline(">> ");
 
             match read_line {
@@ -279,7 +279,7 @@ impl Shell {
             Some(string_path) => {
                 let path = absolute(self.cwd.as_path(), Path::new(string_path));
 
-                match self.fs.status(path.as_path())?.into_inner().into_existing_virtual() {
+                match self.container.status(path.as_path())?.into_inner().into_existing_virtual() {
                     Some(virtual_identity) =>
                         if virtual_identity.as_kind() == &Kind::Directory {
                             self.cwd = path;
@@ -295,7 +295,7 @@ impl Shell {
     }
 
     fn apply(&mut self) -> Result<(), CommandError> {
-        match self.fs.apply() {
+        match self.container.apply() {
             Ok(_) => Ok(()),
             Err(error) => Err(CommandError::from(error))
         }

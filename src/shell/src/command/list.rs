@@ -55,8 +55,8 @@ pub struct InitializedListCommand {
 }
 
 impl Command<InitializedListCommand> {
-    pub fn execute<W : Write>(self, out: &mut W, fs: &mut Container) -> Result<(), CommandError> {
-        let collection = fs.read_dir(self.0.path.as_path())?;
+    pub fn execute<W : Write>(self, out: &mut W, container: &mut Container) -> Result<(), CommandError> {
+        let collection = container.read_dir(self.0.path.as_path())?;
         if ! collection.is_empty() {
             for child in collection.into_iter() {
                 writeln!(

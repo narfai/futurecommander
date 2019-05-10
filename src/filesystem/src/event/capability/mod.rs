@@ -19,7 +19,6 @@
 
 mod capabilities;
 mod guard;
-mod interactive_guard;
 mod registrar_guard;
 
 use std::{
@@ -29,7 +28,6 @@ use std::{
 pub use self::{
     capabilities::Capabilities,
     guard::{ Guard, ZealedGuard, BlindGuard, QuietGuard },
-    interactive_guard::{ InteractiveGuard },
     registrar_guard::{ RegistrarGuard }
 };
 

@@ -36,7 +36,8 @@ mod command_integration {
             InitializedMoveCommand,
             InitializedNewDirectoryCommand,
             InitializedNewFileCommand,
-            InitializedCopyCommand
+            InitializedCopyCommand,
+            AvailableGuard
         },
     };
 
@@ -56,7 +57,8 @@ mod command_integration {
             source: sample_path.join("B"),
             destination: sample_path.join("A"),
             merge: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Zealed
         });
         move_b_to_a.execute(&mut fs).unwrap();
 
@@ -64,7 +66,8 @@ mod command_integration {
             source: sample_path.join("A"),
             destination: sample_path.join("APRIME"),
             merge: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Zealed
         });
         move_a_as_aprime.execute(&mut fs).unwrap();
 
@@ -90,14 +93,16 @@ mod command_integration {
         let mkdir_z = Command(InitializedNewDirectoryCommand {
             path: sample_path.join(&Path::new("Z")),
             recursive: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Zealed
         });
         mkdir_z.execute(&mut fs).unwrap();
 
         let touch_test = Command(InitializedNewFileCommand {
             path: sample_path.join(&Path::new("TEST")),
             recursive: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Zealed
         });
         touch_test.execute(&mut fs).unwrap();
 
@@ -105,7 +110,8 @@ mod command_integration {
             source: sample_path.join("TEST"),
             destination: sample_path.join("Z"),
             merge: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Zealed
         });
         copy_test_to_z.execute(&mut fs).unwrap();
 

@@ -29,8 +29,7 @@ use crate::{
         Capability,
         Guard,
         Capabilities,
-        ZealedGuard,
-        InteractiveGuard
+        ZealedGuard
     }
 };
 
@@ -52,10 +51,6 @@ impl RegistrarGuard {
             inner: guard,
             registry: HashMap::new()
         }
-    }
-
-    pub fn interactive() -> Self {
-        Self::from(Box::new(InteractiveGuard::default()))
     }
 }
 

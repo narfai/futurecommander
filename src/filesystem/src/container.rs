@@ -196,7 +196,7 @@ mod tests {
             false
         );
 
-        let guard = container.emit(&event, RegistrarGuard::from(Box::new(ZealedGuard))).unwrap();
+        let guard = container.emit(&event, RegistrarGuard::default()).unwrap();
         container.delay(Box::new(event), guard);
 
         assert!(container.status(chroot.join("COPIED").as_path()).unwrap().exists());
@@ -214,7 +214,7 @@ mod tests {
             false,
             false
         );
-        container.delay(Box::new(event), RegistrarGuard::from(Box::new(ZealedGuard)));
+        container.delay(Box::new(event), RegistrarGuard::default());
         let expected : String = format!(
             "[[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}},{{\"inner\":{{\"type\":\"ZealedGuard\"}},\"registry\":{{}}}}]]",
             chroot.join("RDIR").to_string_lossy(),
@@ -235,7 +235,7 @@ mod tests {
             false
         );
 
-        let guard = container_a.emit(&event, RegistrarGuard::from(Box::new(ZealedGuard))).unwrap();
+        let guard = container_a.emit(&event, RegistrarGuard::default()).unwrap();
         assert!(!container_a.is_empty());
         let a_stat = container_a.status(chroot.join("COPIED").as_path()).unwrap();
         assert!(a_stat.exists());

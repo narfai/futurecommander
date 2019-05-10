@@ -52,6 +52,9 @@ use std::path::{ Path, PathBuf, MAIN_SEPARATOR };
 
 pub struct Command<C>(pub C);
 
+mod guard;
+pub use self::guard::AvailableGuard;
+
 impl <C>Command<C> {
     pub fn extract_path_from_args(cwd: &Path, args: &ArgMatches<'_>, key: &str) -> Result<PathBuf, CommandError> {
         match args.value_of(key) {
@@ -69,6 +72,18 @@ impl <C>Command<C> {
                 str_path.chars().last().unwrap() == MAIN_SEPARATOR
             )),
             None => Err(CommandError::ArgumentMissing("generic".to_string(), key.to_string(), args.usage().to_string()))
+        }
+    }
+
+    pub fn extract_available_guard(args: &ArgMatches<'_>, key: &str) -> Result<AvailableGuard, CommandError> {
+        match args.value_of(key) {
+            Some(str_guard) => {
+                if ! AvailableGuard::available(str_guard) {
+                    return Err(CommandError::InvalidGuard(str_guard.to_string()));
+                }
+                Ok(AvailableGuard::from(str_guard))
+            },
+            None => Ok(AvailableGuard::default())
         }
     }
 }

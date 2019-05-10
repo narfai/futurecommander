@@ -27,13 +27,13 @@ use file_system::{
     Kind,
     CreateEvent,
     Listener,
-    Delayer,
-    capability::RegistrarGuard
+    Delayer
 };
 
 use crate::command::{
     Command,
-    errors::CommandError
+    errors::CommandError,
+    AvailableGuard
 };
 
 pub struct NewFileCommand {}
@@ -45,7 +45,8 @@ impl Command<NewFileCommand> {
                 InitializedNewFileCommand {
                     path: Self::extract_path_from_args(cwd, args, "path")?,
                     recursive: args.is_present("recursive"),
-                    overwrite: args.is_present("overwrite")
+                    overwrite: args.is_present("overwrite"),
+                    guard: Self::extract_available_guard(args, "guard")?
                 }
             )
         )
@@ -55,11 +56,12 @@ impl Command<NewFileCommand> {
 pub struct InitializedNewFileCommand {
     pub path: PathBuf,
     pub recursive: bool,
-    pub overwrite: bool
+    pub overwrite: bool,
+    pub guard: AvailableGuard
 }
 
 impl Command<InitializedNewFileCommand> {
-    pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
+    pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
         let event = CreateEvent::new(
             self.0.path.as_path(),
             Kind::File,
@@ -67,8 +69,8 @@ impl Command<InitializedNewFileCommand> {
             self.0.overwrite
         );
 
-        let guard = fs.emit(&event, RegistrarGuard::default())?;
-        fs.delay(Box::new(event), guard);
+        let guard = container.emit(&event, self.0.guard.registrar())?;
+        container.delay(Box::new(event), guard);
         Ok(())
     }
 }
@@ -87,18 +89,19 @@ mod tests {
     #[test]
     fn touch(){
         let sample_path = Samples::static_samples_path();
-        let mut fs = Container::new();
+        let mut container = Container::new();
 
         let new_bde_touched = Command(InitializedNewFileCommand {
             path: sample_path.join(&Path::new("B/D/E/TOUCHED")),
             recursive: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Zealed
         });
 
-        new_bde_touched.execute(&mut fs).unwrap();
+        new_bde_touched.execute(&mut container).unwrap();
 
         assert!(
-            fs.read_dir(sample_path.join(&Path::new("B/D/E")).as_path())
+            container.read_dir(sample_path.join(&Path::new("B/D/E")).as_path())
                 .unwrap()
                 .contains(&EntryAdapter(sample_path.join("B/D/E/TOUCHED").as_path()))
         );

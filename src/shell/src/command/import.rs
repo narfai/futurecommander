@@ -51,12 +51,12 @@ pub struct InitializedImportCommand {
 }
 
 impl Command<InitializedImportCommand> {
-    pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
+    pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
         if ! self.0.path.exists() {
             return Err(CommandError::DoesNotExists(self.0.path.clone()));
         }
 
-        fs.emit_json(read_to_string(self.0.path.as_path())?)?;
+        container.emit_json(read_to_string(self.0.path.as_path())?)?;
         Ok(())
     }
 }
@@ -69,7 +69,8 @@ mod tests {
     use crate::{
         command::{
             InitializedSaveCommand,
-            InitializedCopyCommand
+            InitializedCopyCommand,
+            AvailableGuard
         },
     };
 
@@ -81,23 +82,24 @@ mod tests {
 
     #[test]
     fn can_import_virtual_state_from_a_file(){
-        let mut fs = Container::new();
+        let mut container = Container::new();
         let sample_path = Samples::init_advanced_chroot("can_import_virtual_state_from_a_file");
         let copy_command = Command(InitializedCopyCommand {
             source: sample_path.join("A"),
             destination: sample_path.join("APRIME"),
             merge: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Zealed
         });
 
-        copy_command.execute(&mut fs).unwrap();
+        copy_command.execute(&mut container).unwrap();
 
         let save_command = Command(InitializedSaveCommand {
             path: sample_path.join("virtual_state.json"),
             overwrite: false
         });
 
-        save_command.execute(&mut fs).unwrap();
+        save_command.execute(&mut container).unwrap();
 
         let import_command = Command(InitializedImportCommand {
             path: sample_path.join("virtual_state.json")
@@ -108,7 +110,7 @@ mod tests {
         import_command.execute(&mut container_b).unwrap();
 
         assert!(!container_b.is_empty());
-        let b_stat = fs.status(sample_path.join("APRIME").as_path()).unwrap();
+        let b_stat = container.status(sample_path.join("APRIME").as_path()).unwrap();
         assert!(b_stat.exists());
         assert!(b_stat.is_dir());
     }

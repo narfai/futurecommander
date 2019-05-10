@@ -9,3 +9,5 @@ license = "GPL-3.0-or-later"
 rustyline = "3.0.0"
 clap = { version =  "2.32.0", features = ["yaml"] }
 file_system = { package="futurecommander_filesystem", version = "0.3.10", path = "../filesystem" }
+serde = { version = "1.0.90" }
+typetag = { version = "0.1" }

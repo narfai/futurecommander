@@ -54,12 +54,12 @@ pub struct InitializedSaveCommand {
 }
 
 impl Command<InitializedSaveCommand> {
-    pub fn execute(self, fs: &mut Container) -> Result<(), CommandError> {
+    pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
         if ! self.0.overwrite && self.0.path.exists() {
             return Err(CommandError::AlreadyExists(self.0.path.clone()));
         }
         let mut file = File::create(self.0.path.as_path())?;
-        file.write_all(fs.to_json()?.as_bytes())?;
+        file.write_all(container.to_json()?.as_bytes())?;
         Ok(())
     }
 }
@@ -75,7 +75,8 @@ mod tests {
 
     use crate::{
         command::{
-            InitializedCopyCommand
+            InitializedCopyCommand,
+            AvailableGuard
         },
     };
 
@@ -85,23 +86,24 @@ mod tests {
 
     #[test]
     fn can_export_virtual_state_into_a_file(){
-        let mut fs = Container::new();
+        let mut container = Container::new();
         let sample_path = Samples::init_advanced_chroot("can_export_virtual_state_into_a_file");
         let copy_command = Command(InitializedCopyCommand {
             source: sample_path.join("A"),
             destination: sample_path.join("APRIME"),
             merge: false,
-            overwrite: false
+            overwrite: false,
+            guard: AvailableGuard::Interactive
         });
 
-        copy_command.execute(&mut fs).unwrap();
+        copy_command.execute(&mut container).unwrap();
 
         let save_command = Command(InitializedSaveCommand {
             path: sample_path.join("virtual_state.json"),
             overwrite: false
         });
 
-        save_command.execute(&mut fs).unwrap();
+        save_command.execute(&mut container).unwrap();
 
         let expected : String = format!(
             "[[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}},{{\"inner\":{{\"type\":\"InteractiveGuard\",\"skip_all\":{{\"merge\":false,\"overwrite\":false,\"recursive\":false}},\"allow_all\":{{\"merge\":false,\"overwrite\":false,\"recursive\":false}}}},\"registry\":{{}}}}]]",

@@ -125,8 +125,6 @@ impl <E, F> Event <E, F> for CreateEvent
     }
 }
 
-//Infrastructure -> Domain integration tests
-
 #[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]
 mod real_tests {
