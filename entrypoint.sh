@@ -54,8 +54,8 @@ function release {
 
     user_cargo "clippy --all-targets --all-features -- -D warnings"
 
-    git remote remove release
-    git remote add release https://narfai:${GITHUB_TOKEN}@github.com/narfai/futurecommander.git
+    git remote remove release 2> /dev/null
+    git remote add release https://narfai:${GITHUB_TOKEN}@github.com/narfai/futurecommander.git 2> /dev/null
 
     echo "REMOTE TAGS : $(git ls-remote --tags release |grep -i ${branch})"
     if [ -z "$(git ls-remote --tags release |grep -i ${branch})" ]; then
