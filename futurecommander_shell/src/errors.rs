@@ -24,7 +24,7 @@ use std::{
     io
 };
 
-use file_system::{
+use futurecommander_filesystem::{
     DomainError,
     QueryError
 };

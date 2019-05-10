@@ -20,7 +20,7 @@
 use std::path::PathBuf;
 use std::vec::IntoIter;
 
-use file_system::{
+use futurecommander_filesystem::{
     ReadableFileSystem,
     Entry,
     Container

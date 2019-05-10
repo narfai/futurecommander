@@ -18,7 +18,7 @@
  */
 
 extern crate futurecommander_shell;
-extern crate file_system;
+extern crate futurecommander_filesystem;
 
 
 #[cfg(test)]
@@ -41,7 +41,7 @@ mod command_integration {
         },
     };
 
-    use file_system::{
+    use futurecommander_filesystem::{
         sample::Samples,
         Container,
         EntryAdapter,

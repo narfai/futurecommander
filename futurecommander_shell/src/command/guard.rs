@@ -24,7 +24,7 @@ use std::{
 
 use serde::{ Serialize, Deserialize };
 
-use file_system::{
+use futurecommander_filesystem::{
     DomainError,
     capability::{
         Capabilities,

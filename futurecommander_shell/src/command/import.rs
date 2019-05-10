@@ -18,48 +18,45 @@
  */
 
 use std::{
-    fs::File,
-    io::prelude::*,
+    fs::{ read_to_string },
     path::{ Path, PathBuf }
 };
 
 use clap::ArgMatches;
 
-use file_system::{ Container };
+use futurecommander_filesystem::{ Container };
 
 use crate::command::{
     Command,
     errors::CommandError
 };
 
-pub struct SaveCommand {}
+pub struct ImportCommand {}
 
-impl Command<SaveCommand> {
-    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedSaveCommand>, CommandError> {
+impl Command<ImportCommand> {
+    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedImportCommand>, CommandError> {
         Ok(
             Command(
-                InitializedSaveCommand {
+                InitializedImportCommand {
                     path:
-                    Self::extract_path_from_args(cwd, args, "path").unwrap_or_else(|_| cwd.to_path_buf().join(".fc.json")),
-                    overwrite: args.is_present("overwrite")
+                    Self::extract_path_from_args(cwd, args, "path").unwrap_or_else(|_| cwd.to_path_buf().join(".fc.json"))
                 }
             )
         )
     }
 }
 
-pub struct InitializedSaveCommand {
-    pub path: PathBuf,
-    pub overwrite: bool
+pub struct InitializedImportCommand {
+    pub path: PathBuf
 }
 
-impl Command<InitializedSaveCommand> {
+impl Command<InitializedImportCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        if ! self.0.overwrite && self.0.path.exists() {
-            return Err(CommandError::AlreadyExists(self.0.path.clone()));
+        if ! self.0.path.exists() {
+            return Err(CommandError::DoesNotExists(self.0.path.clone()));
         }
-        let mut file = File::create(self.0.path.as_path())?;
-        file.write_all(container.to_json()?.as_bytes())?;
+
+        container.emit_json(read_to_string(self.0.path.as_path())?)?;
         Ok(())
     }
 }
@@ -69,31 +66,30 @@ impl Command<InitializedSaveCommand> {
 mod tests {
     use super::*;
 
-    use std::{
-        fs::read_to_string
-    };
-
     use crate::{
         command::{
+            InitializedSaveCommand,
             InitializedCopyCommand,
             AvailableGuard
         },
     };
 
-    use file_system::{
-        sample::Samples
+    use futurecommander_filesystem::{
+        sample::Samples,
+        ReadableFileSystem,
+        Entry
     };
 
     #[test]
-    fn can_export_virtual_state_into_a_file(){
+    fn can_import_virtual_state_from_a_file(){
         let mut container = Container::new();
-        let sample_path = Samples::init_advanced_chroot("can_export_virtual_state_into_a_file");
+        let sample_path = Samples::init_advanced_chroot("can_import_virtual_state_from_a_file");
         let copy_command = Command(InitializedCopyCommand {
             source: sample_path.join("A"),
             destination: sample_path.join("APRIME"),
             merge: false,
             overwrite: false,
-            guard: AvailableGuard::Interactive
+            guard: AvailableGuard::Zealed
         });
 
         copy_command.execute(&mut container).unwrap();
@@ -105,14 +101,17 @@ mod tests {
 
         save_command.execute(&mut container).unwrap();
 
-        let expected : String = format!(
-            "[[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}},{{\"inner\":{{\"type\":\"InteractiveGuard\",\"skip_all\":{{\"merge\":false,\"overwrite\":false,\"recursive\":false}},\"allow_all\":{{\"merge\":false,\"overwrite\":false,\"recursive\":false}}}},\"registry\":{{}}}}]]",
-            sample_path.join("A").to_string_lossy(),
-            sample_path.join("APRIME").to_string_lossy(),
-        );
+        let import_command = Command(InitializedImportCommand {
+            path: sample_path.join("virtual_state.json")
+        });
 
-        assert!(sample_path.join("virtual_state.json").exists());
+        let mut container_b = Container::new();
 
-        assert_eq!(read_to_string(sample_path.join("virtual_state.json")).unwrap(), expected);
+        import_command.execute(&mut container_b).unwrap();
+
+        assert!(!container_b.is_empty());
+        let b_stat = container.status(sample_path.join("APRIME").as_path()).unwrap();
+        assert!(b_stat.exists());
+        assert!(b_stat.is_dir());
     }
 }

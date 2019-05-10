@@ -21,7 +21,7 @@ use std::path::{ Path, PathBuf };
 
 use clap::ArgMatches;
 
-use file_system::{
+use futurecommander_filesystem::{
     Container,
     CopyEvent,
     Listener,
@@ -104,7 +104,7 @@ impl Command<InitializedCopyCommand> {
 mod tests {
     use super::*;
 
-    use file_system::{
+    use futurecommander_filesystem::{
         sample::Samples,
         EntryAdapter
     };

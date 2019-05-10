@@ -18,31 +18,24 @@
  */
 
 extern crate futurecommander_shell;
-extern crate file_system;
+extern crate futurecommander_filesystem;
 
 #[cfg(test)]
 #[cfg_attr(tarpaulin, skip)]
 mod shell {
     use super::*;
 
-
-
     use std::{
         str::from_utf8
     };
 
-    use file_system::{
+    use futurecommander_filesystem::{
         sample::Samples
     };
 
     use futurecommander_shell::{
         Shell
     };
-
-    //TODO test mkdir B/A; cp A/B
-    //TODO test all scenarios merge / overwrite / recursive cross skip/skipall/allow/allowall/cancel
-    //TODO add samples to PR
-    //TODO split up capability properly
 
     #[test]
     fn regular_list() {

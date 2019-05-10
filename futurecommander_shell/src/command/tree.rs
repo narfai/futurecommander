@@ -23,7 +23,7 @@ use std::{
 
 use clap::ArgMatches;
 
-use file_system::{
+use futurecommander_filesystem::{
     QueryError,
     Container,
     ReadableFileSystem,

@@ -18,11 +18,17 @@
  */
 
 use std::path::Path;
-use std::path::PathBuf;
-
 use clap::ArgMatches;
+use std::path::PathBuf;
+use crate::{
+    command::{
+        errors::CommandError,
+        Command,
+        AvailableGuard
+    }
+};
 
-use file_system::{
+use futurecommander_filesystem::{
     Container,
     Kind,
     CreateEvent,
@@ -30,19 +36,13 @@ use file_system::{
     Delayer
 };
 
-use crate::command::{
-    Command,
-    errors::CommandError,
-    AvailableGuard
-};
+pub struct NewDirectoryCommand {}
 
-pub struct NewFileCommand {}
-
-impl Command<NewFileCommand> {
-    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewFileCommand>, CommandError> {
+impl Command<NewDirectoryCommand> {
+    pub fn initialize(cwd: &Path, args: &ArgMatches<'_>) -> Result<Command<InitializedNewDirectoryCommand>, CommandError> {
         Ok(
             Command(
-                InitializedNewFileCommand {
+                InitializedNewDirectoryCommand {
                     path: Self::extract_path_from_args(cwd, args, "path")?,
                     recursive: args.is_present("recursive"),
                     overwrite: args.is_present("overwrite"),
@@ -53,18 +53,19 @@ impl Command<NewFileCommand> {
     }
 }
 
-pub struct InitializedNewFileCommand {
+pub struct InitializedNewDirectoryCommand {
     pub path: PathBuf,
     pub recursive: bool,
     pub overwrite: bool,
     pub guard: AvailableGuard
+
 }
 
-impl Command<InitializedNewFileCommand> {
+impl Command<InitializedNewDirectoryCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
         let event = CreateEvent::new(
             self.0.path.as_path(),
-            Kind::File,
+            Kind::Directory,
             self.0.recursive,
             self.0.overwrite
         );
@@ -80,30 +81,30 @@ impl Command<InitializedNewFileCommand> {
 mod tests {
     use super::*;
 
-    use file_system::{
+    use futurecommander_filesystem::{
         sample::Samples,
-        ReadableFileSystem,
-        EntryAdapter
+        EntryAdapter,
+        ReadableFileSystem
     };
 
     #[test]
-    fn touch(){
+    fn mkdir(){
         let sample_path = Samples::static_samples_path();
         let mut container = Container::new();
 
-        let new_bde_touched = Command(InitializedNewFileCommand {
-            path: sample_path.join(&Path::new("B/D/E/TOUCHED")),
+        let new_bde_mkdired = Command(InitializedNewDirectoryCommand {
+            path: sample_path.join(&Path::new("B/D/E/MKDIRED")),
             recursive: false,
             overwrite: false,
             guard: AvailableGuard::Zealed
         });
 
-        new_bde_touched.execute(&mut container).unwrap();
+        new_bde_mkdired.execute(&mut container).unwrap();
 
         assert!(
             container.read_dir(sample_path.join(&Path::new("B/D/E")).as_path())
                 .unwrap()
-                .contains(&EntryAdapter(sample_path.join("B/D/E/TOUCHED").as_path()))
+                .contains(&EntryAdapter(sample_path.join("B/D/E/MKDIRED").as_path()))
         );
     }
 }

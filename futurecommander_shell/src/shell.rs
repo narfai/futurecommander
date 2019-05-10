@@ -29,7 +29,7 @@ use rustyline::{ CompletionType, Config, EditMode, Editor };
 
 use clap::{ App, ArgMatches };
 
-use file_system::{
+use futurecommander_filesystem::{
     Container,
     Kind,
     ReadableFileSystem,

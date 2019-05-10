@@ -25,7 +25,7 @@ use std::{
     path::{ PathBuf }
 };
 
-use file_system::{
+use futurecommander_filesystem::{
     DomainError,
     QueryError
 };
