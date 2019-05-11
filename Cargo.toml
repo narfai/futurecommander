@@ -3,5 +3,6 @@ members = [
     "futurecommander",
     "futurecommander_shell",
     "futurecommander_filesystem",
-    "futurecommander_representation"
+    "futurecommander_representation",
+    "futurecommander_daemon"
 ]

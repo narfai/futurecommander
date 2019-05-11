@@ -18,27 +18,12 @@
  */
 
 use futurecommander_shell::Shell;
+use futurecommander_daemon::Daemon;
 use std::{
     env,
     io::{ Write, Read }
 };
 
-fn daemon<O: Write, E: Write>(out: &mut O, err: &mut E){
-    let mut stdin = std::io::stdin();
-    write!(out, "INIT");
-    loop {
-        out.flush().unwrap();
-        let mut event = String::new();
-        stdin.read_line(&mut event).unwrap();
-
-        match event.trim() {
-            "exit" => break,
-            "test" => { write!(out, "TEST"); },
-            "test_error" => { write!(err, "TESTERROR"); },
-            _ => {}
-        }
-    }
-}
 
 fn main() {
     let mut shell = Shell::default();
@@ -53,7 +38,7 @@ fn main() {
             Err(error) => write!(&mut stderr, "{}", error).unwrap()
         }
     } else if &args[0].trim() == &"daemon" {
-        daemon(&mut stdout, &mut stderr);
+        Daemon::new(&mut stdout, &mut stderr).run();
     } else {
         match shell.run_single(env::args(), &mut stdout, &mut stderr) {
             Ok(_) => {},//Exit gracefully
