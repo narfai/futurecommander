@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Context Menu</title>
+</head>
+<body style="width: 100%; height: 100%;">
+
+<p>'Right click' to show context menu.</p>
+
+<script>
+    const { spawn } = require('child_process');
+
+    try {
+        const filesystem = spawn('../target/debug/futurecommander', ['daemon'], {detached: true, stdio: 'pipe'});
+
+        filesystem.stdout.on('data', (data) => {
+            console.log(`stdout: ${data}`);
+        });
+
+        filesystem.stderr.on('data', (data) => {
+            console.log(`stderr: ${data}`);
+        });
+
+        filesystem.on('close', (code) => {
+            console.log(`child process exited with code ${code}`);
+        });
+
+
+        filesystem.on('error', (error) => {
+            console.log(error);
+            console.log(`child process error ${error}`);
+        });
+
+        // var os = require('os');
+        // document.write('You are running on ', os.platform());
+        // let addon = require('pkg/futurecommander_gui');
+        // addon.greet();
+        //
+        // Create an empty context menu
+        var menu = new nw.Menu();
+
+        // Add some items with label
+        menu.append(new nw.MenuItem({
+            label: 'TEST',
+            click: function() {
+                // alert('You have clicked at "Item A"' + process.versions['nw-flavor']);
+                filesystem.stdin.write("test\n");
+            }
+        }));
+
+        menu.append(new nw.MenuItem({
+            label: 'TEST ERROR',
+            click: function() {
+                filesystem.stdin.write("test_error\n");
+            }
+        }));
+
+        menu.append(new nw.MenuItem({type: 'separator'}));
+        menu.append(new nw.MenuItem({
+            label: 'Exit',
+            click: function() {
+                filesystem.stdin.write("exit\n");
+            }
+        }));
+
+        // Hooks the "contextmenu" event
+        document.body.addEventListener('contextmenu', function (ev) {
+            // Prevent showing default context menu
+            ev.preventDefault();
+            // Popup the native context menu at place you click
+            menu.popup(ev.x, ev.y);
+
+            return false;
+        }, false);
+
+        filesystem.unref()
+    } catch (err) {
+        global.console.log(`${err}`)
+    }
+
+</script>
+</body>
+</html>
