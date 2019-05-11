@@ -1,0 +1,21 @@
+{
+  "name": "futurecommander_gui",
+  "version": "0.1.0",
+  "description": "User-delayer filesystem operation",
+  "main": "lib/index.js",
+  "author": "François Cadeillan <francois@azsystem.fr>",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "neon-cli": "^0.2.0",
+    "electron-build-env": "^0.2.0",
+    "mithril": "^1.1.6"
+  },
+  "scripts": {
+    "install": "neon build",
+    "build": "electron-build-env neon build --release",
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^4.1.3"
+  }
+}

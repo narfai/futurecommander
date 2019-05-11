@@ -1,0 +1,19 @@
+[package]
+name = "futurecommander_gui"
+version = "0.1.0"
+authors = ["François Cadeillan <francois@azsystem.fr>"]
+license = "GPL-3.0-or-later"
+build = "build.rs"
+exclude = ["artifacts.json", "index.node"]
+
+[workspace]
+
+[lib]
+name = "futurecommander_gui"
+crate-type = ["dylib"]
+
+[build-dependencies]
+neon-build = "0.2.0"
+
+[dependencies]
+neon = "0.2.0"
