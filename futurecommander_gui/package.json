@@ -7,11 +7,12 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "mithril": "^1.1.6",
-    "nwjs": "^1.4.4"
+    "nwjs": "^1.4.4",
+    "uniqid": "^5.0.3"
   },
   "scripts": {
     "install": "nw install 0.38.2-sdk && nw use 0.38.2-sdk",
     "build": "wasm-pack build --target nodejs",
-    "start": "yarn build && nw . --password-store=basic"
+    "start": "yarn build && nw . --enable-node-worker --password-store=basic --mixed-context"
   }
 }
