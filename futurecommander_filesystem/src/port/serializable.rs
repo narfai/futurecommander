@@ -16,40 +16,41 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-mod event;
-
-mod port;
-mod infrastructure;
-mod errors;
-mod container;
-
-pub use futurecommander_representation::Kind;
-
-pub use self::{
-    errors::{ DomainError, QueryError },
-    event::{
-        Listener,
-        Delayer,
-        Event,
-        capability
-    },
-    port::{
-        Entry,
-        ReadableFileSystem,
-        WriteableFileSystem,
-        EntryAdapter,
-        EntryCollection,
-        SerializableEntry
-    },
-    event::*,
-    container::Container
+use std::{
+    path::{ PathBuf, Path },
+    ffi::{ OsString, OsStr }
 };
 
-//Mainly for testing
-pub use self::infrastructure::VirtualState;
+use serde::{ Serialize, Deserialize };
 
-pub mod tools;
+use crate::{
+    port::{
+        Entry,
+        EntryCollection
+    }
+};
 
-#[cfg_attr(tarpaulin, skip)]
-pub mod sample;
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SerializableEntry {
+    pub path: PathBuf,
+    pub name: Option<String>,
+    pub is_dir: bool,
+    pub is_file: bool,
+    pub exists: bool
+}
+
+impl SerializableEntry {
+    pub fn from(entry: &Entry) -> Self {
+        SerializableEntry {
+            path: entry.to_path(),
+            name: if let Some(s) = entry.name() {
+                Some(s.to_string_lossy().to_string())
+            } else { None },
+            is_dir: entry.is_dir(),
+            is_file: entry.is_file(),
+            exists: entry.exists()
+        }
+    }
+}
+
+

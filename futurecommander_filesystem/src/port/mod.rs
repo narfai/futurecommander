@@ -21,10 +21,12 @@ mod entry;
 mod entry_collection;
 mod filesystem;
 mod atomic;
+mod serializable;
 
 pub use self::{
     entry_collection::{ EntryCollection },
     entry::{ EntryAdapter, Entry },
     filesystem::{ FileSystemAdapter, WriteableFileSystem, ReadableFileSystem, FileSystemTransaction },
-    atomic::{ AtomicTransaction, Atomic }
+    atomic::{ AtomicTransaction, Atomic },
+    serializable::SerializableEntry
 };
