@@ -25,8 +25,7 @@ use serde::{ Serialize, Deserialize };
 
 use crate::{
     port::{
-        Entry,
-        EntryCollection
+        Entry
     }
 };
 
