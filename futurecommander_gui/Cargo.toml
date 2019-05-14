@@ -14,7 +14,8 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 futurecommander_daemon = { version = "0.1.0", path = "../futurecommander_daemon" }
-wasm-bindgen = "0.2"
+serde = { version = "1.0.90" }
+serde_json = { version = "1.0" }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
@@ -27,6 +28,10 @@ console_error_panic_hook = { version = "0.1.1", optional = true }
 #
 # Unfortunately, `wee_alloc` requires nightly Rust when targeting wasm for now.
 wee_alloc = { version = "0.4.2", optional = true }
+
+[dependencies.wasm-bindgen]
+version = "^0.2"
+features = ["serde-serialize"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.2"

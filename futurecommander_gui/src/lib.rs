@@ -4,80 +4,80 @@
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{
+    prelude::*
+};
+
 use futurecommander_daemon::{
     Request,
     Response,
-    ListRequest
+    ListRequest,
+    RequestHeader
 };
+
+mod errors;
+
+//TODO Light iterate over values instead of double copy : https://rustwasm.github.io/docs/wasm-bindgen/reference/iterating-over-js-values.html
+//TODO could be usefull for display apply loaders : https://rustwasm.github.io/docs/wasm-bindgen/reference/receiving-js-closures-in-rust.html
+//TODO the whole client could be in rust and return promises : https://rustwasm.github.io/docs/wasm-bindgen/reference/js-promises-and-rust-futures.html and https://rustwasm.github.io/docs/wasm-bindgen/reference/attributes/on-rust-exports/start.html and https://rustwasm.github.io/docs/wasm-bindgen/reference/attributes/on-rust-exports/skip.html for obscure filesystem internals
+
 
 #[wasm_bindgen]
 extern "C" {
-    pub type JsEntry;
-
-    #[wasm_bindgen(constructor)]
-    pub fn new_entry(name: Option<&str>, is_dir: bool, is_file: bool) -> JsEntry;
-
-    pub type JsResponse;
-
-    #[wasm_bindgen(constructor)]
-    pub fn new_response(id: &str, status: &str, kind: &str, error: Option<&str>) -> JsResponse;
+    #[wasm_bindgen(js_name = Request)]
+    pub type JsRequest;
+    #[wasm_bindgen(method)]
+    pub fn get_id(this: &JsRequest) -> String;
 
     #[wasm_bindgen(method)]
-    pub fn add_entry(this: &JsResponse, entry: JsEntry);
+    pub fn get_type(this: &JsRequest) -> String;
+
+    #[wasm_bindgen(method)]
+    pub fn get_parameter(this: &JsRequest, key: &str) -> Option<String>;
 }
 
-pub trait ResponsePacket {
-    fn into_response(self) -> JsResponse;
-}
-
-impl ResponsePacket for Response {
-    fn into_response(self) -> JsResponse {
-        let response = JsResponse::new_response(
-            self.id.as_str(),
-            self.status.as_str(),
-            self.kind.as_str(),
-            if let Some(error_str) = &self.error {
-                Some(error_str.as_str())
-            } else { None }
-        );
-
-        if let Some(content) = self.content {
-            for entry in content {
-                response.add_entry(
-                    JsEntry::new_entry(
-                        if let Some(name) = &entry.name {
-                            Some(name.as_str())
-                        } else {
-                            None
-                        },
-                        entry.is_dir,
-                        entry.is_file
-                    )
-                );
-            }
+impl From<&JsRequest> for Result<ListRequest, errors::AddonError> {
+    fn from(js_request: &JsRequest) -> Self {
+        match js_request.get_parameter("path") {
+            Some(path) => Ok(
+                ListRequest::new(
+                js_request.get_id().as_str(),
+                path.as_str())
+            ),
+            None => Err(errors::AddonError::InvalidArgument("path".to_string()))
         }
-
-        response
     }
 }
 
 #[wasm_bindgen]
-pub fn list(id : &str, path: &str) -> Box<[u8]> {
-    let mut request : Vec<u8> = vec![ListRequest::header() as u8];
-    request.append(
-        &mut ListRequest::new(id, path)
-            .as_bytes()
-            .unwrap()
-    );
+pub fn request(request: &JsRequest) -> Result<Box<[u8]>, JsValue> {
+    fn encode_request(request: &JsRequest) -> Result<Box<[u8]>, errors::AddonError> {
+        match request.get_type().as_str() {
+            key if RequestHeader::list() == key => Ok(
+                Result::<ListRequest, errors::AddonError>::from(request)?
+                .as_bytes()?
+                .into_boxed_slice()
+            ),
+            _ => Err(
+                errors::AddonError::InvalidRequest(request.get_type())
+            ),
+        }
+    }
 
-    request.into_boxed_slice()
+    match encode_request(request) {
+        Ok(result) => Ok(result),
+        Err(error) => Err(error.into())
+    }
 }
 
 #[wasm_bindgen]
-pub fn decode(response: &[u8]) -> Result<JsResponse, JsValue> {
-    match Response::decode(response) {
-        Ok(decoded) => Ok(decoded.into_response()),
-        Err(error) => Err(JsValue::from_str(format!("{}", error).as_str()))
+pub fn decode(response: &[u8]) -> Result<JsValue, JsValue> {
+    fn decode_response(response: &[u8]) -> Result<JsValue, errors::AddonError> {
+        Ok(JsValue::from_serde(&Response::decode(response)?)?)
+    }
+
+    match decode_response(response) {
+        Ok(result) => Ok(result),
+        Err(error) => Err(error.into())
     }
 }

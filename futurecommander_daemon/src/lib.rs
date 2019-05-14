@@ -30,7 +30,9 @@ pub use self::{
         ListRequest
     },
     response::{
-        Response
+        Response,
+        ResponseKind,
+        ResponseStatus
     },
     errors::DaemonError
 };

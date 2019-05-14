@@ -17,50 +17,49 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const uniqid = require('uniqid');
+const { Response } = require('./api');
+
 
 module.exports = class FileSystemClient {
     constructor() {
         this.resolves = {};
         this.rejects = {};
         this.worker = new Worker('./app/filesystem/worker.js');
-        this.worker.onmessage = ({ data: response }) => {
-            console.log(response);
-            let id = response.id;
-            switch (response.status) {
-                case 'success':
-                    console.log(this.resolves, id);
-                    const resolve = this.resolves[id.toString()];
-                    if (resolve) {
-                        resolve(response);
-                    }
-                    break;
-                case 'fail':
-                    const reject = this.rejects[id];
-                    if (reject) {
-                        reject(response);
-                    }
-                    break;
+        this.worker.onmessage = ({ data }) => {
+            const response = new Response(data);
+            try {
+                const resolve = this.resolves[response.id];
+                if (resolve) {
+                    resolve(response.result())
+                }
+            } catch(error) {
+                const reject = this.rejects[response.id];
+                if (reject) {
+                    reject({ response, error });
+                }
             }
+            this.unsubscribe(response.id)
+        }
+    }
 
+    subscribe(id, resolve, reject) {
+        this.resolves[id] = resolve;
+        this.rejects[id] = reject;
+    }
+
+    unsubscribe(id) {
+        if (typeof this.resolves[id] !== undefined) {
             delete this.resolves[id];
+        }
+        if (typeof this.rejects[id] !== undefined) {
             delete this.rejects[id];
         }
     }
 
     send(request) {
         return new Promise((resolve, reject) => {
-            const id =
-                Array.from(uniqid.process())
-                    .reduce(
-                        (acc, cur) => acc + cur.charCodeAt(0).toString(10),
-                        '0'
-                    );
-
-            this.resolves[id] = resolve;
-            this.rejects[id] = reject;
-
-            this.worker.postMessage([{ id, ...request }]);
+            this.subscribe(request.id, resolve, reject);
+            this.worker.postMessage([request]);
         });
     }
 };

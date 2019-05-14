@@ -22,27 +22,7 @@ const { spawn } = require('child_process');
 
 const addon = require('pkg/futurecommander_gui');
 
-class JsEntry {
-    constructor(name, is_dir, is_file) {
-        this.name = name;
-        this.is_dir = is_dir;
-        this.is_file = is_file;
-    }
-}
-
-class JsResponse {
-    constructor(id, status, kind, error = null, entries = []) {
-        this.id = id;
-        this.status = status;
-        this.kind = kind;
-        this.error = error;
-        this.entries = entries;
-    }
-
-    add_entry(entry) {
-        this.entries.push(entry);
-    }
-}
+const { Request } = require('./api');
 
 class FileSystemWorker {
     constructor() {
@@ -51,14 +31,11 @@ class FileSystemWorker {
 
     emit(request) {
         console.log('WORKER REQUEST', request);
-        switch (request.type) {
-            case 'LIST':
-                this.filesystem.stdin.write(addon.list(request.id, request.path));
-                break;
-            default:
-                console.log('unknown request', request);
-                break;
-        }
+        this.filesystem.stdin.write(
+            addon.request(
+                new Request(request)
+            )
+        );
     }
 
     listen() {
@@ -76,9 +53,9 @@ class FileSystemWorker {
             );
 
             this.filesystem.stdout.on('data', (response) => {
-                console.log('WORKER RESPONSE', response);
-
-                postMessage(addon.decode(response));
+                postMessage(
+                    addon.decode(response)
+                );
             });
 
             this.filesystem.stderr.on('data', (data) => {

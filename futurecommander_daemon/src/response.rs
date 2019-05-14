@@ -26,11 +26,23 @@ use crate::{
     SerializableEntry,
 };
 
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+pub enum ResponseKind {
+    Collection,
+    Entry
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+pub enum ResponseStatus {
+    Success,
+    Fail
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
     pub id: String,
-    pub kind: String,
-    pub status: String,
+    pub kind: ResponseKind,
+    pub status: ResponseStatus,
     pub content: Option<Vec<SerializableEntry>>,
     pub error: Option<String>
 }

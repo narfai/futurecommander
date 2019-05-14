@@ -36,6 +36,8 @@ use crate::{
     errors::DaemonError,
     Request,
     Response,
+    ResponseStatus,
+    ResponseKind,
     RequestHeader
 };
 
@@ -70,8 +72,8 @@ impl Request for ListRequest {
             Ok(collection) =>
                 (Response {
                     id: self.id.clone(),
-                    kind: "collection".to_string(),
-                    status: "success".to_string(),
+                    kind: ResponseKind::Collection,
+                    status: ResponseStatus::Success,
                     content: Some(
                         collection
                         .into_iter()
@@ -84,8 +86,8 @@ impl Request for ListRequest {
             Err(error) =>
                 (Response {
                     id: self.id.clone(),
-                    kind: "string".to_string(),
-                    status: "fail".to_string(),
+                    kind: ResponseKind::Collection,
+                    status: ResponseStatus::Fail,
                     content: None,
                     error: Some(format!("{}", DaemonError::from(error)))
                 }).encode()?
@@ -94,7 +96,9 @@ impl Request for ListRequest {
     }
 
     fn as_bytes(&self) -> Result<Vec<u8>, DaemonError> {
-        Ok(serialize(self)?)
+        let mut request = vec![Self::header() as u8];
+        request.append(&mut serialize(self)?);
+        Ok(request)
     }
 
     fn from_bytes(bytes: &[u8]) -> Result<Self, DaemonError> where Self: Sized {

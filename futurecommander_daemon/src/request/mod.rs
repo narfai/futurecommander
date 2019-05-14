@@ -45,8 +45,12 @@ pub trait Request : Debug {
 }
 
 pub enum RequestHeader {
-    InvalidHeader = 0,
-    List = 1
+    InvalidHeader,
+    List
+}
+
+impl RequestHeader {
+    pub fn list() -> &'static str { "LIST" }
 }
 
 impl From<u8> for RequestHeader {
