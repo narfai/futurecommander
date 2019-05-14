@@ -61,7 +61,7 @@ impl fmt::Display for DaemonError {
         match self {
             DaemonError::Io(error) => write!(f, "I/O error {}", error),
             DaemonError::Query(error) => write!(f, "Filesystem query error {}", error),
-            DaemonError::BinaryEncode(error) => write!(f, "Binary encode error {}", error),
+            DaemonError::BinaryEncode(error) => write!(f, "Binary encode error {:?}", error),
             DaemonError::Exit => write!(f, "Exit"),
         }
     }

@@ -16,7 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+mod errors;
+mod request;
+mod response;
+
+pub use futurecommander_filesystem::SerializableEntry;
+
+pub use self::{
+    request::{
+        Request,
+        RequestHeader,
+        ListRequest
+    },
+    response::{
+        Response
+    },
+    errors::DaemonError
+};
+
 use std::{
+    fmt::{
+        Debug
+    },
     io::{
         prelude::*,
         Write,
@@ -26,136 +48,11 @@ use std::{
 };
 
 use serde::{ Serialize, Deserialize};
-
 use bincode::{ deserialize, serialize };
 
 use futurecommander_filesystem::{
-    Container,
-    ReadableFileSystem,
-    tools::normalize
+    Container
 };
-
-pub use futurecommander_filesystem::SerializableEntry;
-
-mod errors;
-
-pub type RequestId = Vec<u8>;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Request {
-    Exit{
-        id: RequestId
-    },
-    List {
-        id: RequestId,
-        path: String,
-    },
-    Status {
-        id: RequestId,
-        path: String,
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
-pub enum ResponseKind {
-    Collection,
-    Entry,
-    String
-}
-
-#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
-pub enum ResponseStatus {
-    Success,
-    Fail,
-    Exit
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Response {
-    pub id: RequestId,
-    pub kind: ResponseKind,
-    pub status: ResponseStatus,
-    pub content: Vec<SerializableEntry>,
-    pub error: Option<String>
-}
-
-impl Response {
-    pub fn decode(payload: &[u8]) -> Result<Self, errors::DaemonError> {
-        Ok(deserialize(payload)?)
-    }
-
-    pub fn encode(self) -> Result<Vec<u8>, errors::DaemonError> {
-        Ok(serialize(&self)?)
-    }
-}
-
-impl Request {
-    pub fn process(&self, container: &mut Container) -> Result<Vec<u8>, errors::DaemonError> {
-        let response = match self {
-            Request::Exit { id } => {
-                return Err(errors::DaemonError::Exit);
-            },
-            Request::List { path, id } => match container.read_dir(
-                normalize(
-                    Path::new(path)
-                ).as_path()
-            ){
-                Ok(collection) =>
-                    (Response {
-                        id: id.clone(),
-                        kind: ResponseKind::Collection,
-                        status: ResponseStatus::Success,
-                        content: collection
-                            .into_iter()
-                            .map(|entry| SerializableEntry::from(&entry))
-                            .collect::<Vec<SerializableEntry>>(),
-                        error: None
-                    }).encode()?
-                ,
-                Err(error) =>
-                    (Response {
-                        id: id.clone(),
-                        kind: ResponseKind::String,
-                        status: ResponseStatus::Fail,
-                        content: Vec::new(),
-                        error: Some(format!("{}", errors::DaemonError::from(error)))
-                    }).encode()?
-            },
-            Request::Status { path, id } => match container.status(
-                normalize(
-                    Path::new(path)
-                ).as_path()
-            ){
-                Ok(entry) =>
-                    (Response {
-                        id: id.clone(),
-                        kind: ResponseKind::Entry,
-                        status: ResponseStatus::Success,
-                        content: vec![ SerializableEntry::from(&entry) ],
-                        error: None
-                    }).encode()?
-                ,
-                Err(error) =>
-                    (Response {
-                        id: id.clone(),
-                        kind: ResponseKind::String,
-                        status: ResponseStatus::Fail,
-                        content: Vec::new(),
-                        error: Some(format!("{}", errors::DaemonError::from(error)))
-                    }).encode()?
-            }
-        };
-        Ok(response)
-    }
-
-    pub fn into_bytes(self) -> Result<Vec<u8>, errors::DaemonError> {
-        Ok(serialize(&self)?)
-    }
-
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, errors::DaemonError> {
-        Ok(deserialize(bytes)?)
-    }
-}
 
 pub struct Daemon<'a, O: Write + 'a, E: Write + 'a> {
     out: &'a mut O,
@@ -172,16 +69,23 @@ impl <'a, O: Write + 'a, E: Write + 'a>Daemon<'a, O, E> {
         }
     }
 
-    fn emit(&mut self, payload: &[u8]) -> Result<(), errors::DaemonError>{
-        self.out.write(
-            Request::from_bytes(payload)?
-                .process(&mut self.container)?
-                .as_slice()
-        )?;
+    fn emit(&mut self, payload: &[u8]) -> Result<(), DaemonError>{
+        if let Some(header) = payload[..1].first() {
+            match RequestHeader::from(*header) {
+                RequestHeader::InvalidHeader => {},
+                RequestHeader::List => {
+                    self.out.write(
+                        ListRequest::from_bytes(&payload[1..])?
+                            .process(&mut self.container)?
+                            .as_slice()
+                    )?;
+                }
+            }
+        }
         Ok(())
     }
 
-    pub fn next(&mut self, stdin: &Stdin) -> Result<(), errors::DaemonError> {
+    pub fn next(&mut self, stdin: &Stdin) -> Result<(), DaemonError> {
         let mut inlock = stdin.lock();
 
         let length = {
@@ -203,7 +107,7 @@ impl <'a, O: Write + 'a, E: Write + 'a>Daemon<'a, O, E> {
         loop {
             let length = match self.next(&stdin) {
                 Ok(_) => {},
-                Err(errors::DaemonError::Exit) => {
+                Err(DaemonError::Exit) => {
                     break;
                 }
                 Err(error) => {

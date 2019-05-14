@@ -59,7 +59,8 @@ module.exports = class FileSystemClient {
 
             this.resolves[id] = resolve;
             this.rejects[id] = reject;
-            this.worker.postMessage([id, request]);
+
+            this.worker.postMessage([{ id, ...request }]);
         });
     }
 };

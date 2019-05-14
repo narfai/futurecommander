@@ -18,6 +18,7 @@
  */
 
 const FileSystemClient = require('./filesystem/client');
+const { FileSystemActions: { list } } = require('./filesystem/actions');
 
 //TODO tcomb, redux, proper promises, shared enums, tests, linter & whole QA
 //TODO easy ui loader
@@ -35,9 +36,10 @@ module.exports = class Application {
         menu.append(new nw.MenuItem({
             label: 'LIST',
             click: () => {
-                this.filesystem_client.send({ type: 'LIST', path: '/home/narfai/tmp' }).then((response) => {
-                    console.log(response);
-                });
+                this.filesystem_client.send(list('/home/narfai/tmp'))
+                    .then((response) => {
+                        console.log(response);
+                    });
             }
         }));
 
