@@ -81,7 +81,7 @@ function release {
            --user narfai \
            --repo futurecommander \
            --tag "${branch}" \
-           --name "${branch}-$build" \
+           --name "${branch}" \
            --description "Auto-release ${branch} ( Build $build )" \
            --pre-release
     else
@@ -90,7 +90,7 @@ function release {
             --user narfai \
             --repo futurecommander \
             --tag "${branch}" \
-            --name "${branch}-$build" \
+            --name "${branch}" \
             --description "Auto-release ${branch} ( Build $build )"
     fi
 
