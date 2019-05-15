@@ -58,9 +58,11 @@ function release {
     git remote add release https://narfai:${GITHUB_TOKEN}@github.com/narfai/futurecommander.git 2> /dev/null
 
     echo "REMOTE TAGS : $(git ls-remote --tags release |grep -i ${branch})"
-    if [ -z "$(git ls-remote --tags release |grep -i ${branch})" ]; then
-        git tag "${branch}"
-        git push --tags release
+    existing_tags=$(git ls-remote --tags release |grep -i ${branch})
+    if [ -z  "${existing_tags}" ]; then
+        echo "${existing_tags}"
+        git tag "${branch}" 2> /dev/null
+        git push --tags release 2> /dev/null
     fi
 
     if [ -z "$($GOTHUB info -u narfai -r futurecommander | grep -i ${branch})" ]; then
