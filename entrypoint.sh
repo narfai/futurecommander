@@ -39,7 +39,7 @@ function build_linux {
 }
 
 function release {
-    if [ -z "${GITHUB_TOKEN}" ]; then
+    if [[ -z "${GITHUB_TOKEN}" ]]; then
         exit 1
     fi
 
@@ -54,18 +54,30 @@ function release {
 
     user_cargo "clippy --all-targets --all-features -- -D warnings"
 
-    git remote remove release 2> /dev/null
-    git remote add release https://narfai:${GITHUB_TOKEN}@github.com/narfai/futurecommander.git 2> /dev/null
-
-    echo "REMOTE TAGS : $(git ls-remote --tags release |grep -i ${branch})"
-    if [ -z "$(git ls-remote --tags release |grep -i ${branch})" ]; then
-        git tag "${branch}"
-        git push --tags release
+    existing_remote=$(git remote -v | grep -i release | tr)
+    echo "EXISTING REMOTE : ${existing_remote}"
+    if [[ ! -z "${existing_remote}" ]]; then
+        git remote remove release 2> /dev/null
     fi
 
-    if [ -z "$($GOTHUB info -u narfai -r futurecommander | grep -i ${branch})" ]; then
+    git remote add release https://narfai:${GITHUB_TOKEN}@github.com/narfai/futurecommander.git 2> /dev/null
+
+    existing_local_tags=$(git tag | grep -i ${branch} | tr)
+    echo "LOCAL TAGS : ${existing_local_tags}"
+    if [[ -z  "${existing_local_tags}" ]]; then
+        git tag "${branch}" 2> /dev/null
+    fi
+
+    existing_remote_tags=$(git ls-remote --tags release | grep -i ${branch} | tr)
+    echo "REMOTE TAGS : ${existing_local_tags}"
+    if [[ -z  "${existing_remote_tags}" ]]; then
+        git push --tags release 2> /dev/null
+    fi
+
+
+    if [[ -z "$(${GOTHUB} info -u narfai -r futurecommander | grep -i ${branch}) | tr" ]]; then
         echo "Create new release"
-        $GOTHUB release \
+        ${GOTHUB} release \
            --user narfai \
            --repo futurecommander \
            --tag "${branch}" \
@@ -74,7 +86,7 @@ function release {
            --pre-release
     else
         echo "Update existing release"
-        $GOTHUB edit \
+        ${GOTHUB} edit \
             --user narfai \
             --repo futurecommander \
             --tag "${branch}" \
@@ -83,7 +95,7 @@ function release {
     fi
 
     echo "Upload $linux_file"
-    $GOTHUB upload \
+    ${GOTHUB} upload \
         --user narfai \
         --repo futurecommander \
         --tag "${branch}" \
@@ -92,7 +104,7 @@ function release {
         --replace
 
     echo "Upload $windows_file"
-    $GOTHUB upload \
+    ${GOTHUB} upload \
         --user narfai \
         --repo futurecommander \
         --tag "${branch}" \
@@ -102,7 +114,7 @@ function release {
 }
 
 echo "BARE UID"
-if [ ${BARE_UID} -ne 0 ]; then
+if [[ ${BARE_UID} -ne 0 ]]; then
     useradd -u "${BARE_UID}" -g staff -d /usr/src/futurecommander futurecommander 2> /dev/null
     chown futurecommander Cargo.toml Cargo.lock
     chmod -R g+w  /usr/local
