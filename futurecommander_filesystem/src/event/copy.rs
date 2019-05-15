@@ -250,8 +250,6 @@ mod real_tests {
             chroot.join("RDIR2/RFILEB").metadata().unwrap().len()
         )
     }
-
-    //TODO replace len tests with md5 sum for copy & move
 }
 
 #[cfg_attr(tarpaulin, skip)]

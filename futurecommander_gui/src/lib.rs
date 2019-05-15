@@ -18,11 +18,6 @@ use futurecommander_daemon::{
 
 mod errors;
 
-//TODO Light iterate over values instead of double copy : https://rustwasm.github.io/docs/wasm-bindgen/reference/iterating-over-js-values.html
-//TODO could be usefull for display apply loaders : https://rustwasm.github.io/docs/wasm-bindgen/reference/receiving-js-closures-in-rust.html
-//TODO the whole client could be in rust and return promises : https://rustwasm.github.io/docs/wasm-bindgen/reference/js-promises-and-rust-futures.html and https://rustwasm.github.io/docs/wasm-bindgen/reference/attributes/on-rust-exports/start.html and https://rustwasm.github.io/docs/wasm-bindgen/reference/attributes/on-rust-exports/skip.html for obscure filesystem internals
-
-
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_name = Request)]
@@ -96,7 +91,6 @@ impl From<&JsRequest> for Context {
 pub fn request(request: &JsRequest) -> Result<Box<[u8]>, JsValue> {
     fn encode_request(request: &JsRequest) -> Result<Box<[u8]>, errors::AddonError> {
         let context = Context::from(request);
-//        log(format!("{:?}", context.debug_keys()).as_str());
         Ok(
             RequestHeader::new(request.get_type().as_str())?
                 .encode_adapter(context)?

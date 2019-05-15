@@ -22,9 +22,6 @@ const FileSystemClient = require('./filesystem/client');
 
 const { Request } = require('./filesystem/request');
 
-//TODO tcomb, redux, proper promises, shared enums, tests, linter & whole QA
-//TODO easy ui loader
-
 module.exports = class Application {
     constructor() {
         this.filesystem_client = new FileSystemClient();
