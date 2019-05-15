@@ -5,11 +5,11 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-[![buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/185011/badge.svg?token=621d010d2c0d56fa721cefa04f9d765b57c055fbc413be83bfbe30368c18ebe4 "buddy pipeline")](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/185011)
-
-[![buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/184827/badge.svg?token=621d010d2c0d56fa721cefa04f9d765b57c055fbc413be83bfbe30368c18ebe4 "buddy pipeline")](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/184827)
-
 ![Docker Build Status](https://img.shields.io/docker/cloud/build/fcadeillan/futurecommander.svg)
+
+[![Release buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/185011/badge.svg?token=621d010d2c0d56fa721cefa04f9d765b57c055fbc413be83bfbe30368c18ebe4 "Releases pipeline")](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/185011)
+
+[![Master buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/184827/badge.svg?token=621d010d2c0d56fa721cefa04f9d765b57c055fbc413be83bfbe30368c18ebe4 "Master pipeline - tests and lint only - buddy pipeline")](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/184827)
 
 ## License
 
