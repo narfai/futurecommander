@@ -1,4 +1,4 @@
-/samples/*_chroot_*
+/samples/**/*_chroot_*
 /target
 **/*.rs.bk
 /cobertura.xml
