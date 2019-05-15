@@ -17,17 +17,6 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
-// module.exports.List = class {
-//     construct(path) {
-//         this.id = null;
-//         this.path = path;
-//         this.type = 'LIST';
-//     }
-// };
-
-const uniqid = require('uniqid');
-
 class Entry {
     constructor({ name = null, is_dir = null, is_file = null }) {
         this.name = name;
@@ -65,56 +54,7 @@ class Response {
     }
 }
 
-class Request {
-    constructor({ id, type, ...parameters}) {
-        this.id = id;
-        this.type = type;
-        this.parameters = parameters;
-    }
-
-    get_id() {
-        return this.id;
-    }
-
-    get_type() {
-        return this.type;
-    }
-
-    get_parameter(key) {
-        return this.parameters.hasOwnProperty(key)
-            ? this.parameters[key]
-            : null;
-    }
-
-    static from({ id, type, ...obj}) {
-        let request = new Request(id, type);
-        switch (type) {
-            case 'LIST':
-                return ListRequest.apply(request, obj);
-            default:
-                throw new Error(`Unknown request ${type}`)
-        }
-    }
-
-    static strong_id() {
-        return Array.from(uniqid.process())
-            .reduce(
-                (acc, cur) => acc + cur.charCodeAt(0).toString(10),
-                '0'
-            )
-    }
-
-    static list(path) {
-        return {
-            id: Request.strong_id(),
-            type: 'LIST',
-            path: path
-        }
-    }
-}
-
 module.exports = {
     Entry,
-    Response,
-    Request
+    Response
 };

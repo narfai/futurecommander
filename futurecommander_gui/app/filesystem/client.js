@@ -17,7 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { Response } = require('./api');
+const { Response } = require('./response');
 
 
 module.exports = class FileSystemClient {

@@ -9,10 +9,12 @@ use wasm_bindgen::{
 };
 
 use futurecommander_daemon::{
+    DaemonError,
     Request,
     Response,
-    ListRequest,
-    RequestHeader
+    RequestHeader,
+    Context,
+    ContextType
 };
 
 mod errors;
@@ -26,42 +28,81 @@ mod errors;
 extern "C" {
     #[wasm_bindgen(js_name = Request)]
     pub type JsRequest;
-    #[wasm_bindgen(method)]
-    pub fn get_id(this: &JsRequest) -> String;
 
     #[wasm_bindgen(method)]
     pub fn get_type(this: &JsRequest) -> String;
 
     #[wasm_bindgen(method)]
-    pub fn get_parameter(this: &JsRequest, key: &str) -> Option<String>;
+    pub fn next_key(this: &JsRequest) -> Option<String>;
+
+    #[wasm_bindgen(method)]
+    pub fn get_parameter(this: &JsRequest, key: &str) -> JsValue;
+
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
 }
 
-impl From<&JsRequest> for Result<ListRequest, errors::AddonError> {
-    fn from(js_request: &JsRequest) -> Self {
-        match js_request.get_parameter("path") {
-            Some(path) => Ok(
-                ListRequest::new(
-                js_request.get_id().as_str(),
-                path.as_str())
-            ),
-            None => Err(errors::AddonError::InvalidArgument("path".to_string()))
+#[derive(Clone)]
+struct ContextValueWrapper(pub JsValue, pub String);
+
+impl ContextType for ContextValueWrapper {
+    fn to_bool(&self) -> Result<bool, DaemonError> {
+        if self.0.is_null() {
+            return Err(DaemonError::ContextValueDoesNotExists(self.1.clone()))
         }
+
+        if let Some(b) = self.0.as_bool() {
+            Ok(b)
+        } else {
+            Err(DaemonError::ContextCannotCast("JsValue".to_string(), "bool".to_string()))
+        }
+    }
+
+    fn to_string(&self) -> Result<String, DaemonError> {
+        if self.0.is_null() {
+            return Err(DaemonError::ContextValueDoesNotExists(self.1.clone()))
+        }
+
+        if let Some(s) = self.0.as_string() {
+            Ok(s)
+        } else {
+            Err(DaemonError::ContextCannotCast("JsValue".to_string(), "string".to_string()))
+        }
+    }
+
+    fn box_clone(&self) -> Box<dyn ContextType> {
+        Box::new(self.clone())
+    }
+}
+
+impl From<&JsRequest> for Context {
+    fn from(js_request: &JsRequest) -> Self {
+        let mut context = Context::default();
+        while let Some(key) = js_request.next_key() {
+            context.set(
+                key.as_str(),
+                Box::new(
+                    ContextValueWrapper(
+                        js_request.get_parameter(key.as_str()),
+                        key.clone()
+                    )
+                )
+            )
+        }
+        context
     }
 }
 
 #[wasm_bindgen]
 pub fn request(request: &JsRequest) -> Result<Box<[u8]>, JsValue> {
     fn encode_request(request: &JsRequest) -> Result<Box<[u8]>, errors::AddonError> {
-        match request.get_type().as_str() {
-            key if RequestHeader::list() == key => Ok(
-                Result::<ListRequest, errors::AddonError>::from(request)?
-                .as_bytes()?
+        let context = Context::from(request);
+//        log(format!("{:?}", context.debug_keys()).as_str());
+        Ok(
+            RequestHeader::new(request.get_type().as_str())?
+                .encode_adapter(context)?
                 .into_boxed_slice()
-            ),
-            _ => Err(
-                errors::AddonError::InvalidRequest(request.get_type())
-            ),
-        }
+        )
     }
 
     match encode_request(request) {

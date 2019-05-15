@@ -20,6 +20,7 @@
 mod errors;
 mod request;
 mod response;
+mod context;
 
 pub use futurecommander_filesystem::SerializableEntry;
 
@@ -27,20 +28,21 @@ pub use self::{
     request::{
         Request,
         RequestHeader,
-        ListRequest
+        RequestAdapter
     },
     response::{
         Response,
         ResponseKind,
         ResponseStatus
     },
+    context::{
+        ContextType,
+        Context
+    },
     errors::DaemonError
 };
 
 use std::{
-    fmt::{
-        Debug
-    },
     io::{
         prelude::*,
         Write,
@@ -49,20 +51,23 @@ use std::{
     path::{ Path }
 };
 
-use serde::{ Serialize, Deserialize};
-use bincode::{ deserialize, serialize };
-
 use futurecommander_filesystem::{
     Container
 };
 
-pub struct Daemon<'a, O: Write + 'a, E: Write + 'a> {
+pub struct Daemon<'a, O, E>
+    where O: Write + 'a,
+          E: Write + 'a {
+
     out: &'a mut O,
     err: &'a mut E,
     container: Container
 }
 
-impl <'a, O: Write + 'a, E: Write + 'a>Daemon<'a, O, E> {
+impl <'a, O, E>Daemon<'a, O, E>
+    where O: Write + 'a,
+          E: Write + 'a {
+
     pub fn new(out: &'a mut O, err: &'a mut E) -> Daemon<'a, O, E> {
         Daemon {
             out,
@@ -72,18 +77,11 @@ impl <'a, O: Write + 'a, E: Write + 'a>Daemon<'a, O, E> {
     }
 
     fn emit(&mut self, payload: &[u8]) -> Result<(), DaemonError>{
-        if let Some(header) = payload[..1].first() {
-            match RequestHeader::from(*header) {
-                RequestHeader::InvalidHeader => {},
-                RequestHeader::List => {
-                    self.out.write(
-                        ListRequest::from_bytes(&payload[1..])?
-                            .process(&mut self.container)?
-                            .as_slice()
-                    )?;
-                }
-            }
-        }
+        let response = RequestHeader::parse(&payload[..RequestHeader::len()])?
+            .decode_adapter(&payload[RequestHeader::len()..])?
+            .process(&mut self.container)?;
+
+        self.out.write(&response[..])?;
         Ok(())
     }
 

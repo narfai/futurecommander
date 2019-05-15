@@ -34,7 +34,11 @@ use futurecommander_filesystem::{
 pub enum DaemonError {
     Io(io::Error),
     Query(QueryError),
+    ContextKeyDoesNotExists(String),
+    ContextValueDoesNotExists(String),
+    ContextCannotCast(String, String),
     BinaryEncode(BincodeError),
+    InvalidRequest,
     Exit
 }
 
@@ -61,7 +65,11 @@ impl fmt::Display for DaemonError {
         match self {
             DaemonError::Io(error) => write!(f, "I/O error {}", error),
             DaemonError::Query(error) => write!(f, "Filesystem query error {}", error),
+            DaemonError::InvalidRequest => write!(f, "Invalid Request"),
             DaemonError::BinaryEncode(error) => write!(f, "Binary encode error {:?}", error),
+            DaemonError::ContextKeyDoesNotExists(key) => write!(f, "Context key {} does not exists", key),
+            DaemonError::ContextValueDoesNotExists(key) => write!(f, "Context value for key {} does not exists", key),
+            DaemonError::ContextCannotCast(from, to) => write!(f, "Context cannot cast from {} to {}", from, to),
             DaemonError::Exit => write!(f, "Exit"),
         }
     }

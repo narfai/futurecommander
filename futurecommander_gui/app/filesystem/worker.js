@@ -22,7 +22,7 @@ const { spawn } = require('child_process');
 
 const addon = require('pkg/futurecommander_gui');
 
-const { Request } = require('./api');
+const { Request } = require('./request');
 
 class FileSystemWorker {
     constructor() {
@@ -30,7 +30,7 @@ class FileSystemWorker {
     }
 
     emit(request) {
-        console.log('WORKER REQUEST', request);
+        console.log('WORKER REQUEST', addon.request(new Request(request)));
         this.filesystem.stdin.write(
             addon.request(
                 new Request(request)
@@ -53,6 +53,7 @@ class FileSystemWorker {
             );
 
             this.filesystem.stdout.on('data', (response) => {
+                console.log('RESPONSE', response);
                 postMessage(
                     addon.decode(response)
                 );

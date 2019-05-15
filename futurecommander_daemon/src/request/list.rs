@@ -18,7 +18,8 @@
  */
 
 use std::{
-    path::{ Path }
+    path::{ Path },
+    collections::{ HashMap }
 };
 
 use serde::{ Serialize, Deserialize};
@@ -38,54 +39,55 @@ use crate::{
     Response,
     ResponseStatus,
     ResponseKind,
-    RequestHeader
+    RequestHeader,
+    Context,
+    RequestAdapter
+
 };
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ListRequest {
+pub struct ListAction {
     pub id: String,
-    pub r#type: String,
     pub path: String
 }
 
-impl ListRequest {
-    pub fn new(id: &str, path: &str) -> ListRequest {
-        ListRequest {
-            id: id.to_string(),
-            r#type: "LIST".to_string(),
-            path: path.to_string()
-        }
+impl ListAction {
+    pub fn adapter(header: RequestHeader, context: Context) -> Result<RequestAdapter<ListAction>, DaemonError> {
+        Ok(
+            RequestAdapter(
+                ListAction {
+                    id: context.get("id")?.to_string()?,
+                    path: context.get("path")?.to_string()?,
+                }
+            )
+        )
     }
 }
 
-impl Request for ListRequest {
-    fn header() -> RequestHeader {
-        RequestHeader::List
-    }
-
+impl Request for RequestAdapter<ListAction> {
     fn process(&self, container: &mut Container) -> Result<Vec<u8>, DaemonError> {
         let response = match container.read_dir(
             normalize(
-                Path::new(&self.path)
+                Path::new(&self.0.path)
             ).as_path()
         ){
             Ok(collection) =>
                 (Response {
-                    id: self.id.clone(),
+                    id: self.0.id.clone(),
                     kind: ResponseKind::Collection,
                     status: ResponseStatus::Success,
                     content: Some(
                         collection
-                        .into_iter()
-                        .map(|entry| SerializableEntry::from(&entry))
-                        .collect::<Vec<SerializableEntry>>()
+                            .into_iter()
+                            .map(|entry| SerializableEntry::from(&entry))
+                            .collect::<Vec<SerializableEntry>>()
                     ),
                     error: None
                 }).encode()?
             ,
             Err(error) =>
                 (Response {
-                    id: self.id.clone(),
+                    id: self.0.id.clone(),
                     kind: ResponseKind::Collection,
                     status: ResponseStatus::Fail,
                     content: None,
@@ -93,15 +95,5 @@ impl Request for ListRequest {
                 }).encode()?
         };
         Ok(response)
-    }
-
-    fn as_bytes(&self) -> Result<Vec<u8>, DaemonError> {
-        let mut request = vec![Self::header() as u8];
-        request.append(&mut serialize(self)?);
-        Ok(request)
-    }
-
-    fn from_bytes(bytes: &[u8]) -> Result<Self, DaemonError> where Self: Sized {
-        Ok(deserialize(bytes)?)
     }
 }

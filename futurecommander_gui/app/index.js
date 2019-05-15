@@ -20,7 +20,7 @@
 const FileSystemClient = require('./filesystem/client');
 
 
-const { Request } = require('./filesystem/api');
+const { Request } = require('./filesystem/request');
 
 //TODO tcomb, redux, proper promises, shared enums, tests, linter & whole QA
 //TODO easy ui loader
@@ -31,40 +31,30 @@ module.exports = class Application {
     }
 
     run() {
-        // Create an empty context menu
         var menu = new nw.Menu();
 
-        // Add some items with label
         menu.append(new nw.MenuItem({
             label: 'LIST',
             click: () => {
-                this.filesystem_client.send(Request.list('/home/narfai/tmp'))
+                this.filesystem_client.send(Request.list({ path: '/home/narfai/tmp' }))
                     .then((response) => {
                         console.log(response);
                     });
             }
         }));
 
-        // menu.append(new nw.MenuItem({
-        //     label: 'TEST ERROR',
-        //     click: function() {
-        //         // filesystem.stdin.write("test_error\n");
-        //     }
-        // }));
-        //
-        // menu.append(new nw.MenuItem({type: 'separator'}));
-        // menu.append(new nw.MenuItem({
-        //     label: 'Exit',
-        //     click: function() {
-        //         // filesystem.stdin.write("exit\n");
-        //     }
-        // }));
+        menu.append(new nw.MenuItem({
+            label: 'STATUS',
+            click: () => {
+                this.filesystem_client.send(Request.status({ path: '/home/narfai/tmp' }))
+                    .then((response) => {
+                        console.log(response);
+                    });
+            }
+        }));
 
-        // Hooks the "contextmenu" event
         document.body.addEventListener('contextmenu', function (ev) {
-            // Prevent showing default context menu
             ev.preventDefault();
-            // Popup the native context menu at place you click
             menu.popup(ev.x, ev.y);
 
             return false;

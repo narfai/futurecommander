@@ -18,18 +18,31 @@
  */
 
 mod list;
+//mod status;
 
 pub use self::{
-    list::ListRequest
+    list::ListAction,
+//    status::StatusRequest
 };
+
+use serde::{
+    Serialize,
+    Deserialize
+};
+
+use bincode::{ deserialize, serialize };
 
 use crate:: {
     errors::DaemonError,
+    Context
 };
 
 use std::{
     fmt::{
-        Debug
+        Debug,
+        Display,
+        Formatter,
+        Result as FmtResult
     },
 };
 
@@ -37,28 +50,68 @@ use futurecommander_filesystem::{
     Container
 };
 
-pub trait Request : Debug {
-    fn header() -> RequestHeader where Self:Sized;
+pub trait Request: Debug {
     fn process(&self, container: &mut Container) -> Result<Vec<u8>, DaemonError>;
-    fn as_bytes(&self) -> Result<Vec<u8>, DaemonError>;
-    fn from_bytes(bytes: &[u8]) -> Result<Self, DaemonError> where Self: Sized;
 }
 
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 pub enum RequestHeader {
-    InvalidHeader,
-    List
+    LIST,
+//    Status
 }
 
 impl RequestHeader {
-    pub fn list() -> &'static str { "LIST" }
-}
+    pub fn encode_adapter(self, context: Context) -> Result<Vec<u8>, DaemonError> {
+        let mut binary_request = vec![self as u8];
+        match self {
+            RequestHeader::LIST => {
+                binary_request.append(
+                    &mut serialize(&ListAction::adapter(self, context)?)?
+                )
+            }
+        }
+        Ok(binary_request)
+    }
 
-impl From<u8> for RequestHeader {
-    fn from(code: u8) -> RequestHeader {
-        if (RequestHeader::List as u8) == code {
-            RequestHeader::List
+    pub fn decode_adapter(self, bytes: &[u8]) -> Result<Box<Request>, DaemonError> {
+        match self {
+            RequestHeader::LIST => {
+                let request: RequestAdapter<ListAction> = deserialize(bytes)?;
+                Ok(Box::new(request))
+            },
+            _ => Err(DaemonError::InvalidRequest)
+        }
+    }
+
+    pub fn parse(bytes: &[u8]) -> Result<Self, DaemonError> {
+        if let Some(byte) = bytes.first() {
+            match byte {
+                b if b == &(RequestHeader::LIST as u8) => Ok(RequestHeader::LIST),
+//                b if b == &(RequestHeader::Status as u8) => Ok(RequestHeader::Status),
+                _ => Err(DaemonError::InvalidRequest)
+            }
         } else {
-            RequestHeader::InvalidHeader
+            Err(DaemonError::InvalidRequest)
+        }
+    }
+
+    pub fn len() -> usize {
+        1 as usize
+    }
+
+    pub fn new(s: &str) -> Result<RequestHeader, DaemonError> {
+        match s {
+            t if t == RequestHeader::LIST.to_string() => Ok(RequestHeader::LIST),
+            _ => Err(DaemonError::InvalidRequest)
         }
     }
 }
+
+impl Display for RequestHeader {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestAdapter<T: Serialize>(pub T);
