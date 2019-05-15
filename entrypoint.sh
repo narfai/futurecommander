@@ -54,7 +54,7 @@ function release {
 
     user_cargo "clippy --all-targets --all-features -- -D warnings"
 
-    existing_remote=$(git remote -v | grep -i release | tr)
+    existing_remote=$(git remote -v | grep -i release | xargs)
     echo "EXISTING REMOTE : ${existing_remote}"
     if [[ ! -z "${existing_remote}" ]]; then
         git remote remove release 2> /dev/null
@@ -62,20 +62,20 @@ function release {
 
     git remote add release https://narfai:${GITHUB_TOKEN}@github.com/narfai/futurecommander.git 2> /dev/null
 
-    existing_local_tags=$(git tag | grep -i ${branch} | tr)
+    existing_local_tags=$(git tag | grep -i ${branch} | xargs)
     echo "LOCAL TAGS : ${existing_local_tags}"
     if [[ -z  "${existing_local_tags}" ]]; then
         git tag "${branch}" 2> /dev/null
     fi
 
-    existing_remote_tags=$(git ls-remote --tags release | grep -i ${branch} | tr)
+    existing_remote_tags=$(git ls-remote --tags release | grep -i ${branch} | xargs)
     echo "REMOTE TAGS : ${existing_local_tags}"
     if [[ -z  "${existing_remote_tags}" ]]; then
         git push --tags release 2> /dev/null
     fi
 
 
-    if [[ -z "$(${GOTHUB} info -u narfai -r futurecommander | grep -i ${branch}) | tr" ]]; then
+    if [[ -z "$(${GOTHUB} info -u narfai -r futurecommander | grep -i ${branch} | xargs)" ]]; then
         echo "Create new release"
         ${GOTHUB} release \
            --user narfai \
