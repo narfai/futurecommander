@@ -32,12 +32,14 @@ use crate::{
 
 use std::borrow::Cow::{self, Borrowed, Owned};
 
-use rustyline::completion::{Completer, Pair};
-use rustyline::error::ReadlineError;
-
-use rustyline::highlight::{Highlighter, MatchingBracketHighlighter};
-use rustyline::hint::Hinter;
-use rustyline::{ Helper };
+use rustyline::{
+    error::ReadlineError,
+    Helper,
+    Context,
+    hint::Hinter,
+    highlight::{Highlighter, MatchingBracketHighlighter},
+    completion::{Completer, Pair}
+};
 
 static WHITE_PROMPT: &'static str = "\x1b[1;97m>>\x1b[0m ";
 static RED_PROMPT: &'static str = "\x1b[1;91m>>\x1b[0m ";
@@ -207,7 +209,7 @@ impl  <'a>VirtualHelper<'a>  {
 impl <'a> Completer for VirtualHelper<'a>  {
     type Candidate = Pair;
 
-    fn complete(&self, line: &str, pos: usize) -> Result<(usize, Vec<Pair>), ReadlineError> {
+    fn complete(&self, line: &str, pos: usize, _ctx: &Context<'_>) -> Result<(usize, Vec<Pair>), ReadlineError> {
         let input : Vec<&str> = line.split(' ').collect();
 
         if input.len() == 1 {
@@ -219,7 +221,7 @@ impl <'a> Completer for VirtualHelper<'a>  {
 }
 
 impl <'a> Hinter for VirtualHelper<'a>  {
-    fn hint(&self, _line: &str, _pos: usize) -> Option<String> { None }
+    fn hint(&self, _line: &str, _pos: usize, _ctx: &Context<'_>) -> Option<String> { None }
 }
 
 impl <'a> Highlighter for VirtualHelper<'a>  {
