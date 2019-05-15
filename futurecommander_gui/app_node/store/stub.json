@@ -1,0 +1,25 @@
+{
+  "application": {},
+  "explorer": [
+    {
+      "id": "4n5pxq24kpiob12og9",
+      "cwd": "/home/narfai/tmp2",
+      "entries" : [
+        {
+          "name": "Test_directory",
+          "children": [1],
+          "is_dir": true,
+          "is_file": false,
+          "depth": 0
+        },
+        {
+          "name": "Test_child",
+          "children": [],
+          "is_dir": false,
+          "is_file": true,
+          "depth": 1
+        }
+      ]
+    }
+  ]
+}

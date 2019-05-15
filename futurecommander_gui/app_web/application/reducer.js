@@ -17,9 +17,15 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-console.log('MAIN');
+const application_reducer = (state = {}, action) => {
+    switch(action.type) {
 
-const { NodeApplication } = require('./app_node/main');
-const app = new NodeApplication();
+        case 'APPLICATION_LOAD_STATE':
+            return state;
+    }
+    return state;
+};
 
-app.run({ nw });
+module.exports = {
+    application_reducer
+};

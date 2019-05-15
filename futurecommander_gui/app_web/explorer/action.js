@@ -17,9 +17,11 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-console.log('MAIN');
 
-const { NodeApplication } = require('./app_node/main');
-const app = new NodeApplication();
+class ExplorerAction {
 
-app.run({ nw });
+}
+
+module.exports = {
+    ExplorerAction
+};

@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2019 François CADEILLAN
  *
@@ -18,26 +17,32 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const m = nw.require('mithril');
-
-class Application {
-    constructor({ 'attrs': {} }){
-        // this.persister = persister;
-        // this.provider = provider;
-        // this.actions = actions;
-        // this.getState = this.provider.provide(
-        //     ({ 'contact': { name, title }, 'application': { locked, modifiedAt }}) => ({ locked, name, title, modifiedAt })
-        // );
-
+class Action {
+    constructor({ dispatch }){
+        this.storeDispatch = dispatch;
     }
 
-    view(){
-        // let { locked, name, title } = this.getState();
+    dispatch(action){
+        return this.storeDispatch(action);
+    }
 
-        return (m("h1", "Hello web context inside node"));
+    delegate(actionGenerator){
+        return () => this.storeDispatch(actionGenerator.apply(null, Array.prototype.slice.call(arguments)));
+    }
+
+    event(actionGenerator, redraw = false){
+        return (event) => {
+            event.redraw = redraw;
+            let { 'target': { value }} = event;
+            this.storeDispatch(actionGenerator.apply(actionGenerator, [
+                    value,
+                    ...Array.prototype.slice.call(arguments)
+                ]
+            ));
+        };
     }
 }
 
 module.exports = {
-    Application
+    Action
 };

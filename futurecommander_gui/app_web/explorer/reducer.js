@@ -17,9 +17,15 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const mithril = nw.require('mithril');
-const { Application } = nw.require('./application.js');
+const reducer = (state = {}, action) => {
+    switch(action.type) {
 
-console.log('WEB MAIN');
+        case 'APPLICATION_LOAD_STATE':
+            return state;
+    }
+    return state;
+};
 
-mithril.mount(document.body, () => new Application({ 'attrs': {}}));
+module.exports = {
+    reducer
+};

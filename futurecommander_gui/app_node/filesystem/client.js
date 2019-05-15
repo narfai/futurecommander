@@ -18,19 +18,20 @@
  */
 
 const { Response } = require('./response');
+const { Request } = require('./request');
 
 
-module.exports = class FileSystemClient {
+class FileSystemClient {
     constructor() {
         this.resolves = {};
         this.rejects = {};
-        this.worker = new Worker('./worker.js');
+        this.worker = new Worker('app_node/filesystem/worker.js');
         this.worker.onmessage = ({ data }) => {
             const response = new Response(data);
             try {
                 const resolve = this.resolves[response.id];
                 if (resolve) {
-                    resolve(response.result())
+                    resolve(response)
                 }
             } catch(error) {
                 const reject = this.rejects[response.id];
@@ -62,4 +63,10 @@ module.exports = class FileSystemClient {
             this.worker.postMessage([request]);
         });
     }
+}
+
+module.exports = {
+    FileSystemClient,
+    Response,
+    Request
 };

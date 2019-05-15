@@ -17,9 +17,13 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-console.log('MAIN');
 
-const { NodeApplication } = require('./app_node/main');
-const app = new NodeApplication();
+class ApplicationAction {
+    static loadState(state){
+        return { 'type': 'APPLICATION_LOAD_STATE', state };
+    }
+}
 
-app.run({ nw });
+module.exports = {
+    ApplicationAction
+};

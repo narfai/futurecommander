@@ -28,22 +28,17 @@ class NodeApplication {
 
     run({ nw }) {
         nw.Window.open(
-            'node/web/index.html',
+            'app_web/index.html',
             {
                 'id': 'main',
                 new_instance: false,
-                inject_js_end: 'node/web/main.js'
+                inject_js_end: 'app_web/index.js'
             },
-            // function (win) { //Browser context - Same node context - Same thread until new_instance: true
-            //     const mithril = nw.require('mithril');
-            //     const { WebApplication } = nw.require('application/webapp/main.js');
-            //
-            //     console.log(win);
-            //     win.on('loaded', () => {
-            //         win.showDevTools();
-            //         mithril.mount(win.document.body, () => new WebApplication({ 'attrs': {}}))
-            //     });
-            // }
+            function(win) {
+                win.on('loaded', () => {
+                    win.showDevTools();
+                });
+            }
         );
 
     }
