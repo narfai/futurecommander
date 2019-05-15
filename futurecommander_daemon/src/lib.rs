@@ -47,8 +47,7 @@ use std::{
         prelude::*,
         Write,
         Stdin
-    },
-    path::{ Path }
+    }
 };
 
 use futurecommander_filesystem::{
@@ -105,13 +104,13 @@ impl <'a, O, E>Daemon<'a, O, E>
         let stdin = std::io::stdin();
 
         loop {
-            let length = match self.next(&stdin) {
+            match self.next(&stdin) {
                 Ok(_) => {},
                 Err(DaemonError::Exit) => {
                     break;
                 }
                 Err(error) => {
-                    write!(self.err, "{}", error);
+                    write!(self.err, "{}", error).unwrap();
                     break;
                 }
             };

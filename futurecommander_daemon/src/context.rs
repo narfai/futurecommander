@@ -18,7 +18,6 @@
  */
 
 use std::{
-    path::{ Path },
     collections::{ HashMap }
 };
 

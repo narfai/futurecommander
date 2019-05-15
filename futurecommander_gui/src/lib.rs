@@ -10,7 +10,6 @@ use wasm_bindgen::{
 
 use futurecommander_daemon::{
     DaemonError,
-    Request,
     Response,
     RequestHeader,
     Context,

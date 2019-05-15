@@ -26,7 +26,6 @@ use futurecommander_daemon::{
 };
 
 use std::{
-    io,
     error,
     fmt
 };

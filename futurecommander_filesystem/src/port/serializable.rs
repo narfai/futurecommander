@@ -17,8 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 use std::{
-    path::{ PathBuf, Path },
-    ffi::{ OsString, OsStr }
+    path::{ PathBuf }
 };
 
 use serde::{ Serialize, Deserialize };

@@ -78,8 +78,7 @@ impl RequestHeader {
             RequestHeader::LIST => {
                 let request: RequestAdapter<ListAction> = deserialize(bytes)?;
                 Ok(Box::new(request))
-            },
-            _ => Err(DaemonError::InvalidRequest)
+            }
         }
     }
 

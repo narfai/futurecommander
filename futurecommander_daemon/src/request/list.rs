@@ -18,13 +18,10 @@
  */
 
 use std::{
-    path::{ Path },
-    collections::{ HashMap }
+    path::{ Path }
 };
 
 use serde::{ Serialize, Deserialize};
-
-use bincode::{ deserialize, serialize };
 
 use futurecommander_filesystem::{
     Container,
@@ -39,7 +36,6 @@ use crate::{
     Response,
     ResponseStatus,
     ResponseKind,
-    RequestHeader,
     Context,
     RequestAdapter
 

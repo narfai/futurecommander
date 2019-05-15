@@ -21,7 +21,7 @@ use futurecommander_shell::Shell;
 use futurecommander_daemon::Daemon;
 use std::{
     env,
-    io::{ Write, Read }
+    io::{ Write }
 };
 
 
