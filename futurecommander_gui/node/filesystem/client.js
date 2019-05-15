@@ -24,7 +24,7 @@ module.exports = class FileSystemClient {
     constructor() {
         this.resolves = {};
         this.rejects = {};
-        this.worker = new Worker('./app/filesystem/worker.js');
+        this.worker = new Worker('./worker.js');
         this.worker.onmessage = ({ data }) => {
             const response = new Response(data);
             try {
