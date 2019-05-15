@@ -52,7 +52,7 @@ pub struct ListAction {
 }
 
 impl ListAction {
-    pub fn adapter(header: RequestHeader, context: Context) -> Result<RequestAdapter<ListAction>, DaemonError> {
+    pub fn adapter(context: Context) -> Result<RequestAdapter<ListAction>, DaemonError> {
         Ok(
             RequestAdapter(
                 ListAction {

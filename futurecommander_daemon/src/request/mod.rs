@@ -66,7 +66,7 @@ impl RequestHeader {
         match self {
             RequestHeader::LIST => {
                 binary_request.append(
-                    &mut serialize(&ListAction::adapter(self, context)?)?
+                    &mut serialize(&ListAction::adapter(context)?)?
                 )
             }
         }
