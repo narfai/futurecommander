@@ -5,11 +5,13 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-[![buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/185011/badge.svg?token=621d010d2c0d56fa721cefa04f9d765b57c055fbc413be83bfbe30368c18ebe4 "buddy pipeline")](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/185011)
-
-[![buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/184827/badge.svg?token=621d010d2c0d56fa721cefa04f9d765b57c055fbc413be83bfbe30368c18ebe4 "buddy pipeline")](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/184827)
-
 ![Docker Build Status](https://img.shields.io/docker/cloud/build/fcadeillan/futurecommander.svg)
+
+_Release_ [![buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/185011/badge.svg?token=621d010d2c0d56fa721cefa04f9d765b57c055fbc413be83bfbe30368c18ebe4 "buddy pipeline")](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/185011)
+
+_Master_ [![buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/184827/badge.svg?token=621d010d2c0d56fa721cefa04f9d765b57c055fbc413be83bfbe30368c18ebe4 "buddy pipeline")](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/184827)
+
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=narfai/futurecommander)](https://dependabot.com)
 
 ## License
 
@@ -83,11 +85,10 @@ https://trello.com/b/A2BvQdR9/futurecommander
 
 ### Linux x86_64
 
-https://github.com/narfai/futurecommander/releases/download/vlatest/futurecommander_linux64_latest
+https://github.com/narfai/futurecommander/releases/download/release.v0.4.0/futurecommander_linux64_release.v0.4.0
 
 ### Windows x86_64 ( mingw-w64 )
 
-https://github.com/narfai/futurecommander/releases/download/vlatest/futurecommander_win64_latest.exe
-
+https://github.com/narfai/futurecommander/releases/download/release.v0.4.0/futurecommander_win64_release.v0.4.0.exe
 
 
