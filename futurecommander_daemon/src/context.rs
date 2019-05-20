@@ -53,7 +53,7 @@ impl Context {
 
     pub fn debug_keys(&self) -> Vec<String> {
         let mut debug = Vec::new();
-        for (v, _) in &self.values {
+        for v in self.values.keys() {
             debug.push(v.clone());
         }
         debug
