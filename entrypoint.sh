@@ -75,7 +75,7 @@ function release {
     fi
 
 
-    if [[ -z "$(${GOTHUB} info -u narfai -r futurecommander | grep -i ${branch} | xargs)" ]]; then
+    if [[ -z "$(${GOTHUB} info --user narfai --repo futurecommander | jq '.Releases' | grep -i ${branch} | xargs)" ]]; then
         echo "Create new release"
         ${GOTHUB} release \
            --user narfai \
