@@ -152,3 +152,19 @@ https://serde.rs/
 
 ## An OS in rust ( seriously )
 https://os.phil-opp.com/
+
+## Http server
+https://actix.rs/
+
+## wasm
+https://rustwasm.github.io/wasm-bindgen/reference
+https://nodejs.org/api/child_process.html
+
+## thread about running cross platform process from javascript
+
+https://stackoverflow.com/questions/26924209/node-js-child-process-doesnt-work-in-node-webkit
+
+## binary encoding / decoding
+
+https://peteris.rocks/blog/serialize-any-object-to-a-binary-format-in-rust/
+https://github.com/TyOverby/bincode

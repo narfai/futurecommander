@@ -18,14 +18,16 @@
  */
 
 use futurecommander_shell::Shell;
+use futurecommander_daemon::Daemon;
 use std::{
     env,
-    io::Write
+    io::{ Write }
 };
+
 
 fn main() {
     let mut shell = Shell::default();
-    let args = env::args().skip(1);
+    let args : Vec<String> = env::args().skip(1).collect();
 
     let mut stdout = std::io::stdout();
     let mut stderr = std::io::stderr();
@@ -35,6 +37,8 @@ fn main() {
             Ok(_) => {},//Exit gracefully
             Err(error) => write!(&mut stderr, "{}", error).unwrap()
         }
+    } else if &args[0].trim() == &"daemon" {
+        Daemon::new(&mut stdout, &mut stderr).run();
     } else {
         match shell.run_single(env::args(), &mut stdout, &mut stderr) {
             Ok(_) => {},//Exit gracefully
