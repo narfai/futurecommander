@@ -65,9 +65,6 @@ impl Atomic {
             RemoveMaintainedEmptyDirectory(path) => fs.remove_maintained_empty_directory(path.as_path())
         }
     }
-
-    //TODO apply_at(op position) => makes the index bubble through errors
-    //TODO rollback & reverse there
 }
 
 #[derive(Default, Debug)]

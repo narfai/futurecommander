@@ -38,7 +38,9 @@ pub use self::{
         Entry,
         ReadableFileSystem,
         WriteableFileSystem,
-        EntryAdapter
+        EntryAdapter,
+        EntryCollection,
+        SerializableEntry
     },
     event::*,
     container::Container
