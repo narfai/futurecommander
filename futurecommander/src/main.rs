@@ -32,12 +32,12 @@ fn main() {
     let mut stdout = std::io::stdout();
     let mut stderr = std::io::stderr();
 
-    if args.len() < 1 {
+    if args.is_empty() {
         match shell.run_readline(&mut stdout, &mut stderr) {
             Ok(_) => {},//Exit gracefully
             Err(error) => write!(&mut stderr, "{}", error).unwrap()
         }
-    } else if &args[0].trim() == &"daemon" {
+    } else if args[0].trim() == "daemon" {
         Daemon::new(&mut stdout, &mut stderr).run();
     } else {
         match shell.run_single(env::args(), &mut stdout, &mut stderr) {
