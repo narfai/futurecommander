@@ -11,6 +11,8 @@ _Release_ [![buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipe
 
 _Master_ [![buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/184827/badge.svg?token=621d010d2c0d56fa721cefa04f9d765b57c055fbc413be83bfbe30368c18ebe4 "buddy pipeline")](https://app.buddy.works/narfai/futurecommander/pipelines/pipeline/184827)
 
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=narfai/futurecommander)](https://dependabot.com)
+
 ## License
 
 This is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License.
