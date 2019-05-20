@@ -80,7 +80,7 @@ impl <'a, O, E>Daemon<'a, O, E>
             .decode_adapter(&payload[RequestHeader::len()..])?
             .process(&mut self.container)?;
 
-        self.out.write(&response[..])?;
+        self.out.write_all(&response)?;
         Ok(())
     }
 
