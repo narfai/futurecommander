@@ -18,28 +18,10 @@
  */
 
 const mithril               = nw.require('mithril');
-const { Application }       = nw.require('./application.js');
-
 const { FileSystemClient }  = require('../app_node/filesystem/client');
-const { Provider }          = require('../app_node/store/provider');
-const { Action }            = require('../app_node/store/action');
-
-const preload    = {}; //TODO stub
-const reducers   = {};
-const middleware = {};
-
-const provider          = new Provider({ preload, reducers, middleware });
-const action            = new Action(provider.store);
 
 const filesystem_client = new FileSystemClient();
 
-mithril.mount(document.body, () => new Application({
-        'attrs': {
-            filesystem_client,
-            provider,
-            action
-        }
-    })
-);
+mithril.render(document.body, mithril('h1', 'Hello World'));
 
 console.log('WEB MAIN');
