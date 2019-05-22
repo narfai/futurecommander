@@ -17,11 +17,55 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const mithril               = nw.require('mithril');
 const { FileSystemClient }  = require('../app_node/filesystem/client');
+const { filesystem_thunk, readyStatePromise } = require('./middleware.js');
+
+const m = nw.require('mithril');
+const {
+    Registry,
+    register_middleware,
+    attach_middleware,
+    detach_middleware,
+    Action
+} = nw.require('openmew-renderer');
+
+
+const {
+    createStore,
+    applyMiddleware
+} = nw.require('redux');
+
 
 const filesystem_client = new FileSystemClient();
+const registry = new Registry();
+const store = createStore(
+    (state) => state,
+    {},//nw.require('app_web/mock'),
+    applyMiddleware(
+        register_middleware(registry),
+        attach_middleware(registry),
+        detach_middleware(registry),
+        // readyStatePromise,
+        filesystem_thunk(filesystem_client)
+    )
+);
 
-mithril.render(document.body, mithril('h1', 'Hello World'));
+const ApplicationBlueprint = nw.require('./application');
+const EntryBlueprint = nw.require('./entry');
+
+store.dispatch(Action.REGISTER_BLUEPRINT(ApplicationBlueprint));
+store.dispatch(Action.REGISTER_BLUEPRINT(EntryBlueprint));
+
+store.dispatch(Action.ATTACH({
+    'resource': ApplicationBlueprint.resource,
+    'render': ({ container }) => {
+        store.replaceReducer(container.reducer);
+        m.mount(document.body, container.component);
+        store.subscribe(() => {
+            console.log('state change !', store.getState());
+            m.redraw();
+        });
+    }
+}));
 
 console.log('WEB MAIN');

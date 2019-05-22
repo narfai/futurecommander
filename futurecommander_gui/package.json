@@ -6,9 +6,13 @@
   "author": "François Cadeillan <francois@azsystem.fr>",
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.8.2",
     "mithril": "^1.1.6",
     "nwjs": "^1.4.4",
+    "openmew-renderer": "/home/narfai/tuxdata/project/javascript/openmew-renderer",
+    "osenv": "^0.1.5",
     "redux": "^4.0.1",
+    "skeleton-css": "^2.0.4",
     "uniqid": "^5.0.3"
   },
   "scripts": {

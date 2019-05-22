@@ -168,3 +168,11 @@ https://stackoverflow.com/questions/26924209/node-js-child-process-doesnt-work-i
 
 https://peteris.rocks/blog/serialize-any-object-to-a-binary-format-in-rust/
 https://github.com/TyOverby/bincode
+
+## Webstorm & nwjs
+
+thanks ! https://stackoverflow.com/questions/35677387/nw-js-and-webstorm
+
+## Icon font
+
+https://cloudfour.com/thinks/seriously-dont-use-icon-fonts/

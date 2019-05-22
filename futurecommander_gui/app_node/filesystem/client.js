@@ -58,6 +58,7 @@ class FileSystemClient {
     }
 
     send(request) {
+        console.log('SENT' ,request);
         return new Promise((resolve, reject) => {
             this.subscribe(request.id, resolve, reject);
             this.worker.postMessage([request]);

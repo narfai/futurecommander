@@ -27,6 +27,7 @@ const { Request } = require('./request');
 class FileSystemWorker {
     constructor() {
         this.filesystem = null;
+        this.close_count = 0;
     }
 
     emit(request) {
@@ -66,7 +67,10 @@ class FileSystemWorker {
             this.filesystem.on('close', (code) => {
                 global.console.log(`child process exited with code ${code}`);
                 this.close();
-                this.listen();
+                if(this.close_count > 5) {
+                    global.console.log(`restart child process`);
+                    this.listen();
+                }
             });
 
             this.filesystem.on('error', (error) => {
@@ -78,6 +82,7 @@ class FileSystemWorker {
     }
 
     close() {
+        this.close_count += 1;
         this.filesystem.unref();
         this.filesystem = null;
     }
