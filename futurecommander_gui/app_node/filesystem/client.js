@@ -23,6 +23,8 @@ const { Request } = require('./request');
 
 class FileSystemClient {
     constructor() {
+        this.Response = Response;
+        this.Request = Request;
         this.resolves = {};
         this.rejects = {};
         this.worker = new Worker('app_node/filesystem/worker.js');
@@ -66,8 +68,4 @@ class FileSystemClient {
     }
 }
 
-module.exports = {
-    FileSystemClient,
-    Response,
-    Request
-};
+module.exports = FileSystemClient;

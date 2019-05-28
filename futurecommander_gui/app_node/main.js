@@ -17,9 +17,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// const FileSystemClient = new require('./filesystem/client');
-
-// const { Request } = require('./filesystem/request');
+const FileSystemClient = require('./filesystem/client');
 
 class NodeApplication {
     constructor() { //Node dependencies - Main ChromeApp thread
@@ -32,11 +30,17 @@ class NodeApplication {
             {
                 'id': 'main',
                 new_instance: false,
-                inject_js_end: 'app_web/index.js'
+                // inject_js_end: 'app_web/index.js'
             },
             function(win) {
                 win.on('loaded', () => {
                     win.showDevTools();
+                    const Application = nw.require('app_web/index.js');
+                    const app = new Application(
+                        win.window,
+                        new FileSystemClient()
+                    );
+                    app.run();
                 });
             }
         );

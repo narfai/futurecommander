@@ -17,55 +17,33 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { FileSystemClient }  = require('../app_node/filesystem/client');
-const { filesystem_thunk, readyStatePromise } = require('./middleware.js');
-
-const m = nw.require('mithril');
-const {
-    Registry,
-    register_middleware,
-    attach_middleware,
-    detach_middleware,
-    Action
-} = nw.require('openmew-renderer');
+// const { FileSystemClient }  = require('../app_node/filesystem/client');
 
 
-const {
-    createStore,
-    applyMiddleware
-} = nw.require('redux');
+const { Provider, ActionCreator } = nw.require('openmew-renderer');
+const mithril = nw.require('mithril');
 
+const View = nw.require('./view');
+const State = nw.require('./state');
 
-const filesystem_client = new FileSystemClient();
-const registry = new Registry();
-const store = createStore(
-    (state) => state,
-    {},//nw.require('app_web/mock'),
-    applyMiddleware(
-        register_middleware(registry),
-        attach_middleware(registry),
-        detach_middleware(registry),
-        // readyStatePromise,
-        filesystem_thunk(filesystem_client)
-    )
-);
+module.exports = class Application {
+    constructor(window, filesystem_client){
+        console.log('THIS FS', filesystem_client);
+        this.provider = new Provider(mithril, 'Layout');
 
-const ApplicationBlueprint = nw.require('./application');
-const EntryBlueprint = nw.require('./entry');
+        View.connect(this.provider);
 
-store.dispatch(Action.REGISTER_BLUEPRINT(ApplicationBlueprint));
-store.dispatch(Action.REGISTER_BLUEPRINT(EntryBlueprint));
-
-store.dispatch(Action.ATTACH({
-    'resource': ApplicationBlueprint.resource,
-    'render': ({ container }) => {
-        store.replaceReducer(container.reducer);
-        m.mount(document.body, container.component);
-        store.subscribe(() => {
-            console.log('state change !', store.getState());
-            m.redraw();
-        });
+        this.store = State.connect(
+            window,
+            this.provider,
+            filesystem_client,
+            // nw.require('./state/mock.js')
+        );
     }
-}));
 
-console.log('WEB MAIN');
+    run(){
+        this.store.dispatch(ActionCreator.switch());
+    }
+};
+
+

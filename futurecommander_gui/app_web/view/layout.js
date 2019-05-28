@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2019 François CADEILLAN
  *
@@ -18,30 +17,20 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const readyStatePromise = store => next => action => {
-    if (!action.promise) {
-        return next(action);
-    }
-
-    function makeAction(ready, data) {
-        const newAction = Object.assign({}, action, { ready }, data);
-        delete newAction.promise;
-        return newAction;
-    }
-
-    next(makeAction(false));
-    return action.promise.then(
-        result => next(makeAction(true, { result })),
-        error => next(makeAction(true, { error }))
-    )
-};
-
-const filesystem_thunk = (filesystem_client) => (store) => (next) => (action) =>
-    typeof action === 'function'
-        ? action(store.dispatch, filesystem_client)
-        : next(action);
+const m = nw.require('mithril');
 
 module.exports = {
-    filesystem_thunk,
-    readyStatePromise
+    'oninit': function({ state: { store_state, action } }){
+        if(typeof store_state === 'undefined' || !(store_state.children.length > 1)){
+            action.entry({ path: null });
+        }
+    },
+    'view': ({ state: { AnchorGroup }}) =>
+        m('#', [
+            m('h1', 'Layout'),
+            m('nav', []),
+            m('main', [
+                m(AnchorGroup)
+            ])
+        ])
 };

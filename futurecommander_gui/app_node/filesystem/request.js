@@ -61,7 +61,10 @@ class Request {
             .reduce(
                 (acc, cur) => acc + cur.charCodeAt(0).toString(10),
                 '0'
-            )
+            // Too long numbers may goes out depending of generated value,
+            // which broke a u64 sometimes ( 18446744073709551616 )
+            // TODO => find a better fix in rust & wasm-bindgen ... should take a string end to end
+            ).substring(0, 19)
     }
 
     static list({ path }) {

@@ -19,37 +19,33 @@
 
 module.exports = {
     'id': 'jvs2qy94',
-    'resource': 'Application',
-    'consumer_state': {},
-    'containers': [
+    'resource': 'Layout',
+    'children': [
         {
             'id': 'jsvs2qz18',
             'resource': 'Entry',
-            'consumer_state': {
-                'name': 'test_dir',
-                'is_dir': true,
-                'is_file': false
-            },
-            'containers': [
+            'name': 'test_dir',
+            'is_dir': true,
+            'is_file': false,
+            'is_open': true,
+            'children': [
                 {
                     'id': 'jsvs2qz20',
                     'resource': 'Entry',
-                    'consumer_state': {
-                        'name': 'test_nested_dir',
-                        'is_dir': true,
-                        'is_file': false
-                    },
-                    'containers': []
+                    'name': 'test_nested_dir',
+                    'is_dir': true,
+                    'is_file': false,
+                    'children': [],
+                    'is_open': false
                 },
                 {
                     'id': 'jsvs2qz19',
                     'resource': 'Entry',
-                    'consumer_state': {
-                        'name': 'test_file',
-                        'is_dir': false,
-                        'is_file': true
-                    },
-                    'containers': []
+                    'name': 'test_file',
+                    'is_dir': false,
+                    'is_file': true,
+                    'children': [],
+                    'is_open': false,
                 }
             ]
         },
