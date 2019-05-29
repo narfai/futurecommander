@@ -31,28 +31,20 @@ const State = nw.require('./state');
 
 module.exports = class Application {
     constructor(window, filesystem_client){
-        console.log('THIS FS', filesystem_client);
         this.provider = new Provider(mithril, 'Layout');
 
         View.connect(this.provider);
 
         this.store = State.connect(
             this.provider,
-            undefined,// nw.require('./state/mock.js')
             applyMiddleware(
                 list_filesystem(filesystem_client),
                 ready_state_promise,
                 Middleware.render(mithril, this.provider, window.document.body),
-                ready_state_redraw(mithril),
-                // Middleware.redraw(mithril)
-            )
+                ready_state_redraw(mithril)
+            ),
+            // nw.require('./state/mock.js'),
         );
-
-        this.store.subscribe(() => {
-            // console.log('REDRAW', this.store.getState());
-            // mithril.redraw();
-            // mithril.redraw.sync();
-        });
     }
 
     run(){

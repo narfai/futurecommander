@@ -34,7 +34,7 @@ module.exports = {
             })
         )(spread.scope.self, spread.redraw.allow)
     }),
-    layout: (spread) => ({
+    entry_container: (spread) => ({
         'entry': spread.append(({state, event}) => {
             const path = event.path === null ? osenv.home() : event.path;
             return {

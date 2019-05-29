@@ -18,7 +18,7 @@
  */
 
 const { Renderer, Functional } = nw.require('openmew-renderer');
-const { entry, layout } = nw.require('./behavior');
+const { entry, entry_container } = nw.require('./behavior');
 const LAYOUT = 'Layout';
 const ENTRY = 'Entry';
 
@@ -36,7 +36,7 @@ module.exports = {
                 Renderer.skip_redraw,
             )
         );
-        provider.connect_component(LAYOUT, nw.require('./view/layout'), layout);
+        provider.connect_component(LAYOUT, nw.require('./view/layout'), entry_container);
         provider.connect_component(ENTRY, nw.require('./view/entry'), entry);
     }
 };

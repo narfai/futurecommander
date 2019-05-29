@@ -19,17 +19,39 @@
 
 const m = nw.require('mithril');
 
+class Icon {
+    static icon(width, height, path) {
+        return m('img', {
+            'height': height + 'px',
+            'width': width + 'px',
+            'src': '/node_modules/@fortawesome/fontawesome-free/svgs/' + path
+        });
+    }
+
+    static empty(height, width){
+        return m('img', {
+            'height': height + 'px',
+            'width': width + 'px'
+        });
+    }
+
+    static folder_15() {
+        return Icon.icon(15, 15, 'solid/folder.svg')
+    }
+
+    static file_15() {
+        return Icon.icon(15, 15, 'solid/file.svg')
+    }
+
+    static angle_right_15() {
+        return Icon.icon(15, 15, 'solid/angle-right.svg')
+    }
+
+    static angle_down_15() {
+        return Icon.icon(15, 15, 'solid/angle-down.svg')
+    }
+}
+
 module.exports = {
-    'oninit': function({ state: { store, action } }){
-        const { children = null } = store.getState();
-        if(children !== null && !(children.length > 0)){
-            action.entry({ path: '/home/narfai' });
-        }
-    },
-    'view': ({ state: { AnchorGroup }}) =>
-        m('#',
-            m('h1', 'Layout'),
-            m('nav', []),
-            m('main', m(AnchorGroup))
-        )
+    Icon
 };

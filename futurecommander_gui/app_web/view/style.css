@@ -17,28 +17,11 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { Utility, Structural } = nw.require('openmew-renderer');
-const { list_entry_transducer, close_entry_transducer } = nw.require('./state/entry');
-const { createStore } = nw.require('redux');
+li {
+    list-style-type: none;
+}
 
-module.exports = {
-    'connect': (provider, middleware, mock) => {
-        const { logger } = Utility;
-        const { detach, append, prepend } = Structural;
-
-        provider.connect_state_transducers(
-            logger,
-            detach,
-            append,
-            prepend,
-            list_entry_transducer,
-            close_entry_transducer
-        );
-
-        return createStore(
-            provider.reducer,
-            mock,
-            middleware
-        )
-    }
-};
+ul {
+    margin: 0;
+    padding: 0 15px;
+}

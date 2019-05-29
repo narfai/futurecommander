@@ -787,6 +787,9 @@ once@^1.3.0:
   dependencies:
     wrappy "1"
 
+openmew-renderer@/home/narfai/tuxdata/project/javascript/openmew-renderer:
+  version "0.2.2"
+
 "openmew-renderer@file:../../../javascript/openmew-renderer":
   version "0.2.2"
 

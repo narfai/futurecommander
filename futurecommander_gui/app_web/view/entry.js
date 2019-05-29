@@ -17,61 +17,22 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-class Icon {
-    static icon(width, height, path) {
-        return m('img', {
-            'height': height + 'px',
-            'width': width + 'px',
-            'src': '/node_modules/@fortawesome/fontawesome-free/svgs/' + path
-        });
-    }
-
-    static empty(height, width){
-        return m('img', {
-            'height': height + 'px',
-            'width': width + 'px'
-        });
-    }
-
-    static folder_15() {
-        return Icon.icon(15, 15, 'solid/folder.svg')
-    }
-
-    static file_15() {
-        return Icon.icon(15, 15, 'solid/file.svg')
-    }
-
-    static angle_right_15() {
-        return Icon.icon(15, 15, 'solid/angle-right.svg')
-    }
-
-    static angle_down_15() {
-        return Icon.icon(15, 15, 'solid/angle-down.svg')
-    }
-}
+const { Icon } = nw.require('./view/icon');
 
 const m = nw.require('mithril');
 
 module.exports = {
-    'onbeforeupdate': () => true,
     'oninit': function(){
-        this.controls = {
-            spoil: () => {
-                if(typeof this.action.list === 'undefined') throw new Error('Entry needs list action');
-                return this.action.list({ 'path': this.store.getState().cwd }).result;
-            },
-            unspoil: (event) => {
-                console.log('unspoil', event, this.is_open);
-                this.action.close();
-                return event;
-            }
+        this.spoil = () => {
+            if(typeof this.action.list === 'undefined') throw new Error('Entry needs list action');
+            return this.action.list({ 'path': this.store.getState().cwd }).result;
         };
 
         if(this.store.getState().is_open){
-            this.controls.spoil();
+            this.spoil();
         }
     },
-    'view': ({ state: { AnchorGroup, action, controls, store_state: { is_open, name, is_dir, is_file } }}) => {
+    'view': ({ state: { AnchorGroup, action, spoil, store_state: { is_open, name, is_dir, is_file } }}) => {
         return m('div', [
             m('span',
                 [
@@ -81,12 +42,12 @@ module.exports = {
                             ? m(
                                 'span',
                                 // @NOTICE prevent from unfilled action during development
-                                {onclick: controls.unspoil},
+                                {onclick: action.close},
                                 [Icon.angle_down_15()]
                             )
                             : m(
                                 'span',
-                                {onclick: controls.spoil},
+                                {onclick: spoil},
                                 [Icon.angle_right_15()]
                             )
                         : Icon.empty(15, 15),
