@@ -787,11 +787,10 @@ once@^1.3.0:
   dependencies:
     wrappy "1"
 
-openmew-renderer@/home/narfai/tuxdata/project/javascript/openmew-renderer:
-  version "0.2.2"
-
-"openmew-renderer@file:../../../javascript/openmew-renderer":
-  version "0.2.2"
+openmew-renderer@0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/openmew-renderer/-/openmew-renderer-0.2.3.tgz#befa03efc1c04f88a448fe58f93c379e4fb0487f"
+  integrity sha512-F9o8m/c4Tmix8FT9nPkYN4inPr1rjr0/rB8rv4L2Zp8zDo5tpgC4n6gTYkmNw2Xsno3FqWMfBL8QfEoMHvE7jw==
 
 os-homedir@^1.0.0:
   version "1.0.2"

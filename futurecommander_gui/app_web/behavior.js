@@ -23,11 +23,11 @@ const { basename } = require('path');
 module.exports = {
     entry: (spread) => ({
         'list': spread(
-            ({state, event: { path }}) => ({//@NOTICE you also can edit `event.redraw = true` for redrawing mithril way
+            ({state, event: { path }}) => ({
                 'type': 'LIST',
                 path
             })
-        )(spread.scope.self, spread.redraw.allow), //@NOTICE action transducers can be crafted, combined or defined infinitely,'list': spread(
+        )(spread.scope.self, spread.redraw.allow),
         'close': spread(
             ({state, event: { path }}) => ({
                 'type': 'CLOSE'
