@@ -39,6 +39,10 @@ module.exports = class Application {
             filesystem_client,
             // nw.require('./state/mock.js')
         );
+
+        // this.store.subscribe(() => {
+        //     console.log('REDRAW', mithril.redraw());
+        // });
     }
 
     run(){

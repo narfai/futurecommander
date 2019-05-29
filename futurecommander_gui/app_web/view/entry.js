@@ -63,11 +63,13 @@ module.exports = {
                 return this.action.list({ 'path': cwd }).result
                     .then((response) => {
                         console.log('response from view', response);
+                        m.redraw();
                         return event;
                     });
             },
             unspoil: (event) => {
                 console.log('unspoil', event, this.is_open);
+                this.action.close();
                 // event.redraw = true;
                 // m.redraw();
                 return event;
@@ -79,9 +81,8 @@ module.exports = {
         }
     },
     'view': ({ state: { AnchorGroup, action, controls, store_state: { is_open, name, is_dir, is_file } }}) => {
-        console.log('IS_OPEN', is_open);
         return m('div', [
-            m('h6',
+            m('span',
                 [
                     //Arrow
                     is_dir

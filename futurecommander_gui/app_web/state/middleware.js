@@ -48,11 +48,22 @@ const list_filesystem = (filesystem_client) => (store) => (next) => (action) => 
         )
     });
 };
+
+const ready_state_redraw = (mithril) => (/*redux_store*/) => (next) => (action) => {
+    const result = next(action);
+    if(
+        typeof action.redraw !== 'undefined'
+        && action.redraw
+        && (typeof action.ready === 'undefined' || action.ready)
+    ) mithril.redraw(); console.log('redraw');
+    return result;
+};
 //TODO error handling middleware
 
 
 module.exports = {
     list_filesystem,
     thunk,
-    ready_state_promise
+    ready_state_promise,
+    ready_state_redraw
 };

@@ -17,11 +17,76 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { Utility, Structural, Middleware } = nw.require('openmew-renderer');
+const { Utility, Structural, Middleware, Identity } = nw.require('openmew-renderer');
 const { createStore, applyMiddleware } = nw.require('redux');
-const { list_filesystem, ready_state_promise } = nw.require('./state/middleware');
+const { list_filesystem, ready_state_promise, ready_state_redraw } = nw.require('./state/middleware');
 const mithril = nw.require('mithril');
 
+
+const is_entry = ({ resource }) => resource === 'Entry';
+const has_name = (target_name) => ({ name }) => name === target_name;
+
+const path = require('path');
+
+const list_entry = (state, action) => {
+    const { ready = null, result = null } = action;
+    if(!ready || result === null || state.cwd !== action.path) return state.children;
+
+    const entry_collection = result.result();
+
+    const entry_children = state.children
+        .filter(is_entry)
+        .filter(
+            ({ name }) => entry_collection.find(has_name(name))
+        );
+
+    const to_add = entry_collection
+        .filter(
+            ({ name }) => !entry_children.find(has_name(name))
+        ).map(
+            (entry) => Identity.module(
+                'Entry',
+                {
+                    ...entry,
+                    cwd: path.join(action.path, entry.name),
+                    is_open: false
+                }
+            )
+        );
+
+    return [
+        ...entry_children,
+        ...to_add
+    ].sort((left, right) => right.is_dir - left.is_dir);
+};
+
+const list_entry_transducer = Identity.state_reducer(
+    (next, state = null, action = {}) =>
+        ((next_state) => (
+                action.type === 'LIST'
+                    ? {
+                        ...next_state,
+                        is_open: true,
+                        'children': list_entry(next_state, action)
+                    }
+                    : next_state
+            )
+        )(next(state, action))
+);
+
+
+const close_entry_transducer = Identity.state_reducer(
+    (next, state = null, action = {}) =>
+        ((next_state) => (
+                action.type === 'CLOSE'
+                    ? {
+                        ...next_state,
+                        is_open: false
+                    }
+                    : next_state
+            )
+        )(next(state, action))
+);
 
 module.exports = {
     'connect': (window, provider, filesystem_client, mock) => {
@@ -32,7 +97,9 @@ module.exports = {
             logger,
             detach,
             append,
-            prepend
+            prepend,
+            list_entry_transducer,
+            close_entry_transducer
         );
 
         return createStore(
@@ -42,7 +109,8 @@ module.exports = {
                 list_filesystem(filesystem_client),
                 ready_state_promise,
                 Middleware.render(mithril, provider, window.document.body),
-                Middleware.redraw(mithril)
+                ready_state_redraw(mithril),
+                // Middleware.redraw(mithril)
             )
         )
     }

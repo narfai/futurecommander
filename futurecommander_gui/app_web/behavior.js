@@ -27,7 +27,12 @@ module.exports = {
                 'type': 'LIST',
                 path
             })
-        )(spread.scope.self, spread.redraw.allow)//@NOTICE action transducers can be crafted, combined or defined infinitely
+        )(spread.scope.self, spread.redraw.allow), //@NOTICE action transducers can be crafted, combined or defined infinitely,'list': spread(
+        'close': spread(
+            ({state, event: { path }}) => ({
+                'type': 'CLOSE'
+            })
+        )(spread.scope.self, spread.redraw.allow)
     }),
     layout: (spread) => ({
         'entry': spread.append(({state, event}) => {
