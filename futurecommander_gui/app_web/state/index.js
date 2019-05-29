@@ -17,10 +17,8 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { Utility, Structural, Middleware, Identity } = nw.require('openmew-renderer');
-const { createStore, applyMiddleware } = nw.require('redux');
-const { list_filesystem, ready_state_promise, ready_state_redraw } = nw.require('./state/middleware');
-const mithril = nw.require('mithril');
+const { Utility, Structural, Identity } = nw.require('openmew-renderer');
+const { createStore } = nw.require('redux');
 
 
 const is_entry = ({ resource }) => resource === 'Entry';
@@ -29,10 +27,7 @@ const has_name = (target_name) => ({ name }) => name === target_name;
 const path = require('path');
 
 const list_entry = (state, action) => {
-    const { ready = null, result = null } = action;
-    if(!ready || result === null || state.cwd !== action.path) return state.children;
-
-    const entry_collection = result.result();
+    const entry_collection = action.result.result();
 
     const entry_children = state.children
         .filter(is_entry)
@@ -64,6 +59,9 @@ const list_entry_transducer = Identity.state_reducer(
     (next, state = null, action = {}) =>
         ((next_state) => (
                 action.type === 'LIST'
+                    && typeof action.ready !== 'undefined'
+                        && action.ready === true
+                            && action.path === state.cwd
                     ? {
                         ...next_state,
                         is_open: true,
@@ -89,7 +87,7 @@ const close_entry_transducer = Identity.state_reducer(
 );
 
 module.exports = {
-    'connect': (window, provider, filesystem_client, mock) => {
+    'connect': (provider, middleware, mock) => {
         const { logger } = Utility;
         const { detach, append, prepend } = Structural;
 
@@ -105,13 +103,7 @@ module.exports = {
         return createStore(
             provider.reducer,
             mock,
-            applyMiddleware(
-                list_filesystem(filesystem_client),
-                ready_state_promise,
-                Middleware.render(mithril, provider, window.document.body),
-                ready_state_redraw(mithril),
-                // Middleware.redraw(mithril)
-            )
+            middleware
         )
     }
 };

@@ -53,25 +53,16 @@ class Icon {
 const m = nw.require('mithril');
 
 module.exports = {
+    'onbeforeupdate': () => true,
     'oninit': function(){
         this.controls = {
-            spoil: (event) => {
+            spoil: () => {
                 if(typeof this.action.list === 'undefined') throw new Error('Entry needs list action');
-
-                const { cwd } = this.store.getState();
-                console.log('CWD', cwd);
-                return this.action.list({ 'path': cwd }).result
-                    .then((response) => {
-                        console.log('response from view', response);
-                        m.redraw();
-                        return event;
-                    });
+                return this.action.list({ 'path': this.store.getState().cwd }).result;
             },
             unspoil: (event) => {
                 console.log('unspoil', event, this.is_open);
                 this.action.close();
-                // event.redraw = true;
-                // m.redraw();
                 return event;
             }
         };

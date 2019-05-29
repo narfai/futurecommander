@@ -22,15 +22,13 @@ const m = nw.require('mithril');
 module.exports = {
     'oninit': function({ state: { store_state, action } }){
         if(typeof store_state === 'undefined' || !(store_state.children.length > 1)){
-            action.entry({ path: null });
+            action.entry({ path: '/home/narfai' });
         }
     },
     'view': ({ state: { AnchorGroup }}) =>
-        m('#', [
+        m('#',
             m('h1', 'Layout'),
             m('nav', []),
-            m('main', [
-                m(AnchorGroup)
-            ])
-        ])
+            m('main', m(AnchorGroup))
+        )
 };

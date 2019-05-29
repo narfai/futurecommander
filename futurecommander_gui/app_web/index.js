@@ -19,9 +19,12 @@
 
 // const { FileSystemClient }  = require('../app_node/filesystem/client');
 
-
-const { Provider, ActionCreator } = nw.require('openmew-renderer');
 const mithril = nw.require('mithril');
+
+const { Provider, ActionCreator, Middleware } = nw.require('openmew-renderer');
+const { list_filesystem, ready_state_promise, ready_state_redraw } = nw.require('./middleware');
+const { applyMiddleware } = nw.require('redux');
+
 
 const View = nw.require('./view');
 const State = nw.require('./state');
@@ -34,15 +37,22 @@ module.exports = class Application {
         View.connect(this.provider);
 
         this.store = State.connect(
-            window,
             this.provider,
-            filesystem_client,
-            // nw.require('./state/mock.js')
+            undefined,// nw.require('./state/mock.js')
+            applyMiddleware(
+                list_filesystem(filesystem_client),
+                ready_state_promise,
+                Middleware.render(mithril, this.provider, window.document.body),
+                ready_state_redraw(mithril),
+                // Middleware.redraw(mithril)
+            )
         );
 
-        // this.store.subscribe(() => {
-        //     console.log('REDRAW', mithril.redraw());
-        // });
+        this.store.subscribe(() => {
+            // console.log('REDRAW', this.store.getState());
+            // mithril.redraw();
+            // mithril.redraw.sync();
+        });
     }
 
     run(){

@@ -7,7 +7,7 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.8.2",
-    "mithril": "^1.1.6",
+    "mithril": "2.0.0-rc.5",
     "nwjs": "^1.4.4",
     "openmew-renderer": "/home/narfai/tuxdata/project/javascript/openmew-renderer",
     "osenv": "^0.1.5",

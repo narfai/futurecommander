@@ -23,6 +23,7 @@ const { Request } = require('./request');
 
 class FileSystemClient {
     constructor() {
+        console.log('Create FileSystemClient');
         this.Response = Response;
         this.Request = Request;
         this.resolves = {};

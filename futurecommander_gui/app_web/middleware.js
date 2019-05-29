@@ -38,7 +38,7 @@ const thunk = (store) => (next) => (action) =>
         ? action(store.dispatch, store.getState)
         : next(action);
 
-const list_filesystem = (filesystem_client) => (store) => (next) => (action) => {
+const list_filesystem = (filesystem_client) => (/*redux_store*/) => (next) => (action) => {
     if(action.type !== 'LIST') return next(action);
     console.log('SEND', action);
     return next({
@@ -55,7 +55,7 @@ const ready_state_redraw = (mithril) => (/*redux_store*/) => (next) => (action) 
         typeof action.redraw !== 'undefined'
         && action.redraw
         && (typeof action.ready === 'undefined' || action.ready)
-    ) mithril.redraw(); console.log('redraw');
+    ) mithril.redraw.sync();
     return result;
 };
 //TODO error handling middleware

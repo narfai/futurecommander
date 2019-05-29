@@ -29,10 +29,11 @@ module.exports = {
         provider.connect_component_transducers(
             Functional.pipe( //Order matter
                 // @NOTICE this transducer provide `vnode.state.store_state` to component's view
+                // Renderer.debug_redraw(Renderer.state_aware),
                 Renderer.state_aware,
                 // @NOTICE this transducer optimize by preventing mithril to evaluate redraws of unchanged components
                 // according to the state tree ( depends on state_aware for its diff )
-                // Renderer.skip_redraw,
+                Renderer.skip_redraw,
             )
         );
         provider.connect_component(LAYOUT, nw.require('./view/layout'), layout);
