@@ -57,7 +57,7 @@ const list_entry = (state, action) => {
     return [
         ...entry_children,
         ...to_add
-    ].sort((left, right) => right.is_dir - left.is_dir);
+    ].sort((left, right) => right.is_dir - left.is_dir || left.name.localeCompare(right.name, undefined, {numeric: true}));
 };
 
 const list_entry_transducer = Identity.state_reducer(
