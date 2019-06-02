@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2019 François CADEILLAN
  *
@@ -17,11 +18,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const osenv = require('osenv');
-const { basename } = require('path');
-
-module.exports = {
-    entry: (spread) => ({
+module.exports = (spread) => ({
         'list': spread(
             ({state, event: { path }}) => ({
                 'type': 'LIST',
@@ -33,20 +30,4 @@ module.exports = {
                 'type': 'CLOSE'
             })
         )(spread.scope.self, spread.redraw.allow)
-    }),
-    entry_container: (spread) => ({
-        'entry': spread.append(({state, event}) => {
-            const path = event.path === null ? osenv.home() : event.path;
-            return {
-                'resource': 'Entry',
-                'initial_state': {
-                    'name': basename(path),
-                    'cwd': path,
-                    'is_dir': true,
-                    'is_file': false,
-                    'is_open': true
-                }
-            };
-        })(spread.scope.self, spread.redraw.allow)
-    })
-};
+});

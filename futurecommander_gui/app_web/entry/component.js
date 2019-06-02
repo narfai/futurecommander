@@ -17,9 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { Icon } = nw.require('./view/icon');
-
 const m = nw.require('mithril');
+
+const { Icon } = nw.require('./common/icon');
 
 module.exports = {
     'oninit': function(){

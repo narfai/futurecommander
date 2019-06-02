@@ -17,19 +17,21 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const m = nw.require('mithril');
+const osenv = require('osenv');
+const { basename } = require('path');
 
-module.exports = {
-    'oninit': function({ state: { store, action } }){
-        const { children = null } = store.getState();
-        if(children !== null && !(children.length > 0)){
-            action.entry({ path: '/home/narfai' });
-        }
-    },
-    'view': ({ state: { AnchorGroup }}) =>
-        m('#',
-            m('h1', 'Layout'),
-            m('nav', []),
-            m('main', m(AnchorGroup))
-        )
-};
+module.exports = (spread) => ({
+    'entry': spread.append(({state, event}) => {
+        const path = event.path === null ? osenv.home() : event.path;
+        return {
+            'resource': 'Entry',
+            'initial_state': {
+                'name': basename(path),
+                'cwd': path,
+                'is_dir': true,
+                'is_file': false,
+                'is_open': true
+            }
+        };
+    })(spread.scope.self, spread.redraw.allow)
+});

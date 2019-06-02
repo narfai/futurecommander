@@ -21,7 +21,7 @@
 
 const path = require('path');
 
-const { Identity } = nw.require('openmew-renderer');
+const { Identity, Functional } = nw.require('openmew-renderer');
 
 const is_entry = ({ resource }) => resource === 'Entry';
 const has_name = (target_name) => ({ name }) => name === target_name;
@@ -94,7 +94,7 @@ const close_entry_transducer = Identity.state_reducer(
         )(next(state, action))
 );
 
-module.exports = {
+module.exports = Functional.pipe(
     list_entry_transducer,
     close_entry_transducer
-};
+);

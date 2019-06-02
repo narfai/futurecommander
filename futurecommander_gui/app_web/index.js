@@ -21,35 +21,33 @@
 
 const mithril = nw.require('mithril');
 
-const { Provider, ActionCreator, Middleware } = nw.require('openmew-renderer');
-const { list_filesystem, ready_state_promise, ready_state_redraw } = nw.require('./middleware');
-const { applyMiddleware } = nw.require('redux');
+const { ActionCreator, Middleware } = nw.require('openmew-renderer');
+const { list_filesystem, ready_state_promise, ready_state_redraw } = nw.require('./infrastructure/middleware');
+const { applyMiddleware, createStore } = nw.require('redux');
 
 
-const View = nw.require('./view');
-const State = nw.require('./state');
+const create_provider = nw.require('./infrastructure/provider');
 
 module.exports = class Application {
     constructor(window, filesystem_client){
-        this.provider = new Provider(mithril, 'Layout');
+        this.provider = create_provider(mithril);
 
-        View.connect(this.provider);
-
-        this.store = State.connect(
-            this.provider,
+        this.store = createStore(
+            this.provider.reducer,
+            // nw.require('./common/mock.js'),
             applyMiddleware(
                 list_filesystem(filesystem_client),
                 ready_state_promise,
                 Middleware.render(mithril, this.provider, window.document.body),
                 ready_state_redraw(mithril)
-            ),
-            // nw.require('./state/mock.js'),
+            )
         );
+
+        nw.require('./layout')(this.provider);
+        nw.require('./entry')(this.provider);
     }
 
     run(){
         this.store.dispatch(ActionCreator.switch());
     }
 };
-
-
