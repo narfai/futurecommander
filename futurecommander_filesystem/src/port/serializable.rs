@@ -25,12 +25,14 @@ use crate::{
     }
 };
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, PartialEq, Deserialize, Debug)]
 pub struct SerializableEntry {
     pub name: Option<String>,
     pub is_dir: bool,
     pub is_file: bool
 }
+
+impl Eq for SerializableEntry {}
 
 impl SerializableEntry {
     pub fn from(entry: &Entry) -> Self {
