@@ -51,6 +51,8 @@ impl Entry for EntryAdapter<&Path> {
     }
 
     fn exists(&self) -> bool { self.0.exists() }
+
+    fn is_virtual(&self) -> bool { false }
 }
 
 impl Entry for EntryAdapter<PathBuf> {
@@ -65,6 +67,8 @@ impl Entry for EntryAdapter<PathBuf> {
     fn is_file(&self) -> bool { self.0.is_file() }
 
     fn exists(&self) -> bool { self.0.exists() }
+
+    fn is_virtual(&self) -> bool { false }
 }
 
 

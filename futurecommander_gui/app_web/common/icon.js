@@ -35,19 +35,35 @@ class Icon {
         });
     }
 
-    static folder_15() {
+    static virtual_file(){
+        return Icon.icon(15, 15, 'regular/file.svg')
+    }
+
+    static virtual_folder() {
+        return Icon.icon(15, 15, 'regular/folder.svg')
+    }
+
+    static virtual_folder_open() {
+        return Icon.icon(15, 15, 'regular/folder-open.svg')
+    }
+
+    static folder() {
         return Icon.icon(15, 15, 'solid/folder.svg')
     }
 
-    static file_15() {
+    static folder_open() {
+        return Icon.icon(15, 15, 'solid/folder-open.svg')
+    }
+
+    static file() {
         return Icon.icon(15, 15, 'solid/file.svg')
     }
 
-    static angle_right_15() {
+    static angle_right() {
         return Icon.icon(15, 15, 'solid/angle-right.svg')
     }
 
-    static angle_down_15() {
+    static angle_down() {
         return Icon.icon(15, 15, 'solid/angle-down.svg')
     }
 }

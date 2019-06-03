@@ -32,7 +32,7 @@ module.exports = {
             this.spoil();
         }
     },
-    'view': ({ state: { AnchorGroup, action, spoil, store_state: { is_open, name, is_dir, is_file } }}) => {
+    'view': ({ state: { AnchorGroup, action, spoil, store_state: { is_open, name, is_dir, is_file, is_virtual } }}) => {
         return m('div', [
             m('span',
                 [
@@ -43,20 +43,30 @@ module.exports = {
                                 'span',
                                 // @NOTICE prevent from unfilled action during development
                                 {onclick: action.close},
-                                [Icon.angle_down_15()]
+                                [Icon.angle_down()]
                             )
                             : m(
                                 'span',
                                 {onclick: spoil},
-                                [Icon.angle_right_15()]
+                                [Icon.angle_right()]
                             )
                         : Icon.empty(15, 15),
                     //Icon
-                    is_dir
-                        ? Icon.folder_15()
-                        : is_file
-                            ? Icon.file_15()
-                            : '?',
+                    is_virtual
+                        ? is_dir
+                            ? is_open
+                                ? Icon.virtual_folder_open()
+                                : Icon.virtual_folder()
+                            : is_file
+                                ? Icon.virtual_file()
+                                : '?'
+                        : is_dir
+                            ? is_open
+                                ? Icon.folder_open()
+                                : Icon.folder()
+                            : is_file
+                                ? Icon.file()
+                                : '?',
                     name
                 ]
             ),

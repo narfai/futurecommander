@@ -29,7 +29,8 @@ use crate::{
 pub struct SerializableEntry {
     pub name: Option<String>,
     pub is_dir: bool,
-    pub is_file: bool
+    pub is_file: bool,
+    pub is_virtual: bool
 }
 
 impl SerializableEntry {
@@ -39,7 +40,8 @@ impl SerializableEntry {
                 Some(s.to_string_lossy().to_string())
             } else { None },
             is_dir: entry.is_dir(),
-            is_file: entry.is_file()
+            is_file: entry.is_file(),
+            is_virtual: entry.is_virtual()
         }
     }
 }

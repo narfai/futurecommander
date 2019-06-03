@@ -24,10 +24,11 @@ const RESULT_ENTRY = 'Entry';
 const RESULT_COLLECTION = 'Collection';
 
 class Entry {
-    constructor({ name = null, is_dir = null, is_file = null }) {
+    constructor({ name = null, is_dir = null, is_file = null, is_virtual = null }) {
         this.name = name;
         this.is_dir = is_dir;
         this.is_file = is_file;
+        this.is_virtual = is_virtual;
     }
 }
 

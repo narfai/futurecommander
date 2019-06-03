@@ -136,6 +136,19 @@ impl Entry for EntryAdapter<VirtualStatus> {
             | VirtualState::RemovedVirtually => false
         }
     }
+
+    fn is_virtual(&self) -> bool {
+        match self.0.state() {
+            VirtualState::ExistsVirtually
+            | VirtualState::ExistsThroughVirtualParent
+            | VirtualState::RemovedVirtually
+            | VirtualState::Replaced => true,
+
+            VirtualState::Exists
+            | VirtualState::NotExists
+            | VirtualState::Removed => false
+        }
+    }
 }
 
 #[cfg_attr(tarpaulin, skip)]
