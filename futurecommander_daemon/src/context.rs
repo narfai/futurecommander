@@ -33,6 +33,39 @@ pub trait ContextType {
     fn box_clone(&self) -> Box<dyn ContextType>;
 }
 
+#[derive(Clone)]
+pub struct ContextString {
+    inner: String
+}
+
+impl From<String> for ContextString {
+    fn from(s : String) -> ContextString {
+        ContextString {
+            inner: s
+        }
+    }
+}
+
+impl ContextType for ContextString {
+    fn to_bool(&self) -> Result<bool, DaemonError> {
+        if self.inner == "1" {
+            Ok(true)
+        } else if self.inner == "0" {
+            Ok(false)
+        } else {
+            Err(DaemonError::ContextCannotCast("String".to_string(), "bool".to_string()))
+        }
+    }
+
+    fn to_string(&self) -> Result<String, DaemonError> {
+        Ok(self.inner.clone())
+    }
+
+    fn box_clone(&self) -> Box<dyn ContextType> {
+        Box::new(self.clone())
+    }
+}
+
 #[derive(Default)]
 pub struct Context {
     values: HashMap<String, Box<dyn ContextType>>,

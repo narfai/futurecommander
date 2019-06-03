@@ -26,17 +26,21 @@ use crate::{
     SerializableEntry,
 };
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+#[derive(Serialize, PartialEq, Deserialize, Debug, Copy, Clone)]
 pub enum ResponseKind {
     Collection,
     Entry
 }
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+impl Eq for ResponseKind {}
+
+#[derive(Serialize, PartialEq, Deserialize, Debug, Copy, Clone)]
 pub enum ResponseStatus {
     Success,
     Fail
 }
+
+impl Eq for ResponseStatus {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
