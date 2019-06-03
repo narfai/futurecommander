@@ -44,12 +44,23 @@ use crate::{
     }
 };
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
 pub enum RequestHeader {
     LIST
 }
 
+impl Eq for RequestHeader {}
+
 impl RequestHeader {
+    /** Lifecycle step 1 - Consumer - create from action name string **/
+    pub fn new(s: &str) -> Result<RequestHeader, DaemonError> {
+        match s {
+            t if t == RequestHeader::LIST.to_string() => Ok(RequestHeader::LIST),
+            _ => Err(DaemonError::InvalidRequest)
+        }
+    }
+
+    /** Lifecycle step 2 - Consumer - binary encode body from Context object**/
     pub fn encode_adapter(self, context: Context) -> Result<Vec<u8>, DaemonError> {
         let mut binary_request = vec![self as u8];
         match self {
@@ -62,15 +73,12 @@ impl RequestHeader {
         Ok(binary_request)
     }
 
-    pub fn decode_adapter(self, bytes: &[u8]) -> Result<Box<Request>, DaemonError> {
-        match self {
-            RequestHeader::LIST => {
-                let request: RequestAdapter<ListAction> = deserialize(bytes)?;
-                Ok(Box::new(request))
-            }
-        }
+    /** Lifecycle step 3 - Daemon - read size of the header as soon as request is emitted **/
+    pub fn len() -> usize {
+        1 as usize
     }
 
+    /** Lifecycle step 4 - Daemon - retrieve proper header from those bytes **/
     pub fn parse(bytes: &[u8]) -> Result<Self, DaemonError> {
         if let Some(byte) = bytes.first() {
             match byte {
@@ -83,14 +91,13 @@ impl RequestHeader {
         }
     }
 
-    pub fn len() -> usize {
-        1 as usize
-    }
-
-    pub fn new(s: &str) -> Result<RequestHeader, DaemonError> {
-        match s {
-            t if t == RequestHeader::LIST.to_string() => Ok(RequestHeader::LIST),
-            _ => Err(DaemonError::InvalidRequest)
+    /** Lifecycle step 5 - Daemon - decode bytes left from response weather header kind **/
+    pub fn decode_adapter(self, bytes: &[u8]) -> Result<Box<Request>, DaemonError> {
+        match self {
+            RequestHeader::LIST => {
+                let request: RequestAdapter<ListAction> = deserialize(bytes)?;
+                Ok(Box::new(request))
+            }
         }
     }
 }
@@ -98,5 +105,45 @@ impl RequestHeader {
 impl Display for RequestHeader {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{:?}", self)
+    }
+}
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use futurecommander_filesystem::{
+        Container,
+        sample::Samples
+    };
+
+    use crate::{
+        ContextString
+    };
+
+    #[test]
+    fn test_header_codec_list(){
+        let mut container = Container::default();
+
+        /* Consumer */
+        let id = "jsvs2qz26".to_string();
+        let path = Samples::static_samples_path().to_string_lossy().to_string();
+
+        let mut context = Context::default();
+        context.set("id", Box::new(ContextString::from(id.clone())));
+        context.set("path", Box::new(ContextString::from(path.clone())));
+
+        let header = RequestHeader::new("LIST").unwrap();
+
+        assert_eq!(header, RequestHeader::LIST);
+
+        let binary_request = header.encode_adapter(context).unwrap();
+
+        /* Daemon */
+        let payload = binary_request.as_slice();
+        let decoded_header = RequestHeader::parse(&payload[..RequestHeader::len()]).unwrap();
+
+        assert_eq!(decoded_header, RequestHeader::LIST);
     }
 }
