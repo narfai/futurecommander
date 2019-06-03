@@ -108,6 +108,7 @@ mod tests {
 
         assert_eq!(context.get("keyA").unwrap().to_string().unwrap(), value_a);
         assert_eq!(context.get("keyB").unwrap().to_string().unwrap(), value_b);
-        assert_eq!(context.debug_keys(), vec!["keyA".to_string(), "keyB".to_string()]);
+        assert!(context.debug_keys().contains(&"keyA".to_string()));
+        assert!(context.debug_keys().contains(&"keyB".to_string()));
     }
 }

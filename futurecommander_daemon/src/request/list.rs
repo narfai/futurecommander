@@ -100,7 +100,6 @@ mod tests {
     use super::*;
 
     use futurecommander_filesystem::{
-        EntryAdapter,
         sample::Samples
     };
 
