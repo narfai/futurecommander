@@ -92,3 +92,22 @@ impl Context {
         debug
     }
 }
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fill_and_query_context_with_context_strings(){
+        let mut context = Context::default();
+        let value_a = "valueA".to_string();
+        let value_b = "valueB".to_string();
+        context.set("keyA", Box::new(ContextString::from(value_a.clone())));
+        context.set("keyB", Box::new(ContextString::from(value_b.clone())));
+
+        assert_eq!(context.get("keyA").unwrap().to_string().unwrap(), value_a);
+        assert_eq!(context.get("keyB").unwrap().to_string().unwrap(), value_b);
+        assert_eq!(context.debug_keys(), vec!["keyA".to_string(), "keyB".to_string()]);
+    }
+}
