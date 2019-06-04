@@ -16,10 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-use crate:: {
-    errors::DaemonError,
-    Context
-};
 
 use std::{
     fmt::{
@@ -29,24 +25,26 @@ use std::{
     },
 };
 
-use serde::{
-    Serialize,
-    Deserialize
-};
-
 use bincode::{ deserialize, serialize };
 
 use crate::{
+    errors::DaemonError,
+    context::{
+        Context
+    },
     request::{
         Request,
         RequestAdapter,
-        ListAction
+        ListAction,
+        CreateFileAction
     }
 };
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub enum RequestHeader {
-    LIST
+    LIST,
+    CREATE_FILE,
+//   PENDING
 }
 
 impl Eq for RequestHeader {}
@@ -56,6 +54,7 @@ impl RequestHeader {
     pub fn new(s: &str) -> Result<RequestHeader, DaemonError> {
         match s {
             t if t == RequestHeader::LIST.to_string() => Ok(RequestHeader::LIST),
+            t if t == RequestHeader::CREATE_FILE.to_string() => Ok(RequestHeader::CREATE_FILE),
             _ => Err(DaemonError::InvalidRequest)
         }
     }
@@ -67,6 +66,11 @@ impl RequestHeader {
             RequestHeader::LIST => {
                 binary_request.append(
                     &mut serialize(&ListAction::adapter(context)?)?
+                )
+            },
+            RequestHeader::CREATE_FILE => {
+                binary_request.append(
+                    &mut serialize(&CreateFileAction::adapter(context)?)?
                 )
             }
         }
@@ -83,7 +87,7 @@ impl RequestHeader {
         if let Some(byte) = bytes.first() {
             match byte {
                 b if b == &(RequestHeader::LIST as u8) => Ok(RequestHeader::LIST),
-//                b if b == &(RequestHeader::Status as u8) => Ok(RequestHeader::Status),
+                b if b == &(RequestHeader::CREATE_FILE as u8) => Ok(RequestHeader::CREATE_FILE),
                 _ => Err(DaemonError::InvalidRequest)
             }
         } else {
@@ -92,12 +96,16 @@ impl RequestHeader {
     }
 
     /** Lifecycle step 5 - Daemon - decode bytes left from response weather header kind **/
-    pub fn decode_adapter(self, bytes: &[u8]) -> Result<Box<Request>, DaemonError> {
+    pub fn decode_adapter(self, bytes: &[u8]) -> Result<Box<dyn Request>, DaemonError> {
         match self {
             RequestHeader::LIST => {
                 let request: RequestAdapter<ListAction> = deserialize(bytes)?;
                 Ok(Box::new(request))
-            }
+            },
+            RequestHeader::CREATE_FILE => {
+                let request: RequestAdapter<CreateFileAction> = deserialize(bytes)?;
+                Ok(Box::new(request))
+            },
         }
     }
 }
@@ -114,12 +122,13 @@ mod tests {
     use super::*;
 
     use futurecommander_filesystem::{
-        Container,
         sample::Samples
     };
 
     use crate::{
-        ContextString
+        context::{
+            ContextString
+        }
     };
 
     #[test]

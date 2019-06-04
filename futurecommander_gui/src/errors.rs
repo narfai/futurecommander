@@ -22,7 +22,7 @@ use wasm_bindgen::{
 };
 
 use futurecommander_daemon::{
-    DaemonError
+    errors::DaemonError
 };
 
 use std::{

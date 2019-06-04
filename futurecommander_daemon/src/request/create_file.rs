@@ -18,7 +18,7 @@
  */
 
 use std::{
-    path::{ Path }
+    path::{ Path, PathBuf }
 };
 
 use serde::{ Serialize, Deserialize};
@@ -35,7 +35,6 @@ use crate::{
     request::{
         Request,
         RequestAdapter
-
     },
     response::{
         Response,
@@ -51,36 +50,43 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ListAction {
-    pub path: String //TODO store as path
+pub struct CreateFileAction {
+    pub path: PathBuf,
+    pub recursive: bool,
+    pub overwrite: bool
 }
 
-impl ListAction {
-    pub fn adapter(context: Context) -> Result<RequestAdapter<ListAction>, DaemonError> {
+
+impl CreateFileAction {
+    pub fn adapter(context: Context) -> Result<RequestAdapter<CreateFileAction>, DaemonError> {
         Ok(
             RequestAdapter::new(
-                context.get("id")?.to_string()?.as_str(),
-                ListAction {
-                    path: context.get("path")?.to_string()?,//TODO convert to path
+                    context.get("id")?.to_string()?.as_str(),
+                    CreateFileAction {
+                        path: normalize(
+                            Path::new(context.get("path")?.to_string()?.as_str())
+                        ),
+                        recursive: context.get("recursive")?.to_bool()?,
+                        overwrite: context.get("overwrite")?.to_bool()?,
                 }
             )
         )
     }
 }
 
-impl Request for RequestAdapter<ListAction> {
+impl Request for RequestAdapter<CreateFileAction> {
     fn process(&self, container: &mut Container) -> Result<Box<dyn Response>, DaemonError> {
         let collection = container.read_dir(
             normalize(
-                Path::new(self.inner.path.as_str())
+                Path::new(&self.inner.path)
             ).as_path()
         )?;
 
         Ok(
             Box::new(
                 ResponseAdapter::new(
-                self.id.as_str(),
-                ResponseStatus::Success,
+                    self.id.as_str(),
+                    ResponseStatus::Success,
                     ResponseHeader::Entries,
                     EntriesResponse(
                         Some(
@@ -147,7 +153,7 @@ mod tests {
 //        context.set("id", Box::new(ContextString::from(id.clone())));
 //        context.set("path", Box::new(ContextString::from(path.clone())));
 //
-//        let action = ListAction::adapter(context).unwrap();
+//        let action = CreateFileAction::adapter(context).unwrap();
 //
 //        let response = Response::decode(
 //            action.process(&mut container)
@@ -167,7 +173,7 @@ mod tests {
 //        let path = Samples::static_samples_path().to_string_lossy().to_string();
 //        let mut container = Container::default();
 //        let action = RequestAdapter(
-//            ListAction {
+//            CreateFileAction {
 //                id: id.clone(),
 //                path,
 //            }
@@ -194,7 +200,7 @@ mod tests {
 //
 //        let mut container = Container::default();
 //        let action = RequestAdapter(
-//            ListAction {
+//            CreateFileAction {
 //                id: id.clone(),
 //                path,
 //            }

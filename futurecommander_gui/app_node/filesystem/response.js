@@ -21,7 +21,7 @@ const STATUS_FAIL = 'Fail';
 const STATUS_SUCCESS = 'Success';
 
 const RESULT_ENTRY = 'Entry';
-const RESULT_COLLECTION = 'Collection';
+const RESULT_COLLECTION = 'Entries';
 
 class Entry {
     constructor({ name = null, is_dir = null, is_file = null, is_virtual = null }) {
@@ -33,13 +33,11 @@ class Entry {
 }
 
 class Response {
-    constructor({ id = null, status = null, kind = null, error = null, content = [] }) {
+    constructor({ id = null, status = null, header = null, body = null }) {
         this.id = id;
+        this.header = header;
         this.status = status;
-        this.kind = kind;
-        this.error = error;
-        this.content = content
-            .map((entry) => new Entry(entry));
+        this.body = body;
     }
 
     is_fail(){
@@ -50,21 +48,19 @@ class Response {
         return this.status === STATUS_SUCCESS
     }
 
-    result() {
+    parse() {
         switch(this.status) {
             case STATUS_SUCCESS:
-                switch(this.kind) {
+                switch(this.header) {
                     case RESULT_COLLECTION:
-                        return this.content;
-                    case RESULT_ENTRY:
-                        if (this.content.length > 0) {
-                            return this.content[0]
+                        if(this.body !== null){
+                            return this.body.map((entry) => new Entry(entry));
                         }
                         return null;
                 }
                 break;
             case STATUS_FAIL:
-                throw new Error(this.error);
+                throw new Error(this.body);
         }
     }
 }

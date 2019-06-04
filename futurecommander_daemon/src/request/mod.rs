@@ -19,10 +19,12 @@
 
 mod header;
 mod list;
+mod create_file;
 
 pub use self::{
     header::RequestHeader,
     list::ListAction,
+    create_file::CreateFileAction,
 };
 
 use serde::{
@@ -32,7 +34,13 @@ use serde::{
 
 
 use crate:: {
-    errors::DaemonError
+    errors::DaemonError,
+    context::{
+        Context
+    },
+    response::{
+        Response
+    }
 };
 
 use std::{
@@ -45,11 +53,30 @@ use futurecommander_filesystem::{
     Container
 };
 
-pub trait Request: Debug {
-
+pub trait Request : Debug {
     /** Lifecycle step 6 - Daemon - process decoded request and return binary response **/
-    fn process(&self, container: &mut Container) -> Result<Vec<u8>, DaemonError>;
+    fn process(&self, container: &mut Container) -> Result<Box<dyn Response>, DaemonError>;
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RequestAdapter<T: Serialize>(pub T);
+pub struct RequestAdapter<T: Serialize>{
+    pub id: String,
+    pub inner: T
+}
+
+impl <T: Serialize> RequestAdapter<T> {
+    pub fn new(id: &str, inner: T) -> RequestAdapter<T> {
+        RequestAdapter {
+            id: id.to_string(),
+            inner
+        }
+    }
+
+    pub fn id(&self) -> &str {
+        self.id.as_str()
+    }
+
+    pub fn inner(self) -> T {
+        self.inner
+    }
+}

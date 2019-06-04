@@ -9,11 +9,20 @@ use wasm_bindgen::{
 };
 
 use futurecommander_daemon::{
-    DaemonError,
-    Response,
-    RequestHeader,
-    Context,
-    ContextType
+    errors::{
+        DaemonError
+    },
+    response::{
+        Response,
+        ResponseHeader
+    },
+    request::{
+        RequestHeader
+    },
+    context::{
+        Context,
+        ContextType
+    }
 };
 
 mod errors;
@@ -90,10 +99,9 @@ impl From<&JsRequest> for Context {
 #[wasm_bindgen]
 pub fn request(request: &JsRequest) -> Result<Box<[u8]>, JsValue> {
     fn encode_request(request: &JsRequest) -> Result<Box<[u8]>, errors::AddonError> {
-        let context = Context::from(request);
         Ok(
             RequestHeader::new(request.get_type().as_str())?
-                .encode_adapter(context)?
+                .encode_adapter(Context::from(request))?
                 .into_boxed_slice()
         )
     }
@@ -107,7 +115,12 @@ pub fn request(request: &JsRequest) -> Result<Box<[u8]>, JsValue> {
 #[wasm_bindgen]
 pub fn decode(response: &[u8]) -> Result<JsValue, JsValue> {
     fn decode_response(response: &[u8]) -> Result<JsValue, errors::AddonError> {
-        Ok(JsValue::from_serde(&Response::decode(response)?)?)
+        let header = ResponseHeader::parse(&response[..ResponseHeader::len()])?;
+        Ok(
+            JsValue::from_serde(
+                &*header.decode_adapter(&response[ResponseHeader::len()..])?
+            )?
+        )
     }
 
     match decode_response(response) {

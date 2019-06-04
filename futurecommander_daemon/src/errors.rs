@@ -27,19 +27,28 @@ use std::{
 use bincode::{ Error as BincodeError };
 
 use futurecommander_filesystem::{
-    QueryError
+    QueryError,
+    DomainError
 };
 
 #[derive(Debug)]
 pub enum DaemonError {
     Io(io::Error),
+    Domain(DomainError),
     Query(QueryError),
     ContextKeyDoesNotExists(String),
     ContextValueDoesNotExists(String),
     ContextCannotCast(String, String),
     BinaryEncode(BincodeError),
     InvalidRequest,
+    InvalidResponse,
     Exit
+}
+
+impl From<DomainError> for DaemonError {
+    fn from(error: DomainError) -> Self {
+        DaemonError::Domain(error)
+    }
 }
 
 impl From<io::Error> for DaemonError {
@@ -63,9 +72,11 @@ impl From<BincodeError> for DaemonError {
 impl fmt::Display for DaemonError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            DaemonError::Domain(error) => write!(f, "Domain error {}", error),
             DaemonError::Io(error) => write!(f, "I/O error {}", error),
             DaemonError::Query(error) => write!(f, "Filesystem query error {}", error),
             DaemonError::InvalidRequest => write!(f, "Invalid Request"),
+            DaemonError::InvalidResponse => write!(f, "Invalid Response"),
             DaemonError::BinaryEncode(error) => write!(f, "Binary encode error {:?}", error),
             DaemonError::ContextKeyDoesNotExists(key) => write!(f, "Context key {} does not exists", key),
             DaemonError::ContextValueDoesNotExists(key) => write!(f, "Context value for key {} does not exists", key),
@@ -82,6 +93,7 @@ impl error::Error for DaemonError {
             DaemonError::Io(err) => Some(err),
             DaemonError::Query(err) => Some(err),
             DaemonError::BinaryEncode(err) => Some(err),
+            DaemonError::Domain(err) => Some(err),
             _ => None
         }
     }

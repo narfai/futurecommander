@@ -27,7 +27,7 @@ const is_entry = ({ resource }) => resource === 'Entry';
 const has_name = (target_name) => ({ name }) => name === target_name;
 
 const list_entry = (state, action) => {
-    const entry_collection = action.result.result();
+    const entry_collection = action.result.parse();
 
     const entry_children = state.children
         .filter(is_entry)

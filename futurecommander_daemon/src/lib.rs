@@ -17,31 +17,13 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod errors;
-mod request;
-mod response;
-mod context;
+pub mod errors;
+pub mod context;
+pub mod request;
+pub mod response;
+pub mod tools;
 
 pub use futurecommander_filesystem::SerializableEntry;
-
-pub use self::{
-    request::{
-        Request,
-        RequestHeader,
-        RequestAdapter
-    },
-    response::{
-        Response,
-        ResponseKind,
-        ResponseStatus
-    },
-    context::{
-        ContextType,
-        ContextString,
-        Context
-    },
-    errors::DaemonError
-};
 
 use std::{
     io::{
@@ -53,6 +35,14 @@ use std::{
 
 use futurecommander_filesystem::{
     Container
+};
+
+use self::{
+    request::RequestHeader,
+    response::{
+      Response
+    },
+    errors::DaemonError,
 };
 
 pub struct Daemon<'a, O, E>
@@ -81,7 +71,7 @@ impl <'a, O, E>Daemon<'a, O, E>
             .decode_adapter(&payload[RequestHeader::len()..])?
             .process(&mut self.container)?;
 
-        self.out.write_all(&response)?;
+        self.out.write_all(response.encode()?.as_slice())?;
         Ok(())
     }
 

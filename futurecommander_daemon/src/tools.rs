@@ -17,35 +17,15 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde::{ Serialize, Deserialize };
+use std::path::{ PathBuf, Path, MAIN_SEPARATOR };
 
-use crate::{
-    port::{
-        Entry
-    }
-};
-
-#[derive(Serialize, PartialEq, Deserialize, Debug, Clone)]
-pub struct SerializableEntry {
-    pub name: Option<String>,
-    pub is_dir: bool,
-    pub is_file: bool,
-    pub is_virtual: bool
+pub fn root_identity() -> PathBuf {
+    PathBuf::from(MAIN_SEPARATOR.to_string())
 }
 
-impl Eq for SerializableEntry {}
-
-impl SerializableEntry {
-    pub fn from(entry: &Entry) -> Self {
-        SerializableEntry {
-            name: if let Some(s) = entry.name() {
-                Some(s.to_string_lossy().to_string())
-            } else { None },
-            is_dir: entry.is_dir(),
-            is_file: entry.is_file(),
-            is_virtual: entry.is_virtual()
-        }
+pub fn get_parent_or_root(identity: &Path) -> PathBuf {
+    match identity.parent() {
+        Some(parent) => parent.to_path_buf(),
+        None => root_identity()
     }
 }
-
-
