@@ -28,6 +28,7 @@ module.exports = {
             'is_dir': true,
             'is_file': false,
             'is_open': true,
+            'is_virtual': false,
             'children': [
                 {
                     'id': 'jsvs2qz20',
@@ -35,8 +36,9 @@ module.exports = {
                     'name': 'test_nested_dir',
                     'is_dir': true,
                     'is_file': false,
+                    'is_virtual': true,
                     'children': [],
-                    'is_open': false
+                    'is_open': true
                 },
                 {
                     'id': 'jsvs2qz19',
@@ -44,6 +46,7 @@ module.exports = {
                     'name': 'test_file',
                     'is_dir': false,
                     'is_file': true,
+                    'is_virtual': true,
                     'children': [],
                     'is_open': false,
                 }

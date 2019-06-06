@@ -136,6 +136,19 @@ impl Entry for EntryAdapter<VirtualStatus> {
             | VirtualState::RemovedVirtually => false
         }
     }
+
+    fn is_virtual(&self) -> bool {
+        match self.0.state() {
+            VirtualState::ExistsVirtually
+            | VirtualState::ExistsThroughVirtualParent
+            | VirtualState::RemovedVirtually
+            | VirtualState::Replaced => true,
+
+            VirtualState::Exists
+            | VirtualState::NotExists
+            | VirtualState::Removed => false
+        }
+    }
 }
 
 #[cfg_attr(tarpaulin, skip)]
@@ -159,6 +172,7 @@ mod tests {
         assert!(a.exists());
         assert!(a.is_dir());
         assert!(!a.is_file());
+        assert!(!a.is_virtual());
         assert_eq!(a.to_path(), a_path.clone());
         assert_eq!(a.path(), a_path.as_path());
         assert_eq!(a.name(), Some(OsStr::new("MOCK")));
@@ -182,6 +196,7 @@ mod tests {
         assert!(a.exists());
         assert!(!a.is_dir());
         assert!(a.is_file());
+        assert!(!a.is_virtual());
         assert_eq!(a.to_path(), a_path.clone());
         assert_eq!(a.path(), a_path.as_path());
         assert_eq!(a.name(), Some(OsStr::new("MOCK")));
@@ -208,6 +223,7 @@ mod tests {
         assert!(!a.exists());
         assert!(!a.is_dir());
         assert!(!a.is_file());
+        assert!(!a.is_virtual());
     }
 
     #[test]
@@ -216,6 +232,7 @@ mod tests {
         assert!(!a.exists());
         assert!(!a.is_dir());
         assert!(!a.is_file());
+        assert!(!a.is_virtual());
     }
 
     #[test]
@@ -224,6 +241,7 @@ mod tests {
         assert!(!a.exists());
         assert!(!a.is_dir());
         assert!(!a.is_file());
+        assert!(a.is_virtual());
     }
 
     #[test]
@@ -232,6 +250,7 @@ mod tests {
         assert!(a.exists());
         assert!(a.is_dir());
         assert!(!a.is_file());
+        assert!(a.is_virtual());
     }
 
     #[test]
@@ -240,6 +259,7 @@ mod tests {
         assert!(a.exists());
         assert!(!a.is_dir());
         assert!(a.is_file());
+        assert!(a.is_virtual());
     }
 
     #[test]
@@ -248,5 +268,6 @@ mod tests {
         assert!(a.exists());
         assert!(!a.is_dir());
         assert!(a.is_file());
+        assert!(a.is_virtual());
     }
 }
