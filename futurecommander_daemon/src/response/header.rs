@@ -36,7 +36,8 @@ use crate::{
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
 pub enum ResponseHeader {
-    Entries
+    Entries,
+    Error
 }
 
 //TODO Header trait
@@ -53,6 +54,7 @@ impl ResponseHeader {
         if let Some(byte) = bytes.first() {
             match byte {
                 b if b == &(ResponseHeader::Entries as u8) => Ok(ResponseHeader::Entries),
+                b if b == &(ResponseHeader::Error as u8) => Ok(ResponseHeader::Error),
                 _ => Err(DaemonError::InvalidResponse)
             }
         } else {
@@ -63,6 +65,10 @@ impl ResponseHeader {
     pub fn decode_adapter(self, bytes: &[u8]) -> Result<Box<SerializableResponse>, DaemonError> {
         match self {
             ResponseHeader::Entries => {
+                let response: ResponseAdapter<EntriesResponse> = deserialize(bytes)?;
+                Ok(response.serializable())
+            },
+            ResponseHeader::Error => {
                 let response: ResponseAdapter<EntriesResponse> = deserialize(bytes)?;
                 Ok(response.serializable())
             },

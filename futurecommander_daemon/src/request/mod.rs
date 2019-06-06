@@ -56,6 +56,8 @@ use futurecommander_filesystem::{
 pub trait Request : Debug {
     /** Lifecycle step 6 - Daemon - process decoded request and return binary response **/
     fn process(&self, container: &mut Container) -> Result<Box<dyn Response>, DaemonError>;
+
+    fn id(&self) -> &str;
 }
 
 #[derive(Serialize, Deserialize, Debug)]

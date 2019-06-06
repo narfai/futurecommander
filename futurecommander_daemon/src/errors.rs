@@ -20,7 +20,7 @@
 
 use std::{
     io,
-    error,
+    error::Error,
     fmt
 };
 
@@ -43,6 +43,31 @@ pub enum DaemonError {
     InvalidRequest,
     InvalidResponse,
     Exit
+}
+
+impl DaemonError {
+    pub fn serializable(&self) -> (String, String, String) {
+        let kind = match self { //TODO macro for that
+            Io => "Io",
+            Domain => "Domain",
+            Query => "Query",
+            ContextKeyDoesNotExists => "ContextKeyDoesNotExists",
+            ContextValueDoesNotExists => "ContextValueDoesNotExists",
+            ContextCannotCast => "ContextCannotCast",
+            BinaryEncode => "BinaryEncode",
+            InvalidRequest => "InvalidRequest",
+            InvalidResponse => "InvalidResponse",
+            Exit => "Exit"
+        };
+
+        let message = format!("{}", self);
+
+        (
+            kind.to_string(),
+            message,
+            self.description().to_string()
+        )
+    }
 }
 
 impl From<DomainError> for DaemonError {
@@ -87,8 +112,8 @@ impl fmt::Display for DaemonError {
 }
 
 
-impl error::Error for DaemonError {
-    fn cause(&self) -> Option<&dyn error::Error> {
+impl Error for DaemonError {
+    fn cause(&self) -> Option<&dyn Error> {
         match self {
             DaemonError::Io(err) => Some(err),
             DaemonError::Query(err) => Some(err),

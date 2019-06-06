@@ -29,36 +29,40 @@ use std::{
     io::{
         prelude::*,
         Write,
-        Stdin
-    }
+        Stdin,
+        Stdout,
+        Stderr
+    },
+    thread::{ spawn }
 };
 
 use futurecommander_filesystem::{
     Container
 };
 
+
 use self::{
     request::RequestHeader,
     response::{
-      Response
+        Response,
+        ErrorResponse,
+        ResponseHeader,
+        ResponseAdapter,
+        ResponseStatus
     },
     errors::DaemonError,
 };
 
-pub struct Daemon<'a, O, E>
-    where O: Write + 'a,
-          E: Write + 'a {
+pub struct Daemon<'a> {
 
-    out: &'a mut O,
-    err: &'a mut E,
+    out: &'a mut Stdout,
+    err: &'a mut Stderr,
     container: Container
 }
 
-impl <'a, O, E>Daemon<'a, O, E>
-    where O: Write + 'a,
-          E: Write + 'a {
+impl <'a>Daemon<'a> {
 
-    pub fn new(out: &'a mut O, err: &'a mut E) -> Daemon<'a, O, E> {
+    pub fn new(out: &'a mut Stdout, err: &'a mut Stderr) -> Daemon<'a> {
         Daemon {
             out,
             err,
@@ -66,24 +70,43 @@ impl <'a, O, E>Daemon<'a, O, E>
         }
     }
 
-    fn emit(&mut self, payload: &[u8]) -> Result<(), DaemonError>{
-        let response = RequestHeader::parse(&payload[..RequestHeader::len()])?
-            .decode_adapter(&payload[RequestHeader::len()..])?
-            .process(&mut self.container)?;
+    fn process_request(payload: &[u8], container: &mut Container) -> Result<Box<Response>, DaemonError> {
+        let request = RequestHeader::parse(&payload[..RequestHeader::len()])?
+            .decode_adapter(&payload[RequestHeader::len()..])?;
 
-        self.out.write_all(response.encode()?.as_slice())?;
-        Ok(())
+        match request.process(container) {
+            Ok(response) => Ok(response),
+            Err(error) => Ok(
+                Box::new(
+                    ResponseAdapter::new(
+                        request.id(),
+                        ResponseStatus::Fail,
+                        ResponseHeader::Error,
+                        ErrorResponse::from(&error)
+                    )
+                )
+            )
+        }
+    }
+
+    fn write_response(&mut self, response: Box<Response>) -> Result<(), DaemonError> {
+        unimplemented!()
+    }
+
+    fn emit(&mut self, payload: &[u8], ) -> Result<(), DaemonError>{
+        unimplemented!()
     }
 
     pub fn next(&mut self, stdin: &Stdin) -> Result<(), DaemonError> {
         let mut inlock = stdin.lock();
+        let mut outlock = self.out.lock();
 
         let length = {
-            self.out.flush()?;
-
             let buffer = inlock.fill_buf()?;
-
-            self.emit(buffer)?;
+            let response = Self::process_request(buffer, &mut self.container)?;
+            let binary_response = &response.encode()?;
+            outlock.write_all(binary_response)?;
+            outlock.flush()?;
             buffer.len()
         };
 
@@ -95,6 +118,7 @@ impl <'a, O, E>Daemon<'a, O, E>
         let stdin = std::io::stdin();
 
         loop {
+            self.out.flush().unwrap();
             match self.next(&stdin) {
                 Ok(_) => {},
                 Err(DaemonError::Exit) => {

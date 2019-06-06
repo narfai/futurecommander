@@ -18,11 +18,22 @@
  */
 
 mod header;
+mod error;
+mod entries;
+
+pub use self::{
+    header::ResponseHeader,
+    error::ErrorResponse,
+    entries::EntriesResponse
+};
 
 use std::{
     fmt::{
         Debug
     },
+    error::{
+        Error
+    }
 };
 
 use serde::{
@@ -30,20 +41,12 @@ use serde::{
     Deserialize
 };
 
-use futurecommander_filesystem::{
-    SerializableEntry
-};
-
-use bincode::{ deserialize, serialize };
 
 
 use crate::{
     errors::DaemonError
 };
 
-pub use self::{
-    header::ResponseHeader
-};
 
 #[derive(Serialize, PartialEq, Deserialize, Debug, Copy, Clone)]
 pub enum ResponseStatus {
@@ -76,16 +79,6 @@ impl <T: Serialize>ResponseAdapter<T> {
     }
 }
 
-//impl <T: Serialize> ResponseAdapter<T> {
-//    fn id(&self) -> &str {
-//        self.id.as_str()
-//    }
-//
-//    fn status(&self) -> ResponseStatus {
-//        self.status
-//    }
-//}
-
 pub trait Response : Debug {
     fn encode(&self) -> Result<Vec<u8>, DaemonError>;
 }
@@ -93,24 +86,4 @@ pub trait Response : Debug {
 #[typetag::serde(tag = "type")]
 pub trait SerializableResponse : Debug {
     fn serializable(&self) -> Box<SerializableResponse>;
-
-}
-
-
-impl Response for ResponseAdapter<EntriesResponse> {
-    fn encode(&self) -> Result<Vec<u8>, DaemonError> {
-        let mut binary_response = vec![self.header as u8];
-        binary_response.append(&mut serialize(self)?);
-        Ok(binary_response)
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct EntriesResponse(pub Option<Vec<SerializableEntry>>);
-
-#[typetag::serde]
-impl SerializableResponse for ResponseAdapter<EntriesResponse> {
-    fn serializable(&self) -> Box<SerializableResponse> {
-        Box::new(self.clone())
-    }
 }
