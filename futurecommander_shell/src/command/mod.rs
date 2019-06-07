@@ -88,3 +88,8 @@ impl <C>Command<C> {
     }
 }
 
+pub fn add_red_color(text: &str) -> String {
+    format!("\x1b[1;91m{}\x1b[0m",
+            text
+    )
+}

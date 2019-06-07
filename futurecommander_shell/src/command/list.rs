@@ -32,7 +32,8 @@ use futurecommander_filesystem::{
 
 use crate::command::{
     Command,
-    errors::CommandError
+    errors::CommandError,
+    add_red_color
 };
 
 pub struct ListCommand {}
@@ -54,13 +55,14 @@ pub struct InitializedListCommand {
     pub path: PathBuf
 }
 
+
+
 impl Command<InitializedListCommand> {
     pub fn execute<W : Write>(self, out: &mut W, container: &mut Container) -> Result<(), CommandError> {
         let collection = container.read_dir(self.0.path.as_path())?;
         if ! collection.is_empty() {
             for child in collection.sort().into_iter() {
-                writeln!(
-                    out,
+                let output = format!(
                     "{}    {}",
                    if child.is_dir() {
                        "Directory"
@@ -69,7 +71,17 @@ impl Command<InitializedListCommand> {
                    } else {
                        "Unknown  "
                    },
-                    child.name().unwrap().to_string_lossy()
+                    child.name().unwrap().to_string_lossy(),
+
+                );
+                writeln!(
+                    out,
+                    "{}",
+                    if child.is_virtual() {
+                        add_red_color(&output)
+                    } else {
+                        output
+                    }
                 )?;
             }
         } else {
