@@ -57,11 +57,7 @@ class Request {
     }
 
     static strong_id() {
-        return Array.from(uniqid.process())
-            .reduce(
-                (acc, cur) => acc + cur.charCodeAt(0).toString(10),
-                '0'
-            )
+        return uniqid();
     }
 
     static list({ path }) {

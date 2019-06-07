@@ -2,17 +2,23 @@
   "name": "futurecommander_gui",
   "version": "0.1.0",
   "description": "User-delayed filesystem operation",
-  "main": "index.html",
+  "main": "main.js",
   "author": "François Cadeillan <francois@azsystem.fr>",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "mithril": "^1.1.6",
+    "@fortawesome/fontawesome-free": "^5.8.2",
+    "mithril": "2.0.0-rc.5",
     "nwjs": "^1.4.4",
+    "openmew-renderer": "0.2.3",
+    "osenv": "^0.1.5",
+    "redux": "^4.0.1",
+    "skeleton-css": "^2.0.4",
     "uniqid": "^5.0.3"
   },
   "scripts": {
     "install": "nw install 0.38.2-sdk && nw use 0.38.2-sdk",
     "build": "wasm-pack build --target nodejs",
-    "start": "cargo build --manifest-path ../Cargo.toml && yarn build && nw . --enable-node-worker --password-store=basic --mixed-context"
+    "start": "nw . --enable-node-worker --password-store=basic",
+    "dev": "cargo build --manifest-path ../Cargo.toml && yarn build && yarn start"
   }
 }

@@ -17,33 +17,21 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde::{ Serialize, Deserialize };
+const osenv = require('osenv');
+const { basename } = require('path');
 
-use crate::{
-    port::{
-        Entry
-    }
-};
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SerializableEntry {
-    pub name: Option<String>,
-    pub is_dir: bool,
-    pub is_file: bool,
-    pub is_virtual: bool
-}
-
-impl SerializableEntry {
-    pub fn from(entry: &Entry) -> Self {
-        SerializableEntry {
-            name: if let Some(s) = entry.name() {
-                Some(s.to_string_lossy().to_string())
-            } else { None },
-            is_dir: entry.is_dir(),
-            is_file: entry.is_file(),
-            is_virtual: entry.is_virtual()
-        }
-    }
-}
-
-
+module.exports = (spread) => ({
+    'entry': spread.append(({state, event}) => {
+        const path = event.path === null ? osenv.home() : event.path;
+        return {
+            'resource': 'Entry',
+            'initial_state': {
+                'name': basename(path),
+                'cwd': path,
+                'is_dir': true,
+                'is_file': false,
+                'is_open': true
+            }
+        };
+    })(spread.scope.self, spread.redraw.allow)
+});

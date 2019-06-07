@@ -17,11 +17,18 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const STATUS_FAIL = 'Fail';
+const STATUS_SUCCESS = 'Success';
+
+const RESULT_ENTRY = 'Entry';
+const RESULT_COLLECTION = 'Collection';
+
 class Entry {
-    constructor({ name = null, is_dir = null, is_file = null }) {
+    constructor({ name = null, is_dir = null, is_file = null, is_virtual = null }) {
         this.name = name;
         this.is_dir = is_dir;
         this.is_file = is_file;
+        this.is_virtual = is_virtual;
     }
 }
 
@@ -35,20 +42,28 @@ class Response {
             .map((entry) => new Entry(entry));
     }
 
+    is_fail(){
+        return this.status === STATUS_FAIL;
+    }
+
+    is_success(){
+        return this.status === STATUS_SUCCESS
+    }
+
     result() {
         switch(this.status) {
-            case 'Success':
+            case STATUS_SUCCESS:
                 switch(this.kind) {
-                    case 'Collection':
+                    case RESULT_COLLECTION:
                         return this.content;
-                    case 'Entry':
+                    case RESULT_ENTRY:
                         if (this.content.length > 0) {
                             return this.content[0]
                         }
                         return null;
                 }
                 break;
-            case 'Fail':
+            case STATUS_FAIL:
                 throw new Error(this.error);
         }
     }

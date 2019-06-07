@@ -51,6 +51,8 @@ impl Entry for EntryAdapter<&Path> {
     }
 
     fn exists(&self) -> bool { self.0.exists() }
+
+    fn is_virtual(&self) -> bool { false }
 }
 
 impl Entry for EntryAdapter<PathBuf> {
@@ -65,6 +67,8 @@ impl Entry for EntryAdapter<PathBuf> {
     fn is_file(&self) -> bool { self.0.is_file() }
 
     fn exists(&self) -> bool { self.0.exists() }
+
+    fn is_virtual(&self) -> bool { false }
 }
 
 
@@ -84,6 +88,7 @@ mod tests {
         assert!(a.exists());
         assert!(a.is_dir());
         assert!(!a.is_file());
+        assert!(!a.is_virtual());
         assert_eq!(a.to_path(), a_path.clone());
         assert_eq!(a.path(), a_path.as_path());
         assert_eq!(a.name(), Some(OsStr::new("A")));
@@ -101,6 +106,7 @@ mod tests {
         assert!(f.exists());
         assert!(!f.is_dir());
         assert!(f.is_file());
+        assert!(!f.is_virtual());
         assert_eq!(f.to_path(), f_path.clone());
         assert_eq!(f.path(), f_path.as_path());
         assert_eq!(f.name(), Some(OsStr::new("F")));
@@ -118,6 +124,7 @@ mod tests {
         assert!(!z.exists());
         assert!(!z.is_dir());
         assert!(!z.is_file());
+        assert!(!z.is_virtual());
         assert_eq!(z.to_path(), z_path.clone());
         assert_eq!(z.path(), z_path.as_path());
         assert_eq!(z.name(), Some(OsStr::new("Z")));
@@ -134,6 +141,7 @@ mod tests {
         assert!(a.exists());
         assert!(a.is_dir());
         assert!(!a.is_file());
+        assert!(!a.is_virtual());
         assert_eq!(a.to_path(), a_path.clone());
         assert_eq!(a.path(), a_path.as_path());
         assert_eq!(a.name(), Some(OsStr::new("A")));
@@ -151,6 +159,7 @@ mod tests {
         assert!(f.exists());
         assert!(!f.is_dir());
         assert!(f.is_file());
+        assert!(!f.is_virtual());
         assert_eq!(f.to_path(), f_path.clone());
         assert_eq!(f.path(), f_path.as_path());
         assert_eq!(f.name(), Some(OsStr::new("F")));
@@ -168,6 +177,7 @@ mod tests {
         assert!(!z.exists());
         assert!(!z.is_dir());
         assert!(!z.is_file());
+        assert!(!z.is_virtual());
         assert_eq!(z.to_path(), z_path.clone());
         assert_eq!(z.path(), z_path.as_path());
         assert_eq!(z.name(), Some(OsStr::new("Z")));

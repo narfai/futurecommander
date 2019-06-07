@@ -17,33 +17,10 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde::{ Serialize, Deserialize };
-
-use crate::{
-    port::{
-        Entry
-    }
+module.exports = function Layout(provider){
+    provider.connect_component(
+        Layout.name,
+        nw.require('./layout/component'),
+        nw.require('./layout/action')
+    );
 };
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SerializableEntry {
-    pub name: Option<String>,
-    pub is_dir: bool,
-    pub is_file: bool,
-    pub is_virtual: bool
-}
-
-impl SerializableEntry {
-    pub fn from(entry: &Entry) -> Self {
-        SerializableEntry {
-            name: if let Some(s) = entry.name() {
-                Some(s.to_string_lossy().to_string())
-            } else { None },
-            is_dir: entry.is_dir(),
-            is_file: entry.is_file(),
-            is_virtual: entry.is_virtual()
-        }
-    }
-}
-
-

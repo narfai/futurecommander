@@ -17,33 +17,25 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use serde::{ Serialize, Deserialize };
+const { Provider, Utility, Structural, Renderer } = nw.require('openmew-renderer');
 
-use crate::{
-    port::{
-        Entry
-    }
+module.exports = function create_provider(mithril){
+    const provider = new Provider(mithril, 'Layout');
+
+    provider.connect_component_transducers(
+        Renderer.state_aware,
+        Renderer.skip_redraw
+    );
+
+    const { logger } = Utility;
+    const { detach, append, prepend } = Structural;
+
+    provider.connect_state_transducers(
+        logger,
+        detach,
+        append,
+        prepend
+    );
+
+    return provider;
 };
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SerializableEntry {
-    pub name: Option<String>,
-    pub is_dir: bool,
-    pub is_file: bool,
-    pub is_virtual: bool
-}
-
-impl SerializableEntry {
-    pub fn from(entry: &Entry) -> Self {
-        SerializableEntry {
-            name: if let Some(s) = entry.name() {
-                Some(s.to_string_lossy().to_string())
-            } else { None },
-            is_dir: entry.is_dir(),
-            is_file: entry.is_file(),
-            is_virtual: entry.is_virtual()
-        }
-    }
-}
-
-

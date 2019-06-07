@@ -27,6 +27,7 @@ const { Request } = require('./request');
 class FileSystemWorker {
     constructor() {
         this.filesystem = null;
+        this.close_count = 0;
     }
 
     emit(request) {
@@ -40,6 +41,7 @@ class FileSystemWorker {
 
     listen() {
         try {
+            console.log('SPAWN CHILD');
             this.filesystem = spawn(
                 '../target/debug/futurecommander',
                 ['daemon'],
@@ -64,9 +66,12 @@ class FileSystemWorker {
             });
 
             this.filesystem.on('close', (code) => {
-                global.console.log(`child process exited with code ${code}`);
+                console.log(`child process exited with code ${code}`);
                 this.close();
-                this.listen();
+                if(this.close_count > 5) {
+                    global.console.log(`restart child process`);
+                    this.listen();
+                }
             });
 
             this.filesystem.on('error', (error) => {
@@ -78,6 +83,7 @@ class FileSystemWorker {
     }
 
     close() {
+        this.close_count += 1;
         this.filesystem.unref();
         this.filesystem = null;
     }
@@ -85,7 +91,8 @@ class FileSystemWorker {
 
 let worker = new FileSystemWorker();
 
+worker.listen();
+
 onmessage = function(e) {
-    worker.listen();
     worker.emit(e.data[0]);
 };

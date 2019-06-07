@@ -41,6 +41,7 @@ pub trait Entry {
     fn is_dir(&self) -> bool;
     fn is_file(&self) -> bool;
     fn exists(&self) -> bool;
+    fn is_virtual(&self) -> bool;
     fn is_contained_by(&self, other: &Entry) -> bool {
         for ancestor in self.path().ancestors() {
             if other.path() == ancestor {
@@ -87,6 +88,7 @@ mod tests_entry {
         assert!(a.exists());
         assert!(a.is_dir());
         assert!(!a.is_file());
+        assert!(!a.is_virtual());
         assert_eq!(a.to_path(), a_path.clone());
         assert_eq!(a.path(), a_path.as_path());
         assert_eq!(a.name(), Some(OsStr::new("A")));
@@ -104,6 +106,7 @@ mod tests_entry {
         assert!(f.exists());
         assert!(!f.is_dir());
         assert!(f.is_file());
+        assert!(!f.is_virtual());
         assert_eq!(f.to_path(), f_path.clone());
         assert_eq!(f.path(), f_path.as_path());
         assert_eq!(f.name(), Some(OsStr::new("F")));
@@ -121,6 +124,7 @@ mod tests_entry {
         assert!(!z.exists());
         assert!(!z.is_dir());
         assert!(!z.is_file());
+        assert!(!z.is_virtual());
         assert_eq!(z.to_path(), z_path.clone());
         assert_eq!(z.path(), z_path.as_path());
         assert_eq!(z.name(), Some(OsStr::new("Z")));
