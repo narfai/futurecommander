@@ -40,10 +40,7 @@ pub enum ResponseHeader {
     Error
 }
 
-//TODO Header trait
 impl Eq for ResponseHeader {}
-
-//TODO from string to string
 
 impl ResponseHeader {
     pub fn len() -> usize {

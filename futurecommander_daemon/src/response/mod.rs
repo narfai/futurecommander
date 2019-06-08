@@ -87,3 +87,41 @@ pub trait Response : Debug {
 pub trait SerializableResponse : Debug {
     fn serializable(&self) -> Box<SerializableResponse>;
 }
+//
+//#[cfg_attr(tarpaulin, skip)]
+//#[cfg(test)]
+//mod tests {
+//    use super::*;
+//
+//    use std::{
+//        path::{ Path }
+//    };
+//
+//    use futurecommander_filesystem::{
+//        EntryAdapter,
+//        SerializableEntry
+//    };
+//
+//    #[test]
+//    fn test_codec_response(){
+//        let response = Response {
+//            id: "jsvsazd21".to_string(),
+//            kind: ResponseKind::Collection,
+//            status: ResponseStatus::Success,
+//            content: Some(vec![SerializableEntry::from(&EntryAdapter(Path::new("/test/directory")))]),
+//            error: None
+//        };
+//
+//        let codec_response = Response::decode(
+//            response.encode()
+//                .unwrap()
+//                .as_slice()
+//        ).unwrap();
+//
+//        assert_eq!(codec_response.id, "jsvsazd21".to_string());
+//        assert_eq!(codec_response.kind, ResponseKind::Collection);
+//        assert_eq!(codec_response.status, ResponseStatus::Success);
+//        assert_eq!(codec_response.content, Some(vec![SerializableEntry::from(&EntryAdapter(Path::new("/test/directory")))]));
+//        assert_eq!(codec_response.error, None);
+//    }
+//}
