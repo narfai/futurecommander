@@ -23,6 +23,8 @@ pub mod request;
 pub mod response;
 pub mod tools;
 
+pub mod message;// /!\ Highly experimental
+
 pub use futurecommander_filesystem::SerializableEntry;
 
 use std::{
@@ -33,13 +35,21 @@ use std::{
         Stdout,
         Stderr
     },
+    sync::{
+        Arc,
+        Mutex
+    },
     thread::{ spawn }
 };
 
-use futurecommander_filesystem::{
-    Container
+use tokio::{
+    io,
+    net::{ TcpStream },
+    prelude::*,
+    codec::{
+        Framed
+    }
 };
-
 
 use self::{
     request::RequestHeader,
@@ -51,6 +61,13 @@ use self::{
         ResponseStatus
     },
     errors::DaemonError,
+    message::{
+        MessageCodec
+    }
+};
+
+use futurecommander_filesystem::{
+    Container
 };
 
 pub struct Daemon<'a> {
@@ -112,6 +129,25 @@ impl <'a>Daemon<'a> {
 
         inlock.consume(length);
         Ok(())
+    }
+
+    pub fn listen(mut self) {
+        let addr = "127.0.0.1:7842".parse().unwrap();
+
+        let mut container : Arc<Mutex<Container>> = Arc::default();
+        let server = TcpStream::connect(&addr)
+            .and_then( move |socket|{
+                let framed = Framed::new(socket, MessageCodec::default());
+
+                framed.for_each(move |message| {
+                    let test = &mut container;
+                    Ok(())
+                }).map_err(|error| { error.into() })
+            }).map_err(|error| { eprintln!("Server error {}", error); });
+
+        println!("server running on localhost:6142");
+
+        tokio::run(server);
     }
 
     pub fn run(mut self) {

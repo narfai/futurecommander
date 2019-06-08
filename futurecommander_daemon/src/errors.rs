@@ -19,9 +19,12 @@
 
 
 use std::{
-    io,
     error::Error,
     fmt
+};
+
+use tokio::{
+    io
 };
 
 use bincode::{ Error as BincodeError };
@@ -91,6 +94,18 @@ impl From<QueryError> for DaemonError {
 impl From<BincodeError> for DaemonError {
     fn from(error: BincodeError) -> Self {
         DaemonError::BinaryEncode(error)
+    }
+}
+
+impl Into<io::Error> for DaemonError {
+    fn into(self) -> io::Error {
+        match self {
+            DaemonError::Io(error) => error,
+            _ => io::Error::new(
+                io::ErrorKind::InvalidData,
+                self
+            )
+        }
     }
 }
 
