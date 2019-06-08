@@ -33,7 +33,7 @@ use crate::{
 };
 
 #[typetag::serde(tag = "type")]
-pub trait Guard : Debug {
+pub trait Guard : Debug + Send {
     fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError>;
 }
 

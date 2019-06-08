@@ -57,7 +57,7 @@ use crate::{
     }
 };
 
-pub trait Event<E, F> : SerializableEvent + Debug
+pub trait Event<E, F> : SerializableEvent + Debug + Send
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
