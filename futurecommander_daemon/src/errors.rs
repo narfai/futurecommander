@@ -20,7 +20,8 @@
 
 use std::{
     error::Error,
-    fmt
+    fmt,
+    net::{ AddrParseError }
 };
 
 use tokio::{
@@ -37,6 +38,7 @@ use futurecommander_filesystem::{
 #[derive(Debug)]
 pub enum DaemonError {
     Io(io::Error),
+    AddrParseError(AddrParseError),
     Domain(DomainError),
     Query(QueryError),
     ContextKeyDoesNotExists(String),
@@ -48,30 +50,6 @@ pub enum DaemonError {
     Exit
 }
 
-impl DaemonError {
-    pub fn serializable(&self) -> (String, String, String) {
-        let kind = match self { //TODO macro for that
-            Io => "Io",
-            Domain => "Domain",
-            Query => "Query",
-            ContextKeyDoesNotExists => "ContextKeyDoesNotExists",
-            ContextValueDoesNotExists => "ContextValueDoesNotExists",
-            ContextCannotCast => "ContextCannotCast",
-            BinaryEncode => "BinaryEncode",
-            InvalidRequest => "InvalidRequest",
-            InvalidResponse => "InvalidResponse",
-            Exit => "Exit"
-        };
-
-        let message = format!("{}", self);
-
-        (
-            kind.to_string(),
-            message,
-            self.description().to_string()
-        )
-    }
-}
 
 impl From<DomainError> for DaemonError {
     fn from(error: DomainError) -> Self {
@@ -82,6 +60,12 @@ impl From<DomainError> for DaemonError {
 impl From<io::Error> for DaemonError {
     fn from(error: io::Error) -> Self {
         DaemonError::Io(error)
+    }
+}
+
+impl From<AddrParseError> for DaemonError {
+    fn from(error: AddrParseError) -> Self {
+        DaemonError::AddrParseError(error)
     }
 }
 
@@ -114,6 +98,7 @@ impl fmt::Display for DaemonError {
         match self {
             DaemonError::Domain(error) => write!(f, "Domain error {}", error),
             DaemonError::Io(error) => write!(f, "I/O error {}", error),
+            DaemonError::AddrParseError(error) => write!(f, "Fail to parse socket address {}", error),
             DaemonError::Query(error) => write!(f, "Filesystem query error {}", error),
             DaemonError::InvalidRequest => write!(f, "Invalid Request"),
             DaemonError::InvalidResponse => write!(f, "Invalid Response"),
@@ -131,6 +116,7 @@ impl Error for DaemonError {
     fn cause(&self) -> Option<&dyn Error> {
         match self {
             DaemonError::Io(err) => Some(err),
+            DaemonError::AddrParseError(err) => Some(err),
             DaemonError::Query(err) => Some(err),
             DaemonError::BinaryEncode(err) => Some(err),
             DaemonError::Domain(err) => Some(err),

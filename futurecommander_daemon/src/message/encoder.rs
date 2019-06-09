@@ -32,29 +32,18 @@ use crate::{
         DaemonError
     },
     message::{
-        MessageCodec,
-        Message
+        PacketCodec,
+        Message,
+        Packet
     }
 };
 
-impl Encoder for MessageCodec {
-    type Item=Box<Message>;
+impl Encoder for PacketCodec {
+    type Item=Packet;
     type Error=DaemonError;
 
-    fn encode(&mut self, message: Box<Message>, buf: &mut BytesMut) -> Result<(), DaemonError> {
-        let mut encoded = vec![message.header() as u8];
-        let mut datagram = message.encode()?;
-        let mut length = vec![];
-
-        length.write_u64::<NetworkEndian>(datagram.len() as u64).unwrap();
-
-        encoded.append(&mut length);
-        encoded.append(&mut datagram);
-
-        buf.reserve(encoded.len());
-
-        buf.put(encoded);
-
+    fn encode(&mut self, packet: Packet, buf: &mut BytesMut) -> Result<(), DaemonError> {
+        packet.write(buf)?;
         Ok(())
     }
 }

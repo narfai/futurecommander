@@ -18,9 +18,6 @@
  */
 
 pub mod errors;
-pub mod context;
-pub mod request;
-pub mod response;
 pub mod tools;
 
 // /!\ Highly experimental
@@ -45,14 +42,6 @@ use std::{
 };
 
 use self::{
-    request::RequestHeader,
-    response::{
-        Response,
-        ErrorResponse,
-        ResponseHeader,
-        ResponseAdapter,
-        ResponseStatus
-    },
     errors::DaemonError
 };
 
@@ -79,65 +68,7 @@ impl <'a>Daemon<'a> {
         }
     }
 
-    fn process_request(payload: &[u8], container: &mut Container) -> Result<Box<Response>, DaemonError> {
-        let request = RequestHeader::parse(&payload[..RequestHeader::len()])?
-            .decode_adapter(&payload[RequestHeader::len()..])?;
-
-        match request.process(container) {
-            Ok(response) => Ok(response),
-            Err(error) => Ok(
-                Box::new(
-                    ResponseAdapter::new(
-                        request.id(),
-                        ResponseStatus::Fail,
-                        ResponseHeader::Error,
-                        ErrorResponse::from(&error)
-                    )
-                )
-            )
-        }
-    }
-
-    fn write_response(&mut self, response: Box<Response>) -> Result<(), DaemonError> {
-        unimplemented!()
-    }
-
-    fn emit(&mut self, payload: &[u8], ) -> Result<(), DaemonError>{
-        unimplemented!()
-    }
-
-    pub fn next(&mut self, stdin: &Stdin) -> Result<(), DaemonError> {
-        let mut inlock = stdin.lock();
-        let mut outlock = self.out.lock();
-
-        let length = {
-            let buffer = inlock.fill_buf()?;
-            let response = Self::process_request(buffer, &mut self.container)?;
-            let binary_response = &response.encode()?;
-            outlock.write_all(binary_response)?;
-            outlock.flush()?;
-            buffer.len()
-        };
-
-        inlock.consume(length);
-        Ok(())
-    }
-
     pub fn run(mut self) {
-        let stdin = std::io::stdin();
-
-        loop {
-            self.out.flush().unwrap();
-            match self.next(&stdin) {
-                Ok(_) => {},
-                Err(DaemonError::Exit) => {
-                    break;
-                }
-                Err(error) => {
-                    write!(self.err, "{}", error).unwrap();
-                    break;
-                }
-            };
-        }
+       unimplemented!();
     }
 }

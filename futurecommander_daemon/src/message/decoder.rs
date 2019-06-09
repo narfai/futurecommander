@@ -35,18 +35,18 @@ use crate::{
         DaemonError
     },
     message::{
-        MessageCodec,
+        PacketCodec,
         Header,
-        Message
+        Message,
+        Packet
     }
 };
 
-impl Decoder for MessageCodec {
-    type Item=Box<Message>;
+impl Decoder for PacketCodec {
+    type Item=Packet;
     type Error=DaemonError;
 
-    //TODO how to handle an error ?
-    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Box<Message>>, DaemonError> {
+    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Packet>, DaemonError> {
         //Parse header
         if self.consumer_header.is_none() {
             if (buf.len()) >= 1 {
@@ -71,14 +71,15 @@ impl Decoder for MessageCodec {
         if let Some(header) = self.consumer_header {
             if let Some(length) = self.consumer_length {
                 if ((self.consumer_index + buf.len()) as u64) >= length {
-                    let message = header.parse_message(
+                    let packet = Packet::from((
+                        header,
                         &buf[self.consumer_index..(self.consumer_index + (length as usize))]
-                    )?;
+                    ));
 
                     self.consumer_header = None;
                     self.consumer_length = None;
                     self.consumer_index = 0;
-                    return Ok(Some(message));
+                    return Ok(Some(packet));
                 }
             }
         }

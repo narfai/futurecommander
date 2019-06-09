@@ -18,6 +18,7 @@
  */
 
 use std::{
+    net::{ SocketAddr },
     path::{ Path, PathBuf },
     io::{
         prelude::*,
@@ -50,11 +51,36 @@ use tokio::{
 use crate::{
     errors::DaemonError,
     message::{
-        MessageCodec,
+        PacketCodec,
         Message,
-        DirectoryOpen
+        DirectoryOpen,
+        DirectoryRead
     }
 };
+
+//pub trait Server {
+//
+//}
+//
+//pub trait Client {
+//    fn read_dir() -> Future<Item=Direc>
+//}
+
+pub struct Peer<T> {
+    socket_address: SocketAddr,
+    inner: T
+}
+
+impl <T> Peer <T> {
+    pub fn new(inner: T, address: String, port: u16) -> Result<Peer<T>, DaemonError> {
+        Ok(
+            Peer {
+                inner,
+                socket_address: format!("{}:{}", address, port).parse()?
+            }
+        )
+    }
+}
 
 pub fn send(){
     let addr = "127.0.0.1:7842".parse().unwrap();
@@ -62,16 +88,29 @@ pub fn send(){
     let client = TcpStream::connect(&addr)
         .map_err(|error| error.into())
         .and_then(|socket| {
-            let framed = Framed::new(socket, MessageCodec::default());
+            let framed = Framed::new(socket, PacketCodec::default());
             let (tx, rx) = framed.split();
             println!("Stream splitted");
+            let message = DirectoryOpen { path: PathBuf::from("/tmp2")};
             tx
-                .send(Box::new(DirectoryOpen { path: PathBuf::from("/tmp2")}))
+                .send(message.encode().unwrap())
                 .and_then(|_| rx
                     .into_future()
                     .map_err(|(e, _)| e)
-                    .and_then(|(message, _)|{
-                        println!("Message received {:?}", message);
+                    .and_then(|(packet, _)|{
+                        if let Some(packet) = packet {
+                            println!("Packet received");
+                            match packet.parse::<DirectoryRead>() {
+                                Some(message) => {
+                                    println!("Parse ok ! {:?}", message.entries)
+                                },
+                                None => {
+                                    println!("Unknown message");
+                                }
+                            }
+                        } else {
+                            println!("Packet is none");
+                        }
                         Ok(())
                     })
                 )

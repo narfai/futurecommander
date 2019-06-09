@@ -36,7 +36,8 @@ use crate::{
         Header,
         Message,
         State,
-        MessageStream
+        MessageStream,
+        Packet
     }
 };
 
@@ -62,14 +63,9 @@ pub struct DirectoryOpen {
 }
 
 impl Message for DirectoryOpen {
-    fn encode(&self) -> Result<Vec<u8>, DaemonError> {
-        Ok(serialize(&self)?)
+    fn encode(&self) -> Result<Packet, DaemonError> {
+        Ok(Packet::new(Header::DirectoryOpen, serialize(&self)?))
     }
-
-    fn header(&self) -> Header {
-        Header::DirectoryOpen
-    }
-
 
     fn process(&self, state: State) -> MessageStream {
         fn read_dir(state: State, path: &Path) -> Result<Box<Message>, DaemonError> {
@@ -90,18 +86,15 @@ impl Message for DirectoryOpen {
     }
 }
 
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DirectoryRead {
     pub entries: Vec<SerializableEntry>
 }
 
 impl Message for DirectoryRead {
-    fn encode(&self) -> Result<Vec<u8>, DaemonError> {
-        Ok(serialize(&self)?)
-    }
-
-    fn header(&self) -> Header {
-        Header::DirectoryRead
+    fn encode(&self) -> Result<Packet, DaemonError> {
+        Ok(Packet::new(Header::DirectoryRead, serialize(&self)?))
     }
 
     //TODO process could be stream for client ?
@@ -117,3 +110,9 @@ impl <T: Entry>From<EntryCollection<T>> for DirectoryRead {
         }
     }
 }
+//
+//impl From<Packet> for Option<DirectoryRead> {
+//    fn from(packet: Packet) -> Option<DirectoryOpen> {
+//
+//    }
+//}

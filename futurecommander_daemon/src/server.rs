@@ -50,8 +50,9 @@ use crate::{
     errors::DaemonError,
     message::{
         MessageStream,
-        MessageCodec,
-        Message
+        PacketCodec,
+        Message,
+        Packet
     }
 };
 
@@ -60,12 +61,12 @@ use futurecommander_filesystem::{
 };
 
 pub type State = Arc<Mutex<Container>>;
-pub type Rx = SplitStream<Framed<TcpStream, MessageCodec>>;
+pub type Rx = SplitStream<Framed<TcpStream, PacketCodec>>;
 pub struct Consumer {
     rx: Rx,
     state: State,
     replies: Vec<MessageStream>,
-    buffer: Vec<Box<Message>>
+    buffer: Vec<Packet>
 }
 
 impl Consumer {
@@ -80,13 +81,16 @@ impl Consumer {
 }
 
 impl Stream for Consumer {
-    type Item = Box<Message>;
+    type Item = Packet;
     type Error = DaemonError;
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
         match self.rx.poll()? {
-            Async::Ready(Some(message)) => { // We got a new message in socket
-                self.replies.push(message.process(self.state.clone()))
+            Async::Ready(Some(packet)) => { // We got a new packet in socket
+                self.replies.push(
+                    packet.decode()?
+                        .process(self.state.clone())
+                )
             },
             Async::Ready(None) => {
                 return Ok(Async::Ready(None)); // Client disconnected
@@ -99,7 +103,7 @@ impl Stream for Consumer {
             for (index, stream) in self.replies.iter_mut().take(10).enumerate() {
                 match stream.poll()? {
                     Async::Ready(Some(reply)) => { //Message processing yield some reply
-                        self.buffer.push(reply);
+                        self.buffer.push(reply.encode()?);
                     },
                     Async::Ready(None) => { //Message processing done
                         cleanup_indexes.push(index);
@@ -126,7 +130,7 @@ impl Stream for Consumer {
 }
 
 pub fn process(state: State, socket: TcpStream){
-    let (tx, rx) = Framed::new(socket, MessageCodec::default()).split();
+    let (tx, rx) = Framed::new(socket, PacketCodec::default()).split();
 
     let task = tx
         .send_all(Consumer::new( rx, state.clone()))

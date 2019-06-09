@@ -53,18 +53,77 @@ pub use crate::{
 };
 
 #[derive(Default)]
-pub struct MessageCodec {
+pub struct PacketCodec {
     consumer_index: usize,
     consumer_header: Option<Header>,
     consumer_length: Option<u64>
 }
 
 pub trait Message : Send + Sync + Debug {
-    fn encode(&self) -> Result<Vec<u8>, DaemonError>;
-    fn header(&self) -> Header;
+    fn encode(&self) -> Result<Packet, DaemonError>; //TODO encode -> Packet
     fn process(&self, state: State) -> MessageStream {
         Box::new(empty())
     }
 }
 
+
+use byteorder::{ NetworkEndian, WriteBytesExt };
+use bytes::{ BytesMut, BufMut };
+use bincode::{ serialize, deserialize };
+use serde::{ Deserialize };
+
 pub type MessageStream = Box<Stream<Item=Box<Message>, Error=DaemonError> + Sync + Send>;
+
+pub struct Packet {
+    header: Header,
+    datagram: Vec<u8>
+}
+
+impl Packet {
+    pub fn new(header : Header, datagram: Vec<u8>) -> Packet {
+        Packet {
+            header,
+            datagram
+        }
+    }
+
+    pub fn header(&self) -> Header {
+        self.header
+    }
+
+    pub fn decode(&self) -> Result<Box<Message>, DaemonError> {
+        Ok(self.header.parse_message(self.datagram.as_slice())?)
+    }
+
+    pub fn write(self, buf: &mut BytesMut) -> Result<(), DaemonError> {
+        let mut encoded = vec![self.header as u8];
+        let mut datagram = self.datagram;
+        let mut length = vec![];
+
+        length.write_u64::<NetworkEndian>(datagram.len() as u64)?;
+
+        encoded.append(&mut length);
+        encoded.append(&mut datagram);
+
+        buf.reserve(encoded.len());
+
+        buf.put(encoded);
+        Ok(())
+    }
+
+    pub fn parse<'a, T: Message + Deserialize<'a>>(&'a self) -> Option<T> {
+        match deserialize(self.datagram.as_slice()) {
+            Ok(message) => Some(message),
+            Err(_) => None
+        }
+    }
+}
+
+impl From<(Header, &[u8])> for Packet {
+    fn from(payload : (Header, &[u8])) -> Packet {
+        Packet {
+            header: payload.0,
+            datagram: payload.1.to_vec()
+        }
+    }
+}
