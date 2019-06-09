@@ -52,19 +52,20 @@ use crate::{
     errors::DaemonError,
     message::{
         PacketCodec,
+        Header,
         Message,
         DirectoryOpen,
         DirectoryRead
     }
 };
 
-//pub trait Server {
-//
-//}
-//
-//pub trait Client {
-//    fn read_dir() -> Future<Item=Direc>
-//}
+pub trait Server {
+
+}
+
+pub trait Client {
+
+}
 
 pub struct Peer<T> {
     socket_address: SocketAddr,
@@ -100,14 +101,17 @@ pub fn send(){
                     .and_then(|(packet, _)|{
                         if let Some(packet) = packet {
                             println!("Packet received");
-                            match packet.parse::<DirectoryRead>() {
-                                Some(message) => {
-                                    println!("Parse ok ! {:?}", message.entries)
+                            match packet.header() {
+                                Header::DirectoryRead => match packet.parse::<DirectoryRead>() {
+                                    Some(message) => {
+                                        println!("Parse ok ! {:?}", message.entries)
+                                    },
+                                    None => {
+                                        println!("Unable to parse DirectoryRead message");
+                                    }
                                 },
-                                None => {
-                                    println!("Unknown message");
-                                }
-                            }
+                                _ => { println!("Unhandled message"); }
+                            };
                         } else {
                             println!("Packet is none");
                         }
