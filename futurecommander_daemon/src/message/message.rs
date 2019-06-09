@@ -35,13 +35,14 @@ use crate::{
     message::{
         Header,
         Message,
-        State
+        State,
+        MessageStream
     }
 };
 
 use tokio::{
     prelude::{
-        stream::{ Stream, empty },
+        stream::{ Stream, once },
         future::{ Future },
         *
     },
@@ -69,13 +70,23 @@ impl Message for DirectoryOpen {
         Header::DirectoryOpen
     }
 
-    fn process(&self, state: State) ->  Result<Box<Message>, DaemonError> {
-        let collection = state.lock().unwrap().read_dir(
-            normalize(
-                self.path.as_path()
-            ).as_path()
-        )?;
-        Ok(Box::new(DirectoryRead::from(collection)))
+
+    fn process(&self, state: State) -> MessageStream {
+        fn read_dir(state: State, path: &Path) -> Result<Box<Message>, DaemonError> {
+            Ok(
+                Box::new(
+                    DirectoryRead::from(
+                        state.lock().unwrap().read_dir(path)?
+                    )
+                )
+            )
+        }
+
+        Box::new(
+        once(
+            read_dir(state, self.path.as_path())
+            )
+        )
     }
 }
 
@@ -93,9 +104,7 @@ impl Message for DirectoryRead {
         Header::DirectoryRead
     }
 
-    fn process(&self, state: State) ->  Result<Box<Message>, DaemonError> {
-        unimplemented!();
-    }
+    //TODO process could be stream for client ?
 }
 
 impl <T: Entry>From<EntryCollection<T>> for DirectoryRead {

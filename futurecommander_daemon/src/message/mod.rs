@@ -62,31 +62,9 @@ pub struct MessageCodec {
 pub trait Message : Send + Sync + Debug {
     fn encode(&self) -> Result<Vec<u8>, DaemonError>;
     fn header(&self) -> Header;
-    fn process(&self, state: State) -> Result<Box<Message>, DaemonError>;
-}
-
-pub struct ProcessMessage {
-    message: Box<Message>,
-    state: State
-}
-
-impl ProcessMessage {
-    pub fn new(message: Box<Message>, state: State) -> ProcessMessage {
-        ProcessMessage {
-            message,
-            state
-        }
+    fn process(&self, state: State) -> MessageStream {
+        Box::new(empty())
     }
 }
 
-impl Future for ProcessMessage {
-    type Item = Box<Message>;
-    type Error = DaemonError;
-
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-        match self.message.process(self.state.clone()) {
-            Ok(message) => Ok(Async::Ready(message)),
-            Err(error) => Err(error)
-        }
-    }
-}
+pub type MessageStream = Box<Stream<Item=Box<Message>, Error=DaemonError> + Sync + Send>;

@@ -53,11 +53,7 @@ use self::{
         ResponseAdapter,
         ResponseStatus
     },
-    errors::DaemonError,
-    message::{
-        ProcessMessage,
-        MessageCodec
-    }
+    errors::DaemonError
 };
 
 pub use self::server::{ State };

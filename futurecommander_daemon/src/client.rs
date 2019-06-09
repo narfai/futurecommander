@@ -50,7 +50,6 @@ use tokio::{
 use crate::{
     errors::DaemonError,
     message::{
-        ProcessMessage,
         MessageCodec,
         Message,
         DirectoryOpen

@@ -37,7 +37,7 @@ use tokio::{
     prelude::{
         Async,
         Poll,
-//        stream::{ },
+        stream::{ SplitStream },
         future::{ Either, ok, lazy },
         *
     },
@@ -49,7 +49,7 @@ use tokio::{
 use crate::{
     errors::DaemonError,
     message::{
-        ProcessMessage,
+        MessageStream,
         MessageCodec,
         Message
     }
@@ -60,26 +60,83 @@ use futurecommander_filesystem::{
 };
 
 pub type State = Arc<Mutex<Container>>;
+pub type Rx = SplitStream<Framed<TcpStream, MessageCodec>>;
+pub struct Consumer {
+    rx: Rx,
+    state: State,
+    replies: Vec<MessageStream>,
+    buffer: Vec<Box<Message>>
+}
+
+impl Consumer {
+    pub fn new(rx: Rx, state: State) -> Consumer {
+        Consumer {
+            rx,
+            state,
+            replies: Vec::new(),
+            buffer: Vec::new()
+        }
+    }
+}
+
+impl Stream for Consumer {
+    type Item = Box<Message>;
+    type Error = DaemonError;
+
+    fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
+        match self.rx.poll()? {
+            Async::Ready(Some(message)) => { // We got a new message in socket
+                self.replies.push(message.process(self.state.clone()))
+            },
+            Async::Ready(None) => {
+                return Ok(Async::Ready(None)); // Client disconnected
+            },
+            Async::NotReady => {} // Socket is not ready
+        }
+
+        if !self.replies.is_empty() {
+            let mut cleanup_indexes = Vec::new();
+            for (index, stream) in self.replies.iter_mut().take(10).enumerate() {
+                match stream.poll()? {
+                    Async::Ready(Some(reply)) => { //Message processing yield some reply
+                        self.buffer.push(reply);
+                    },
+                    Async::Ready(None) => { //Message processing done
+                        cleanup_indexes.push(index);
+                    },
+                    Async::NotReady => {} //Message processing still running
+                }
+            }
+            for remove_index in cleanup_indexes {
+                self.replies.remove(remove_index);
+            }
+        }
+
+        //If still replies to process or messages to send
+        if !self.replies.is_empty() || !self.buffer.is_empty() {
+            task::current().notify(); // Notify re-scheduling of the task
+        }
+
+        if let Some(message) = self.buffer.pop() {
+            return Ok(Async::Ready(Some(message)));
+        }
+
+        Ok(Async::NotReady)
+    }
+}
 
 pub fn process(state: State, socket: TcpStream){
     let (tx, rx) = Framed::new(socket, MessageCodec::default()).split();
 
-    let task = tx.send_all(
-        rx.and_then(move |message|{
-            println!("Incoming message {:?}", message);
-            ProcessMessage::new(message, state.clone())
-                .then(|message| {
-                    println!("Reply {:?}", message);
-                    message
-                })
-        })
-    ).then(|res| {
-        if let Err(e) = res {
-            println!("failed to process connection; error = {:?}", e);
-        }
+    let task = tx
+        .send_all(Consumer::new( rx, state.clone()))
+        .then(|res| {
+            if let Err(e) = res {
+                println!("failed to process connection; error = {:?}", e);
+            }
 
-        Ok(())
-    });
+            Ok(())
+        });
 
     tokio::spawn(task);
 }
