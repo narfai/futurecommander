@@ -22,12 +22,31 @@ mod message;
 mod decoder;
 mod encoder;
 
+pub use std::{
+    fmt::{ Debug }
+};
+
 pub use self::{
     header::Header,
     message::*
 };
 
+use tokio::{
+    net::{ TcpListener, TcpStream },
+    codec::{
+        Framed
+    },
+    prelude::{
+        Async,
+        Poll,
+        stream::{ Stream, empty },
+        future::{ Future },
+        *
+    },
+};
+
 pub use crate::{
+    State,
     errors::{
         DaemonError
     }
@@ -40,11 +59,34 @@ pub struct MessageCodec {
     consumer_length: Option<u64>
 }
 
-pub trait Message : Send {
-    fn encode(self) -> Result<Vec<u8>, DaemonError>;
+pub trait Message : Send + Sync + Debug {
+    fn encode(&self) -> Result<Vec<u8>, DaemonError>;
     fn header(&self) -> Header;
+    fn process(&self, state: State) -> Result<Box<Message>, DaemonError>;
 }
-//
-//pub trait MessageProcessor {
-//
-//}
+
+pub struct ProcessMessage {
+    message: Box<Message>,
+    state: State
+}
+
+impl ProcessMessage {
+    pub fn new(message: Box<Message>, state: State) -> ProcessMessage {
+        ProcessMessage {
+            message,
+            state
+        }
+    }
+}
+
+impl Future for ProcessMessage {
+    type Item = Box<Message>;
+    type Error = DaemonError;
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        match self.message.process(self.state.clone()) {
+            Ok(message) => Ok(Async::Ready(message)),
+            Err(error) => Err(error)
+        }
+    }
+}

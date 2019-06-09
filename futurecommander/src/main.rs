@@ -18,7 +18,11 @@
  */
 
 use futurecommander_shell::Shell;
-use futurecommander_daemon::Daemon;
+use futurecommander_daemon::{
+    server::listen,
+    client::send,
+    Daemon
+};
 use std::{
     env,
     io::{ Write }
@@ -39,6 +43,10 @@ fn main() {
         }
     } else if args[0].trim() == "daemon" {
         Daemon::new(&mut stdout, &mut stderr).run();
+    } else if args[0].trim() == "server" {
+        listen()
+    } else if args[0].trim() == "client" {
+        send()
     } else {
         match shell.run_single(env::args(), &mut stdout, &mut stderr) {
             Ok(_) => {},//Exit gracefully

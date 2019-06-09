@@ -19,7 +19,7 @@
 
 
 use std::{
-    path::{ PathBuf }
+    path::{ PathBuf, Path }
 };
 
 use bincode::{ deserialize, serialize };
@@ -34,12 +34,25 @@ use crate::{
     },
     message::{
         Header,
-        Message
+        Message,
+        State
     }
 };
 
+use tokio::{
+    prelude::{
+        stream::{ Stream, empty },
+        future::{ Future },
+        *
+    },
+};
+
 use futurecommander_filesystem::{
-    SerializableEntry
+    EntryCollection,
+    SerializableEntry,
+    tools::normalize,
+    ReadableFileSystem,
+    Entry
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -48,26 +61,50 @@ pub struct DirectoryOpen {
 }
 
 impl Message for DirectoryOpen {
-    fn encode(self) -> Result<Vec<u8>, DaemonError> {
+    fn encode(&self) -> Result<Vec<u8>, DaemonError> {
         Ok(serialize(&self)?)
     }
 
     fn header(&self) -> Header {
         Header::DirectoryOpen
     }
+
+    fn process(&self, state: State) ->  Result<Box<Message>, DaemonError> {
+        let collection = state.lock().unwrap().read_dir(
+            normalize(
+                self.path.as_path()
+            ).as_path()
+        )?;
+        Ok(Box::new(DirectoryRead::from(collection)))
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DirectoryRead {
-    pub entries: Option<Vec<SerializableEntry>>
+    pub entries: Vec<SerializableEntry>
 }
 
 impl Message for DirectoryRead {
-    fn encode(self) -> Result<Vec<u8>, DaemonError> {
+    fn encode(&self) -> Result<Vec<u8>, DaemonError> {
         Ok(serialize(&self)?)
     }
 
     fn header(&self) -> Header {
         Header::DirectoryRead
+    }
+
+    fn process(&self, state: State) ->  Result<Box<Message>, DaemonError> {
+        unimplemented!();
+    }
+}
+
+impl <T: Entry>From<EntryCollection<T>> for DirectoryRead {
+    fn from(collection: EntryCollection<T>) -> DirectoryRead {
+        DirectoryRead {
+            entries: collection
+                .into_iter()
+                .map(|entry| SerializableEntry::from(&entry))
+                .collect::<Vec<SerializableEntry>>()
+        }
     }
 }

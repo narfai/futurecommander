@@ -40,6 +40,7 @@ impl Header {
     pub fn parse(byte: &u8) -> Result<Self, DaemonError> {
         match byte {
             b if b == &(Header::DirectoryOpen as u8) => Ok(Header::DirectoryOpen),
+            b if b == &(Header::DirectoryRead as u8) => Ok(Header::DirectoryRead),
             _ => Err(DaemonError::InvalidRequest)
         }
     }
