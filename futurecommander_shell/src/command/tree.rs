@@ -27,12 +27,14 @@ use futurecommander_filesystem::{
     QueryError,
     Container,
     ReadableFileSystem,
-    Entry
+    Entry,
+    EntryAdapter
 };
 
 use crate::command::{
     Command,
-    errors::CommandError
+    errors::CommandError,
+    add_red_color
 };
 
 pub struct TreeCommand {}
@@ -75,15 +77,24 @@ impl Command<InitializedTreeCommand> {
         Ok(())
     }
 
-    fn tree<W: Write>(out: &mut W, container: &Container, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), CommandError>{
-        let file_name = match identity.file_name() {
+    fn tree<W: Write>(out: &mut W, container: &Container, identity: &Entry, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), CommandError>{
+        let file_name = match identity.name() {
             Some(file_name) => file_name.to_string_lossy().to_string(),
             None => "/".to_string()
         };
 
-        Self::display_tree_line(out, &depth_list, parent_last, file_name)?;
+        Self::display_tree_line(
+            out,
+            &depth_list,
+            parent_last,
+            if identity.is_virtual() {
+                add_red_color(&file_name)
+            } else {
+                file_name
+            }
+        )?;
 
-        match container.read_dir(identity) {
+        match container.read_dir(identity.path()) {
             Ok(collection) => {
                 let new_depth_list = match depth_list {
                     Some(depth_list) => {
@@ -99,7 +110,7 @@ impl Command<InitializedTreeCommand> {
                     if let Err(error) = Self::tree(
                         out,
                         container,
-                        child.path(),
+                        &child,
                         Some(new_depth_list.clone()),
                         index == (length - 1)
                     ) {
@@ -116,7 +127,7 @@ impl Command<InitializedTreeCommand> {
     }
 
     pub fn execute<W: Write>(self, out: &mut W, container: &mut Container) -> Result<(), CommandError> {
-        Self::tree(out, container, self.0.path.as_path(), None, true)?;
+        Self::tree(out, container, &EntryAdapter(self.0.path.as_path()), None, true)?;
         Ok(())
     }
 }
