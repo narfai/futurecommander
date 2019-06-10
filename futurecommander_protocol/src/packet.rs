@@ -19,12 +19,12 @@
 
 use byteorder::{ NetworkEndian, WriteBytesExt };
 use bytes::{ BytesMut, BufMut };
-use bincode::{ serialize, deserialize };
+use bincode::{ deserialize };
 use serde::{ Deserialize };
 
 use crate::{
-    DaemonError,
-    Message,
+    errors::ProtocolError,
+    message::Message,
     Header
 };
 
@@ -45,11 +45,11 @@ impl Packet {
         self.header
     }
 
-    pub fn decode(&self) -> Result<Box<Message>, DaemonError> {
+    pub fn decode(&self) -> Result<Box<Message>, ProtocolError> {
         Ok(self.header.parse_message(self.datagram.as_slice())?)
     }
 
-    pub fn write(self, buf: &mut BytesMut) -> Result<(), DaemonError> {
+    pub fn write(self, buf: &mut BytesMut) -> Result<(), ProtocolError> {
         let mut encoded = vec![self.header as u8];
         let mut datagram = self.datagram;
         let mut length = vec![];

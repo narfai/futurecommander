@@ -27,10 +27,12 @@ use serde::{ Serialize, Deserialize };
 use bincode::{ serialize };
 
 use crate::{
-    DaemonError,
+    errors::ProtocolError,
+    message::{
+        Message
+    },
     Packet,
     Header,
-    Message
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -39,7 +41,7 @@ pub struct DirectoryRead {
 }
 
 impl Message for DirectoryRead {
-    fn encode(&self) -> Result<Packet, DaemonError> {
+    fn encode(&self) -> Result<Packet, ProtocolError> {
         Ok(Packet::new(Header::DirectoryRead, serialize(&self)?))
     }
 }

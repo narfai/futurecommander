@@ -17,31 +17,24 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use bincode::{ deserialize, serialize };
-
-use byteorder::{ NetworkEndian, WriteBytesExt };
-use bytes::{ BytesMut, BufMut };
-use tokio::{
-    io,
-    prelude::*,
-    codec::{ Encoder },
+use bytes::{ BytesMut };
+use tokio_codec::{
+    Encoder
 };
 
 use crate::{
     errors::{
-        DaemonError
+        ProtocolError
     },
     PacketCodec,
-    Message,
     Packet
 };
 
 impl Encoder for PacketCodec {
     type Item=Packet;
-    type Error=DaemonError;
+    type Error=ProtocolError;
 
-    fn encode(&mut self, packet: Packet, buf: &mut BytesMut) -> Result<(), DaemonError> {
-//        buf.clear();
+    fn encode(&mut self, packet: Packet, buf: &mut BytesMut) -> Result<(), ProtocolError> {
         packet.write(buf)?;
         Ok(())
     }

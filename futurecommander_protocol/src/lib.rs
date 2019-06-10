@@ -21,6 +21,9 @@ mod codec;
 mod header;
 mod packet;
 
+pub mod message;
+pub mod errors;
+
 pub use {
     self::codec::PacketCodec,
     self::header::Header,

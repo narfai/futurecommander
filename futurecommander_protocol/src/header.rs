@@ -18,9 +18,7 @@
  */
 
 use crate::{
-    errors::{
-        DaemonError
-    },
+    errors::{ ProtocolError },
     message::{
         Message,
         DirectoryOpen,
@@ -28,7 +26,7 @@ use crate::{
     }
 };
 
-use bincode::{ serialize, deserialize };
+use bincode::{ deserialize };
 
 #[derive(Clone, Copy, Debug)]
 pub enum Header {
@@ -37,15 +35,15 @@ pub enum Header {
 }
 
 impl Header {
-    pub fn parse(byte: &u8) -> Result<Self, DaemonError> {
+    pub fn parse(byte: &u8) -> Result<Self, ProtocolError> {
         match byte {
             b if b == &(Header::DirectoryOpen as u8) => Ok(Header::DirectoryOpen),
             b if b == &(Header::DirectoryRead as u8) => Ok(Header::DirectoryRead),
-            _ => Err(DaemonError::InvalidRequest)
+            _ => Err(ProtocolError::InvalidHeader)
         }
     }
 
-    pub fn parse_message(self, datagram: &[u8]) -> Result<Box<dyn Message>, DaemonError> {
+    pub fn parse_message(self, datagram: &[u8]) -> Result<Box<dyn Message>, ProtocolError> {
         match self {
             Header::DirectoryOpen => {
                 let message: DirectoryOpen = deserialize(datagram)?;

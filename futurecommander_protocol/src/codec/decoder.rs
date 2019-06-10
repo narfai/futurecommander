@@ -23,27 +23,24 @@ use std::{
 use byteorder::{ NetworkEndian, ReadBytesExt};
 
 use bytes::{ BytesMut };
-use tokio::{
-    prelude::*,
-    codec::{ Decoder, LengthDelimitedCodec },
+use tokio_codec::{
+    Decoder
 };
 
 use crate::{
     errors::{
-        DaemonError
+        ProtocolError
     },
-    protocol::{
-        PacketCodec,
-        Header,
-        Packet
-    }
+    PacketCodec,
+    Header,
+    Packet
 };
 
 impl Decoder for PacketCodec {
     type Item=Packet;
-    type Error=DaemonError;
+    type Error=ProtocolError;
 
-    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Packet>, DaemonError> {
+    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Packet>, ProtocolError> {
         //Parse header
         if self.consumer_header.is_none() {
             let header_pos = self.consumer_index + 1;

@@ -17,33 +17,28 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod directory_read;
-mod directory_open;
-
-pub use std::{
-    fmt::{ Debug }
+use std::{
+    path::{ PathBuf }
 };
 
-pub use self::{
-    directory_open::DirectoryOpen,
-    directory_read::DirectoryRead
+use crate::{
+    errors::ProtocolError,
+    message::Message,
+    Packet,
+    Header,
 };
 
-use tokio::{
-    prelude::*,
-};
+use serde::{ Serialize, Deserialize };
+use bincode::{ serialize };
 
-pub use crate::{
-    errors::DaemonError,
-    State,
-    Packet
-};
 
-pub trait Message : Send + Sync + Debug {
-    fn encode(&self) -> Result<Packet, DaemonError>;
-    fn process(&self, state: State) -> MessageStream {
-        Box::new(stream::empty())
-    }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DirectoryOpen {
+    pub path: PathBuf
 }
 
-pub type MessageStream = Box<Stream<Item=Box<Message>, Error=DaemonError> + Sync + Send>;
+impl Message for DirectoryOpen {
+    fn encode(&self) -> Result<Packet, ProtocolError> {
+        Ok(Packet::new(Header::DirectoryOpen, serialize(&self)?))
+    }
+}
