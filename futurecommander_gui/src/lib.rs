@@ -1,13 +1,12 @@
-//mod utils;
+mod utils;
 
-//TODO big WIP
-//#[cfg(feature = "wee_alloc")]
-//#[global_allocator]
-//static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-//
-//use wasm_bindgen::{
-//    prelude::*
-//};
+#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+use wasm_bindgen::{
+    prelude::*
+};
 //
 //use futurecommander_daemon::{
 //    errors::{
@@ -98,7 +97,7 @@
 //}
 //
 //#[wasm_bindgen]
-//pub fn request(request: &JsRequest) -> Result<Box<[u8]>, JsValue> {
+//pub fn encode(message: &JsMessage) -> Result<Box<[u8]>, JsValue> {
 //    fn encode_request(request: &JsRequest) -> Result<Box<[u8]>, errors::AddonError> {
 //        Ok(
 //            RequestHeader::new(request.get_type().as_str())?

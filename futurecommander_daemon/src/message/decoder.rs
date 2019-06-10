@@ -49,8 +49,9 @@ impl Decoder for PacketCodec {
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Packet>, DaemonError> {
         //Parse header
         if self.consumer_header.is_none() {
-            if (buf.len()) >= 1 {
-                if let Some(first_byte) = buf[self.consumer_index..(self.consumer_index + 1)].first() {
+            let header_pos = self.consumer_index + 1;
+            if (buf.len()) >= header_pos {
+                if let Some(first_byte) = buf[self.consumer_index..header_pos].first() {
                     self.consumer_header = Some(Header::parse(first_byte)?);
                     self.consumer_index += 1;
                 }
@@ -60,8 +61,9 @@ impl Decoder for PacketCodec {
         //Parse length
         if self.consumer_length.is_none() && self.consumer_header.is_some() {
             let u64_size = size_of::<u64>();
-            if (self.consumer_index + buf.len()) >= u64_size {
-                let mut cursor = Cursor::new(&buf[self.consumer_index..(self.consumer_index + u64_size)]);
+            let length_pos = self.consumer_index + u64_size;
+            if buf.len() >= length_pos {
+                let mut cursor = Cursor::new(&buf[self.consumer_index..length_pos]);
                 self.consumer_length = Some(cursor.read_u64::<NetworkEndian>().unwrap());
                 self.consumer_index += u64_size;
             }
@@ -70,15 +72,16 @@ impl Decoder for PacketCodec {
         //Parse datagram
         if let Some(header) = self.consumer_header {
             if let Some(length) = self.consumer_length {
-                if ((self.consumer_index + buf.len()) as u64) >= length {
+                let datagram_pos = self.consumer_index + (length as usize);
+                if buf.len() >= datagram_pos {
                     let packet = Packet::from((
                         header,
-                        &buf[self.consumer_index..(self.consumer_index + (length as usize))]
+                        &buf[self.consumer_index..datagram_pos]
                     ));
 
                     self.consumer_header = None;
                     self.consumer_length = None;
-                    self.consumer_index = 0;
+                    self.consumer_index += length as usize;
                     return Ok(Some(packet));
                 }
             }

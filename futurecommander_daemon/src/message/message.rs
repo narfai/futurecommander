@@ -82,6 +82,12 @@ impl Message for DirectoryOpen {
         once(
             read_dir(state, self.path.as_path())
             )
+            //DOES WORKS !
+    //        iter_result(vec![
+//                    read_dir(state.clone(), self.path.as_path()),
+//                    read_dir(state, Path::new("/tmp2")),
+//                ]
+//            )
         )
     }
 }

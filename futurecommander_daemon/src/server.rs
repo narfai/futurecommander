@@ -28,7 +28,8 @@ use std::{
     sync::{
         Arc,
         Mutex
-    }
+    },
+    collections::{ vec_deque::VecDeque }
 };
 
 use tokio::{
@@ -62,32 +63,32 @@ use futurecommander_filesystem::{
 
 pub type State = Arc<Mutex<Container>>;
 pub type Rx = SplitStream<Framed<TcpStream, PacketCodec>>;
-pub struct Consumer {
+pub struct Daemon {
     rx: Rx,
     state: State,
-    replies: Vec<MessageStream>,
-    buffer: Vec<Packet>
+    replies: VecDeque<MessageStream>
 }
 
-impl Consumer {
-    pub fn new(rx: Rx, state: State) -> Consumer {
-        Consumer {
+impl Daemon {
+    pub fn new(rx: Rx, state: State) -> Daemon {
+        Daemon {
             rx,
             state,
-            replies: Vec::new(),
-            buffer: Vec::new()
+            replies: VecDeque::new(),
         }
     }
 }
 
-impl Stream for Consumer {
+impl Stream for Daemon {
     type Item = Packet;
     type Error = DaemonError;
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
+        println!("initial poll call");
         match self.rx.poll()? {
             Async::Ready(Some(packet)) => { // We got a new packet in socket
-                self.replies.push(
+                println!("Incoming packet {:?}", packet.decode()?);
+                self.replies.push_front(
                     packet.decode()?
                         .process(self.state.clone())
                 )
@@ -96,33 +97,31 @@ impl Stream for Consumer {
                 return Ok(Async::Ready(None)); // Client disconnected
             },
             Async::NotReady => {} // Socket is not ready
-        }
+        };
 
         if !self.replies.is_empty() {
-            let mut cleanup_indexes = Vec::new();
-            for (index, stream) in self.replies.iter_mut().take(10).enumerate() {
+            let mut cleanup_ids: Vec<usize> = Vec::new();
+            for (id, stream) in self.replies.iter_mut().take(10).enumerate() {
                 match stream.poll()? {
                     Async::Ready(Some(reply)) => { //Message processing yield some reply
-                        self.buffer.push(reply.encode()?);
+                        println!("write packet in buffer {:?}", reply);
+                        return Ok(Async::Ready(Some(reply.encode()?)));
                     },
                     Async::Ready(None) => { //Message processing done
-                        cleanup_indexes.push(index);
+                        cleanup_ids.push(id);
                     },
                     Async::NotReady => {} //Message processing still running
-                }
+                };
             }
-            for remove_index in cleanup_indexes {
-                self.replies.remove(remove_index);
+
+            while let Some(id) = cleanup_ids.pop() {
+                self.replies.remove(id);
             }
         }
 
         //If still replies to process or messages to send
-        if !self.replies.is_empty() || !self.buffer.is_empty() {
+        if !self.replies.is_empty() {
             task::current().notify(); // Notify re-scheduling of the task
-        }
-
-        if let Some(message) = self.buffer.pop() {
-            return Ok(Async::Ready(Some(message)));
         }
 
         Ok(Async::NotReady)
@@ -133,7 +132,7 @@ pub fn process(state: State, socket: TcpStream){
     let (tx, rx) = Framed::new(socket, PacketCodec::default()).split();
 
     let task = tx
-        .send_all(Consumer::new( rx, state.clone()))
+        .send_all(Daemon::new(rx, state.clone()))
         .then(|res| {
             if let Err(e) = res {
                 println!("failed to process connection; error = {:?}", e);

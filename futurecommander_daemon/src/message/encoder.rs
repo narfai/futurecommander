@@ -43,6 +43,7 @@ impl Encoder for PacketCodec {
     type Error=DaemonError;
 
     fn encode(&mut self, packet: Packet, buf: &mut BytesMut) -> Result<(), DaemonError> {
+//        buf.clear();
         packet.write(buf)?;
         Ok(())
     }

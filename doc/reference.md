@@ -159,6 +159,7 @@ https://actix.rs/
 ## wasm
 https://rustwasm.github.io/wasm-bindgen/reference
 https://nodejs.org/api/child_process.html
+https://rustwasm.github.io/docs/book/reference/which-crates-work-with-wasm.html
 
 ## thread about running cross platform process from javascript
 
