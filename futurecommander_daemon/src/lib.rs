@@ -37,6 +37,7 @@ pub use self::{
     },
     context::{
         ContextType,
+        ContextString,
         Context
     },
     errors::DaemonError

@@ -33,6 +33,39 @@ pub trait ContextType {
     fn box_clone(&self) -> Box<dyn ContextType>;
 }
 
+#[derive(Clone)]
+pub struct ContextString {
+    inner: String
+}
+
+impl From<String> for ContextString {
+    fn from(s : String) -> ContextString {
+        ContextString {
+            inner: s
+        }
+    }
+}
+
+impl ContextType for ContextString {
+    fn to_bool(&self) -> Result<bool, DaemonError> {
+        if self.inner == "1" {
+            Ok(true)
+        } else if self.inner == "0" {
+            Ok(false)
+        } else {
+            Err(DaemonError::ContextCannotCast("String".to_string(), "bool".to_string()))
+        }
+    }
+
+    fn to_string(&self) -> Result<String, DaemonError> {
+        Ok(self.inner.clone())
+    }
+
+    fn box_clone(&self) -> Box<dyn ContextType> {
+        Box::new(self.clone())
+    }
+}
+
 #[derive(Default)]
 pub struct Context {
     values: HashMap<String, Box<dyn ContextType>>,
@@ -57,5 +90,25 @@ impl Context {
             debug.push(v.clone());
         }
         debug
+    }
+}
+
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fill_and_query_context_with_context_strings(){
+        let mut context = Context::default();
+        let value_a = "valueA".to_string();
+        let value_b = "valueB".to_string();
+        context.set("keyA", Box::new(ContextString::from(value_a.clone())));
+        context.set("keyB", Box::new(ContextString::from(value_b.clone())));
+
+        assert_eq!(context.get("keyA").unwrap().to_string().unwrap(), value_a);
+        assert_eq!(context.get("keyB").unwrap().to_string().unwrap(), value_b);
+        assert!(context.debug_keys().contains(&"keyA".to_string()));
+        assert!(context.debug_keys().contains(&"keyB".to_string()));
     }
 }

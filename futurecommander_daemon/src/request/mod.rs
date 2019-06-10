@@ -17,12 +17,12 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+mod header;
 mod list;
-//mod status;
 
 pub use self::{
+    header::RequestHeader,
     list::ListAction,
-//    status::StatusRequest
 };
 
 use serde::{
@@ -30,19 +30,14 @@ use serde::{
     Deserialize
 };
 
-use bincode::{ deserialize, serialize };
 
 use crate:: {
-    errors::DaemonError,
-    Context
+    errors::DaemonError
 };
 
 use std::{
     fmt::{
-        Debug,
-        Display,
-        Formatter,
-        Result as FmtResult
+        Debug
     },
 };
 
@@ -51,65 +46,9 @@ use futurecommander_filesystem::{
 };
 
 pub trait Request: Debug {
+
+    /** Lifecycle step 6 - Daemon - process decoded request and return binary response **/
     fn process(&self, container: &mut Container) -> Result<Vec<u8>, DaemonError>;
-}
-
-#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
-pub enum RequestHeader {
-    LIST,
-//    Status
-}
-
-impl RequestHeader {
-    pub fn encode_adapter(self, context: Context) -> Result<Vec<u8>, DaemonError> {
-        let mut binary_request = vec![self as u8];
-        match self {
-            RequestHeader::LIST => {
-                binary_request.append(
-                    &mut serialize(&ListAction::adapter(context)?)?
-                )
-            }
-        }
-        Ok(binary_request)
-    }
-
-    pub fn decode_adapter(self, bytes: &[u8]) -> Result<Box<Request>, DaemonError> {
-        match self {
-            RequestHeader::LIST => {
-                let request: RequestAdapter<ListAction> = deserialize(bytes)?;
-                Ok(Box::new(request))
-            }
-        }
-    }
-
-    pub fn parse(bytes: &[u8]) -> Result<Self, DaemonError> {
-        if let Some(byte) = bytes.first() {
-            match byte {
-                b if b == &(RequestHeader::LIST as u8) => Ok(RequestHeader::LIST),
-//                b if b == &(RequestHeader::Status as u8) => Ok(RequestHeader::Status),
-                _ => Err(DaemonError::InvalidRequest)
-            }
-        } else {
-            Err(DaemonError::InvalidRequest)
-        }
-    }
-
-    pub fn len() -> usize {
-        1 as usize
-    }
-
-    pub fn new(s: &str) -> Result<RequestHeader, DaemonError> {
-        match s {
-            t if t == RequestHeader::LIST.to_string() => Ok(RequestHeader::LIST),
-            _ => Err(DaemonError::InvalidRequest)
-        }
-    }
-}
-
-impl Display for RequestHeader {
-    fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        write!(f, "{:?}", self)
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
