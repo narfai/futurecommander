@@ -209,7 +209,7 @@ dependencies = [
  "bincode 1.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "futurecommander_filesystem 0.4.0",
  "serde 1.0.91 (registry+https://github.com/rust-lang/crates.io-index)",
- "typetag 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typetag 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -219,7 +219,7 @@ dependencies = [
  "futurecommander_representation 0.4.0",
  "serde 1.0.91 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
- "typetag 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typetag 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -247,7 +247,7 @@ dependencies = [
  "futurecommander_filesystem 0.4.0",
  "rustyline 4.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.91 (registry+https://github.com/rust-lang/crates.io-index)",
- "typetag 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typetag 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -533,7 +533,7 @@ dependencies = [
 
 [[package]]
 name = "typetag"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "erased-serde 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -771,7 +771,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum synstructure 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)" = "02353edf96d6e4dc81aea2d8490a7e9db177bf8acb0e951c24940bf866cb313f"
 "checksum termion 1.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "dde0593aeb8d47accea5392b39350015b5eccb12c0d98044d856983d89548dea"
 "checksum textwrap 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
-"checksum typetag 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "63b33e740c82caa0b67706a4e71987aa46e04d8323dd5ea7f8ab1fb7b392c9aa"
+"checksum typetag 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "7573a67ebbc8696e879d902067bc278671b7502abd8604b7336d87efd47e5858"
 "checksum typetag-impl 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ef49605e1070ec194bd9d2c360a975d47ba164460de183cbc53aa1be8c4db6dc"
 "checksum unicode-segmentation 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1967f4cdfc355b37fd76d2a954fb2ed3871034eb4f26d60537d88795cfc332a9"
 "checksum unicode-width 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "882386231c45df4700b275c7ff55b6f3698780a650026380e72dabe76fa46526"
