@@ -17,34 +17,19 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod errors;
 pub mod tools;
 
 mod client;
-mod message;
-mod protocol;
 mod daemon;
-
-use std::{
-    sync::{ Arc, Mutex }
-};
+mod router;
 
 pub use self::{
-    errors::DaemonError,
     daemon::Daemon,
     client::Client,
-    message::{
-        MessageStream,
-        Message,
-        DirectoryOpen,
-        DirectoryRead
-    },
-    protocol::{
-        Packet,
-        PacketCodec,
-        Header
-    }
+    router::Router
 };
+
+pub use futurecommander_protocol as protocol;
 
 use tokio::{
     net::{ TcpStream },
@@ -52,9 +37,10 @@ use tokio::{
     prelude::*
 };
 
-use futurecommander_filesystem::{
-    Container
-};
-
-pub type State = Arc<Mutex<Container>>;
-pub type Rx = stream::SplitStream<Framed<TcpStream, PacketCodec>>;
+pub type Rx = stream::SplitStream<Framed<TcpStream, protocol::PacketCodec>>;
+pub type MessageStream = Box<
+    Stream<
+        Item=Box<protocol::message::Message>,
+        Error=protocol::errors::ProtocolError
+    > + Sync + Send
+>;

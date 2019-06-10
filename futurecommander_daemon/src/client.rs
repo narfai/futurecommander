@@ -19,34 +19,19 @@
 
 use std::{
     net::{ SocketAddr },
-    path::{ Path, PathBuf },
-    io::{
-        prelude::*,
-        Write,
-        Stdin,
-        Stdout,
-        Stderr
-    },
+    path::{ PathBuf },
     rc::{ Rc },
     cell:: { RefCell },
-    sync::{
-        Arc,
-        Mutex
-    },
     collections::{
         vec_deque::VecDeque
     }
 };
 
 use tokio::{
-    io,
-    net::{ TcpListener, TcpStream, tcp::ConnectFuture },
+    runtime::current_thread::{ Runtime, TaskExecutor },
+    net::{ TcpStream, tcp::ConnectFuture },
     prelude::{
-        Async,
-        AsyncSink,
-        Poll,
         stream::{ Stream, SplitSink, SplitStream },
-        future::{ Either, ok, lazy, IntoFuture, AndThen, MapErr },
         *
     },
     codec::{
@@ -55,26 +40,71 @@ use tokio::{
 };
 
 use crate::{
-    errors::DaemonError,
-    Message,
-    DirectoryOpen,
-    DirectoryRead,
-    PacketCodec,
-    Header,
-    Packet,
-    tools::parse_address
+    tools::parse_address,
+    protocol::{
+        errors::{ ProtocolError },
+        message::{
+            Message,
+            DirectoryOpen
+        },
+        PacketCodec,
+        Packet
+    }
 };
 
 
-use tokio::runtime::current_thread::{Runtime, TaskExecutor};
-
-
 pub type Rx = SplitStream<Framed<TcpStream, PacketCodec>>;
-pub type Tx = SplitSink<Framed<TcpStream, PacketCodec>>;
-
 
 type OnMessage = Rc<Fn(&Packet)>;
-type ClientState = Rc<RefCell<VecDeque<Box<Message>>>>; //TODO no thread with Rc<RefCell<>>.borrow_mut
+type ClientState = Rc<RefCell<VecDeque<Box<Message>>>>;
+
+pub struct Client {
+    socket_address: SocketAddr,
+    state: ClientState
+}
+
+impl Client {
+    pub fn new(socket_address: SocketAddr) -> Client {
+        Client {
+            socket_address,
+            state: Rc::default()
+        }
+    }
+
+    pub fn connect(&self, on_message: OnMessage) -> ConnectingClient {
+        ConnectingClient::new(
+            TcpStream::connect(&self.socket_address),
+            self.state.clone(),
+            on_message
+        )
+    }
+
+    pub fn listen(address: Option<&str>, port: Option<u16>) -> Result<(), ProtocolError> {
+        let mut runtime = Runtime::new().unwrap();
+
+        let on_message : OnMessage = Rc::new(|packet| {
+            println!("{:?}", packet.decode());
+        });
+
+        let client = Client::new(parse_address(address, port));
+
+        runtime.spawn(
+            client.connect(on_message)
+                .and_then(|sender| {
+                    //Here would need a lazy future to allow js to send whatever he wants
+                    sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/tmp2")}));
+                    sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/home/narfai")}));
+                    sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/home/narfai/tmp")}));
+                    Ok(())
+                })
+                .map_err(|err| { eprintln!("{}", err ); })
+        );
+
+        runtime.run().unwrap();
+
+        Ok(())
+    }
+}
 
 pub struct Sender {
     state: ClientState
@@ -111,7 +141,7 @@ impl ConnectedClient {
 
 impl Stream for ConnectedClient {
     type Item = Packet;
-    type Error = DaemonError;
+    type Error = ProtocolError;
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
         println!("POLL");
@@ -157,9 +187,9 @@ impl ConnectingClient {
 
 impl Future for ConnectingClient {
     type Item = Sender;
-    type Error = DaemonError;
+    type Error = ProtocolError;
 
-    fn poll(&mut self) -> Poll<Sender, DaemonError> {
+    fn poll(&mut self) -> Poll<Sender, ProtocolError> {
             match self.connect.poll() {
                 Ok(Async::Ready(socket)) => {
                     let framed = Framed::new(socket, PacketCodec::default());
@@ -184,58 +214,9 @@ impl Future for ConnectingClient {
                     return Ok(Async::Ready(Sender::new(self.state.clone())));
                 },
                 Ok(Async::NotReady) => { println!("Not ready"); },
-                Err(error) => { return Err(DaemonError::from(error)) }
+                Err(error) => { return Err(ProtocolError::from(error)) }
             }
 
             Ok(Async::NotReady)
-    }
-}
-
-
-pub struct Client {
-    socket_address: SocketAddr,
-    state: ClientState
-}
-
-impl Client {
-    pub fn new(socket_address: SocketAddr) -> Client {
-        Client {
-            socket_address,
-            state: Rc::default()
-        }
-    }
-
-    pub fn connect(&self, on_message: OnMessage) -> ConnectingClient {
-        ConnectingClient::new(
-            TcpStream::connect(&self.socket_address),
-            self.state.clone(),
-            on_message
-        )
-    }
-
-    pub fn listen(address: Option<&str>, port: Option<u16>) -> Result<(), DaemonError> {
-        let mut runtime = Runtime::new().unwrap();
-
-        let on_message : OnMessage = Rc::new(|packet| {
-            println!("{:?}", packet.decode());
-        });
-
-        let client = Client::new(parse_address(address, port));
-
-        runtime.spawn(
-            client.connect(on_message)
-                .and_then(|sender| {
-                    //Here would need a lazy future to allow js to send whatever he wants
-                    sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/tmp2")}));
-                    sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/home/narfai")}));
-                    sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/home/narfai/tmp")}));
-                    Ok(())
-                })
-                .map_err(|err| { eprintln!("{}", err ); })
-        );
-
-        runtime.run().unwrap();
-
-        Ok(())
     }
 }

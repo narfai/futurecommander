@@ -18,7 +18,7 @@
  */
 
 use std::{
-    sync::{ Arc },
+    sync::{ Arc, Mutex },
     collections::{ vec_deque::VecDeque }
 };
 
@@ -29,35 +29,37 @@ use tokio::{
 };
 
 use crate::{
-    errors::DaemonError,
-    Packet,
-    State,
+    Router,
     Rx,
     MessageStream,
-    PacketCodec,
-    tools::parse_address
+    tools::parse_address,
+    protocol::{
+        errors::{ ProtocolError },
+        Packet,
+        PacketCodec,
+    }
 };
 
 pub struct Daemon {
     rx: Rx,
-    state: State,
+    router: Arc<Mutex<Router>>,
     replies: VecDeque<MessageStream>
 }
 
 impl Daemon {
-    pub fn new(rx: Rx, state: State) -> Daemon {
+    pub fn new(rx: Rx) -> Daemon {
         Daemon {
             rx,
-            state,
+            router: Arc::default(),
             replies: VecDeque::new(),
         }
     }
 
-    pub fn process(state: State, socket: TcpStream){
+    pub fn process(socket: TcpStream){
         let (tx, rx) = Framed::new(socket, PacketCodec::default()).split();
 
         let task = tx
-            .send_all(Daemon::new(rx, state.clone()))
+            .send_all(Daemon::new(rx))
             .then(|res| {
                 if let Err(e) = res {
                     println!("failed to process connection; error = {:?}", e);
@@ -69,14 +71,13 @@ impl Daemon {
         tokio::spawn(task);
     }
 
-    pub fn listen(address: Option<&str>, port: Option<u16>) -> Result<(), DaemonError> {
+    pub fn listen(address: Option<&str>, port: Option<u16>) -> Result<(), ProtocolError> {
         let listener = TcpListener::bind(&parse_address(address, port))?;
 
-        let mut state : State = Arc::default();
         let server = listener.incoming()
             .map_err(|e| println!("failed to accept socket; error = {:?}", e))
             .for_each(move |socket| {
-                Self::process(Arc::clone(&state), socket);
+                Self::process(socket);
                 Ok(())
             });
 
@@ -90,15 +91,18 @@ impl Daemon {
 
 impl Stream for Daemon {
     type Item = Packet;
-    type Error = DaemonError;
+    type Error = ProtocolError;
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
         println!("initial poll call");
         match self.rx.poll()? {
             Async::Ready(Some(packet)) => { // We got a new packet in socket
                 self.replies.push_front(
-                    packet.decode()?
-                        .process(self.state.clone())
+                    self.router
+                            .clone()
+                            .lock()
+                            .unwrap()
+                            .process(&packet)
                 )
             },
             Async::Ready(None) => {

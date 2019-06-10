@@ -34,6 +34,7 @@ pub enum ProtocolError {
     Domain(DomainError),
     Query(QueryError),
     BinaryEncode(BincodeError),
+    MessageParsing,
     InvalidHeader,
     Exit
 }
@@ -69,6 +70,7 @@ impl fmt::Display for ProtocolError {
             ProtocolError::Domain(error) => write!(f, "Domain error {}", error),
             ProtocolError::Query(error) => write!(f, "Filesystem query error {}", error),
             ProtocolError::InvalidHeader => write!(f, "Invalid Header"),
+            ProtocolError::MessageParsing => write!(f, "Cannot parse message"),
             ProtocolError::BinaryEncode(error) => write!(f, "Binary encode error {:?}", error),
             ProtocolError::Exit => write!(f, "Exit"),
         }
