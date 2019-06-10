@@ -17,33 +17,12 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod directory_read;
-mod directory_open;
+mod codec;
+mod header;
+mod packet;
 
-pub use std::{
-    fmt::{ Debug }
+pub use {
+    self::codec::PacketCodec,
+    self::header::Header,
+    self::packet::Packet
 };
-
-pub use self::{
-    directory_open::DirectoryOpen,
-    directory_read::DirectoryRead
-};
-
-use tokio::{
-    prelude::*,
-};
-
-pub use crate::{
-    errors::DaemonError,
-    State,
-    Packet
-};
-
-pub trait Message : Send + Sync + Debug {
-    fn encode(&self) -> Result<Packet, DaemonError>;
-    fn process(&self, state: State) -> MessageStream {
-        Box::new(stream::empty())
-    }
-}
-
-pub type MessageStream = Box<Stream<Item=Box<Message>, Error=DaemonError> + Sync + Send>;

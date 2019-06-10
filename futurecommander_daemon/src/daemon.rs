@@ -18,51 +18,25 @@
  */
 
 use std::{
-    io::{
-        prelude::*,
-        Write,
-        Stdin,
-        Stdout,
-        Stderr
-    },
-    sync::{
-        Arc,
-        Mutex
-    },
+    sync::{ Arc },
     collections::{ vec_deque::VecDeque }
 };
 
 use tokio::{
-    io,
     net::{ TcpListener, TcpStream },
-    prelude::{
-        Async,
-        Poll,
-        stream::{ SplitStream },
-        future::{ Either, ok, lazy },
-        *
-    },
-    codec::{
-        Framed
-    }
+    prelude::*,
+    codec::{ Framed }
 };
 
 use crate::{
     errors::DaemonError,
-    message::{
-        MessageStream,
-        PacketCodec,
-        Message,
-        Packet
-    }
+    Packet,
+    State,
+    Rx,
+    MessageStream,
+    PacketCodec
 };
 
-use futurecommander_filesystem::{
-    Container
-};
-
-pub type State = Arc<Mutex<Container>>;
-pub type Rx = SplitStream<Framed<TcpStream, PacketCodec>>;
 pub struct Daemon {
     rx: Rx,
     state: State,
@@ -77,6 +51,39 @@ impl Daemon {
             replies: VecDeque::new(),
         }
     }
+
+    pub fn process(state: State, socket: TcpStream){
+        let (tx, rx) = Framed::new(socket, PacketCodec::default()).split();
+
+        let task = tx
+            .send_all(Daemon::new(rx, state.clone()))
+            .then(|res| {
+                if let Err(e) = res {
+                    println!("failed to process connection; error = {:?}", e);
+                }
+
+                Ok(())
+            });
+
+        tokio::spawn(task);
+    }
+
+    pub fn listen() {
+        let addr = "127.0.0.1:7842".parse().unwrap();
+        let listener = TcpListener::bind(&addr).unwrap();
+
+        let mut state : State = Arc::default();
+        let server = listener.incoming()
+            .map_err(|e| println!("failed to accept socket; error = {:?}", e))
+            .for_each(move |socket| {
+                Self::process(Arc::clone(&state), socket);
+                Ok(())
+            });
+
+        println!("server running on localhost:7842");
+
+        tokio::run(server);
+    }
 }
 
 impl Stream for Daemon {
@@ -87,7 +94,6 @@ impl Stream for Daemon {
         println!("initial poll call");
         match self.rx.poll()? {
             Async::Ready(Some(packet)) => { // We got a new packet in socket
-                println!("Incoming packet {:?}", packet.decode()?);
                 self.replies.push_front(
                     packet.decode()?
                         .process(self.state.clone())
@@ -104,7 +110,6 @@ impl Stream for Daemon {
             for (id, stream) in self.replies.iter_mut().take(10).enumerate() {
                 match stream.poll()? {
                     Async::Ready(Some(reply)) => { //Message processing yield some reply
-                        println!("write packet in buffer {:?}", reply);
                         return Ok(Async::Ready(Some(reply.encode()?)));
                     },
                     Async::Ready(None) => { //Message processing done
@@ -126,37 +131,4 @@ impl Stream for Daemon {
 
         Ok(Async::NotReady)
     }
-}
-
-pub fn process(state: State, socket: TcpStream){
-    let (tx, rx) = Framed::new(socket, PacketCodec::default()).split();
-
-    let task = tx
-        .send_all(Daemon::new(rx, state.clone()))
-        .then(|res| {
-            if let Err(e) = res {
-                println!("failed to process connection; error = {:?}", e);
-            }
-
-            Ok(())
-        });
-
-    tokio::spawn(task);
-}
-
-pub fn listen() {
-    let addr = "127.0.0.1:7842".parse().unwrap();
-    let listener = TcpListener::bind(&addr).unwrap();
-
-    let mut state : State = Arc::default();
-    let server = listener.incoming()
-        .map_err(|e| println!("failed to accept socket; error = {:?}", e))
-        .for_each(move |socket| {
-            process(Arc::clone(&state), socket);
-            Ok(())
-        });
-
-    println!("server running on localhost:7842");
-
-    tokio::run(server);
 }

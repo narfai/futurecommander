@@ -21,23 +21,20 @@ use std::{
     mem::{ size_of }
 };
 use byteorder::{ NetworkEndian, ReadBytesExt};
-use bincode::{ deserialize, serialize };
 
 use bytes::{ BytesMut };
 use tokio::{
-    io,
     prelude::*,
-    codec::{ Decoder },
+    codec::{ Decoder, LengthDelimitedCodec },
 };
 
 use crate::{
     errors::{
         DaemonError
     },
-    message::{
+    protocol::{
         PacketCodec,
         Header,
-        Message,
         Packet
     }
 };

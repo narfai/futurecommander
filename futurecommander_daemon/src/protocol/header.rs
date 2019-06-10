@@ -30,7 +30,7 @@ use crate::{
 
 use bincode::{ serialize, deserialize };
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Header {
     DirectoryOpen,
     DirectoryRead

@@ -17,45 +17,31 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 use std::{
     path::{ PathBuf, Path }
 };
 
-use bincode::{ deserialize, serialize };
-use serde::{
-    Serialize,
-    Deserialize
-};
-
 use crate::{
-    errors::{
-        DaemonError
-    },
-    message::{
-        Header,
-        Message,
-        State,
-        MessageStream,
-        Packet
-    }
+    errors::DaemonError,
+    State,
+    Message,
+    MessageStream,
+    DirectoryRead,
+    Packet,
+    Header,
 };
 
 use tokio::{
-    prelude::{
-        stream::{ Stream, once },
-        future::{ Future },
-        *
-    },
+    prelude::*
 };
 
 use futurecommander_filesystem::{
-    EntryCollection,
-    SerializableEntry,
-    tools::normalize,
-    ReadableFileSystem,
-    Entry
+    ReadableFileSystem
 };
+
+use serde::{ Serialize, Deserialize };
+use bincode::{ serialize };
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DirectoryOpen {
@@ -79,46 +65,9 @@ impl Message for DirectoryOpen {
         }
 
         Box::new(
-        once(
-            read_dir(state, self.path.as_path())
+            stream::once(
+                read_dir(state, self.path.as_path())
             )
-            //DOES WORKS !
-    //        iter_result(vec![
-//                    read_dir(state.clone(), self.path.as_path()),
-//                    read_dir(state, Path::new("/tmp2")),
-//                ]
-//            )
         )
     }
 }
-
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DirectoryRead {
-    pub entries: Vec<SerializableEntry>
-}
-
-impl Message for DirectoryRead {
-    fn encode(&self) -> Result<Packet, DaemonError> {
-        Ok(Packet::new(Header::DirectoryRead, serialize(&self)?))
-    }
-
-    //TODO process could be stream for client ?
-}
-
-impl <T: Entry>From<EntryCollection<T>> for DirectoryRead {
-    fn from(collection: EntryCollection<T>) -> DirectoryRead {
-        DirectoryRead {
-            entries: collection
-                .into_iter()
-                .map(|entry| SerializableEntry::from(&entry))
-                .collect::<Vec<SerializableEntry>>()
-        }
-    }
-}
-//
-//impl From<Packet> for Option<DirectoryRead> {
-//    fn from(packet: Packet) -> Option<DirectoryOpen> {
-//
-//    }
-//}

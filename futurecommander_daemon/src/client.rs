@@ -27,6 +27,8 @@ use std::{
         Stdout,
         Stderr
     },
+    rc::{ Rc },
+    cell:: { RefCell },
     sync::{
         Arc,
         Mutex
@@ -54,15 +56,12 @@ use tokio::{
 
 use crate::{
     errors::DaemonError,
-    message::{
-        PacketCodec,
-        Header,
-        Packet,
-        Message,
-        MessageStream,
-        DirectoryOpen,
-        DirectoryRead
-    }
+    Message,
+    DirectoryOpen,
+    DirectoryRead,
+    PacketCodec,
+    Header,
+    Packet
 };
 
 
@@ -73,8 +72,8 @@ pub type Rx = SplitStream<Framed<TcpStream, PacketCodec>>;
 pub type Tx = SplitSink<Framed<TcpStream, PacketCodec>>;
 
 
-type OnMessage = Arc<Fn(&Packet)>;
-type ClientState = Arc<Mutex<VecDeque<Box<Message>>>>; //TODO no thread with Rc<RefCell<>>.borrow_mut
+type OnMessage = Rc<Fn(&Packet)>;
+type ClientState = Rc<RefCell<VecDeque<Box<Message>>>>; //TODO no thread with Rc<RefCell<>>.borrow_mut
 
 pub struct Sender {
     state: ClientState
@@ -88,7 +87,7 @@ impl Sender {
     }
 
     pub fn send(&self, message: Box<Message>) {
-        self.state.as_ref().lock().unwrap().push_back(message);
+        self.state.borrow_mut().push_back(message);
         task::current().notify(); //NOTIFY WORKS
     }
 }
@@ -120,9 +119,6 @@ impl Stream for ConnectedClient {
                 Async::Ready(Some(packet)) => { // We got a new packet in socket
                     println!("get packet");
                     self.on_message.as_ref()(&packet);
-                    if i == 10 {
-                        task::current().notify(); //NOTIFY WORKS
-                    }
                 },
                 Async::Ready(None) => {
                     println!("Daemon disconnected");
@@ -132,15 +128,10 @@ impl Stream for ConnectedClient {
             }
         }
 
-        if let Ok(mut state) = self.state.lock() {
-            if let Some(message) = state.pop_front() {
-                if !state.is_empty() {
-                    task::current().notify(); //NOTIFY WORKS
-                }
-                return Ok(Async::Ready(Some(message.encode()?)));
+        if !self.state.borrow().is_empty() {
+            if let Some(message) = self.state.borrow_mut().pop_front() {
+               return Ok(Async::Ready(Some(message.encode()?)));
             }
-        } else { //Try lock later
-            task::current().notify(); //NOTIFY WORKS
         }
 
         Ok(Async::NotReady)
@@ -209,7 +200,7 @@ impl Client {
     pub fn new(socket_address: SocketAddr) -> Client {
         Client {
             socket_address,
-            state: Arc::default()
+            state: Rc::default()
         }
     }
 
@@ -226,7 +217,7 @@ pub fn send(){
     let mut runtime = Runtime::new().unwrap();
     let address = "127.0.0.1";
     let port : u16 = 7842;
-    let on_message : OnMessage = Arc::new(|packet| {
+    let on_message : OnMessage = Rc::new(|packet| {
         println!("{:?}", packet.decode());
     });
 
@@ -238,6 +229,7 @@ pub fn send(){
                 //Here would need a lazy to allow js to send whatever he wants
                 sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/tmp2")}));
                 sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/home/narfai")}));
+                sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/home/narfai/tmp")}));
                 Ok(())
             })
             .map_err(|err| { eprintln!("{}", err ); })

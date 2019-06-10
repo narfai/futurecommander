@@ -17,33 +17,32 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod directory_read;
-mod directory_open;
+use bincode::{ deserialize, serialize };
 
-pub use std::{
-    fmt::{ Debug }
-};
-
-pub use self::{
-    directory_open::DirectoryOpen,
-    directory_read::DirectoryRead
-};
-
+use byteorder::{ NetworkEndian, WriteBytesExt };
+use bytes::{ BytesMut, BufMut };
 use tokio::{
+    io,
     prelude::*,
+    codec::{ Encoder },
 };
 
-pub use crate::{
-    errors::DaemonError,
-    State,
+use crate::{
+    errors::{
+        DaemonError
+    },
+    PacketCodec,
+    Message,
     Packet
 };
 
-pub trait Message : Send + Sync + Debug {
-    fn encode(&self) -> Result<Packet, DaemonError>;
-    fn process(&self, state: State) -> MessageStream {
-        Box::new(stream::empty())
+impl Encoder for PacketCodec {
+    type Item=Packet;
+    type Error=DaemonError;
+
+    fn encode(&mut self, packet: Packet, buf: &mut BytesMut) -> Result<(), DaemonError> {
+//        buf.clear();
+        packet.write(buf)?;
+        Ok(())
     }
 }
-
-pub type MessageStream = Box<Stream<Item=Box<Message>, Error=DaemonError> + Sync + Send>;

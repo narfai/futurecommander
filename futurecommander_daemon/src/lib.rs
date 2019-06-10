@@ -21,54 +21,40 @@ pub mod errors;
 pub mod tools;
 
 // /!\ Highly experimental
-pub mod server;
 pub mod client;
-pub mod message;
-
-pub use futurecommander_filesystem::SerializableEntry;
+mod message;
+mod protocol;
+mod daemon;
 
 use std::{
-    io::{
-        prelude::*,
-        Write,
-        Stdin,
-        Stdout,
-        Stderr
+    sync::{ Arc, Mutex }
+};
+
+pub use self::{
+    errors::DaemonError,
+    daemon::Daemon,
+    message::{
+        MessageStream,
+        Message,
+        DirectoryOpen,
+        DirectoryRead
     },
-    sync::{
-        Arc,
-        Mutex
+    protocol::{
+        Packet,
+        PacketCodec,
+        Header
     }
 };
 
-use self::{
-    errors::DaemonError
+use tokio::{
+    net::{ TcpStream },
+    codec::{ Framed },
+    prelude::*
 };
-
-pub use self::server::{ State };
 
 use futurecommander_filesystem::{
     Container
 };
 
-pub struct Daemon<'a> {
-
-    out: &'a mut Stdout,
-    err: &'a mut Stderr,
-    container: Container
-}
-
-impl <'a>Daemon<'a> {
-
-    pub fn new(out: &'a mut Stdout, err: &'a mut Stderr) -> Daemon<'a> {
-        Daemon {
-            out,
-            err,
-            container: Container::default()
-        }
-    }
-
-    pub fn run(mut self) {
-       unimplemented!();
-    }
-}
+pub type State = Arc<Mutex<Container>>;
+pub type Rx = stream::SplitStream<Framed<TcpStream, PacketCodec>>;
