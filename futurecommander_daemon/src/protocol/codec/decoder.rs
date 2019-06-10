@@ -79,9 +79,14 @@ impl Decoder for PacketCodec {
                     self.consumer_header = None;
                     self.consumer_length = None;
                     self.consumer_index += length as usize;
+                    println!("PACKET LENGTH {}", self.consumer_index);
                     return Ok(Some(packet));
                 }
             }
+        }
+
+        if !buf.is_empty() && self.consumer_header.is_none() && self.consumer_length.is_none() {
+            buf.clear(); // Clear input buffer if connection disconnect unexpectedly
         }
 
         Ok(None)
