@@ -34,7 +34,8 @@ use crate::{
     State,
     Rx,
     MessageStream,
-    PacketCodec
+    PacketCodec,
+    tools::parse_address
 };
 
 pub struct Daemon {
@@ -68,9 +69,8 @@ impl Daemon {
         tokio::spawn(task);
     }
 
-    pub fn listen() {
-        let addr = "127.0.0.1:7842".parse().unwrap();
-        let listener = TcpListener::bind(&addr).unwrap();
+    pub fn listen(address: Option<&str>, port: Option<u16>) -> Result<(), DaemonError> {
+        let listener = TcpListener::bind(&parse_address(address, port))?;
 
         let mut state : State = Arc::default();
         let server = listener.incoming()
@@ -83,6 +83,8 @@ impl Daemon {
         println!("server running on localhost:7842");
 
         tokio::run(server);
+
+        Ok(())
     }
 }
 

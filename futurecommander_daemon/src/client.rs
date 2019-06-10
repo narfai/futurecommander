@@ -61,7 +61,8 @@ use crate::{
     DirectoryRead,
     PacketCodec,
     Header,
-    Packet
+    Packet,
+    tools::parse_address
 };
 
 
@@ -211,81 +212,30 @@ impl Client {
             on_message
         )
     }
-}
 
-pub fn send(){
-    let mut runtime = Runtime::new().unwrap();
-    let address = "127.0.0.1";
-    let port : u16 = 7842;
-    let on_message : OnMessage = Rc::new(|packet| {
-        println!("{:?}", packet.decode());
-    });
+    pub fn listen(address: Option<&str>, port: Option<u16>) -> Result<(), DaemonError> {
+        let mut runtime = Runtime::new().unwrap();
 
-    let client = Client::new(format!("{}:{}", address, port).parse().unwrap());
+        let on_message : OnMessage = Rc::new(|packet| {
+            println!("{:?}", packet.decode());
+        });
 
-    runtime.spawn(
-        client.connect(on_message)
-            .and_then(|sender| {
-                //Here would need a lazy to allow js to send whatever he wants
-                sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/tmp2")}));
-                sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/home/narfai")}));
-                sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/home/narfai/tmp")}));
-                Ok(())
-            })
-            .map_err(|err| { eprintln!("{}", err ); })
-    );
+        let client = Client::new(parse_address(address, port));
 
-    runtime.run().unwrap();
+        runtime.spawn(
+            client.connect(on_message)
+                .and_then(|sender| {
+                    //Here would need a lazy future to allow js to send whatever he wants
+                    sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/tmp2")}));
+                    sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/home/narfai")}));
+                    sender.send(Box::new(DirectoryOpen { path: PathBuf::from("/home/narfai/tmp")}));
+                    Ok(())
+                })
+                .map_err(|err| { eprintln!("{}", err ); })
+        );
 
-    //addon.connect(...) -> Promise(sender)
-//    let client = Client::connect(address, port, on_message).unwrap()
-//        .and_then(move |sink| { //Sink to send arbitrary packet
-//
-//        });
-//            .map_err(|error| DaemonError::from(error))
-//            .and_then(Client::new())
-//            .map_err(|error| { eprintln!("{}", error); });
-//    //addon.listen(task) ?
-//    runtime.spawn(client);
-}
+        runtime.run().unwrap();
 
-pub fn old_send(){
-    let addr = "127.0.0.1:7842".parse().unwrap();
-
-    let client = TcpStream::connect(&addr)
-        .map_err(|error| error.into())
-        .and_then(|socket| {
-            let framed = Framed::new(socket, PacketCodec::default());
-            let (tx, rx) = framed.split();
-            println!("Stream splitted");
-            let message = DirectoryOpen { path: PathBuf::from("/tmp2")};
-            tx
-                .send(message.encode().unwrap())
-                .and_then(|_| rx
-                    .into_future()
-                    .map_err(|(e, _)| e)
-                    .and_then(|(packet, _)|{
-                        if let Some(packet) = packet {
-                            println!("Packet received");
-                            match packet.header() {
-                                Header::DirectoryRead => match packet.parse::<DirectoryRead>() {
-                                    Some(message) => {
-                                        println!("Parse ok ! {:?}", message.entries)
-                                    },
-                                    None => {
-                                        println!("Unable to parse DirectoryRead message");
-                                    }
-                                },
-                                _ => { println!("Unhandled message"); }
-                            };
-                        } else {
-                            println!("Packet is none");
-                        }
-                        Ok(())
-                    })
-                )
-
-        }).map_err(|error| { eprintln!("{}", error); });
-
-    tokio::run(client);
+        Ok(())
+    }
 }

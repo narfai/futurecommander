@@ -79,7 +79,6 @@ impl Decoder for PacketCodec {
                     self.consumer_header = None;
                     self.consumer_length = None;
                     self.consumer_index += length as usize;
-                    println!("PACKET LENGTH {}", self.consumer_index);
                     return Ok(Some(packet));
                 }
             }

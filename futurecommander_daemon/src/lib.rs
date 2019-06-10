@@ -20,8 +20,7 @@
 pub mod errors;
 pub mod tools;
 
-// /!\ Highly experimental
-pub mod client;
+mod client;
 mod message;
 mod protocol;
 mod daemon;
@@ -33,6 +32,7 @@ use std::{
 pub use self::{
     errors::DaemonError,
     daemon::Daemon,
+    client::Client,
     message::{
         MessageStream,
         Message,
