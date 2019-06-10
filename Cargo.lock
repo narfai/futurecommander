@@ -540,12 +540,12 @@ dependencies = [
  "inventory 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.91 (registry+https://github.com/rust-lang/crates.io-index)",
- "typetag-impl 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typetag-impl 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "typetag-impl"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -772,7 +772,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum termion 1.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "dde0593aeb8d47accea5392b39350015b5eccb12c0d98044d856983d89548dea"
 "checksum textwrap 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
 "checksum typetag 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "63b33e740c82caa0b67706a4e71987aa46e04d8323dd5ea7f8ab1fb7b392c9aa"
-"checksum typetag-impl 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "8d6baa1c203da8e681d7d8b231e16b528ac6ad3b448716a26c9e2aa3cf2cfc47"
+"checksum typetag-impl 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ef49605e1070ec194bd9d2c360a975d47ba164460de183cbc53aa1be8c4db6dc"
 "checksum unicode-segmentation 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1967f4cdfc355b37fd76d2a954fb2ed3871034eb4f26d60537d88795cfc332a9"
 "checksum unicode-width 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "882386231c45df4700b275c7ff55b6f3698780a650026380e72dabe76fa46526"
 "checksum unicode-xid 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fc72304796d0818e357ead4e000d19c9c174ab23dc11093ac919054d20a6a7fc"
