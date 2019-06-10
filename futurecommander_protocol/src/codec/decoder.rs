@@ -35,12 +35,14 @@ use crate::{
     Header,
     Packet
 };
-
+// TODO problem is somehow, tokio consume the buffer but addon dont ( js has to do ) => tokio keeps up to 220K afaik
+// TODO Split those 3 parsing function naivily then use it directly trough addon bounday
 impl Decoder for PacketCodec {
     type Item=Packet;
     type Error=ProtocolError;
 
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Packet>, ProtocolError> {
+        println!("BUFFER SIZE {}", buf.len());
         //Parse header
         if self.consumer_header.is_none() {
             let header_pos = self.consumer_index + 1;
@@ -79,10 +81,6 @@ impl Decoder for PacketCodec {
                     return Ok(Some(packet));
                 }
             }
-        }
-
-        if !buf.is_empty() && self.consumer_header.is_none() && self.consumer_length.is_none() {
-            buf.clear(); // Clear input buffer if connection disconnect unexpectedly
         }
 
         Ok(None)

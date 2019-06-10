@@ -24,62 +24,99 @@ const addon = require('pkg/futurecommander_gui');
 
 const { Request } = require('./request');
 
+const { Socket } = require('net');
+
+const uniqid = require('uniqid');
+
+
+const { PassThrough } = require('stream');
+
+class Message {
+    constructor(header, payload){
+        this.header = header;
+        this.payload = payload;
+        this.identifier = uniqid.time();
+    }
+}
+
+class MessageFrame extends PassThrough {
+    constructor(options) {
+        options.readableObjectMode = true;
+        options.writableObjectMode = true;
+        super(options);
+        this._buffer = Buffer.alloc(0);
+
+        this._codec = options.codec;
+
+        this.tx_count = 0;
+        this.rx_count = 0;
+    }
+
+    read(){
+        this.pause();
+        const message = this._codec.decode(this._buffer);
+
+        if(message.len()) {
+            this.tx_count++;
+            this._buffer = this._buffer.slice(message.len());
+            this.resume();
+            console.log(this.tx_count);
+            this.push(new Message(message.header(), message.parse()));
+        }
+    }
+
+    write(chunk) {
+        this.rx_count++;
+        this._buffer = Buffer.concat([chunk, this._buffer]);
+        this.resume();
+    }
+}
+
 class FileSystemWorker {
     constructor() {
-        this.filesystem = null;
-        this.close_count = 0;
+        this._socket = new Socket();
+        this._codec = new addon.ProtocolCodec();
+
+        this._socket.connect(7842, '127.0.0.1', () => {
+            console.log('Connected');
+
+            for (let i = 0; i < 10000; i++) { // Always block at 405 - may it hit some TCP critical value
+                setTimeout(() => this._socket.write(this._codec.read_dir()), 0); // 405 simultaneous requests is ok for a client
+            }
+        });
+
     }
 
     emit(request) {
-        console.log('WORKER REQUEST', addon.request(new Request(request)));
-        this.filesystem.stdin.write(
-            addon.request(
-                new Request(request)
-            )
-        );
+        //@deprecate
     }
 
-    listen() {
-        try {
-            console.log('SPAWN CHILD');
-            this.filesystem = spawn(
-                '../target/debug/futurecommander',
-                ['daemon'],
-                {
-                    detached: true,
-                    stdio: 'pipe',
-                    env: {
-                        'RUST_BACKTRACE': 1
-                    }
-                }
-            );
+    send(message) {
+        //TODO send addon encoded messages through the pipe
+        // this.socket.write(addon.encode(message))
+    }
 
-            this.filesystem.stdout.on('data', (response) => {
-                console.log('RESPONSE', response);
-                postMessage(
-                    addon.decode(response)
-                );
-            });
+    listen(){
 
-            this.filesystem.stderr.on('data', (data) => {
-                global.console.log(`stderr: ${data}`);
-            });
+        const framed = this._socket.pipe(new MessageFrame({ codec: this._codec }));
 
-            this.filesystem.on('close', (code) => {
-                console.log(`child process exited with code ${code}`);
-                this.close();
-                if(this.close_count > 5) {
-                    global.console.log(`restart child process`);
-                    this.listen();
-                }
-            });
+        framed.on('connect', () => {
+            console.log('connect !' );
+        });
 
-            this.filesystem.on('error', (error) => {
-                global.console.log(`child process error ${error}`);
-            });
-        } catch (err) {
-            global.console.log(`${err}`);
-        }
+        framed.on('drain', (data) => {
+            console.log('DRAIN', data);
+        });
+
+        framed.on('data', (data) => {
+            console.log('DATA CALL', data);
+            // TODO postMessage then transform
+
+        });
+
+        framed.on('close', function() {
+            console.log('Connection closed');
+        });
     }
 
     close() {
@@ -94,5 +131,5 @@ let worker = new FileSystemWorker();
 worker.listen();
 
 onmessage = function(e) {
-    worker.emit(e.data[0]);
+    worker.emit(e.data[0]);//@deprecate
 };

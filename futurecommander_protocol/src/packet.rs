@@ -17,6 +17,10 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::{
+    mem::{ size_of }
+};
+
 use byteorder::{ NetworkEndian, WriteBytesExt };
 use bytes::{ BytesMut, BufMut };
 use bincode::{ deserialize };
@@ -45,6 +49,9 @@ impl Packet {
         self.header
     }
 
+    pub fn length(&self) -> usize {
+        1 + size_of::<u64>() + self.datagram.len()
+    }
     pub fn decode(&self) -> Result<Box<Message>, ProtocolError> {
         Ok(self.header.parse_message(self.datagram.as_slice())?)
     }

@@ -30,3 +30,17 @@ pub struct PacketCodec {
     consumer_header: Option<Header>,
     consumer_length: Option<u64>
 }
+
+impl PacketCodec {
+    pub fn index(&self) -> usize {
+        self.consumer_index
+    }
+
+    pub fn header(&self) -> Option<Header> {
+        self.consumer_header
+    }
+
+    pub fn length(&self) -> Option<u64> {
+        self.consumer_length
+    }
+}

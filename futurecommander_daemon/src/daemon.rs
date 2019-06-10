@@ -95,8 +95,10 @@ impl Stream for Daemon {
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
         println!("initial poll call");
+
         match self.rx.poll()? {
             Async::Ready(Some(packet)) => { // We got a new packet in socket
+                println!("get message !");
                 self.replies.push_front(
                     self.router
                             .clone()
@@ -113,9 +115,10 @@ impl Stream for Daemon {
 
         if !self.replies.is_empty() {
             let mut cleanup_ids: Vec<usize> = Vec::new();
-            for (id, stream) in self.replies.iter_mut().take(10).enumerate() {
+            for (id, stream) in self.replies.iter_mut().take(100).enumerate() {
                 match stream.poll()? {
                     Async::Ready(Some(reply)) => { //Message processing yield some reply
+                        println!("Send response");
                         return Ok(Async::Ready(Some(reply.encode()?)));
                     },
                     Async::Ready(None) => { //Message processing done

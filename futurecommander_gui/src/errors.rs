@@ -21,8 +21,8 @@ use wasm_bindgen::{
     prelude::*
 };
 
-use futurecommander_daemon::{
-    errors::DaemonError
+use futurecommander_protocol::{
+    errors::{ ProtocolError }
 };
 
 use std::{
@@ -35,7 +35,7 @@ pub enum AddonError {
     InvalidRequest(String),
     InvalidArgument(String),
     JsonError(serde_json::Error),
-    Daemon(DaemonError),
+    Protocol(ProtocolError),
     JsValue(JsValue)
 }
 
@@ -51,7 +51,7 @@ impl fmt::Display for AddonError {
             AddonError::InvalidRequest(rtype) => write!(f, "Invalid request type {}", rtype),
             AddonError::InvalidArgument(arg) => write!(f, "Invalid request argument {}", arg),
             AddonError::JsonError(error) => write!(f, "Json error {}", error),
-            AddonError::Daemon(error) => write!(f, "Daemon error : {}", error),
+            AddonError::Protocol(error) => write!(f, "Protocol error : {}", error),
             AddonError::JsValue(value) => write!(f, "JsValue : {:?}", value.as_string()),
         }
     }
@@ -69,16 +69,16 @@ impl From<JsValue> for AddonError {
     }
 }
 
-impl From<DaemonError> for AddonError {
-    fn from(error: DaemonError) -> Self {
-        AddonError::Daemon(error)
+impl From<ProtocolError> for AddonError {
+    fn from(error: ProtocolError) -> Self {
+        AddonError::Protocol(error)
     }
 }
 
 impl error::Error for AddonError {
     fn cause(&self) -> Option<&dyn error::Error> {
         match self {
-            AddonError::Daemon(err) => Some(err),
+            AddonError::Protocol(err) => Some(err),
             AddonError::JsonError(err) => Some(err),
             _ => None
         }

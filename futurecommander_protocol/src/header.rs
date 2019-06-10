@@ -27,8 +27,9 @@ use crate::{
 };
 
 use bincode::{ deserialize };
+use serde::{ Serialize, Deserialize };
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum Header {
     DirectoryOpen,
     DirectoryRead
