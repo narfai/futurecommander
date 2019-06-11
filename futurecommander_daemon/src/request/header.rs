@@ -114,7 +114,6 @@ mod tests {
     use super::*;
 
     use futurecommander_filesystem::{
-        Container,
         sample::Samples
     };
 
@@ -124,8 +123,6 @@ mod tests {
 
     #[test]
     fn test_header_codec_list(){
-        let mut container = Container::default();
-
         /* Consumer */
         let id = "jsvs2qz26".to_string();
         let path = Samples::static_samples_path().to_string_lossy().to_string();
