@@ -145,7 +145,13 @@ mod tests {
         assert_eq!(response.kind, ResponseKind::Collection);
         assert_eq!(response.status, ResponseStatus::Success);
 
-        assert_static_sample_success_response(response.content.unwrap().as_slice());
+        let mut collection = response.content.unwrap();
+
+        collection.sort_by(|left, right| {
+            left.name.cmp(&right.name)
+        });
+
+        assert_static_sample_success_response(collection.as_slice());
     }
 
     #[test]
@@ -169,7 +175,13 @@ mod tests {
         assert_eq!(response.kind, ResponseKind::Collection);
         assert_eq!(response.status, ResponseStatus::Success);
 
-        assert_static_sample_success_response(response.content.unwrap().as_slice());
+        let mut collection = response.content.unwrap();
+
+        collection.sort_by(|left, right| {
+            left.name.cmp(&right.name)
+        });
+
+        assert_static_sample_success_response(collection.as_slice());
     }
 
     #[test]
