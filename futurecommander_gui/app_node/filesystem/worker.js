@@ -31,7 +31,7 @@ const uniqid = require('uniqid');
 
 const { PassThrough } = require('stream');
 
-class Message {
+class Message { // TODO move to upper namespace
     constructor(header, payload){
         this.header = header;
         this.payload = payload;
@@ -56,11 +56,11 @@ class MessageFrame extends PassThrough {
         this.pause();
         const message = this._codec.decode(this._buffer);
 
+        console.log(this.tx_count);
         if(message.len()) {
             this.tx_count++;
             this._buffer = this._buffer.slice(message.len());
             this.resume();
-            console.log(this.tx_count);
             this.push(new Message(message.header(), message.parse()));
         }
     }
@@ -72,16 +72,16 @@ class MessageFrame extends PassThrough {
     }
 }
 
-class FileSystemWorker {
+class FileSystemWorker { // TODO refactor it to be usable outside the worker
     constructor() {
         this._socket = new Socket();
         this._codec = new addon.ProtocolCodec();
 
-        this._socket.connect(7842, '127.0.0.1', () => {
+        this._socket.connect(7842, '127.0.0.1', () => { //TODO parametrize & promisify
             console.log('Connected');
 
-            for (let i = 0; i < 10000; i++) { // Always block at 405 - may it hit some TCP critical value
-                setTimeout(() => this._socket.write(this._codec.read_dir()), 0); // 405 simultaneous requests is ok for a client
+            for (let i = 0; i < 100; i++) { // Always block at 405 - may it hit some TCP critical value
+                setTimeout(() => this._socket.write(this._codec.read_dir()), 1000); // 405 simultaneous requests is ok for a client
             }
         });
 
