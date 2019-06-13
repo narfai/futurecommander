@@ -77,11 +77,30 @@ class FileSystemWorker { // TODO refactor it to be usable outside the worker
         this._socket = new Socket();
         this._codec = new addon.ProtocolCodec();
 
+        this._socket.on('disconnect', () => {
+            console.log('disconnected !')
+        });
+
+        this._socket.on('close', () => {
+            console.log('closed !')
+        });
+
         this._socket.connect(7842, '127.0.0.1', () => { //TODO parametrize & promisify
             console.log('Connected');
 
-            for (let i = 0; i < 100; i++) { // Always block at 405 - may it hit some TCP critical value
-                setTimeout(() => this._socket.write(this._codec.read_dir()), 1000); // 405 simultaneous requests is ok for a client
+            /**
+             * May it is even faster but there limited to javascript tick ( of whole worker )
+             * kernel:              Linux 5.1.1 x86_64
+             * cpu :                Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz
+             * ram :                32836740 kB DDR4
+             * sent :               100 000 message
+             * received:            100 000 message
+             * time :               11 seconds
+             * rate :               18181 message / second
+             * average latency :    0.055 ms
+             **/
+            for (let i = 0; i < 100000; i++) {
+                setTimeout(() => this._socket.write(this._codec.read_dir()), 0);
             }
         });
 

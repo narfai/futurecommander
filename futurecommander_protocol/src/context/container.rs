@@ -18,31 +18,40 @@
  */
 
 use std::{
-    path::{ PathBuf }
+    collections::HashMap
 };
 
 use crate::{
-    errors::ProtocolError,
-    message::Message,
-    Packet,
-    Header,
+    context::{
+        ContextError,
+        ContextType
+    }
 };
 
-use serde::{ Serialize, Deserialize };
-use bincode::{ serialize };
 
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DirectoryOpen {
-    pub path: PathBuf
+#[derive(Default)]
+pub struct ContextContainer {
+    values: HashMap<String, Box<dyn ContextType>>,
 }
 
-impl Message for DirectoryOpen {
-    fn encode(&self) -> Result<Packet, ProtocolError> {
-        Ok(Packet::new(Header::DirectoryOpen, serialize(&self)?))
+impl ContextContainer {
+    pub fn get(&self, key: &str) -> Result<Box<dyn ContextType>, ContextError> {
+        if let Some(context) = self.values.get(key) {
+            Ok(context.box_clone())
+        } else {
+            Err(ContextError::KeyDoesNotExists(key.to_string()))
+        }
     }
 
-    fn header(&self) -> Header {
-        Header::DirectoryOpen
+    pub fn set(&mut self, key: &str, value: Box<dyn ContextType>) {
+        self.values.insert(key.to_string(), value);
+    }
+
+    pub fn debug_keys(&self) -> Vec<String> {
+        let mut debug = Vec::new();
+        for v in self.values.keys() {
+            debug.push(v.clone());
+        }
+        debug
     }
 }

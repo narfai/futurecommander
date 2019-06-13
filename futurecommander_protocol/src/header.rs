@@ -44,6 +44,10 @@ impl Header {
         }
     }
 
+    pub const fn length() -> usize {
+        1 as usize
+    }
+
     pub fn parse_message(self, datagram: &[u8]) -> Result<Box<dyn Message>, ProtocolError> {
         match self {
             Header::DirectoryOpen => {

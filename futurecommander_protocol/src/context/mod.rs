@@ -17,32 +17,20 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{
-    path::{ PathBuf }
+mod errors;
+mod container;
+mod string;
+
+pub use self::{
+    container::ContextContainer,
+    string::ContextString,
+    errors::ContextError
 };
 
-use crate::{
-    errors::ProtocolError,
-    message::Message,
-    Packet,
-    Header,
-};
+pub trait ContextType {
+    fn to_bool(&self) -> Result<bool, ContextError>;
 
-use serde::{ Serialize, Deserialize };
-use bincode::{ serialize };
+    fn to_string(&self) -> Result<String, ContextError>;
 
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DirectoryOpen {
-    pub path: PathBuf
-}
-
-impl Message for DirectoryOpen {
-    fn encode(&self) -> Result<Packet, ProtocolError> {
-        Ok(Packet::new(Header::DirectoryOpen, serialize(&self)?))
-    }
-
-    fn header(&self) -> Header {
-        Header::DirectoryOpen
-    }
+    fn box_clone(&self) -> Box<dyn ContextType>;
 }

@@ -31,6 +31,7 @@ use futurecommander_filesystem::{ QueryError, DomainError };
 #[derive(Debug)]
 pub enum ProtocolError {
     Io(io::Error),
+    FailToParseNextBlock(usize),
     Domain(DomainError),
     Query(QueryError),
     BinaryEncode(BincodeError),
@@ -72,6 +73,7 @@ impl fmt::Display for ProtocolError {
             ProtocolError::InvalidHeader => write!(f, "Invalid Header"),
             ProtocolError::MessageParsing => write!(f, "Cannot parse message"),
             ProtocolError::BinaryEncode(error) => write!(f, "Binary encode error {:?}", error),
+            ProtocolError::FailToParseNextBlock(pos) => write!(f, "Fail to parse block at position {}", pos),
             ProtocolError::Exit => write!(f, "Exit"),
         }
     }

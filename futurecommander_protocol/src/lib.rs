@@ -20,6 +20,7 @@
 mod codec;
 mod header;
 mod packet;
+pub mod context;
 
 pub mod message;
 pub mod errors;

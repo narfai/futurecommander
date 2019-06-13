@@ -17,32 +17,33 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+
 use std::{
-    path::{ PathBuf }
+    error::Error,
+    fmt
 };
 
-use crate::{
-    errors::ProtocolError,
-    message::Message,
-    Packet,
-    Header,
-};
-
-use serde::{ Serialize, Deserialize };
-use bincode::{ serialize };
-
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct DirectoryOpen {
-    pub path: PathBuf
+#[derive(Debug)]
+pub enum ContextError {
+    KeyDoesNotExists(String),
+    CannotCast(String, String)
 }
 
-impl Message for DirectoryOpen {
-    fn encode(&self) -> Result<Packet, ProtocolError> {
-        Ok(Packet::new(Header::DirectoryOpen, serialize(&self)?))
-    }
 
-    fn header(&self) -> Header {
-        Header::DirectoryOpen
+impl fmt::Display for ContextError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ContextError::KeyDoesNotExists(key) => write!(f, "Context key {} does not exists", key),
+            ContextError::CannotCast(from, to) => write!(f, "Context cannot cast {} to {}", from, to),
+        }
+    }
+}
+
+
+impl Error for ContextError {
+    fn cause(&self) -> Option<&dyn Error> {
+        match self {
+            _ => None
+        }
     }
 }

@@ -44,6 +44,10 @@ impl Message for DirectoryRead {
     fn encode(&self) -> Result<Packet, ProtocolError> {
         Ok(Packet::new(Header::DirectoryRead, serialize(&self)?))
     }
+
+    fn header(&self) -> Header {
+        Header::DirectoryRead
+    }
 }
 
 impl <T: Entry>From<EntryCollection<T>> for DirectoryRead {

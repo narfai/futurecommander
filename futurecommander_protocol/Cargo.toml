@@ -10,5 +10,4 @@ futurecommander_filesystem = { version = "0.4.0", path = "../futurecommander_fil
 bytes = "0.4.12"
 byteorder = "1.3.1"
 serde = { version = "1.0.90" }
-tokio-codec = "0.1.1"
 bincode = "1.1.3"

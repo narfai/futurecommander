@@ -43,7 +43,9 @@ use crate::{
 pub struct Daemon {
     rx: Rx,
     router: Arc<Mutex<Router>>,
-    replies: VecDeque<MessageStream>
+    replies: VecDeque<MessageStream>,
+    tx_count: u128,
+    rx_count: u128,
 }
 
 impl Daemon {
@@ -52,6 +54,8 @@ impl Daemon {
             rx,
             router: Arc::default(),
             replies: VecDeque::new(),
+            tx_count: 0,
+            rx_count: 0,
         }
     }
 
@@ -94,11 +98,10 @@ impl Stream for Daemon {
     type Error = ProtocolError;
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
-        println!("initial poll call");
-
         match self.rx.poll()? {
             Async::Ready(Some(packet)) => { // We got a new packet in socket
-                println!("get message !");
+                self.rx_count += 1;
+                println!("INCOMING MESSAGE #{} {:?}", self.rx_count, packet.header());
                 self.replies.push_front(
                     self.router
                             .clone()
@@ -118,7 +121,8 @@ impl Stream for Daemon {
             for (id, stream) in self.replies.iter_mut().take(100).enumerate() {
                 match stream.poll()? {
                     Async::Ready(Some(reply)) => { //Message processing yield some reply
-                        println!("Send response");
+                        self.tx_count += 1;
+                        println!("REPLY MESSAGE #{} {:?}", self.tx_count, reply.header());
                         return Ok(Async::Ready(Some(reply.encode()?)));
                     },
                     Async::Ready(None) => { //Message processing done

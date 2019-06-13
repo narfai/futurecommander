@@ -31,9 +31,12 @@ pub use self::{
 
 pub use crate::{
     errors::ProtocolError,
-    Packet
+    Packet,
+    Header
 };
 
 pub trait Message : Send + Sync + Debug {
     fn encode(&self) -> Result<Packet, ProtocolError>;
+
+    fn header(&self) -> Header;
 }
