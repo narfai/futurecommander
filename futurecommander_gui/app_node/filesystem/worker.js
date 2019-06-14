@@ -40,13 +40,12 @@ class Message { // TODO move to upper namespace
 }
 
 class MessageFrame extends PassThrough {
-    constructor(options) {
+    constructor(options = {}) {
         options.readableObjectMode = true;
         options.writableObjectMode = true;
         super(options);
-        this._buffer = Buffer.alloc(0);
 
-        this._codec = options.codec;
+        this._buffer = Buffer.alloc(0);
 
         this.tx_count = 0;
         this.rx_count = 0;
@@ -54,14 +53,14 @@ class MessageFrame extends PassThrough {
 
     read(){
         this.pause();
-        const message = this._codec.decode(this._buffer);
+        const message = addon.Codec.decode(this._buffer);
 
         console.log(this.tx_count);
         if(message.len()) {
             this.tx_count++;
             this._buffer = this._buffer.slice(0, this._buffer.length - message.len());
             this.resume();
-            this.push(new Message(message.header(), message.parse()));
+            this.push(new Message(message.header(), message.parse())); //TODO send ptr
         }
     }
 
@@ -76,7 +75,6 @@ class MessageFrame extends PassThrough {
 class FileSystemWorker { // TODO refactor it to be usable outside the worker
     constructor() {
         this._socket = new Socket();
-        this._codec = new addon.ProtocolCodec();
 
         this._socket.on('disconnect', () => {
             console.log('disconnected !')
@@ -90,6 +88,7 @@ class FileSystemWorker { // TODO refactor it to be usable outside the worker
             console.log('Connected');
 
             /**
+             * TODO move to real benchmark
              * May it is even faster but there limited to javascript tick ( of whole worker )
              * kernel:              Linux 5.1.1 x86_64
              * cpu :                Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz
@@ -100,9 +99,11 @@ class FileSystemWorker { // TODO refactor it to be usable outside the worker
              * rate :               18181 message / second
              * average latency :    0.055 ms
              **/
-            for (let i = 0; i < 100000; i++) {
-                setTimeout(() => this._socket.write(this._codec.read_dir()), 0);
-            }
+            // for (let i = 0; i < 100000; i++) {
+            //     setTimeout(() => {
+            //         this.send('DirectoryOpen', { path: '/tmp2' })
+            //     }, 0);
+            // }
         });
 
     }
@@ -111,14 +112,19 @@ class FileSystemWorker { // TODO refactor it to be usable outside the worker
         //@deprecate
     }
 
-    send(message) {
-        //TODO send addon encoded messages through the pipe
-        // this.socket.write(addon.encode(message))
+    send(header, payload = {}) {
+        let context = new addon.RustMessageContext(header);
+        Object
+            .keys(payload)
+            .forEach((key) => context.set(key, payload[key]))
+        ;
+
+        this._socket.write(addon.Codec.encode(context))
     }
 
     listen(){
 
-        const framed = this._socket.pipe(new MessageFrame({ codec: this._codec }));
+        const framed = this._socket.pipe(new MessageFrame());
 
         framed.on('connect', () => {
             console.log('connect !' );

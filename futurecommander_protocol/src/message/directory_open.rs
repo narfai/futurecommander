@@ -24,6 +24,10 @@ use std::{
 use crate::{
     errors::ProtocolError,
     message::Message,
+    context::{
+        ContextMessage,
+        ContextContainer
+    },
     Packet,
     Header,
 };
@@ -44,5 +48,20 @@ impl Message for DirectoryOpen {
 
     fn header(&self) -> Header {
         Header::DirectoryOpen
+    }
+}
+
+impl ContextMessage for DirectoryOpen {
+    fn from_context(context: &ContextContainer) -> Result<Box<ContextMessage>, ProtocolError> where Self: Sized {
+        Ok(
+            Box::new(
+                DirectoryOpen {
+                    path: PathBuf::from(
+                        context.get("path")?
+                            .to_string()?
+                    ),
+                }
+            )
+        )
     }
 }

@@ -24,11 +24,11 @@ use std::{
 use byteorder::{ NetworkEndian, WriteBytesExt };
 use bytes::{ BytesMut, BufMut };
 use bincode::{ deserialize };
-use serde::{ Deserialize };
+use serde::{ Deserialize, Serialize };
 
 use crate::{
     errors::ProtocolError,
-    message::Message,
+    message::{ DirectoryOpen, DirectoryRead, Message },
     Header
 };
 

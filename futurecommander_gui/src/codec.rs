@@ -19,10 +19,6 @@
 
 use wasm_bindgen::{ prelude::* };
 
-use std::{
-    path::{ PathBuf }
-};
-
 use bytes::{
     BytesMut
 };
@@ -30,48 +26,37 @@ use bytes::{
 use futurecommander_protocol::{
     PacketCodec,
     message::{
-        Message,
+        Header,
         DirectoryOpen,
         DirectoryRead
-    },
+    }
 };
 
 use crate::{
     errors::AddonError,
-    MessageDelta
+    MessageDelta,
+    RustMessageContext
 };
 
 #[wasm_bindgen]
-pub struct ProtocolCodec {
-    codec : PacketCodec
-}
+pub struct Codec {}
 
 #[wasm_bindgen]
-impl ProtocolCodec {
-
-    #[wasm_bindgen(constructor)]
-    pub fn new() -> ProtocolCodec {
-        ProtocolCodec {
-            codec: PacketCodec::default()
-        }
-    }
-
-    pub fn read_dir(&self) -> Result<Box<[u8]>, JsValue> {
-        // TODO encode with context as previous poc
-        let message = DirectoryOpen { path: PathBuf::from("/tmp2") };
-        message.encode()
+impl Codec {
+    pub fn encode(message: &RustMessageContext) -> Result<Box<[u8]>, JsValue> {
+        Header::new(message.header.as_str())
+            .and_then(|header| header.parse_context(&message.inner))
+            .and_then(|message| message.encode())
             .and_then(|packet| {
                 let mut buffer = BytesMut::new();
                 packet.write(&mut buffer)
-                    .and_then(|_|
-                        Ok(buffer.freeze().to_vec())
-                    )
+                    .and_then(|_| Ok(buffer.freeze()))
             })
+            .and_then(|raw| Ok(raw.to_vec().into_boxed_slice()))
             .map_err(|error| AddonError::from(error).into())
-            .map(|raw| raw.into_boxed_slice())
     }
 
-    pub fn decode(&mut self, read_buffer: &[u8]) -> Result<MessageDelta, JsValue> {
+    pub fn decode(read_buffer: &[u8]) -> Result<MessageDelta, JsValue> {
         let mut codec = PacketCodec::default();
         codec.next(&mut BytesMut::from(read_buffer))
             .map_err(|error| AddonError::from(error).into())

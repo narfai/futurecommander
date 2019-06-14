@@ -34,3 +34,7 @@ pub trait ContextType {
 
     fn box_clone(&self) -> Box<dyn ContextType>;
 }
+
+pub trait ContextMessage: crate::message::Message {
+    fn from_context(context: &ContextContainer) -> Result<Box<ContextMessage>, crate::errors::ProtocolError> where Self: Sized;
+}

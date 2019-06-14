@@ -28,16 +28,29 @@ use bincode::{ Error as BincodeError };
 
 use futurecommander_filesystem::{ QueryError, DomainError };
 
+use crate::{
+    context::{
+        ContextError
+    }
+};
+
 #[derive(Debug)]
 pub enum ProtocolError {
     Io(io::Error),
     FailToParseNextBlock(usize),
     Domain(DomainError),
+    Context(ContextError),
     Query(QueryError),
     BinaryEncode(BincodeError),
     MessageParsing,
     InvalidHeader,
     Exit
+}
+
+impl From<ContextError> for ProtocolError {
+    fn from(error: ContextError) -> Self {
+        ProtocolError::Context(error)
+    }
 }
 
 impl From<DomainError> for ProtocolError {
@@ -68,6 +81,7 @@ impl fmt::Display for ProtocolError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ProtocolError::Io(error) => write!(f, "Io error {}", error),
+            ProtocolError::Context(error) => write!(f, "Context error {}", error),
             ProtocolError::Domain(error) => write!(f, "Domain error {}", error),
             ProtocolError::Query(error) => write!(f, "Filesystem query error {}", error),
             ProtocolError::InvalidHeader => write!(f, "Invalid Header"),
@@ -79,12 +93,12 @@ impl fmt::Display for ProtocolError {
     }
 }
 
-
 impl Error for ProtocolError {
     fn cause(&self) -> Option<&dyn Error> {
         match self {
             ProtocolError::Io(err) => Some(err),
             ProtocolError::Query(err) => Some(err),
+            ProtocolError::Context(err) => Some(err),
             ProtocolError::BinaryEncode(err) => Some(err),
             ProtocolError::Domain(err) => Some(err),
             _ => None

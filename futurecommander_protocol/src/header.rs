@@ -19,6 +19,7 @@
 
 use crate::{
     errors::{ ProtocolError },
+    context::{ ContextMessage, ContextContainer },
     message::{
         Message,
         DirectoryOpen,
@@ -29,6 +30,14 @@ use crate::{
 use bincode::{ deserialize };
 use serde::{ Serialize, Deserialize };
 
+use std::{
+    fmt::{
+        Display,
+        Formatter,
+        Result as FmtResult
+    },
+};
+
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum Header {
     DirectoryOpen,
@@ -36,6 +45,14 @@ pub enum Header {
 }
 
 impl Header {
+    pub fn new(s: &str) -> Result<Self, ProtocolError> {
+        match s {
+            t if t == Header::DirectoryOpen.to_string() => Ok(Header::DirectoryOpen),
+            t if t == Header::DirectoryRead.to_string() => Ok(Header::DirectoryRead),
+            _ => Err(ProtocolError::InvalidHeader)
+        }
+    }
+
     pub fn parse(byte: &u8) -> Result<Self, ProtocolError> {
         match byte {
             b if b == &(Header::DirectoryOpen as u8) => Ok(Header::DirectoryOpen),
@@ -59,5 +76,18 @@ impl Header {
                 Ok(Box::new(message))
             }
         }
+    }
+
+    pub fn parse_context(self, context: &ContextContainer) -> Result<Box<ContextMessage>, ProtocolError> {
+        match self {
+            Header::DirectoryOpen => Ok(DirectoryOpen::from_context(&context)?),
+            _ => Err(ProtocolError::InvalidHeader)
+        }
+    }
+}
+
+impl Display for Header {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(f, "{:?}", self)
     }
 }

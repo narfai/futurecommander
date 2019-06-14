@@ -2,6 +2,7 @@ mod utils;
 mod errors;
 mod message_delta;
 mod codec;
+mod context;
 
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
@@ -11,5 +12,6 @@ use wasm_bindgen::{ prelude::* };
 
 pub use self::{
     message_delta::MessageDelta,
-    codec::ProtocolCodec
+    codec::Codec,
+    context::RustMessageContext
 };
