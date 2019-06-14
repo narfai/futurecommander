@@ -36,6 +36,8 @@ use crate::{
     Packet
 };
 
+const MINIMUM_WINDOW : usize = Header::length() + size_of::<u64>() + 1;
+
 impl PacketCodec {
     pub fn parse_header(index: usize, buf: &BytesMut) -> Result<Option<(usize, Header)>, ProtocolError> {
         let header_end = index + Header::length();
@@ -77,10 +79,17 @@ impl PacketCodec {
         Ok(None)
     }
 
-    pub fn next(&mut self, buf: &BytesMut) -> Result<Option<Packet>, ProtocolError> {
-        for _ in 0..3 {
+    pub fn next(&mut self, buf: &mut BytesMut) -> Result<Option<Packet>, ProtocolError> {
+        if buf.len() <= MINIMUM_WINDOW {
+            return Ok(None); // Exclude too small packets.
+        }
+
+        for i in 0..3 {
             if let Some(header) = self.consumer_header {
                 if let Some(length) = self.consumer_length {
+                    if buf.len() - self.consumer_index < (length as usize) { // If the buffer ain't filled enough
+                        return Ok(None); // Packet larger than MINIMUM_WINDOW needs more data
+                    }
                     if let Some((new_index, packet)) = Self::parse_packet(self.consumer_index, buf, header, length)? {
                         self.consumer_index = new_index;
                         self.consumer_header = None;
@@ -94,6 +103,11 @@ impl PacketCodec {
             } else if let Some((new_index, header)) = Self::parse_header(self.consumer_index, buf)? {
                 self.consumer_index = new_index;
                 self.consumer_header = Some(header);
+            }
+
+            if i == 3 {
+                // Larger than minimum window, no length, length but no packet => codec is poisoned
+                return Err(ProtocolError::FailToParseNextBlock(self.consumer_index));
             }
         }
 

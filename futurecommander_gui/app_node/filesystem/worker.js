@@ -59,15 +59,16 @@ class MessageFrame extends PassThrough {
         console.log(this.tx_count);
         if(message.len()) {
             this.tx_count++;
-            this._buffer = this._buffer.slice(message.len());
+            this._buffer = this._buffer.slice(0, this._buffer.length - message.len());
             this.resume();
             this.push(new Message(message.header(), message.parse()));
         }
     }
 
     write(chunk) {
+        console.log(this.rx_count);
         this.rx_count++;
-        this._buffer = Buffer.concat([chunk, this._buffer]);
+        this._buffer = Buffer.concat([this._buffer, chunk]);
         this.resume();
     }
 }
@@ -139,7 +140,6 @@ class FileSystemWorker { // TODO refactor it to be usable outside the worker
     }
 
     close() {
-        this.close_count += 1;
         this.filesystem.unref();
         this.filesystem = null;
     }

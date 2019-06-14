@@ -13,7 +13,6 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-tokio-codec = "0.1.1"
 futurecommander_protocol = { version = "0.1.0", path = "../futurecommander_protocol" }
 bytes = "0.4.12"
 byteorder = "1.3.1"
