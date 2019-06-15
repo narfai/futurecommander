@@ -23,7 +23,7 @@ module.exports = {
     'oninit': function({ state: { store, action } }){
         const { children = null } = store.getState();
         if(children !== null && !(children.length > 0)){
-            action.entry({ path: '/tmp2' });
+            action.entry({ path: '/home/narfai' });
         }
     },
     'view': ({ state: { AnchorGroup }}) =>

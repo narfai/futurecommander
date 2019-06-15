@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
+use std::{
+    path::{ PathBuf }
+};
 
 use futurecommander_filesystem::{
     SerializableEntry,
@@ -24,7 +27,7 @@ use futurecommander_filesystem::{
 };
 
 use serde::{ Serialize, Deserialize };
-use bincode::{ serialize };
+use bincode::{ serialize, deserialize };
 
 use crate::{
     errors::ProtocolError,
@@ -37,7 +40,8 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DirectoryRead {
-    pub entries: Vec<SerializableEntry>
+    pub entries: Vec<SerializableEntry>,
+    pub path: String
 }
 
 impl Message for DirectoryRead {
@@ -50,9 +54,10 @@ impl Message for DirectoryRead {
     }
 }
 
-impl <T: Entry>From<EntryCollection<T>> for DirectoryRead {
-    fn from(collection: EntryCollection<T>) -> DirectoryRead {
+impl <T: Entry>From<(PathBuf, EntryCollection<T>)> for DirectoryRead {
+    fn from((path, collection): (PathBuf, EntryCollection<T>)) -> DirectoryRead {
         DirectoryRead {
+            path: path.to_string_lossy().to_string(),
             entries: collection
                 .into_iter()
                 .map(|entry| SerializableEntry::from(&entry))

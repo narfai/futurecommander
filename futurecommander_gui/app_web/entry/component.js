@@ -25,7 +25,7 @@ module.exports = {
     'oninit': function(){
         this.spoil = () => {
             if(typeof this.action.list === 'undefined') throw new Error('Entry needs list action');
-            return this.action.list({ 'path': this.store.getState().cwd }).result;
+            this.action.list({ 'path': this.store.getState().cwd });
         };
 
         if(this.store.getState().is_open){
@@ -41,7 +41,6 @@ module.exports = {
                         ? is_open
                             ? m(
                                 'span',
-                                // @NOTICE prevent from unfilled action during development
                                 {onclick: action.close},
                                 [Icon.angle_down()]
                             )

@@ -51,7 +51,7 @@ impl Router {
             Ok(
                 Box::new(
                     DirectoryRead::from(
-                        self.container.read_dir(message.path.as_path())?
+                        (message.path.clone(), self.container.read_dir(message.path.as_path())?)
                     )
                 )
             )

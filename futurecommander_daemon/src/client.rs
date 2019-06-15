@@ -144,7 +144,6 @@ impl Stream for ConnectedClient {
     type Error = ProtocolError;
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
-        println!("POLL");
         for i in 0..10 {
             match self.rx.poll()? {
                 Async::Ready(Some(packet)) => { // We got a new packet in socket

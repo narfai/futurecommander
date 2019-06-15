@@ -9,7 +9,7 @@
     "@fortawesome/fontawesome-free": "^5.8.2",
     "mithril": "2.0.0-rc.5",
     "nwjs": "^1.4.4",
-    "openmew-renderer": "0.2.3",
+    "openmew-renderer": "/home/narfai/tuxdata/project/javascript/openmew-renderer",
     "osenv": "^0.1.5",
     "redux": "^4.0.1",
     "skeleton-css": "^2.0.4",
@@ -19,6 +19,7 @@
     "install": "nw install 0.38.2-sdk && nw use 0.38.2-sdk",
     "build": "wasm-pack build --target nodejs",
     "start": "nw . --enable-node-worker --password-store=basic",
-    "dev": "cargo build --manifest-path ../Cargo.toml && yarn build && yarn start"
+    "dev": "cargo build --manifest-path ../Cargo.toml && yarn build --dev && yarn start --dev",
+    "dev-local": "yarn build --dev && yarn start --dev"
   }
 }

@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2019 François CADEILLAN
  *
@@ -18,16 +17,17 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-module.exports = (spread) => ({
-        'list': spread(
-            ({state, event: { path }}) => ({
-                'type': 'DIRECTORY_OPEN',
-                path
-            })
-        )(spread.scope.self),
-        'close': spread(
-            ({state, event: { path }}) => ({
-                'type': 'CLOSE'
-            })
-        )(spread.scope.self, spread.redraw.allow)
-});
+const uniqid = require('uniqid');
+
+class Message { // TODO move to upper namespace
+    constructor({ header, payload, identifier = null, type = null }){
+        this.type = header;
+        this.header = header;
+        this.payload = payload;
+        this.identifier = identifier === null ? uniqid.time() : identifier;
+    }
+}
+
+module.exports = {
+    Message
+};

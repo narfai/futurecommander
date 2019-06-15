@@ -43,11 +43,22 @@ module.exports = class Application {
             )
         );
 
+        filesystem_client.on(
+            'in_message',
+            (message) => {
+                this.store.dispatch({
+                    'type': message.header,
+                    'payload': message.payload,
+                    'redraw': true
+                });
+            }
+        );
         nw.require('./layout')(this.provider);
         nw.require('./entry')(this.provider);
     }
 
     run(){
+
         this.store.dispatch(ActionCreator.switch());
     }
 };

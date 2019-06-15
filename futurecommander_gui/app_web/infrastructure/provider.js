@@ -24,7 +24,7 @@ module.exports = function create_provider(mithril){
 
     provider.connect_component_transducers(
         Renderer.state_aware,
-        Renderer.skip_redraw
+        // Renderer.skip_redraw
     );
 
     const { logger } = Utility;

@@ -22,22 +22,11 @@ const { spawn } = require('child_process');
 
 const addon = require('pkg/futurecommander_gui');
 
-const { Request } = require('./request');
+const { Message } = require('./message');
 
 const { Socket } = require('net');
 
-const uniqid = require('uniqid');
-
-
 const { PassThrough } = require('stream');
-
-class Message { // TODO move to upper namespace
-    constructor(header, payload){
-        this.header = header;
-        this.payload = payload;
-        this.identifier = uniqid.time();
-    }
-}
 
 class MessageFrame extends PassThrough {
     constructor(options = {}) {
@@ -60,7 +49,7 @@ class MessageFrame extends PassThrough {
             this.tx_count++;
             this._buffer = this._buffer.slice(0, this._buffer.length - message.len());
             this.resume();
-            this.push(new Message(message.header(), message.parse())); //TODO send ptr
+            this.push(message); //TODO send ptr
         }
     }
 
@@ -108,11 +97,7 @@ class FileSystemWorker { // TODO refactor it to be usable outside the worker
 
     }
 
-    emit(request) {
-        //@deprecate
-    }
-
-    send(header, payload = {}) {
+    send({ header, payload = {} }) {
         let context = new addon.RustMessageContext(header);
         Object
             .keys(payload)
@@ -135,8 +120,10 @@ class FileSystemWorker { // TODO refactor it to be usable outside the worker
         });
 
         framed.on('data', (data) => {
-            console.log('DATA CALL', data);
-            // TODO postMessage then transform
+            postMessage(new Message({
+                header: data.header(),
+                payload: data.parse()
+            }));
 
         });
 
@@ -156,5 +143,5 @@ let worker = new FileSystemWorker();
 worker.listen();
 
 onmessage = function(e) {
-    worker.emit(e.data[0]);//@deprecate
+    worker.send(e.data[0]);//@deprecate
 };
