@@ -49,11 +49,7 @@ class TcpMessageClient extends EventEmitter {
         }));
 
         framed.on('connect', () => {
-            console.log('connect !' );
-        });
-
-        framed.on('drain', (data) => {
-            console.log('DRAIN', data);
+            console.debug('Framed client connected' );
         });
 
         framed.on('data', (data) => {
@@ -65,21 +61,21 @@ class TcpMessageClient extends EventEmitter {
         });
 
         framed.on('close', function() {
-            console.log('Connection closed');
+            console.debug('Framed connection closed');
         });
     }
 
     listen_tcp(){
         this._socket.on('disconnect', () => {
-            console.log('disconnected !')
+            console.debug('Socket disconnected !')
         });
 
         this._socket.on('close', () => {
-            console.log('closed !')
+            console.debug('Socket closed !')
         });
 
         this._socket.connect(7842, '127.0.0.1', () => { //TODO parametrize & promisify
-            console.log('Connected');
+            console.debug('Socket connected');
 
             /**
              * TODO move to real benchmark

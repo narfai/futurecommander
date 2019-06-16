@@ -38,7 +38,6 @@ class MessageFrame extends PassThrough {
         this.pause();
         const message = this.decode(this._buffer);
 
-        console.log(this.tx_count);
         if(message.len()) {
             this.tx_count++;
             this._buffer = this._buffer.slice(0, this._buffer.length - message.len());
@@ -48,7 +47,6 @@ class MessageFrame extends PassThrough {
     }
 
     write(chunk) {
-        console.log(this.rx_count);
         this.rx_count++;
         this._buffer = Buffer.concat([this._buffer, chunk]);
         this.resume();

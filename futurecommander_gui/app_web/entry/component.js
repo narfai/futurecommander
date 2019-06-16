@@ -29,7 +29,6 @@ module.exports = {
         };
 
         if(this.store.getState().is_open){
-            console.log('SPOIL');
             this.spoil();
         }
     },
