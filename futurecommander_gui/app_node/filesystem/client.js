@@ -30,27 +30,35 @@ class FileSystemClient extends EventEmitter {
 
         this.Message = Message;
         this.worker = null;
-        if(this.worker === null) {
-            this.listen()
-        }
     }
+
     listen() {
-        this.worker = new Worker('app_node/filesystem/worker.js');
-        this.worker.onmessage = ({data}) => {
-            this.emit('in_message', new Message(data));
-        };
+        if(this.worker === null) {
+            this.worker = new Worker('app_node/filesystem/worker/main.js');
+            this.worker.onmessage = ({data}) => {
+                this.emit('in_message', new Message(data));
+            };
 
-        this.on('out_message', (message) => {
-            this.worker.postMessage([message]);
-        });
+            this.on('out_message', (message) => {
+                this.worker.postMessage([message]);
+            });
 
-        this.worker.onerror = ((error) => {
-            process.nextTick(() => this.emit('error', error));
-        })
+            this.worker.onerror = ((error) => {
+                console.log('ERROR', error);
+                process.nextTick(() => this.emit('error', error));
+                this.worker.terminate();
+            })
+        }
     }
 
     message(user_message) {
         return new Message(user_message);
+    }
+
+    close() {
+        if(this.worker !== null) {
+            this.worker.terminate();
+        }
     }
 }
 

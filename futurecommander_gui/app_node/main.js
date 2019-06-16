@@ -29,17 +29,23 @@ class NodeApplication {
             'app_web/index.html',
             {
                 'id': 'main',
-                new_instance: false,
-                // inject_js_end: 'app_web/index.js'
+                new_instance: false
             },
             function(win) {
+                const filesystem_client = new FileSystemClient();
+                win.on('closed', function () {
+                    filesystem_client.close();
+                    win = null;
+                });
+
                 win.on('loaded', () => {
                     win.showDevTools();
                     const Application = nw.require('app_web/index.js');
                     const app = new Application(
                         win.window,
-                        new FileSystemClient()
+                        filesystem_client
                     );
+                    filesystem_client.listen();
                     app.run();
                 });
             }

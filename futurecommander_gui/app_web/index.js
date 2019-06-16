@@ -46,10 +46,12 @@ module.exports = class Application {
         filesystem_client.on(
             'in_message',
             (message) => {
-                this.store.dispatch({
+                this.store.dispatch({ //TODO create a kind of reverse router to send adapter action weather received message
                     'type': message.header,
                     'payload': message.payload,
-                    'redraw': true
+                    'redraw': true,
+                    'allow': (state) => state.resource === 'Entry' && state.cwd === message.payload.path,
+                    'propagate': (state) => state.resource === 'Layout' || (state.resource === 'Entry' && message.payload.path.includes(state.cwd)),
                 });
             }
         );
