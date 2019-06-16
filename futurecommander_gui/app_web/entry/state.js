@@ -27,7 +27,7 @@ const is_entry = ({ resource }) => resource === 'Entry';
 const has_name = (target_name) => ({ name }) => name === target_name;
 
 const list_entry = (state, action) => {
-    const entry_collection = action.payload.entries;
+    const entry_collection = action.entries;
 
     const entry_children = state.children
         .filter(is_entry)
@@ -43,7 +43,7 @@ const list_entry = (state, action) => {
                 'Entry',
                 {
                     ...entry,
-                    cwd: path.join(action.payload.path, entry.name),
+                    cwd: path.join(action.path, entry.name),
                     is_open: false
                 }
             )
@@ -66,10 +66,10 @@ const list_entry = (state, action) => {
 const list_entry_transducer = Identity.state_reducer(
     (next, state = null, action = {}) =>
         ((next_state) => (
-                action.type === 'DirectoryRead'
+                action.type === 'DIRECTORY_READ'
                 // && typeof action.ready !== 'undefined'
                 // && action.ready === true
-                && action.payload.path === state.cwd
+                && action.path === state.cwd
                     ? {
                         ...next_state,
                         is_open: true,

@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2019 François CADEILLAN
  *
@@ -17,16 +18,25 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const uniqid = require('uniqid');
+const { ActionCreator } = nw.require('openmew-renderer');
+const action_creator = nw.require('./infrastructure/action');
 
-class Message { // TODO move to upper namespace
-    constructor({ header, payload, identifier = null }){
-        this.header = header;
-        this.payload = payload;
-        this.identifier = identifier === null ? uniqid.time() : identifier;
+class ActionCreatorAdapter {
+    constructor(store){
+        this.message_actions = ActionCreator.action_collection(
+            action_creator,
+            (creator) => (message) => store.dispatch(creator(store)(message))
+        );
+    }
+
+    dispatch(message){
+        if(!this.message_actions.hasOwnProperty(message.header)){
+            throw new Error('Unhandled message header ' + message.header);
+        }
+        this.message_actions[message.header](message)
     }
 }
 
 module.exports = {
-    Message
+    ActionCreatorAdapter
 };

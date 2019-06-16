@@ -25,7 +25,7 @@ const { ActionCreator, Middleware } = nw.require('openmew-renderer');
 const { list_filesystem, ready_state_promise, ready_state_redraw } = nw.require('./infrastructure/middleware');
 const { applyMiddleware, createStore } = nw.require('redux');
 
-
+const { ActionCreatorAdapter } = nw.require('./infrastructure/action_adapter');
 const create_provider = nw.require('./infrastructure/provider');
 
 module.exports = class Application {
@@ -43,24 +43,17 @@ module.exports = class Application {
             )
         );
 
+        const action_adapter = new ActionCreatorAdapter(this.store);
         filesystem_client.on(
             'in_message',
-            (message) => {
-                this.store.dispatch({ //TODO create a kind of reverse router to send adapter action weather received message
-                    'type': message.header,
-                    'payload': message.payload,
-                    'redraw': true,
-                    'allow': (state) => state.resource === 'Entry' && state.cwd === message.payload.path,
-                    'propagate': (state) => state.resource === 'Layout' || (state.resource === 'Entry' && message.payload.path.includes(state.cwd)),
-                });
-            }
+            (message) => action_adapter.dispatch(message)
         );
+
         nw.require('./layout')(this.provider);
         nw.require('./entry')(this.provider);
     }
 
     run(){
-
         this.store.dispatch(ActionCreator.switch());
     }
 };
