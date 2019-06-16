@@ -19,7 +19,7 @@
 
 const uniqid = require('uniqid');
 
-class Message { // TODO move to upper namespace
+class Message {
     constructor({ header, payload, identifier = null }){
         this.header = header;
         this.payload = payload;

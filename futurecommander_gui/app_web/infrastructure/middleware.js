@@ -63,8 +63,6 @@ const ready_state_redraw = (mithril) => (/*redux_store*/) => (next) => (action) 
     ) mithril.redraw.sync();
     return result;
 };
-//TODO error handling middleware
-
 
 module.exports = {
     list_filesystem,

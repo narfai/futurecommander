@@ -23,7 +23,7 @@ const EventEmitter = require('events');
 const { MessageFrame } = require('./frame');
 const { Message } = require('../message');
 
-class TcpMessageClient extends EventEmitter { // TODO refactor it to be usable outside the worker
+class TcpMessageClient extends EventEmitter {
     constructor(options) {
         super(options);
 
