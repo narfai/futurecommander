@@ -20,19 +20,11 @@
 use wasm_bindgen::{ prelude::* };
 
 use futurecommander_protocol::{
-    message::{
-        Header
-    },
     context::{
-        ContextMessage,
         ContextType,
         ContextError,
         ContextContainer
     }
-};
-
-use crate::{
-    errors::AddonError
 };
 
 #[derive(Clone)]

@@ -27,7 +27,7 @@ use futurecommander_filesystem::{
 };
 
 use serde::{ Serialize, Deserialize };
-use bincode::{ serialize, deserialize };
+use bincode::{ serialize };
 
 use crate::{
     errors::ProtocolError,

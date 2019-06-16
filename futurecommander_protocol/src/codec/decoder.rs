@@ -22,7 +22,7 @@ use std::{
 };
 use byteorder::{ NetworkEndian, ReadBytesExt};
 
-use bytes::{ Bytes, BytesMut };
+use bytes::{ BytesMut };
 use tokio_codec::{
     Decoder
 };
@@ -45,7 +45,7 @@ impl PacketCodec {
             if let Some(first_byte) = buf[index..header_end].first() {
                 return Ok(
                     Some(
-                        ( header_end, Header::parse(first_byte)? )
+                        ( header_end, Header::parse(*first_byte)? )
                     )
                 );
             }

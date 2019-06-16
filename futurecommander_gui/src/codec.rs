@@ -26,9 +26,7 @@ use bytes::{
 use futurecommander_protocol::{
     PacketCodec,
     message::{
-        Header,
-        DirectoryOpen,
-        DirectoryRead
+        Header
     }
 };
 

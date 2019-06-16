@@ -59,6 +59,10 @@ impl MessageDelta {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.maybe_packet.is_none()
+    }
+
     pub fn parse(&self) -> Result<JsValue, JsValue> {
         if let Some(packet) = &self.maybe_packet {
             match packet.header() {
