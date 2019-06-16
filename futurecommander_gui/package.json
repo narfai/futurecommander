@@ -9,7 +9,7 @@
     "@fortawesome/fontawesome-free": "^5.8.2",
     "mithril": "2.0.0-rc.5",
     "nwjs": "^1.4.4",
-    "openmew-renderer": "/home/narfai/tuxdata/project/javascript/openmew-renderer",
+    "openmew-renderer": "0.2.4",
     "osenv": "^0.1.5",
     "redux": "^4.0.1",
     "skeleton-css": "^2.0.4",
