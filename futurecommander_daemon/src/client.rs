@@ -52,6 +52,7 @@ use crate::{
     }
 };
 
+//TODO Move it to a separated crate
 
 pub type Rx = SplitStream<Framed<TcpStream, PacketCodec>>;
 
