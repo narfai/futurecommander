@@ -13,10 +13,6 @@ _Master_ [![buddy pipeline](https://app.buddy.works/narfai/futurecommander/pipel
 
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=narfai/futurecommander)](https://dependabot.com)
 
-## License
-
-This is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License.
-
 ## Docker
 
 Build static image ( with embed source ) and interact with your target binaries
@@ -76,6 +72,25 @@ Command can be :
 * coverage ( needs `-e "CODECOV_TOKEN=..."` and `--security-opt seccomp=unconfined`) : send test coverage to dovecot
 
 * release ( needs `-e "GITHUB_TOKEN=..."` ) : test, lint and generate a pre-release on github containing both binaries
+
+## GUI
+
+Needs :
+- yarn
+- nodejs environment
+- cargo and a working rust 2018 environment
+- wasm-pack https://rustwasm.github.io/wasm-pack/installer/#
+
+```
+# Run daemon
+cargo run daemon &
+
+cd futurecommander_gui
+
+yarn install --dev
+yarn dev
+
+```
 
 ## Trello
 

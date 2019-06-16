@@ -18,12 +18,13 @@
  */
 
 const m = nw.require('mithril');
+const osenv = require('osenv');
 
 module.exports = {
     'oninit': function({ state: { store, action } }){
         const { children = null } = store.getState();
         if(children !== null && !(children.length > 0)){
-            action.entry({ path: '/home/narfai' });
+            action.entry({ path: osenv.home() });
         }
     },
     'view': ({ state: { AnchorGroup }}) =>
