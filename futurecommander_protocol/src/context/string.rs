@@ -58,23 +58,28 @@ impl ContextType for ContextString {
     }
 }
 
+#[cfg_attr(tarpaulin, skip)]
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//#[cfg_attr(tarpaulin, skip)]
-//#[cfg(test)]
-//mod tests {
-//    use super::*;
-//
-//    #[test]
-//    fn fill_and_query_context_with_context_strings(){
-//        let mut context = Context::default();
-//        let value_a = "valueA".to_string();
-//        let value_b = "valueB".to_string();
-//        context.set("keyA", Box::new(ContextString::from(value_a.clone())));
-//        context.set("keyB", Box::new(ContextString::from(value_b.clone())));
-//
-//        assert_eq!(context.get("keyA").unwrap().to_string().unwrap(), value_a);
-//        assert_eq!(context.get("keyB").unwrap().to_string().unwrap(), value_b);
-//        assert!(context.debug_keys().contains(&"keyA".to_string()));
-//        assert!(context.debug_keys().contains(&"keyB".to_string()));
-//    }
-//}
+    use crate::{
+        context::{
+            ContextContainer
+        }
+    };
+
+    #[test]
+    fn fill_and_query_context_with_context_strings(){
+        let mut context = ContextContainer::default();
+        let value_a = "valueA".to_string();
+        let value_b = "valueB".to_string();
+        context.set("keyA", Box::new(ContextString::from(value_a.clone())));
+        context.set("keyB", Box::new(ContextString::from(value_b.clone())));
+
+        assert_eq!(context.get("keyA").unwrap().to_string().unwrap(), value_a);
+        assert_eq!(context.get("keyB").unwrap().to_string().unwrap(), value_b);
+        assert!(context.debug_keys().contains(&"keyA".to_string()));
+        assert!(context.debug_keys().contains(&"keyB".to_string()));
+    }
+}
