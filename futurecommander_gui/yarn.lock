@@ -690,6 +690,10 @@ mithril@2.0.0-rc.5:
   version "2.0.0-rc.5"
   resolved "https://registry.yarnpkg.com/mithril/-/mithril-2.0.0-rc.5.tgz#3c9b84eaf9d6bc8f507fc5ce49b2572b21f0bbeb"
 
+mithril@^2.0.0-rc.5:
+  version "2.0.0-rc.6"
+  resolved "https://registry.yarnpkg.com/mithril/-/mithril-2.0.0-rc.6.tgz#341ef52f4faafd8dc930b04ece0ed890e3dd295b"
+
 mkdirp@0.5.1, mkdirp@^0.5.0:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.1.tgz#30057438eac6cf7f8c4767f38648d6697d75c903"
@@ -787,10 +791,15 @@ once@^1.3.0:
   dependencies:
     wrappy "1"
 
-openmew-renderer@0.2.3:
+openmew-renderer@/home/narfai/tuxdata/project/javascript/openmew-renderer:
   version "0.2.3"
-  resolved "https://registry.yarnpkg.com/openmew-renderer/-/openmew-renderer-0.2.3.tgz#befa03efc1c04f88a448fe58f93c379e4fb0487f"
-  integrity sha512-F9o8m/c4Tmix8FT9nPkYN4inPr1rjr0/rB8rv4L2Zp8zDo5tpgC4n6gTYkmNw2Xsno3FqWMfBL8QfEoMHvE7jw==
+  dependencies:
+    mithril "^2.0.0-rc.5"
+
+"openmew-renderer@file:../../../javascript/openmew-renderer":
+  version "0.2.3"
+  dependencies:
+    mithril "^2.0.0-rc.5"
 
 os-homedir@^1.0.0:
   version "1.0.2"

@@ -21,10 +21,10 @@
 module.exports = (spread) => ({
         'list': spread(
             ({state, event: { path }}) => ({
-                'type': 'LIST',
+                'type': 'DIRECTORY_OPEN',
                 path
             })
-        )(spread.scope.self, spread.redraw.allow),
+        )(spread.scope.self),
         'close': spread(
             ({state, event: { path }}) => ({
                 'type': 'CLOSE'

@@ -39,14 +39,19 @@ const thunk = (store) => (next) => (action) =>
         : next(action);
 
 const list_filesystem = (filesystem_client) => (/*redux_store*/) => (next) => (action) => {
-    if(action.type !== 'LIST') return next(action);
-    console.log('SEND', action);
-    return next({
-        ...action,
-        'promise': filesystem_client.send(
-            filesystem_client.Request.list(action)
-        )
-    });
+    if(action.type !== 'DIRECTORY_OPEN') return next(action);
+
+    const next_action = next(action);
+    filesystem_client.emit(
+        'out_message',
+        filesystem_client.message({
+            'header': 'DirectoryOpen',
+            'payload': {
+                'path': action.path
+            }
+        })
+    );
+    return next_action;
 };
 
 const ready_state_redraw = (mithril) => (/*redux_store*/) => (next) => (action) => {
@@ -58,8 +63,6 @@ const ready_state_redraw = (mithril) => (/*redux_store*/) => (next) => (action) 
     ) mithril.redraw.sync();
     return result;
 };
-//TODO error handling middleware
-
 
 module.exports = {
     list_filesystem,

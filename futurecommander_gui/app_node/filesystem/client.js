@@ -17,55 +17,48 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { Response } = require('./response');
-const { Request } = require('./request');
+const { Message } = require('./message');
+const EventEmitter = require('events');
 
+class FileSystemClient extends EventEmitter {
+    constructor(options = {}) {
+        options.allowHalfOpen = false;
+        options.readableObjectMode = true;
+        options.writableObjectMode = true;
+        options.readableFlowing = false;
+        super(options);
 
-class FileSystemClient {
-    constructor() {
-        console.log('Create FileSystemClient');
-        this.Response = Response;
-        this.Request = Request;
-        this.resolves = {};
-        this.rejects = {};
-        this.worker = new Worker('app_node/filesystem/worker.js');
-        this.worker.onmessage = ({ data }) => {
-            const response = new Response(data);
-            try {
-                const resolve = this.resolves[response.id];
-                if (resolve) {
-                    resolve(response)
-                }
-            } catch(error) {
-                const reject = this.rejects[response.id];
-                if (reject) {
-                    reject({ response, error });
-                }
-            }
-            this.unsubscribe(response.id)
+        this.Message = Message;
+        this.worker = null;
+    }
+
+    listen() {
+        if(this.worker === null) {
+            this.worker = new Worker('app_node/filesystem/worker/main.js');
+            this.worker.onmessage = ({data}) => {
+                this.emit('in_message', new Message(data));
+            };
+
+            this.on('out_message', (message) => {
+                this.worker.postMessage([message]);
+            });
+
+            this.worker.onerror = ((error) => {
+                console.error(error);
+                process.nextTick(() => this.emit('error', error));
+                this.worker.terminate();
+            })
         }
     }
 
-    subscribe(id, resolve, reject) {
-        this.resolves[id] = resolve;
-        this.rejects[id] = reject;
+    message(user_message) {
+        return new Message(user_message);
     }
 
-    unsubscribe(id) {
-        if (typeof this.resolves[id] !== undefined) {
-            delete this.resolves[id];
+    close() {
+        if(this.worker !== null) {
+            this.worker.terminate();
         }
-        if (typeof this.rejects[id] !== undefined) {
-            delete this.rejects[id];
-        }
-    }
-
-    send(request) {
-        console.log('SENT' ,request);
-        return new Promise((resolve, reject) => {
-            this.subscribe(request.id, resolve, reject);
-            this.worker.postMessage([request]);
-        });
     }
 }
 

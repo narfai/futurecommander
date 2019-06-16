@@ -17,39 +17,30 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod header;
-mod list;
+mod decoder;
+mod encoder;
 
-pub use self::{
-    header::RequestHeader,
-    list::ListAction,
+use crate::{
+    Header
 };
 
-use serde::{
-    Serialize,
-    Deserialize
-};
-
-
-use crate:: {
-    errors::DaemonError
-};
-
-use std::{
-    fmt::{
-        Debug
-    },
-};
-
-use futurecommander_filesystem::{
-    Container
-};
-
-pub trait Request: Debug {
-
-    /** Lifecycle step 6 - Daemon - process decoded request and return binary response **/
-    fn process(&self, container: &mut Container) -> Result<Vec<u8>, DaemonError>;
+#[derive(Default)]
+pub struct PacketCodec {
+    consumer_index: usize,
+    consumer_header: Option<Header>,
+    consumer_length: Option<u64>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RequestAdapter<T: Serialize>(pub T);
+impl PacketCodec {
+    pub fn index(&self) -> usize {
+        self.consumer_index
+    }
+
+    pub fn header(&self) -> Option<Header> {
+        self.consumer_header
+    }
+
+    pub fn length(&self) -> Option<u64> {
+        self.consumer_length
+    }
+}

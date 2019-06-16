@@ -5,5 +5,7 @@ members = [
     "futurecommander_filesystem",
     "futurecommander_representation",
     "futurecommander_daemon",
-    "futurecommander_gui"
+    "futurecommander_gui",
+    "futurecommander_protocol",
+    "futurecommander_client"
 ]

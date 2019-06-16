@@ -25,7 +25,7 @@ use crate::{
     }
 };
 
-#[derive(Serialize, PartialEq, Deserialize, Debug)]
+#[derive(Serialize, PartialEq, Deserialize, Debug, Clone)]
 pub struct SerializableEntry {
     pub name: Option<String>,
     pub is_dir: bool,

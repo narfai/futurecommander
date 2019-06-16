@@ -25,7 +25,7 @@ const { ActionCreator, Middleware } = nw.require('openmew-renderer');
 const { list_filesystem, ready_state_promise, ready_state_redraw } = nw.require('./infrastructure/middleware');
 const { applyMiddleware, createStore } = nw.require('redux');
 
-
+const { ActionCreatorAdapter } = nw.require('./infrastructure/action_adapter');
 const create_provider = nw.require('./infrastructure/provider');
 
 module.exports = class Application {
@@ -41,6 +41,12 @@ module.exports = class Application {
                 Middleware.render(mithril, this.provider, window.document.body),
                 ready_state_redraw(mithril)
             )
+        );
+
+        const action_adapter = new ActionCreatorAdapter(this.store);
+        filesystem_client.on(
+            'in_message',
+            (message) => action_adapter.dispatch(message)
         );
 
         nw.require('./layout')(this.provider);

@@ -17,13 +17,14 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use futurecommander_shell::Shell;
-use futurecommander_daemon::Daemon;
 use std::{
     env,
     io::{ Write }
 };
 
+use futurecommander_shell::{ Shell };
+use futurecommander_daemon::{ Daemon };
+use futurecommander_client::{ Client };
 
 fn main() {
     let mut shell = Shell::default();
@@ -33,16 +34,24 @@ fn main() {
     let mut stderr = std::io::stderr();
 
     if args.is_empty() {
-        match shell.run_readline(&mut stdout, &mut stderr) {
-            Ok(_) => {},//Exit gracefully
-            Err(error) => write!(&mut stderr, "{}", error).unwrap()
-        }
+        shell.run_readline(&mut stdout, &mut stderr)
+            .unwrap_or_else(|error| {
+                write!(&mut stderr, "{}", error).unwrap();
+            });
     } else if args[0].trim() == "daemon" {
-        Daemon::new(&mut stdout, &mut stderr).run();
+        Daemon::listen(None, None)
+            .unwrap_or_else(|error| {
+                write!(&mut stderr, "{}", error).unwrap();
+            });
+    } else if args[0].trim() == "client" {
+        Client::listen(None, None)
+            .unwrap_or_else(|error| {
+                write!(&mut stderr, "{}", error).unwrap();
+            });
     } else {
-        match shell.run_single(env::args(), &mut stdout, &mut stderr) {
-            Ok(_) => {},//Exit gracefully
-            Err(error) => write!(&mut stderr, "{}", error).unwrap()
-        }
-    }
+        shell.run_single(env::args(), &mut stdout, &mut stderr)
+            .unwrap_or_else(|error| {
+                write!(&mut stderr, "{}", error).unwrap();
+            });
+    };
 }

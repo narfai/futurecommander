@@ -159,6 +159,7 @@ https://actix.rs/
 ## wasm
 https://rustwasm.github.io/wasm-bindgen/reference
 https://nodejs.org/api/child_process.html
+https://rustwasm.github.io/docs/book/reference/which-crates-work-with-wasm.html
 
 ## thread about running cross platform process from javascript
 
@@ -176,6 +177,15 @@ thanks ! https://stackoverflow.com/questions/35677387/nw-js-and-webstorm
 ## Icon font
 
 https://cloudfour.com/thinks/seriously-dont-use-icon-fonts/
+
+## CSS tips
+
+http://tachyons.io/
+https://mithril.js.org/css.html
+
+## Tokio
+
+https://blog.passcod.name/2018/mar/07/writing-servers-with-tokio
 
 ## CSS tips
 

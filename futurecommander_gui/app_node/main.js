@@ -21,25 +21,31 @@ const FileSystemClient = require('./filesystem/client');
 
 class NodeApplication {
     constructor() { //Node dependencies - Main ChromeApp thread
-        // this.filesystem_client = new FileSystemClient();
+        this.filesystem_client = new FileSystemClient();
     }
 
     run({ nw }) {
+        const self = this;
         nw.Window.open(
             'app_web/index.html',
             {
                 'id': 'main',
-                new_instance: false,
-                // inject_js_end: 'app_web/index.js'
+                new_instance: false
             },
             function(win) {
+                win.on('closed', function () {
+                    self.filesystem_client.close();
+                    win = null;
+                });
+
                 win.on('loaded', () => {
                     win.showDevTools();
                     const Application = nw.require('app_web/index.js');
                     const app = new Application(
                         win.window,
-                        new FileSystemClient()
+                        self.filesystem_client
                     );
+                    self.filesystem_client.listen();
                     app.run();
                 });
             }

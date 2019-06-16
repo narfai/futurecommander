@@ -17,21 +17,13 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{
-    collections::{ HashMap }
-};
-
 use crate::{
-    DaemonError
+    context::{
+        ContextError,
+        ContextType
+    }
 };
 
-pub trait ContextType {
-    fn to_bool(&self) -> Result<bool, DaemonError>;
-
-    fn to_string(&self) -> Result<String, DaemonError>;
-
-    fn box_clone(&self) -> Box<dyn ContextType>;
-}
 
 #[derive(Clone)]
 pub struct ContextString {
@@ -47,17 +39,17 @@ impl From<String> for ContextString {
 }
 
 impl ContextType for ContextString {
-    fn to_bool(&self) -> Result<bool, DaemonError> {
+    fn to_bool(&self) -> Result<bool, ContextError> {
         if self.inner == "1" {
             Ok(true)
         } else if self.inner == "0" {
             Ok(false)
         } else {
-            Err(DaemonError::ContextCannotCast("String".to_string(), "bool".to_string()))
+            Err(ContextError::CannotCast("String".to_string(), "bool".to_string()))
         }
     }
 
-    fn to_string(&self) -> Result<String, DaemonError> {
+    fn to_string(&self) -> Result<String, ContextError> {
         Ok(self.inner.clone())
     }
 
@@ -66,41 +58,20 @@ impl ContextType for ContextString {
     }
 }
 
-#[derive(Default)]
-pub struct Context {
-    values: HashMap<String, Box<dyn ContextType>>,
-}
-
-impl Context {
-    pub fn get(&self, key: &str) -> Result<Box<dyn ContextType>, DaemonError> {
-        if let Some(context) = self.values.get(key) {
-            Ok(context.box_clone())
-        } else {
-            Err(DaemonError::ContextKeyDoesNotExists(key.to_string()))
-        }
-    }
-
-    pub fn set(&mut self, key: &str, value: Box<dyn ContextType>) {
-        self.values.insert(key.to_string(), value);
-    }
-
-    pub fn debug_keys(&self) -> Vec<String> {
-        let mut debug = Vec::new();
-        for v in self.values.keys() {
-            debug.push(v.clone());
-        }
-        debug
-    }
-}
-
 #[cfg_attr(tarpaulin, skip)]
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    use crate::{
+        context::{
+            ContextContainer
+        }
+    };
+
     #[test]
     fn fill_and_query_context_with_context_strings(){
-        let mut context = Context::default();
+        let mut context = ContextContainer::default();
         let value_a = "valueA".to_string();
         let value_b = "valueB".to_string();
         context.set("keyA", Box::new(ContextString::from(value_a.clone())));
