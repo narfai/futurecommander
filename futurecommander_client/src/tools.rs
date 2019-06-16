@@ -17,28 +17,24 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod tools;
-
-mod daemon;
-mod router;
-
-pub use self::{
-    daemon::Daemon,
-    router::Router
+use std::{
+    path::{ PathBuf, Path, MAIN_SEPARATOR },
+    net::{ SocketAddr }
 };
 
-pub use futurecommander_protocol as protocol;
+pub fn root_identity() -> PathBuf {
+    PathBuf::from(MAIN_SEPARATOR.to_string())
+}
 
-use tokio::{
-    net::{ TcpStream },
-    codec::{ Framed },
-    prelude::*
-};
+pub fn get_parent_or_root(identity: &Path) -> PathBuf {
+    match identity.parent() {
+        Some(parent) => parent.to_path_buf(),
+        None => root_identity()
+    }
+}
 
-pub type Rx = stream::SplitStream<Framed<TcpStream, protocol::PacketCodec>>;
-pub type MessageStream = Box<
-    Stream<
-        Item=Box<protocol::message::Message>,
-        Error=protocol::errors::ProtocolError
-    > + Sync + Send
->;
+pub fn parse_address(address: Option<&str>, port: Option<u16>) -> SocketAddr {
+    let address = address.unwrap_or("127.0.0.1");
+    let port : u16 = port.unwrap_or(7842);
+    format!("{}:{}", address, port).parse().unwrap()
+}

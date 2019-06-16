@@ -17,28 +17,40 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+mod connected;
+mod connecting;
+mod client;
+mod sender;
 pub mod tools;
 
-mod daemon;
-mod router;
-
 pub use self::{
-    daemon::Daemon,
-    router::Router
+    client::Client,
+    connected::ConnectedClient,
+    connecting::ConnectingClient,
+    sender::Sender
 };
 
-pub use futurecommander_protocol as protocol;
+use std::{
+    rc::{ Rc },
+    cell:: { RefCell },
+    collections::{
+        vec_deque::VecDeque
+    }
+};
 
 use tokio::{
     net::{ TcpStream },
     codec::{ Framed },
-    prelude::*
+    prelude::stream::{ SplitStream }
 };
 
-pub type Rx = stream::SplitStream<Framed<TcpStream, protocol::PacketCodec>>;
-pub type MessageStream = Box<
-    Stream<
-        Item=Box<protocol::message::Message>,
-        Error=protocol::errors::ProtocolError
-    > + Sync + Send
->;
+use futurecommander_protocol::{
+    Packet,
+    PacketCodec,
+    message::{ Message }
+};
+
+pub type Rx = SplitStream<Framed<TcpStream, PacketCodec>>;
+
+type OnMessage = Rc<Fn(&Packet)>;
+type ClientState = Rc<RefCell<VecDeque<Box<Message>>>>;

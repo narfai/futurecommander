@@ -17,28 +17,33 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-pub mod tools;
-
-mod daemon;
-mod router;
-
-pub use self::{
-    daemon::Daemon,
-    router::Router
-};
-
-pub use futurecommander_protocol as protocol;
-
 use tokio::{
-    net::{ TcpStream },
-    codec::{ Framed },
-    prelude::*
+    prelude::{ * }
 };
 
-pub type Rx = stream::SplitStream<Framed<TcpStream, protocol::PacketCodec>>;
-pub type MessageStream = Box<
-    Stream<
-        Item=Box<protocol::message::Message>,
-        Error=protocol::errors::ProtocolError
-    > + Sync + Send
->;
+use crate::{
+    ClientState
+};
+
+use futurecommander_protocol::{
+    message::{
+        Message
+    }
+};
+
+pub struct Sender {
+    state: ClientState
+}
+
+impl Sender {
+    pub fn new(state: ClientState) -> Sender {
+        Sender {
+            state
+        }
+    }
+
+    pub fn send(&self, message: Box<Message>) {
+        self.state.borrow_mut().push_back(message);
+        task::current().notify(); //NOTIFY WORKS
+    }
+}

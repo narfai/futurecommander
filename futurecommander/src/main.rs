@@ -17,16 +17,14 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use futurecommander_shell::Shell;
-use futurecommander_daemon::{
-    Client,
-    Daemon
-};
 use std::{
     env,
     io::{ Write }
 };
 
+use futurecommander_shell::{ Shell };
+use futurecommander_daemon::{ Daemon };
+use futurecommander_client::{ Client };
 
 fn main() {
     let mut shell = Shell::default();
