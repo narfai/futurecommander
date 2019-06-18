@@ -20,6 +20,7 @@
 const m = nw.require('mithril');
 
 const { Icon } = nw.require('./common/icon');
+const path = require('path');
 
 module.exports = {
     'oninit': function(){
@@ -28,11 +29,16 @@ module.exports = {
             this.action.list({ 'path': this.store.getState().cwd });
         };
 
+        this.directory_create = () => {
+            if(typeof this.action.directory_create === 'undefined') throw new Error('Entry needs directory_create action');
+            this.action.directory_create({ 'path': path.join(this.store.getState().cwd, 'New directory') });
+        };
+
         if(this.store.getState().is_open){
             this.spoil();
         }
     },
-    'view': ({ state: { AnchorGroup, action, spoil, store_state: { is_open, name, is_dir, is_file, is_virtual } }}) => {
+    'view': ({ state: { AnchorGroup, action, spoil, directory_create, store_state: { is_open, name, is_dir, is_file, is_virtual } }}) => {
         return m('div', [
             m('span',
                 [
@@ -66,7 +72,12 @@ module.exports = {
                             : is_file
                                 ? Icon.file()
                                 : '?',
-                    name
+                    name,
+                    m(
+                        'button',
+                        {onclick: directory_create},
+                        [Icon.plus()]
+                    )
                 ]
             ),
             is_dir && is_open

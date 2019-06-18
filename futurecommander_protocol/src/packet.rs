@@ -78,6 +78,14 @@ impl Packet {
             Err(_) => None
         }
     }
+
+    pub fn parse_result<'a, T: Message + Deserialize<'a>>(&'a self) -> Result<T, ProtocolError> {
+        if let Some(packet) = self.parse() {
+            Ok(packet)
+        } else {
+            Err(ProtocolError::MessageParsing)
+        }
+    }
 }
 
 impl From<(Header, &[u8])> for Packet {

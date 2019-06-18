@@ -38,17 +38,15 @@ const thunk = (store) => (next) => (action) =>
         ? action(store.dispatch, store.getState)
         : next(action);
 
-const list_filesystem = (filesystem_client) => (/*redux_store*/) => (next) => (action) => {
-    if(action.type !== 'DIRECTORY_OPEN') return next(action);
+const send_filesystem = (filesystem_client) => (/*redux_store*/) => (next) => (action) => {
+    if(typeof action.filesystem_header === 'undefined') return next(action);
 
     const next_action = next(action);
     filesystem_client.emit(
         'out_message',
         filesystem_client.message({
-            'header': 'DirectoryOpen',
-            'payload': {
-                'path': action.path
-            }
+            'header': action.filesystem_header,
+            'payload': action.payload
         })
     );
     return next_action;
@@ -65,7 +63,7 @@ const ready_state_redraw = (mithril) => (/*redux_store*/) => (next) => (action) 
 };
 
 module.exports = {
-    list_filesystem,
+    send_filesystem,
     thunk,
     ready_state_promise,
     ready_state_redraw
