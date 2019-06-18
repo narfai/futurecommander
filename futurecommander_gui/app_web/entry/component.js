@@ -42,7 +42,7 @@ module.exports = {
         return m('div', [
             m('span',
                 [
-                    //Arrow
+                    // Arrow
                     is_dir
                         ? is_open
                             ? m(
@@ -56,7 +56,7 @@ module.exports = {
                                 [Icon.angle_right()]
                             )
                         : Icon.empty(15, 15),
-                    //Icon
+                    // Icon
                     is_virtual
                         ? is_dir
                             ? is_open
@@ -72,14 +72,19 @@ module.exports = {
                             : is_file
                                 ? Icon.file()
                                 : '?',
+                    // Entry name
                     name,
-                    m(
-                        'button',
-                        {onclick: directory_create},
-                        [Icon.plus()]
-                    )
+                    // Left buttons
+                    is_dir
+                        ? m(
+                            'span',
+                            {onclick: directory_create},
+                            [Icon.plus()]
+                        )
+                        : m('#')
                 ]
             ),
+            // Children
             is_dir && is_open
                 ? m('ul', m(AnchorGroup, {'wrapper': 'li'}))
                 : m('#')

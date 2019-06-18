@@ -57,7 +57,6 @@ class TcpMessageClient extends EventEmitter {
                 header: data.header(),
                 payload: data.parse()
             }));
-
         });
 
         framed.on('closed', function() {

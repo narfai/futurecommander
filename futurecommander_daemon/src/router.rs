@@ -45,7 +45,8 @@ use crate::{
             Message,
             DirectoryOpen,
             DirectoryRead,
-            DirectoryCreate
+            DirectoryCreate,
+            MessageError
         },
         Header,
         Packet
@@ -98,8 +99,9 @@ impl Router {
                             .and_then(|packet| {
                                 self.create(packet.path.as_path(), packet.recursive, packet.overwrite)
                                     .and_then(|_| Ok(tools::get_parent_or_root(packet.path.as_path())))
+                                    .and_then(|path| self.read_dir(path.as_path()))
+                                    .or_else(|error| Ok(Box::new(MessageError::from(error))))
                             })
-                            .and_then(|path| self.read_dir(path.as_path()))
                     )
                 ),
             _ => Box::new(stream::empty())

@@ -51,6 +51,7 @@ module.exports = class Application {
 
         nw.require('./layout')(this.provider);
         nw.require('./entry')(this.provider);
+        nw.require('./error_set')(this.provider);
     }
 
     run(){

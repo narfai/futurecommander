@@ -42,7 +42,7 @@ class FileSystemClient extends EventEmitter {
             this.worker.onerror = ((error) => {
                 console.error(error);
                 process.nextTick(() => this.emit('error', error));
-                this.worker.terminate();
+                // this.worker.terminate();
             })
         }
     }

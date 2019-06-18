@@ -27,7 +27,8 @@ use futurecommander_protocol::{
     Packet,
     Header,
     message::{
-        DirectoryRead
+        DirectoryRead,
+        MessageError
     }
 };
 
@@ -67,6 +68,9 @@ impl MessageDelta {
         if let Some(packet) = &self.maybe_packet {
             match packet.header() {
                 Header::DirectoryRead => JsValue::from_serde(&packet.parse::<DirectoryRead>().unwrap())
+                    .map_err(|error| AddonError::from(error).into())
+                ,
+                Header::MessageError => JsValue::from_serde(&packet.parse::<MessageError>().unwrap())
                     .map_err(|error| AddonError::from(error).into())
                 ,
                 _ => Err(AddonError::InvalidArgument("Unsupported header".to_string()).into())

@@ -18,23 +18,35 @@
  */
 
 const m = nw.require('mithril');
-const osenv = require('osenv');
 
-const is_error_set = ({ resource }) => resource === 'ErrorSet';
+class CleanupErrorsTimeout {
+    constructor(){
+        this.index = 0;
+        this.timeout = null;
+    }
+    next(){
+        this.timeout = setTimeout(() => {
+            clearTimeout(this.timeout);
+            this.index++;
+            m.redraw.sync();
+        }, 3000);
+    }
+}
 
 module.exports = {
-    'oninit': function({ state: { store, action } }){
-        const { children = null } = store.getState();
-        if(children !== null && !(children.length > 0)){
-            action.entry({ path: osenv.home() });
+    'oninit': function(){
+        this.timeout = new CleanupErrorsTimeout();
+        this.timeout.next();
+    },
+    'onupdate': function(){
+        if(this.timeout.index < this.store_state.errors.length){
+            this.timeout.next()
         }
     },
-    'view': ({ state: { AnchorGroup }}) =>
-        m('#',
-            m('h1', 'Layout'),
-            m('nav', [
-                m(AnchorGroup, { filterFn: (state) => is_error_set(state) })
-            ]),
-            m('main', m(AnchorGroup, { filterFn: (state) => !is_error_set(state) }))
+    'view': ({ state: { timeout, AnchorGroup, action, store_state: { errors } }}) => {
+        return m(
+            'ul',
+            errors.slice(timeout.index).map((message) => m('li', message))
         )
+    }
 };

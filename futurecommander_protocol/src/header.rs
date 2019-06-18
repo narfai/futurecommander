@@ -43,7 +43,8 @@ use std::{
 pub enum Header {
     DirectoryOpen,
     DirectoryRead,
-    DirectoryCreate
+    DirectoryCreate,
+    MessageError
 }
 
 impl Header {
@@ -52,6 +53,7 @@ impl Header {
             t if t == Header::DirectoryOpen.to_string() => Ok(Header::DirectoryOpen),
             t if t == Header::DirectoryRead.to_string() => Ok(Header::DirectoryRead),
             t if t == Header::DirectoryCreate.to_string() => Ok(Header::DirectoryCreate),
+            t if t == Header::MessageError.to_string() => Ok(Header::MessageError),
             _ => Err(ProtocolError::InvalidHeader)
         }
     }
@@ -61,6 +63,7 @@ impl Header {
             b if b == (Header::DirectoryOpen as u8) => Ok(Header::DirectoryOpen),
             b if b == (Header::DirectoryRead as u8) => Ok(Header::DirectoryRead),
             b if b == (Header::DirectoryCreate as u8) => Ok(Header::DirectoryCreate),
+            b if b == (Header::MessageError as u8) => Ok(Header::MessageError),
             _ => Err(ProtocolError::InvalidHeader)
         }
     }
@@ -80,6 +83,10 @@ impl Header {
                 Ok(Box::new(message))
             },
             Header::DirectoryCreate => {
+                let message: DirectoryCreate = deserialize(datagram)?;
+                Ok(Box::new(message))
+            },
+            Header::MessageError => {
                 let message: DirectoryCreate = deserialize(datagram)?;
                 Ok(Box::new(message))
             }

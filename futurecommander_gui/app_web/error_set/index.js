@@ -17,14 +17,13 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-module.exports = function Layout(provider){
+module.exports = function ErrorSet(provider){
     provider.connect_component(
-        Layout.name,
-        nw.require('./layout/component'),
-        nw.require('./layout/action')
+        ErrorSet.name,
+        nw.require('./error_set/component')
     );
 
     provider.connect_state_transducers(
-        nw.require('./layout/state')
-    )
+        nw.require('./error_set/state')
+    );
 };

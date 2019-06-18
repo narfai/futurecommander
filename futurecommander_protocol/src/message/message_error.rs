@@ -16,31 +16,47 @@
  * You should have received a copy of the GNU General Public License
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-mod directory_read;
-mod directory_open;
-mod directory_create;
-mod message_error;
-
-pub use std::{
-    fmt::{ Debug }
+use std::{
+    path::{ PathBuf }
 };
 
-pub use self::{
-    directory_open::DirectoryOpen,
-    directory_read::DirectoryRead,
-    directory_create::DirectoryCreate,
-    message_error::MessageError
+use futurecommander_filesystem::{
+    SerializableEntry,
+    EntryCollection,
+    Entry
 };
 
-pub use crate::{
+use serde::{ Serialize, Deserialize };
+use bincode::{ serialize };
+
+use crate::{
     errors::ProtocolError,
+    message::{
+        Message
+    },
     Packet,
-    Header
+    Header,
 };
 
-pub trait Message : Send + Sync + Debug {
-    fn encode(&self) -> Result<Packet, ProtocolError>;
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MessageError {
+    pub message: String
+}
 
-    fn header(&self) -> Header;
+impl Message for MessageError {
+    fn encode(&self) -> Result<Packet, ProtocolError> {
+        Ok(Packet::new(Header::MessageError, serialize(&self)?))
+    }
+
+    fn header(&self) -> Header {
+        Header::MessageError
+    }
+}
+
+impl From<ProtocolError> for MessageError {
+    fn from(error: ProtocolError) -> Self {
+        MessageError {
+            message: error.to_string()
+        }
+    }
 }
