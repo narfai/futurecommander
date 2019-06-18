@@ -22,10 +22,6 @@ const EventEmitter = require('events');
 
 class FileSystemClient extends EventEmitter {
     constructor(options = {}) {
-        options.allowHalfOpen = false;
-        options.readableObjectMode = true;
-        options.writableObjectMode = true;
-        options.readableFlowing = false;
         super(options);
 
         this.Message = Message;

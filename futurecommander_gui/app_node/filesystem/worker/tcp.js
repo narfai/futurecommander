@@ -60,7 +60,7 @@ class TcpMessageClient extends EventEmitter {
 
         });
 
-        framed.on('close', function() {
+        framed.on('closed', function() {
             console.debug('Framed connection closed');
         });
     }
@@ -70,7 +70,7 @@ class TcpMessageClient extends EventEmitter {
             console.debug('Socket disconnected !')
         });
 
-        this._socket.on('close', () => {
+        this._socket.on('closed', () => {
             console.debug('Socket closed !')
         });
 
