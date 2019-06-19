@@ -25,14 +25,17 @@ pub mod errors;
 mod path;
 mod delta;
 mod state;
-mod children;
 mod kind;
 
 pub use self::{
     kind::Kind,
     path::VirtualPath,
     delta::VirtualDelta,
-    state::VirtualState,
-    children::{ VirtualChildren, VirtualChildrenIterator }
+    state::VirtualState
 };
 
+use std::collections::{
+    HashSet
+};
+
+pub type VirtualChildren = HashSet<VirtualPath>;

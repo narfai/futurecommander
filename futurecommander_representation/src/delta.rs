@@ -186,10 +186,7 @@ impl VirtualDelta {
     }
 
     pub fn is_virtual(&self, path: &Path) -> Result<bool, RepresentationError> {
-        match self.first_virtual_ancestor(path)? {
-            Some(_) => Ok(true),
-            None => Ok(false),
-        }
+        Ok(self.first_virtual_ancestor(path)?.is_some())
     }
 
     pub fn root_identity() -> PathBuf {
