@@ -22,7 +22,7 @@
 const mithril = nw.require('mithril');
 
 const { ActionCreator, Middleware } = nw.require('openmew-renderer');
-const { send_filesystem, ready_state_promise, ready_state_redraw } = nw.require('./infrastructure/middleware');
+const { send_filesystem, copy_manager, selection_manager, ready_state_promise, ready_state_redraw } = nw.require('./infrastructure/middleware');
 const { applyMiddleware, createStore } = nw.require('redux');
 
 const { ActionCreatorAdapter } = nw.require('./infrastructure/action_adapter');
@@ -32,6 +32,7 @@ module.exports = class Application {
     constructor(window, filesystem_client){
         this.provider = create_provider(mithril);
 
+        const selection = new Set();
         this.store = createStore(
             this.provider.reducer,
             // nw.require('./common/mock.js'),
@@ -39,7 +40,9 @@ module.exports = class Application {
                 send_filesystem(filesystem_client),
                 ready_state_promise,
                 Middleware.render(mithril, this.provider, window.document.body),
-                ready_state_redraw(mithril)
+                ready_state_redraw(mithril),
+                copy_manager(filesystem_client, selection),
+                selection_manager(selection)
             )
         );
 
@@ -56,5 +59,6 @@ module.exports = class Application {
 
     run(){
         this.store.dispatch(ActionCreator.switch());
+        mithril.redraw.sync();
     }
 };

@@ -20,20 +20,38 @@
 const m = nw.require('mithril');
 
 const { Icon } = nw.require('./common/icon');
-const path = require('path');
+
 
 module.exports = {
     'oninit': function(){
+        this.context_menu = new nw.Menu();
+
+        this.context_menu.append(new nw.MenuItem({ 'label': 'Copy there'}));
+
+        this.show_menu = (event) => {
+            event.preventDefault();
+            this.context_menu.popup(event.x, event.y);
+            return false;
+        };
+
         this.spoil = () => {
             if(typeof this.action.list === 'undefined') throw new Error('Entry needs list action');
             this.action.list({ 'path': this.store.getState().cwd });
+        };
+
+        this.toggle_select = () => {
+            if(this.store.getState().is_selected){
+                this.action.unselect();
+            } else {
+                this.action.select();
+            }
         };
 
         if(this.store.getState().is_open){
             this.spoil();
         }
     },
-    'view': ({ state: { AnchorGroup, action, spoil, directory_create, file_create, store_state: { is_open, name, is_dir, is_file, is_virtual } }}) => {
+    'view': ({ state: { AnchorGroup, action, spoil, toggle_select, directory_create, show_menu, file_create, store_state: { is_open, name, is_dir, is_file, is_virtual, is_selected } }}) => {
         return m('div', [
             m('span',
                 [
@@ -51,24 +69,30 @@ module.exports = {
                                 [Icon.angle_right()]
                             )
                         : Icon.empty(15, 15),
-                    // Icon
-                    is_virtual
-                        ? is_dir
-                            ? is_open
-                                ? Icon.virtual_folder_open()
-                                : Icon.virtual_folder()
-                            : is_file
-                                ? Icon.virtual_file()
-                                : '?'
-                        : is_dir
-                            ? is_open
-                                ? Icon.folder_open()
-                                : Icon.folder()
-                            : is_file
-                                ? Icon.file()
-                                : '?',
-                    // Entry name
-                    name,
+                    m(
+                        is_selected ? 'span.selected' : 'span',
+                        {onclick: toggle_select, contextmenu: show_menu},
+                        [
+                            // Icon
+                            is_virtual
+                                ? is_dir
+                                ? is_open
+                                    ? Icon.virtual_folder_open()
+                                    : Icon.virtual_folder()
+                                : is_file
+                                    ? Icon.virtual_file()
+                                    : '?'
+                                : is_dir
+                                ? is_open
+                                    ? Icon.folder_open()
+                                    : Icon.folder()
+                                : is_file
+                                    ? Icon.file()
+                                    : '?',
+                            // Entry name
+                            name,
+                        ]
+                    ),
                     // Left buttons
                     is_dir
                         ? [
@@ -81,7 +105,14 @@ module.exports = {
                                 'span',
                                 {onclick: () => action.file_create({ 'name': 'New file' })},
                                 [Icon.plus_file()]
-                            )
+                            ),
+                            is_selected
+                                ? ''
+                                : m(
+                                    'span',
+                                    {onclick: action.copy_there},
+                                    [Icon.circle_down()]
+                                )
                         ]
                         : '',
                     m(

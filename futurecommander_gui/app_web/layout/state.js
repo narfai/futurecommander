@@ -19,10 +19,11 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { Identity, Functional } = nw.require('openmew-renderer');
+const { Identity, Functional, ActionCreator } = nw.require('openmew-renderer');
 
 const is_layout = ({ resource }) => resource === 'Layout';
 const is_error_set = ({ resource }) => resource === 'ErrorSet';
+const is_entry = ({ resource }) => resource === 'Entry';
 
 const add_error_set_transducer = Identity.state_reducer(
     (next, state = null, action = {}) =>
@@ -42,6 +43,57 @@ const add_error_set_transducer = Identity.state_reducer(
         )(next(state, action))
 );
 
+const osenv = require('osenv');
+const { basename } = require('path');
+
+const add_entry_transducer = Identity.state_reducer(
+    (next, state = null, action = {}) =>
+        ((next_state) => (
+                action.type === ActionCreator.SWITCH_VIEWSET
+                && is_layout(next_state)
+                && typeof next_state.children.find(is_entry) === 'undefined'
+                    ? {
+                        ...next_state,
+                        'children': [
+                            ...next_state.children,
+                            Identity.module(
+                                'Entry',
+                                {
+                                    'name': basename(osenv.home()),
+                                    'cwd': osenv.home(),
+                                    'is_dir': true,
+                                    'is_file': false,
+                                    'is_open': true,
+                                    'selected': false
+                                }
+                            )
+                        ]
+                    }
+                    : next_state
+            )
+        )(next(state, action))
+);
+
+const add_to_selection_transducer = Identity.state_reducer(
+    (next, state = null, action = {}) =>
+        ((next_state) => (
+                action.type === 'SELECT'
+                && is_layout(next_state)
+                && ( typeof next_state.selection === 'undefined'
+                        || typeof next_state.selection.find(action.path) === 'undefined' )
+                    ? {
+                        ...next_state,
+                        selection: [
+                            action.path
+                        ]
+                    }
+                    : next_state
+            )
+        )(next(state, action))
+);
+
 module.exports = Functional.pipe(
-    add_error_set_transducer
+    add_error_set_transducer,
+    add_entry_transducer,
+    add_to_selection_transducer
 );

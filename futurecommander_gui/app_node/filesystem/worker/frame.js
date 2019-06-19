@@ -18,6 +18,7 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const { Message } = require('../message');
 const { PassThrough } = require('stream');
 
 class MessageFrame extends PassThrough {
@@ -39,10 +40,14 @@ class MessageFrame extends PassThrough {
         const message = this.decode(this._buffer);
 
         if(message.len()) {
+            const extracted = new Message({
+                header: message.header(),
+                payload: message.parse()
+            });
             this.tx_count++;
             this._buffer = this._buffer.slice(0, this._buffer.length - message.len());
             this.resume();
-            this.push(message);
+            this.push(extracted);
         }
     }
 

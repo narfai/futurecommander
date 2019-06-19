@@ -24,10 +24,10 @@ const is_error_set = ({ resource }) => resource === 'ErrorSet';
 
 module.exports = {
     'oninit': function({ state: { store, action } }){
-        const { children = null } = store.getState();
-        if(children !== null && !(children.length > 0)){
-            action.entry({ path: osenv.home() });
-        }
+        // const { children = null } = store.getState();
+        // if(children !== null && !(children.length > 0)){
+        //     action.entry({ path: osenv.home() });
+        // }
     },
     'view': ({ state: { AnchorGroup }}) =>
         m('#',

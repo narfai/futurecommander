@@ -31,6 +31,7 @@ use futurecommander_filesystem::{
     Kind,
     CreateEvent,
     RemoveEvent,
+    CopyEvent,
     Listener,
     Delayer,
     capability::{
@@ -48,7 +49,8 @@ use crate::{
             DirectoryRead,
             DirectoryCreate,
             FileCreate,
-            Remove,
+            EntryRemove,
+            EntryCopy,
             MessageError
         },
         Header,
@@ -94,6 +96,19 @@ impl Router {
         Ok(())
     }
 
+    fn copy(&mut self, source: &Path, destination: &Path, merge: bool, overwrite: bool) -> Result<(), ProtocolError> {
+        let event = CopyEvent::new(
+            source,
+            destination,
+            merge,
+            overwrite
+        );
+
+        let guard = self.container.emit(&event, RegistrarGuard::default())?;
+        self.container.delay(Box::new(event), guard);
+        Ok(())
+    }
+
     pub fn process(&mut self, packet: &Packet) -> MessageStream {
         match packet.header() {
             Header::DirectoryOpen =>
@@ -107,9 +122,9 @@ impl Router {
                 Box::new(
                     stream::once(
                         packet.parse_result::<DirectoryCreate>()
-                            .and_then(|packet| {
-                                self.create(Kind::Directory, packet.path.as_path(), packet.recursive, packet.overwrite)
-                                    .and_then(|_| Ok(tools::get_parent_or_root(packet.path.as_path())))
+                            .and_then(|message| {
+                                self.create(Kind::Directory, message.path.as_path(), message.recursive, message.overwrite)
+                                    .and_then(|_| Ok(tools::get_parent_or_root(message.path.as_path())))
                                     .and_then(|path| self.read_dir(path.as_path()))
                                     .or_else(|error| Ok(Box::new(MessageError::from(error))))
                             })
@@ -119,21 +134,33 @@ impl Router {
                 Box::new(
                     stream::once(
                         packet.parse_result::<FileCreate>()
-                            .and_then(|packet| {
-                                self.create(Kind::File, packet.path.as_path(), packet.recursive, packet.overwrite)
-                                    .and_then(|_| Ok(tools::get_parent_or_root(packet.path.as_path())))
+                            .and_then(|message| {
+                                self.create(Kind::File, message.path.as_path(), message.recursive, message.overwrite)
+                                    .and_then(|_| Ok(tools::get_parent_or_root(message.path.as_path())))
                                     .and_then(|path| self.read_dir(path.as_path()))
                                     .or_else(|error| Ok(Box::new(MessageError::from(error))))
                             })
                     )
                 ),
-            Header::Remove =>
+            Header::EntryRemove =>
                 Box::new(
                     stream::once(
-                        packet.parse_result::<Remove>()
-                            .and_then(|packet| {
-                                self.remove(packet.path.as_path(), packet.recursive)
-                                    .and_then(|_| Ok(tools::get_parent_or_root(packet.path.as_path())))
+                        packet.parse_result::<EntryRemove>()
+                            .and_then(|message| {
+                                self.remove(message.path.as_path(), message.recursive)
+                                    .and_then(|_| Ok(tools::get_parent_or_root(message.path.as_path())))
+                                    .and_then(|path| self.read_dir(path.as_path()))
+                                    .or_else(|error| Ok(Box::new(MessageError::from(error))))
+                            })
+                    )
+                ),
+            Header::EntryCopy =>
+                Box::new(
+                    stream::once(
+                        packet.parse_result::<EntryCopy>()
+                            .and_then(|message| {
+                                self.copy(message.source.as_path(), message.destination.as_path(), message.merge, message.overwrite)
+                                    .and_then(|_| Ok(tools::get_parent_or_root(message.destination.as_path())))
                                     .and_then(|path| self.read_dir(path.as_path()))
                                     .or_else(|error| Ok(Box::new(MessageError::from(error))))
                             })

@@ -30,7 +30,8 @@ module.exports = (spread) => ({
                 'cwd': path,
                 'is_dir': true,
                 'is_file': false,
-                'is_open': true
+                'is_open': true,
+                'selected': false
             }
         };
     })(spread.scope.self, spread.redraw.allow)

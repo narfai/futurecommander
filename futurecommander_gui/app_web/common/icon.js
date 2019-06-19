@@ -78,6 +78,10 @@ class Icon {
     static times(){
         return Icon.icon(15, 15, 'solid/times.svg')
     }
+
+    static circle_down(){
+        return Icon.icon(15, 15, 'solid/arrow-circle-down.svg')
+    }
 }
 
 module.exports = {

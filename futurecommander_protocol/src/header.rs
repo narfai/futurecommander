@@ -26,7 +26,8 @@ use crate::{
         DirectoryRead,
         DirectoryCreate,
         FileCreate,
-        Remove,
+        EntryRemove,
+        EntryCopy,
         MessageError
     }
 };
@@ -48,7 +49,8 @@ pub enum Header {
     DirectoryRead,
     DirectoryCreate,
     FileCreate,
-    Remove,
+    EntryRemove,
+    EntryCopy,
     MessageError
 }
 
@@ -59,7 +61,8 @@ impl Header {
             t if t == Header::DirectoryRead.to_string() => Ok(Header::DirectoryRead),
             t if t == Header::DirectoryCreate.to_string() => Ok(Header::DirectoryCreate),
             t if t == Header::FileCreate.to_string() => Ok(Header::FileCreate),
-            t if t == Header::Remove.to_string() => Ok(Header::Remove),
+            t if t == Header::EntryRemove.to_string() => Ok(Header::EntryRemove),
+            t if t == Header::EntryCopy.to_string() => Ok(Header::EntryCopy),
             t if t == Header::MessageError.to_string() => Ok(Header::MessageError),
             _ => Err(ProtocolError::InvalidHeader)
         }
@@ -71,7 +74,8 @@ impl Header {
             b if b == (Header::DirectoryRead as u8) => Ok(Header::DirectoryRead),
             b if b == (Header::DirectoryCreate as u8) => Ok(Header::DirectoryCreate),
             b if b == (Header::FileCreate as u8) => Ok(Header::FileCreate),
-            b if b == (Header::Remove as u8) => Ok(Header::Remove),
+            b if b == (Header::EntryRemove as u8) => Ok(Header::EntryRemove),
+            b if b == (Header::EntryCopy as u8) => Ok(Header::EntryCopy),
             b if b == (Header::MessageError as u8) => Ok(Header::MessageError),
             _ => Err(ProtocolError::InvalidHeader)
         }
@@ -86,7 +90,8 @@ impl Header {
             Header::DirectoryOpen => Ok(DirectoryOpen::from_context(&context)?),
             Header::DirectoryCreate => Ok(DirectoryCreate::from_context(&context)?),
             Header::FileCreate => Ok(FileCreate::from_context(&context)?),
-            Header::Remove => Ok(Remove::from_context(&context)?),
+            Header::EntryRemove => Ok(EntryRemove::from_context(&context)?),
+            Header::EntryCopy => Ok(EntryCopy::from_context(&context)?),
             _ => Err(ProtocolError::InvalidHeader)
         }
     }

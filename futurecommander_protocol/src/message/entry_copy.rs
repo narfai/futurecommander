@@ -37,32 +37,33 @@ use bincode::{ serialize };
 
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Remove {
-    pub path: PathBuf,
-    pub recursive: bool
+pub struct EntryCopy {
+    pub source: PathBuf,
+    pub destination: PathBuf,
+    pub merge: bool,
+    pub overwrite: bool,
 //    pub guard: AvailableGuard
 }
 
-impl Message for Remove {
+impl Message for EntryCopy {
     fn encode(&self) -> Result<Packet, ProtocolError> {
-        Ok(Packet::new(Header::Remove, serialize(&self)?))
+        Ok(Packet::new(Header::EntryCopy, serialize(&self)?))
     }
 
     fn header(&self) -> Header {
-        Header::Remove
+        Header::EntryCopy
     }
 }
 
-impl ContextMessage for Remove {
+impl ContextMessage for EntryCopy {
     fn from_context(context: &ContextContainer) -> Result<Box<ContextMessage>, ProtocolError> where Self: Sized {
         Ok(
             Box::new(
-                Remove {
-                    path: PathBuf::from(
-                        context.get("path")?
-                            .to_string()?
-                    ),
-                    recursive: context.get("recursive")?.to_bool()?
+                EntryCopy {
+                    source: PathBuf::from( context.get("source")?.to_string()?),
+                    destination: PathBuf::from( context.get("destination")?.to_string()?),
+                    merge: context.get("merge")?.to_bool()?,
+                    overwrite: context.get("overwrite")?.to_bool()?
                 }
             )
         )

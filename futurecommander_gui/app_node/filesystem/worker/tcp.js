@@ -21,7 +21,6 @@ const { Socket } = require('net');
 const EventEmitter = require('events');
 
 const { MessageFrame } = require('./frame');
-const { Message } = require('../message');
 
 class TcpMessageClient extends EventEmitter {
     constructor(options) {
@@ -53,10 +52,7 @@ class TcpMessageClient extends EventEmitter {
         });
 
         framed.on('data', (data) => {
-            postMessage(new Message({
-                header: data.header(),
-                payload: data.parse()
-            }));
+            postMessage(data);
         });
 
         framed.on('closed', function() {

@@ -94,7 +94,35 @@ const close_entry_transducer = Identity.state_reducer(
         )(next(state, action))
 );
 
+const selectable_transducer = Identity.state_reducer(
+    (next, state = null, action = {}) =>
+        ((next_state) => (
+                action.type === 'SELECT'
+                    ? {
+                        ...next_state,
+                        is_selected: true
+                    }
+                    : next_state
+            )
+        )(next(state, action))
+);
+
+const unselectable_transducer = Identity.state_reducer(
+    (next, state = null, action = {}) =>
+        ((next_state) => (
+                action.type === 'UNSELECT'
+                    ? {
+                        ...next_state,
+                        is_selected: false
+                    }
+                    : next_state
+            )
+        )(next(state, action))
+);
+
 module.exports = Functional.pipe(
     list_entry_transducer,
-    close_entry_transducer
+    close_entry_transducer,
+    selectable_transducer,
+    unselectable_transducer
 );

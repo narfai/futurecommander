@@ -21,7 +21,8 @@ mod directory_read;
 mod directory_open;
 mod directory_create;
 mod file_create;
-mod remove;
+mod entry_remove;
+mod entry_copy;
 mod message_error;
 
 pub use std::{
@@ -33,7 +34,8 @@ pub use self::{
     directory_read::DirectoryRead,
     directory_create::DirectoryCreate,
     file_create::FileCreate,
-    remove::Remove,
+    entry_remove::EntryRemove,
+    entry_copy::EntryCopy,
     message_error::MessageError
 };
 

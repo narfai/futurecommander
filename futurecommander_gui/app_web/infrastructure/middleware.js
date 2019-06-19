@@ -52,6 +52,46 @@ const send_filesystem = (filesystem_client) => (/*redux_store*/) => (next) => (a
     return next_action;
 };
 
+const path = require('path');
+
+const selection_manager = (selection) => (store) => (next) => (action) => {
+    switch (action.type) {
+        case 'SELECT':
+            selection.add(action.path);
+            break;
+        case 'ENTRY_REMOVE':
+        case 'UNSELECT':
+            selection.delete(action.path);
+            break;
+        case 'MOVE_THERE':
+            selection.clear();
+            break;
+    }
+    return next(action);
+};
+
+const copy_manager = (filesystem_client, selection) => (store) => (next) => (action) => {
+    if(action.type !== 'COPY_THERE') return next(action);
+
+    if(typeof selection !== 'undefined' && selection.size > 0 ){
+        selection.forEach((source) => {
+            filesystem_client.emit(
+                'out_message',
+                filesystem_client.message({
+                    'header': 'EntryCopy',
+                    'payload': {
+                        source,
+                        'destination': path.join(action.path, path.basename(source)),
+                        'merge': false,
+                        'overwrite': false
+                    }
+                })
+            )
+        });
+    }
+    return next(action);
+};
+
 const ready_state_redraw = (mithril) => (/*redux_store*/) => (next) => (action) => {
     const result = next(action);
     if(
@@ -66,5 +106,7 @@ module.exports = {
     send_filesystem,
     thunk,
     ready_state_promise,
-    ready_state_redraw
+    ready_state_redraw,
+    copy_manager,
+    selection_manager
 };

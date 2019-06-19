@@ -19,6 +19,7 @@
  */
 
 const path = require('path');
+const { Functional } = require('openmew-renderer');
 
 module.exports = (spread) => ({
         'list': spread(
@@ -54,14 +55,32 @@ module.exports = (spread) => ({
         )(spread.scope.self),
         'remove': spread(
             ({ state }) => ({
-                'type': 'REMOVE',
-                'filesystem_header': 'Remove',
+                'type': 'ENTRY_REMOVE',
+                'filesystem_header': 'EntryRemove',
                 'payload': {
                     'path': state.cwd,
                     recursive: true
                 }
             })
         )(spread.scope.self),
+        'select': spread(
+            ({ state }) => ({
+                'type': 'SELECT',
+                'path': state.cwd
+            })
+        )(spread.scope.root, spread.scope.self, spread.redraw.allow),
+        'unselect': spread(
+            ({ state }) => ({
+                'type': 'UNSELECT',
+                'path': state.cwd
+            })
+        )(spread.scope.root, spread.scope.self, spread.redraw.allow),
+        'copy_there': spread(
+            ({ state }) => ({
+                'type': 'COPY_THERE',
+                'path': state.cwd
+            })
+        )(spread.scope.root, spread.redraw.allow),
         'close': spread(
             () => ({
                 'type': 'CLOSE'
