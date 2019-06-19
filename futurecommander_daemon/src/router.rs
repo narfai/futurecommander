@@ -30,6 +30,7 @@ use futurecommander_filesystem::{
     Container,
     Kind,
     CreateEvent,
+    RemoveEvent,
     Listener,
     Delayer,
     capability::{
@@ -47,6 +48,7 @@ use crate::{
             DirectoryRead,
             DirectoryCreate,
             FileCreate,
+            Remove,
             MessageError
         },
         Header,
@@ -84,6 +86,14 @@ impl Router {
         Ok(())
     }
 
+    fn remove(&mut self, path: &Path, recursive: bool) -> Result<(), ProtocolError> {
+        let event = RemoveEvent::new(path, recursive);
+
+        let guard = self.container.emit(&event, RegistrarGuard::default())?;
+        self.container.delay(Box::new(event), guard);
+        Ok(())
+    }
+
     pub fn process(&mut self, packet: &Packet) -> MessageStream {
         match packet.header() {
             Header::DirectoryOpen =>
@@ -111,6 +121,18 @@ impl Router {
                         packet.parse_result::<FileCreate>()
                             .and_then(|packet| {
                                 self.create(Kind::File, packet.path.as_path(), packet.recursive, packet.overwrite)
+                                    .and_then(|_| Ok(tools::get_parent_or_root(packet.path.as_path())))
+                                    .and_then(|path| self.read_dir(path.as_path()))
+                                    .or_else(|error| Ok(Box::new(MessageError::from(error))))
+                            })
+                    )
+                ),
+            Header::Remove =>
+                Box::new(
+                    stream::once(
+                        packet.parse_result::<Remove>()
+                            .and_then(|packet| {
+                                self.remove(packet.path.as_path(), packet.recursive)
                                     .and_then(|_| Ok(tools::get_parent_or_root(packet.path.as_path())))
                                     .and_then(|path| self.read_dir(path.as_path()))
                                     .or_else(|error| Ok(Box::new(MessageError::from(error))))

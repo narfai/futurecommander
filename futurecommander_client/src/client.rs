@@ -38,8 +38,10 @@ use crate::{
 
 use futurecommander_protocol::{
     errors::ProtocolError,
+    Header,
     message::{
-        DirectoryOpen
+        DirectoryOpen,
+        DirectoryRead
     }
 };
 
@@ -68,7 +70,10 @@ impl Client {
         let mut runtime = Runtime::new().unwrap();
 
         let on_message : OnMessage = Rc::new(|packet| {
-            println!("{:?}", packet.decode());
+            match packet.header() {
+                Header::DirectoryRead => println!("{:?}", packet.parse::<DirectoryRead>()),
+                _ => {}
+            }
         });
 
         let client = Client::new(parse_address(address, port));

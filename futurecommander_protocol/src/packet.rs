@@ -52,9 +52,6 @@ impl Packet {
     pub fn length(&self) -> usize {
         1 + size_of::<u64>() + self.datagram.len()
     }
-    pub fn decode(&self) -> Result<Box<Message>, ProtocolError> {
-        Ok(self.header.parse_message(self.datagram.as_slice())?)
-    }
 
     pub fn write(self, buf: &mut BytesMut) -> Result<(), ProtocolError> {
         let mut encoded = vec![self.header as u8];
