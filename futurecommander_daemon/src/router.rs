@@ -46,6 +46,7 @@ use crate::{
             DirectoryOpen,
             DirectoryRead,
             DirectoryCreate,
+            FileCreate,
             MessageError
         },
         Header,
@@ -70,10 +71,10 @@ impl Router {
         )
     }
 
-    fn create(&mut self, path: &Path, recursive: bool, overwrite: bool) -> Result<(), ProtocolError> {
+    fn create(&mut self, kind: Kind, path: &Path, recursive: bool, overwrite: bool) -> Result<(), ProtocolError> {
         let event = CreateEvent::new(
             path,
-            Kind::Directory,
+            kind,
             recursive,
             overwrite
         );
@@ -97,7 +98,19 @@ impl Router {
                     stream::once(
                         packet.parse_result::<DirectoryCreate>()
                             .and_then(|packet| {
-                                self.create(packet.path.as_path(), packet.recursive, packet.overwrite)
+                                self.create(Kind::Directory, packet.path.as_path(), packet.recursive, packet.overwrite)
+                                    .and_then(|_| Ok(tools::get_parent_or_root(packet.path.as_path())))
+                                    .and_then(|path| self.read_dir(path.as_path()))
+                                    .or_else(|error| Ok(Box::new(MessageError::from(error))))
+                            })
+                    )
+                ),
+            Header::FileCreate =>
+                Box::new(
+                    stream::once(
+                        packet.parse_result::<FileCreate>()
+                            .and_then(|packet| {
+                                self.create(Kind::File, packet.path.as_path(), packet.recursive, packet.overwrite)
                                     .and_then(|_| Ok(tools::get_parent_or_root(packet.path.as_path())))
                                     .and_then(|path| self.read_dir(path.as_path()))
                                     .or_else(|error| Ok(Box::new(MessageError::from(error))))

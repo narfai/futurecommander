@@ -24,7 +24,9 @@ use crate::{
         Message,
         DirectoryOpen,
         DirectoryRead,
-        DirectoryCreate
+        DirectoryCreate,
+        FileCreate,
+        MessageError
     }
 };
 
@@ -44,6 +46,7 @@ pub enum Header {
     DirectoryOpen,
     DirectoryRead,
     DirectoryCreate,
+    FileCreate,
     MessageError
 }
 
@@ -53,6 +56,7 @@ impl Header {
             t if t == Header::DirectoryOpen.to_string() => Ok(Header::DirectoryOpen),
             t if t == Header::DirectoryRead.to_string() => Ok(Header::DirectoryRead),
             t if t == Header::DirectoryCreate.to_string() => Ok(Header::DirectoryCreate),
+            t if t == Header::FileCreate.to_string() => Ok(Header::FileCreate),
             t if t == Header::MessageError.to_string() => Ok(Header::MessageError),
             _ => Err(ProtocolError::InvalidHeader)
         }
@@ -63,6 +67,7 @@ impl Header {
             b if b == (Header::DirectoryOpen as u8) => Ok(Header::DirectoryOpen),
             b if b == (Header::DirectoryRead as u8) => Ok(Header::DirectoryRead),
             b if b == (Header::DirectoryCreate as u8) => Ok(Header::DirectoryCreate),
+            b if b == (Header::FileCreate as u8) => Ok(Header::FileCreate),
             b if b == (Header::MessageError as u8) => Ok(Header::MessageError),
             _ => Err(ProtocolError::InvalidHeader)
         }
@@ -86,8 +91,12 @@ impl Header {
                 let message: DirectoryCreate = deserialize(datagram)?;
                 Ok(Box::new(message))
             },
+            Header::FileCreate => {
+                let message: FileCreate = deserialize(datagram)?;
+                Ok(Box::new(message))
+            },
             Header::MessageError => {
-                let message: DirectoryCreate = deserialize(datagram)?;
+                let message: MessageError = deserialize(datagram)?;
                 Ok(Box::new(message))
             }
         }
@@ -97,6 +106,7 @@ impl Header {
         match self {
             Header::DirectoryOpen => Ok(DirectoryOpen::from_context(&context)?),
             Header::DirectoryCreate => Ok(DirectoryCreate::from_context(&context)?),
+            Header::FileCreate => Ok(FileCreate::from_context(&context)?),
             _ => Err(ProtocolError::InvalidHeader)
         }
     }

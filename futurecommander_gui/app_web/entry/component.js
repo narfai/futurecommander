@@ -34,11 +34,16 @@ module.exports = {
             this.action.directory_create({ 'path': path.join(this.store.getState().cwd, 'New directory') });
         };
 
+        this.file_create = () => {
+            if(typeof this.action.file_create === 'undefined') throw new Error('Entry needs file_create action');
+            this.action.file_create({ 'path': path.join(this.store.getState().cwd, 'New file') });
+        };
+
         if(this.store.getState().is_open){
             this.spoil();
         }
     },
-    'view': ({ state: { AnchorGroup, action, spoil, directory_create, store_state: { is_open, name, is_dir, is_file, is_virtual } }}) => {
+    'view': ({ state: { AnchorGroup, action, spoil, directory_create, file_create, store_state: { is_open, name, is_dir, is_file, is_virtual } }}) => {
         return m('div', [
             m('span',
                 [
@@ -76,11 +81,18 @@ module.exports = {
                     name,
                     // Left buttons
                     is_dir
-                        ? m(
-                            'span',
-                            {onclick: directory_create},
-                            [Icon.plus()]
-                        )
+                        ? [
+                            m(
+                                'span',
+                                {onclick: directory_create},
+                                [Icon.plus()]
+                            ),
+                            m(
+                                'span',
+                                {onclick: file_create},
+                                [Icon.plus()]
+                            )
+                        ]
                         : m('#')
                 ]
             ),

@@ -20,6 +20,7 @@
 mod directory_read;
 mod directory_open;
 mod directory_create;
+mod file_create;
 mod message_error;
 
 pub use std::{
@@ -30,6 +31,7 @@ pub use self::{
     directory_open::DirectoryOpen,
     directory_read::DirectoryRead,
     directory_create::DirectoryCreate,
+    file_create::FileCreate,
     message_error::MessageError
 };
 
