@@ -20,6 +20,7 @@
 const m = nw.require('mithril');
 
 const { Icon } = nw.require('./common/icon');
+const path = require('path');
 
 module.exports = {
     'oninit': function(){
@@ -28,15 +29,25 @@ module.exports = {
             this.action.list({ 'path': this.store.getState().cwd });
         };
 
+        this.directory_create = () => {
+            if(typeof this.action.directory_create === 'undefined') throw new Error('Entry needs directory_create action');
+            this.action.directory_create({ 'path': path.join(this.store.getState().cwd, 'New directory') });
+        };
+
+        this.file_create = () => {
+            if(typeof this.action.file_create === 'undefined') throw new Error('Entry needs file_create action');
+            this.action.file_create({ 'path': path.join(this.store.getState().cwd, 'New file') });
+        };
+
         if(this.store.getState().is_open){
             this.spoil();
         }
     },
-    'view': ({ state: { AnchorGroup, action, spoil, store_state: { is_open, name, is_dir, is_file, is_virtual } }}) => {
+    'view': ({ state: { AnchorGroup, action, spoil, directory_create, file_create, store_state: { is_open, name, is_dir, is_file, is_virtual } }}) => {
         return m('div', [
             m('span',
                 [
-                    //Arrow
+                    // Arrow
                     is_dir
                         ? is_open
                             ? m(
@@ -50,7 +61,7 @@ module.exports = {
                                 [Icon.angle_right()]
                             )
                         : Icon.empty(15, 15),
-                    //Icon
+                    // Icon
                     is_virtual
                         ? is_dir
                             ? is_open
@@ -66,9 +77,26 @@ module.exports = {
                             : is_file
                                 ? Icon.file()
                                 : '?',
-                    name
+                    // Entry name
+                    name,
+                    // Left buttons
+                    is_dir
+                        ? [
+                            m(
+                                'span',
+                                {onclick: directory_create},
+                                [Icon.plus()]
+                            ),
+                            m(
+                                'span',
+                                {onclick: file_create},
+                                [Icon.plus()]
+                            )
+                        ]
+                        : m('#')
                 ]
             ),
+            // Children
             is_dir && is_open
                 ? m('ul', m(AnchorGroup, {'wrapper': 'li'}))
                 : m('#')

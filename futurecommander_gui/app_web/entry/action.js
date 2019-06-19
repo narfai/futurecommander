@@ -22,7 +22,32 @@ module.exports = (spread) => ({
         'list': spread(
             ({state, event: { path }}) => ({
                 'type': 'DIRECTORY_OPEN',
-                path
+                'filesystem_header': 'DirectoryOpen',
+                'payload': {
+                    path
+                }
+            })
+        )(spread.scope.self),
+        'directory_create': spread(
+            ({state, event: { path }}) => ({
+                'type': 'DIRECTORY_CREATE',
+                'filesystem_header': 'DirectoryCreate',
+                'payload': {
+                    path,
+                    overwrite: false,
+                    recursive: false
+                }
+            })
+        )(spread.scope.self),
+        'file_create': spread(
+            ({state, event: { path }}) => ({
+                'type': 'FILE_CREATE',
+                'filesystem_header': 'FileCreate',
+                'payload': {
+                    path,
+                    overwrite: false,
+                    recursive: false
+                }
             })
         )(spread.scope.self),
         'close': spread(

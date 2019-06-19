@@ -1,3 +1,5 @@
+
+
 /*
  * Copyright 2019 François CADEILLAN
  *
@@ -17,24 +19,31 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const m = nw.require('mithril');
-const osenv = require('osenv');
+const { Identity, Functional } = nw.require('openmew-renderer');
 
 const is_error_set = ({ resource }) => resource === 'ErrorSet';
 
-module.exports = {
-    'oninit': function({ state: { store, action } }){
-        const { children = null } = store.getState();
-        if(children !== null && !(children.length > 0)){
-            action.entry({ path: osenv.home() });
-        }
-    },
-    'view': ({ state: { AnchorGroup }}) =>
-        m('#',
-            m('h1', 'Layout'),
-            m('nav', [
-                m(AnchorGroup, { filterFn: (state) => is_error_set(state) })
-            ]),
-            m('main', m(AnchorGroup, { filterFn: (state) => !is_error_set(state) }))
-        )
+const add_error = (state = [], action) => {
+    return [
+        ...state,
+        action.message
+    ];
 };
+
+const message_error_transducer = Identity.state_reducer(
+    (next, state = null, action = {}) =>
+        ((next_state) => (
+                action.type === 'MESSAGE_ERROR'
+                    && is_error_set(next_state)
+                        ? {
+                            ...next_state,
+                            'errors': add_error(next_state.errors, action)
+                        }
+                        : next_state
+            )
+        )(next(state, action))
+);
+
+module.exports = Functional.pipe(
+    message_error_transducer
+);

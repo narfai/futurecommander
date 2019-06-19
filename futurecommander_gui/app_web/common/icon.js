@@ -66,6 +66,10 @@ class Icon {
     static angle_down() {
         return Icon.icon(15, 15, 'solid/angle-down.svg')
     }
+
+    static plus(){
+        return Icon.icon(15, 15, 'solid/plus.svg')
+    }
 }
 
 module.exports = {

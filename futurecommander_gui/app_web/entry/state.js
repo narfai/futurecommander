@@ -67,15 +67,14 @@ const list_entry_transducer = Identity.state_reducer(
     (next, state = null, action = {}) =>
         ((next_state) => (
                 action.type === 'DIRECTORY_READ'
-                // && typeof action.ready !== 'undefined'
-                // && action.ready === true
-                && action.path === state.cwd
-                    ? {
-                        ...next_state,
-                        is_open: true,
-                        'children': list_entry(next_state, action)
-                    }
-                    : next_state
+                    && is_entry(next_state)
+                    && action.path === state.cwd
+                        ? {
+                            ...next_state,
+                            is_open: true,
+                            'children': list_entry(next_state, action)
+                        }
+                        : next_state
             )
         )(next(state, action))
 );
@@ -85,11 +84,12 @@ const close_entry_transducer = Identity.state_reducer(
     (next, state = null, action = {}) =>
         ((next_state) => (
                 action.type === 'CLOSE'
-                    ? {
-                        ...next_state,
-                        is_open: false
-                    }
-                    : next_state
+                    && is_entry(next_state)
+                        ? {
+                            ...next_state,
+                            is_open: false
+                        }
+                        : next_state
             )
         )(next(state, action))
 );

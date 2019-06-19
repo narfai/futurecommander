@@ -17,13 +17,24 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::{
+  path::{ Path, PathBuf }
+};
+
 use tokio::{
     prelude::*
 };
 
 use futurecommander_filesystem::{
     ReadableFileSystem,
-    Container
+    Container,
+    Kind,
+    CreateEvent,
+    Listener,
+    Delayer,
+    capability::{
+        RegistrarGuard
+    }
 };
 
 use crate::{
@@ -34,10 +45,14 @@ use crate::{
             Message,
             DirectoryOpen,
             DirectoryRead,
+            DirectoryCreate,
+            FileCreate,
+            MessageError
         },
         Header,
         Packet
-    }
+    },
+    tools
 };
 
 #[derive(Default)]
@@ -46,26 +61,60 @@ pub struct Router {
 }
 
 impl Router {
-    fn read_dir(&mut self, message: Option<DirectoryOpen>) -> Result<Box<Message>, ProtocolError> {
-        if let Some(message) = message {
-            Ok(
-                Box::new(
-                    DirectoryRead::from(
-                        (message.path.clone(), self.container.read_dir(message.path.as_path())?)
-                    )
+    fn read_dir(&mut self, path: &Path) -> Result<Box<Message>, ProtocolError> {
+        Ok(
+            Box::new(
+                DirectoryRead::from(
+                    (path.to_path_buf(), self.container.read_dir(path)?)
                 )
             )
-        } else {
-            Err(ProtocolError::MessageParsing)
-        }
+        )
+    }
+
+    fn create(&mut self, kind: Kind, path: &Path, recursive: bool, overwrite: bool) -> Result<(), ProtocolError> {
+        let event = CreateEvent::new(
+            path,
+            kind,
+            recursive,
+            overwrite
+        );
+
+        let guard = self.container.emit(&event, RegistrarGuard::default())?;
+        self.container.delay(Box::new(event), guard);
+        Ok(())
     }
 
     pub fn process(&mut self, packet: &Packet) -> MessageStream {
         match packet.header() {
             Header::DirectoryOpen =>
                 Box::new(
-                stream::once(
-                    self.read_dir( packet.parse::<DirectoryOpen>() )
+                    stream::once(
+                        packet.parse_result::<DirectoryOpen>()
+                            .and_then(|packet| self.read_dir(packet.path.as_path()))
+                    )
+                ),
+            Header::DirectoryCreate =>
+                Box::new(
+                    stream::once(
+                        packet.parse_result::<DirectoryCreate>()
+                            .and_then(|packet| {
+                                self.create(Kind::Directory, packet.path.as_path(), packet.recursive, packet.overwrite)
+                                    .and_then(|_| Ok(tools::get_parent_or_root(packet.path.as_path())))
+                                    .and_then(|path| self.read_dir(path.as_path()))
+                                    .or_else(|error| Ok(Box::new(MessageError::from(error))))
+                            })
+                    )
+                ),
+            Header::FileCreate =>
+                Box::new(
+                    stream::once(
+                        packet.parse_result::<FileCreate>()
+                            .and_then(|packet| {
+                                self.create(Kind::File, packet.path.as_path(), packet.recursive, packet.overwrite)
+                                    .and_then(|_| Ok(tools::get_parent_or_root(packet.path.as_path())))
+                                    .and_then(|path| self.read_dir(path.as_path()))
+                                    .or_else(|error| Ok(Box::new(MessageError::from(error))))
+                            })
                     )
                 ),
             _ => Box::new(stream::empty())

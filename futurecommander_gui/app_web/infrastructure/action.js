@@ -34,6 +34,10 @@ class InfraScope {
             ActionTransducer.reduce(InfraScope.same_entry)
         );
     }
+
+    static error_set_scope() {
+        return ActionTransducer.reduce(({ resource }) => resource === 'ErrorSet' || resource === 'Layout')
+    }
 }
 
 module.exports = (spread) => ({
@@ -43,5 +47,11 @@ module.exports = (spread) => ({
             entries,
             path
         })
-    )(InfraScope.entry_scope, spread.redraw.allow)
+    )(InfraScope.entry_scope, spread.redraw.allow),
+    'MessageError': spread(
+        ({ 'payload': { message }}) => ({
+            'type': 'MESSAGE_ERROR',
+            message
+        })
+    )(InfraScope.error_set_scope, spread.redraw.allow)
 });
