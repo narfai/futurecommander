@@ -67,8 +67,16 @@ class Icon {
         return Icon.icon(15, 15, 'solid/angle-down.svg')
     }
 
-    static plus(){
-        return Icon.icon(15, 15, 'solid/plus.svg')
+    static plus_directory(){
+        return Icon.icon(15, 15, 'solid/plus-square.svg')
+    }
+
+    static plus_file(){
+        return Icon.icon(15, 15, 'regular/plus-square.svg')
+    }
+
+    static times(){
+        return Icon.icon(15, 15, 'solid/times.svg')
     }
 }
 

@@ -18,6 +18,8 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const path = require('path');
+
 module.exports = (spread) => ({
         'list': spread(
             ({state, event: { path }}) => ({
@@ -29,29 +31,39 @@ module.exports = (spread) => ({
             })
         )(spread.scope.self),
         'directory_create': spread(
-            ({state, event: { path }}) => ({
+            ({state, event: { name }}) => ({
                 'type': 'DIRECTORY_CREATE',
                 'filesystem_header': 'DirectoryCreate',
                 'payload': {
-                    path,
+                    path: path.join(state.cwd, name),
                     overwrite: false,
                     recursive: false
                 }
             })
         )(spread.scope.self),
         'file_create': spread(
-            ({state, event: { path }}) => ({
+            ({state, event: { name }}) => ({
                 'type': 'FILE_CREATE',
                 'filesystem_header': 'FileCreate',
                 'payload': {
-                    path,
+                    path: path.join(state.cwd, name),
                     overwrite: false,
                     recursive: false
                 }
             })
         )(spread.scope.self),
+        'remove': spread(
+            ({ state }) => ({
+                'type': 'REMOVE',
+                'filesystem_header': 'Remove',
+                'payload': {
+                    'path': state.cwd,
+                    recursive: true
+                }
+            })
+        )(spread.scope.self),
         'close': spread(
-            ({state, event: { path }}) => ({
+            () => ({
                 'type': 'CLOSE'
             })
         )(spread.scope.self, spread.redraw.allow)

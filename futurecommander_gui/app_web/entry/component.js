@@ -29,16 +29,6 @@ module.exports = {
             this.action.list({ 'path': this.store.getState().cwd });
         };
 
-        this.directory_create = () => {
-            if(typeof this.action.directory_create === 'undefined') throw new Error('Entry needs directory_create action');
-            this.action.directory_create({ 'path': path.join(this.store.getState().cwd, 'New directory') });
-        };
-
-        this.file_create = () => {
-            if(typeof this.action.file_create === 'undefined') throw new Error('Entry needs file_create action');
-            this.action.file_create({ 'path': path.join(this.store.getState().cwd, 'New file') });
-        };
-
         if(this.store.getState().is_open){
             this.spoil();
         }
@@ -84,16 +74,21 @@ module.exports = {
                         ? [
                             m(
                                 'span',
-                                {onclick: directory_create},
-                                [Icon.plus()]
+                                {onclick: () => action.directory_create({ 'name': 'New directory' })},
+                                [Icon.plus_directory()]
                             ),
                             m(
                                 'span',
-                                {onclick: file_create},
-                                [Icon.plus()]
+                                {onclick: () => action.file_create({ 'name': 'New file' })},
+                                [Icon.plus_file()]
                             )
                         ]
-                        : m('#')
+                        : '',
+                    m(
+                        'span',
+                        {onclick: action.remove},
+                        [Icon.times()]
+                    )
                 ]
             ),
             // Children

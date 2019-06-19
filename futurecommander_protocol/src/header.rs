@@ -26,6 +26,7 @@ use crate::{
         DirectoryRead,
         DirectoryCreate,
         FileCreate,
+        Remove,
         MessageError
     }
 };
@@ -47,6 +48,7 @@ pub enum Header {
     DirectoryRead,
     DirectoryCreate,
     FileCreate,
+    Remove,
     MessageError
 }
 
@@ -57,6 +59,7 @@ impl Header {
             t if t == Header::DirectoryRead.to_string() => Ok(Header::DirectoryRead),
             t if t == Header::DirectoryCreate.to_string() => Ok(Header::DirectoryCreate),
             t if t == Header::FileCreate.to_string() => Ok(Header::FileCreate),
+            t if t == Header::Remove.to_string() => Ok(Header::Remove),
             t if t == Header::MessageError.to_string() => Ok(Header::MessageError),
             _ => Err(ProtocolError::InvalidHeader)
         }
@@ -68,6 +71,7 @@ impl Header {
             b if b == (Header::DirectoryRead as u8) => Ok(Header::DirectoryRead),
             b if b == (Header::DirectoryCreate as u8) => Ok(Header::DirectoryCreate),
             b if b == (Header::FileCreate as u8) => Ok(Header::FileCreate),
+            b if b == (Header::Remove as u8) => Ok(Header::Remove),
             b if b == (Header::MessageError as u8) => Ok(Header::MessageError),
             _ => Err(ProtocolError::InvalidHeader)
         }
@@ -77,36 +81,12 @@ impl Header {
         1 as usize
     }
 
-    pub fn parse_message(self, datagram: &[u8]) -> Result<Box<dyn Message>, ProtocolError> {
-        match self {
-            Header::DirectoryOpen => {
-                let message: DirectoryOpen = deserialize(datagram)?;
-                Ok(Box::new(message))
-            },
-            Header::DirectoryRead => {
-                let message: DirectoryRead = deserialize(datagram)?;
-                Ok(Box::new(message))
-            },
-            Header::DirectoryCreate => {
-                let message: DirectoryCreate = deserialize(datagram)?;
-                Ok(Box::new(message))
-            },
-            Header::FileCreate => {
-                let message: FileCreate = deserialize(datagram)?;
-                Ok(Box::new(message))
-            },
-            Header::MessageError => {
-                let message: MessageError = deserialize(datagram)?;
-                Ok(Box::new(message))
-            }
-        }
-    }
-
     pub fn parse_context(self, context: &ContextContainer) -> Result<Box<ContextMessage>, ProtocolError> {
         match self {
             Header::DirectoryOpen => Ok(DirectoryOpen::from_context(&context)?),
             Header::DirectoryCreate => Ok(DirectoryCreate::from_context(&context)?),
             Header::FileCreate => Ok(FileCreate::from_context(&context)?),
+            Header::Remove => Ok(Remove::from_context(&context)?),
             _ => Err(ProtocolError::InvalidHeader)
         }
     }
