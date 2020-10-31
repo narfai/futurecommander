@@ -33,7 +33,8 @@ use crate::{
         ReadableFileSystem,
         FileSystemAdapter,
         EntryAdapter,
-        EntryCollection
+        EntryCollection,
+        Entry
     },
     infrastructure::virt::{
         VirtualFileSystem,
@@ -113,54 +114,10 @@ impl FileSystemAdapter<VirtualFileSystem> {
         }
 
     }
-
-    pub fn from_file_system(
-        fs: &VirtualFileSystem,
-        path: &Path,
-        source: Option<&Path>,
-        parent: Option<&Path>
-    ) -> Result<EntryCollection<EntryAdapter<VirtualStatus>>, QueryError> {
-        if !path.exists() {
-            return Ok(EntryCollection::new());
-        }
-
-        let mut entry_collection = EntryCollection::new();
-
-        match path.read_dir() {
-            Ok(results) => {
-                for result in results {
-                    match result {
-                        Ok(result) => {
-                            let result_path = result.path();
-                            let mut virtual_identity = VirtualPath::from_path(result.path().as_path())?
-                                .with_source(Some(result_path.as_path()))
-                                .with_kind(Kind::from_path(result_path.as_path()));
-
-                            if let Some(source) = source {
-                                virtual_identity = virtual_identity.with_new_source_parent(source);
-                            }
-
-                            if let Some(parent) = parent {
-                                virtual_identity = virtual_identity.with_new_identity_parent(parent);
-                            }
-
-                            if ! fs.sub_state().is_virtual(virtual_identity.as_identity())? {
-                                entry_collection.add(EntryAdapter(VirtualStatus::new(VirtualState::Exists, virtual_identity)));
-                            }
-                        },
-                        Err(error) => return Err(QueryError::from(error))
-                    };
-                }
-                Ok(entry_collection)
-            },
-            Err(error) => Err(QueryError::from(error))
-        }
-    }
 }
 
 impl ReadableFileSystem for FileSystemAdapter<VirtualFileSystem> {
     type Item = EntryAdapter<VirtualStatus>;
-    //Read virtual specialization
     fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Item>, QueryError> {
         let directory =
             match self.status(path)?
@@ -174,12 +131,38 @@ impl ReadableFileSystem for FileSystemAdapter<VirtualFileSystem> {
                 None => return Err(QueryError::ReadTargetDoesNotExists(path.to_path_buf()))
             };
 
-        let mut entry_collection = Self::from_file_system(
-            &self.0,
-            directory.as_source().unwrap_or_else(|| directory.as_identity()),
-            directory.as_source(),
-            Some(path)
-        )?;
+        let mut entry_collection= EntryCollection::new();
+
+        let real_path = directory.as_source().unwrap_or_else(|| directory.as_identity());
+        if real_path.exists() {
+            match real_path.read_dir() {
+                Ok(results) => {
+                    for result in results {
+                        match result {
+                            Ok(result) => {
+                                let result_path = result.path();
+                                let mut virtual_identity = VirtualPath::from_path(result.path().as_path())?
+                                    .with_source(Some(result_path.as_path()))
+                                    .with_new_identity_parent(directory.as_identity())
+                                    .with_kind(Kind::from_path(result_path.as_path()));
+
+                                if let Some(source) = directory.as_source() {
+                                    virtual_identity = virtual_identity.with_new_source_parent(source);
+                                }
+
+                                let entry_adapter = self.status(virtual_identity.as_identity())?;
+
+                                if entry_adapter.exists() {
+                                    entry_collection.add(entry_adapter);
+                                }
+                            },
+                            Err(error) => return Err(QueryError::from(error))
+                        };
+                    }
+                },
+                Err(error) => return Err(QueryError::from(error))
+            }
+        }
 
         if let Some(to_add_children) = self.0.add_state().children(directory.as_identity()) {
             for child in to_add_children.iter() {
