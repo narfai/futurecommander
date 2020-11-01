@@ -195,3 +195,11 @@ https://mithril.js.org/css.html
 ## Node Stream
 
 https://www.freecodecamp.org/news/node-js-streams-everything-you-need-to-know-c9141306be93/
+
+## GRPC
+
+https://dev.to/anshulgoyal15/a-beginners-guide-to-grpc-with-rust-3c7o
+
+## Rust + webassembly to make webapp
+
+https://seed-rs.org
