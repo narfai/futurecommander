@@ -23,8 +23,6 @@ use std::{
 };
 
 use futurecommander_shell::{ Shell };
-use futurecommander_daemon::{ Daemon };
-use futurecommander_client::{ Client };
 
 fn main() {
     let mut shell = Shell::default();
@@ -35,16 +33,6 @@ fn main() {
 
     if args.is_empty() {
         shell.run_readline(&mut stdout, &mut stderr)
-            .unwrap_or_else(|error| {
-                write!(&mut stderr, "{}", error).unwrap();
-            });
-    } else if args[0].trim() == "daemon" {
-        Daemon::listen(None, None)
-            .unwrap_or_else(|error| {
-                write!(&mut stderr, "{}", error).unwrap();
-            });
-    } else if args[0].trim() == "client" {
-        Client::listen(None, None)
             .unwrap_or_else(|error| {
                 write!(&mut stderr, "{}", error).unwrap();
             });

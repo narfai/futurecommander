@@ -3,9 +3,5 @@ members = [
     "futurecommander",
     "futurecommander_shell",
     "futurecommander_filesystem",
-    "futurecommander_representation",
-    "futurecommander_daemon",
-    "futurecommander_gui",
-    "futurecommander_protocol",
-    "futurecommander_client"
-]
+    "futurecommander_representation"]
+exclude = []
