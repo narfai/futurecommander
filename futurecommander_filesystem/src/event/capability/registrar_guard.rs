@@ -35,7 +35,7 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RegistrarGuard {
-    inner: Box<Guard>,
+    inner: Box<dyn Guard>,
     registry: HashMap<PathBuf, Capabilities>
 }
 
@@ -46,7 +46,7 @@ impl Default for RegistrarGuard {
 }
 
 impl RegistrarGuard {
-    pub fn from(guard: Box<Guard>) -> Self {
+    pub fn from(guard: Box<dyn Guard>) -> Self {
         RegistrarGuard {
             inner: guard,
             registry: HashMap::new()

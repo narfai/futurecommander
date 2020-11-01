@@ -35,7 +35,7 @@ pub struct EntryCollection<T>(pub Vec<T>)
     where T: Entry;
 
 impl <T: Entry> EntryCollection<T> {
-    pub fn contains(&self, node: &Entry) -> bool {
+    pub fn contains(&self, node: &dyn Entry) -> bool {
         for owned_node in self.0.iter() {
             if owned_node.path() == node.path() {
                 return true;

@@ -77,7 +77,7 @@ impl Command<InitializedTreeCommand> {
         Ok(())
     }
 
-    fn tree<W: Write>(out: &mut W, container: &Container, identity: &Entry, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), CommandError>{
+    fn tree<W: Write>(out: &mut W, container: &Container, identity: &dyn Entry, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<(), CommandError>{
         let file_name = match identity.name() {
             Some(file_name) => file_name.to_string_lossy().to_string(),
             None => "/".to_string()

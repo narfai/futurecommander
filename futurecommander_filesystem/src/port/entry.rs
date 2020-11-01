@@ -42,7 +42,7 @@ pub trait Entry {
     fn is_file(&self) -> bool;
     fn exists(&self) -> bool;
     fn is_virtual(&self) -> bool;
-    fn is_contained_by(&self, other: &Entry) -> bool {
+    fn is_contained_by(&self, other: &dyn Entry) -> bool {
         for ancestor in self.path().ancestors() {
             if other.path() == ancestor {
                 return true;
@@ -52,22 +52,22 @@ pub trait Entry {
     }
 }
 
-impl Eq for Entry {}
+impl Eq for dyn Entry {}
 
-impl Ord for Entry {
-    fn cmp(&self, other: &Entry) -> Ordering {
+impl Ord for dyn Entry {
+    fn cmp(&self, other: &dyn Entry) -> Ordering {
         self.path().cmp(other.path())
     }
 }
 
-impl PartialOrd for Entry {
-    fn partial_cmp(&self, other: &Entry) -> Option<Ordering> {
+impl PartialOrd for dyn Entry {
+    fn partial_cmp(&self, other: &dyn Entry) -> Option<Ordering> {
         Some(self.path().cmp(other.path()))
     }
 }
 
-impl PartialEq for Entry {
-    fn eq(&self, other: &Entry) -> bool {
+impl PartialEq for dyn Entry {
+    fn eq(&self, other: &dyn Entry) -> bool {
         self.path().eq(other.path())
     }
 }

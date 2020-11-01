@@ -63,7 +63,7 @@ impl <E, F> Event <E, F> for RemoveEvent
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
-    fn atomize(&self, fs: &F, guard: &mut Guard) -> Result<AtomicTransaction, DomainError> {
+    fn atomize(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
         let entry = fs.status(self.path())?;
         let mut transaction = AtomicTransaction::default();
 

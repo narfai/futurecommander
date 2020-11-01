@@ -36,7 +36,7 @@ pub struct SerializableEntry {
 impl Eq for SerializableEntry {}
 
 impl SerializableEntry {
-    pub fn from(entry: &Entry) -> Self {
+    pub fn from(entry: &dyn Entry) -> Self {
         SerializableEntry {
             name: if let Some(s) = entry.name() {
                 Some(s.to_string_lossy().to_string())

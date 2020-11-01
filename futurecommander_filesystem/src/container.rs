@@ -73,7 +73,7 @@ impl EventQueue {
     }
 
     pub fn serialize(&self) -> Result<String, serde_json::Error> {
-        let mut serializable : Vec<(Box<SerializableEvent>, &RegistrarGuard)> = Vec::new();
+        let mut serializable : Vec<(Box<dyn SerializableEvent>, &RegistrarGuard)> = Vec::new();
         for (event, guard) in self.0.iter() {
             serializable.push((event.as_inner().serializable(), &guard));
         }
@@ -134,7 +134,7 @@ impl Container {
     }
 
     pub fn emit_json(&mut self, json: String) -> Result<(), DomainError> {
-        let events : Vec<(Box<SerializableEvent>, RegistrarGuard)> = serde_json::from_str(json.as_str()).unwrap();
+        let events : Vec<(Box<dyn SerializableEvent>, RegistrarGuard)> = serde_json::from_str(json.as_str()).unwrap();
         for (event, guard) in events {
             let guard = self.emit(&*event.virt().into_inner(), guard)?;
             self.delay(event.real().into_inner(), guard );
