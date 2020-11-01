@@ -1,13 +1,14 @@
 [package]
-name = "futurecommander_shell"
-version = "0.4.0"
+name = "futurecommander_protocol"
+version = "0.1.0"
 authors = ["François Cadeillan <francois@azsystem.fr>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
 
 [dependencies]
-rustyline = "6.2.0"
-clap = { version =  "2.32.0", features = ["yaml"] }
 futurecommander_filesystem = { version = "0.4.0", path = "../futurecommander_filesystem" }
+bytes = "0.4.12"
+byteorder = "1.3.2"
 serde = { version = "1.0.117" }
-typetag = { version = "0.1" }
+tokio-codec = "0.1.1"
+bincode = "1.1.3"

@@ -39,6 +39,8 @@ function build_linux {
 }
 
 function release {
+    go get github.com/itchio/gothub
+
     if [[ -z "${GITHUB_TOKEN}" ]]; then
         exit 1
     fi
