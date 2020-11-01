@@ -38,7 +38,8 @@ use rustyline::{
     Context,
     hint::Hinter,
     highlight::{Highlighter, MatchingBracketHighlighter},
-    completion::{Completer, Pair}
+    completion::{Completer, Pair},
+    validate::{self, MatchingBracketValidator, Validator}
 };
 
 static WHITE_PROMPT: &'static str = "\x1b[1;97m>>\x1b[0m ";
@@ -69,6 +70,7 @@ const fn available_commands() -> [&'static str; 18] {
 
 pub struct VirtualHelper<'a>  {
     highlighter: MatchingBracketHighlighter,
+    validator: MatchingBracketValidator,
     container: &'a Container,
     cwd: PathBuf
 }
@@ -76,6 +78,7 @@ pub struct VirtualHelper<'a>  {
 impl  <'a>VirtualHelper<'a>  {
     pub fn new(container: &'a Container, cwd: PathBuf) -> VirtualHelper  {
         VirtualHelper{
+            validator: MatchingBracketValidator::new(),
             highlighter: MatchingBracketHighlighter::new(),
             container,
             cwd
@@ -229,7 +232,7 @@ impl <'a> Highlighter for VirtualHelper<'a>  {
         self.highlighter.highlight(line, pos)
     }
 
-    fn highlight_prompt<'p>(&self, _prompt: &'p str) -> Cow<'p, str> {
+    fn highlight_prompt<'b, 's: 'b, 'p: 'b>(&'s self, _prompt: &'p str, default: bool) -> Cow<'b, str> {
         if self.container.is_empty() {
             Borrowed(WHITE_PROMPT)
         } else {
@@ -247,3 +250,17 @@ impl <'a> Highlighter for VirtualHelper<'a>  {
 }
 
 impl  <'a>Helper for VirtualHelper<'a>  {}
+
+
+impl <'a>Validator for VirtualHelper<'a> {
+    fn validate(
+        &self,
+        ctx: &mut validate::ValidationContext,
+    ) -> rustyline::Result<validate::ValidationResult> {
+        self.validator.validate(ctx)
+    }
+
+    fn validate_while_typing(&self) -> bool {
+        self.validator.validate_while_typing()
+    }
+}
