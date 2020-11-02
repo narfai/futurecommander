@@ -21,8 +21,9 @@ enum RequestStatus {
 
 enum ResponseStatus {
     PROCESSING = 0;
-    ERROR = 1;
-    DONE = 2;
+    WAIT = 1;
+    ERROR = 2;
+    DONE = 3;
 }
 
 message Entry {
@@ -42,47 +43,52 @@ message ListDirectoryResponse {
     // TODO think about the one of or not
     optional Entry entry = 2;
     // TODO think about making a proper error def or not
-    optional string error = 3;
+    optional string message = 3;
+    optional string error = 4;
 }
 
 message CreateNodeRequest {
-    required RequestStatus status = 1 [default = INITIATING];
+    required RequestStatus status = 1;
     required string path = 2;
     required bool recursive = 3;
     required bool overwrite = 4;
 }
 message CreateNodeResponse {
-    required ResponseStatus status = 1 [default = PROCESSING];
-    optional string error = 2;
+    required ResponseStatus status = 1;
+    optional string message = 2;
+    optional string error = 3;
 }
 
 message RemoveNodeRequest {
-    required RequestStatus status = 1 [default = INITIATING];
+    required RequestStatus status = 1;
     required string path = 2;
     required bool recursive = 3;
 }
 message RemoveNodeResponse {
-    required ResponseStatus status = 1 [default = PROCESSING];
-    optional string error = 2;
+    required ResponseStatus status = 1;
+    optional string message = 2;
+    optional string error = 3;
 }
 
 message CopyNodeRequest {
-    required RequestStatus status = 1 [default = INITIATING];
+    required RequestStatus status = 1;
     required string path = 2;
     required bool recursive = 3;
     required bool merge = 4;
 }
 message CopyNodeResponse {
-    required ResponseStatus status = 1 [default = PROCESSING];
+    required ResponseStatus status = 1;
     optional Entry entry = 2;
-    optional string error = 3;
+    optional string message = 3;
+    optional string error = 4;
 }
 
 message MoveNodeRequest {
-    required RequestStatus status = 1 [default = INITIATING];
+    required RequestStatus status = 1;
 }
 message MoveNodeResponse {
-    required ResponseStatus status = 1 [default = PROCESSING];
+    required ResponseStatus status = 1;
     optional Entry entry = 2;
+    optional string message = 4;
     optional string error = 3;
 }

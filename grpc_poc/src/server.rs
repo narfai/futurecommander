@@ -34,10 +34,22 @@ impl VirtualFileSystem for Daemon {
             while let Some(req) = streamer.message().await.unwrap(){
                 println!("Got a delete request {:?}", req);
                 tx.send(Ok(RemoveNodeResponse {
-                    status: ResponseStatus::Done as i32,
+                    status: ResponseStatus::Processing as i32,
+                    message: Some(format!("{:?}/A", req.path)),
+                    error: None
+                })).await?;
+                tx.send(Ok(RemoveNodeResponse {
+                    status: ResponseStatus::Processing as i32,
+                    message: Some(format!("{:?}/B", req.path)),
                     error: None
                 }))
-                .await;
+                .await?;
+                tx.send(Ok(RemoveNodeResponse {
+                    status: ResponseStatus::Done as i32,
+                    message: None,
+                    error: None
+                }))
+                .await?;
             }
         });
         Ok(Response::new(rx))
