@@ -198,7 +198,10 @@ https://www.freecodecamp.org/news/node-js-streams-everything-you-need-to-know-c9
 
 ## GRPC
 
+https://grpc.io/
 https://dev.to/anshulgoyal15/a-beginners-guide-to-grpc-with-rust-3c7o
+https://github.com/anshulrgoyal/rust-grpc-demo
+https://developers.google.com/protocol-buffers/docs/proto
 
 ## Rust + webassembly to make webapp
 
