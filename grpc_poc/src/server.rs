@@ -37,51 +37,60 @@ impl VirtualFileSystem for Daemon {
                     status: ResponseStatus::Processing as i32,
                     message: Some(format!("{:?}/A", req.path)),
                     error: None
-                })).await?;
+                })).await;
                 tx.send(Ok(RemoveNodeResponse {
                     status: ResponseStatus::Processing as i32,
                     message: Some(format!("{:?}/B", req.path)),
                     error: None
                 }))
-                .await?;
+                .await;
                 tx.send(Ok(RemoveNodeResponse {
                     status: ResponseStatus::Done as i32,
                     message: None,
                     error: None
                 }))
-                .await?;
+                .await;
             }
         });
         Ok(Response::new(rx))
     }
 }
 
-fn interceptor(req:Request<()>)->Result<Request<()>,Status>{
-    let token=match req.metadata().get("authorization"){
-        Some(token)=>token.to_str(),
-        None=>return Err(Status::unauthenticated("Token not found"))
-    };
-    // do some validation with token here ...
-    Ok(req)
-}
+// required for JWT
+//fn interceptor(req:Request<()>)->Result<Request<()>,Status>{
+//    let token=match req.metadata().get("authorization"){
+//        Some(token)=>token.to_str(),
+//        None=>return Err(Status::unauthenticated("Token not found"))
+//    };
+//    // do some validation with token here ...
+//    Ok(req)
+//}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse().unwrap();
     let daemon = Daemon::default();
-    let ser = VirtualFileSystemServer::with_interceptor(daemon,interceptor);
-    let cert = include_str!("../server.pem");
-    let key = include_str!("../server.key");
-    let id = tonic::transport::Identity::from_pem(cert.as_bytes(), key.as_bytes());
+
+// Required for JWT
+//    let ser = VirtualFileSystemServer::with_interceptor(daemon,interceptor);
+    let ser = VirtualFileSystemServer::new(daemon);
+
+// required for TLS
+//    let cert = include_str!("../tls/server.pem");
+//    let key = include_str!("../tls/server.key");
+//    let id = tonic::transport::Identity::from_pem(cert.as_bytes(), key.as_bytes());
 
     println!("Server listening on {}", addr);
-    let s = include_str!("../my_ca.pem");
-    let ca = tonic::transport::Certificate::from_pem(s.as_bytes());
-    let tls = tonic::transport::ServerTlsConfig::new()
-        .identity(id)
-        .client_ca_root(ca);
+// required for TLS
+//    let s = include_str!("../tls/my_ca.pem");
+//    let ca = tonic::transport::Certificate::from_pem(s.as_bytes());
+//    let tls = tonic::transport::ServerTlsConfig::new()
+//        .identity(id)
+//        .client_ca_root(ca);
+
     Server::builder()
-        .tls_config(tls)?
+// required for TLS
+//        .tls_config(tls)?
         .add_service(ser)
         .serve(addr)
         .await?;
