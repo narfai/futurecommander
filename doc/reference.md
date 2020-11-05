@@ -67,10 +67,14 @@ https://stackoverflow.com/questions/32682876/is-there-any-way-to-return-a-refere
 https://bryce.fisher-fleig.org/blog/strategies-for-returning-references-in-rust/index.html
 https://manishearth.github.io/blog/2015/05/27/wrapper-types-in-rust-choosing-your-guarantees/
 
-## TUI / GUI
+## GUI
+
+https://github.com/maps4print/azul / https://azul.rs/
+
+## TUI
 
 https://crates.io/crates/cursive
-https://github.com/maps4print/azul / https://azul.rs/
+https://github.com/redox-os/termion
 
 ## OO Pattern
 

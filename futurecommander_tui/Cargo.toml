@@ -1,0 +1,15 @@
+[package]
+name = "futurecommander_tui"
+version = "0.1.0"
+authors = ["François Cadeillan <francois@azsystem.fr>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+termion = "*"
+prost = "0.6.1"
+tonic = {version="0.3.1",features = ["tls"]}
+tokio = {version="0.2",features = ["full"]}
+futures = "0.3"
+futurecommander_proto = { version = "0.0.1", path = "../futurecommander_proto" }
