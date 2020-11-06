@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use tonic::Request;
 use futures::stream;
+use math::round;
 
 use termion::{clear, cursor, color, style};
 use termion::event::{Key, Event, MouseEvent};
@@ -55,15 +56,25 @@ impl Position {
         (self.x, self.y)
     }
 
-    fn is_contained_by(&self, rectangle: &Rectangle) -> bool {        
-        self.x >= rectangle.from.x && self.x <= rectangle.to.x && self.y >= rectangle.from.y && self.y <= rectangle.to.y
+    fn is_contained_by(&self, area: &Area) -> bool {        
+        self.x >= area.from.x && self.x <= area.to.x && self.y >= area.from.y && self.y <= area.to.y
     }
 }
 
 #[derive(Debug)]
-struct Rectangle {
+struct Area {
     pub from: Position,
     pub to: Position
+}
+
+impl Area {
+    pub fn inside(&self, cell_number: u16) -> Area {
+        fn sub_if_positive(n: u16, cn: u16) -> u16{ if n > 0 { n - cn } else { 0 } }
+        Area {
+            from: Position { x: self.from.x + cell_number, y: self.from.y + cell_number},
+            to: Position { x: sub_if_positive(self.to.x, cell_number), y: sub_if_positive(self.to.y, cell_number)},
+        }
+    }
 }
 
 enum CellChoice {
@@ -77,7 +88,9 @@ struct SkipCell {
 
 struct RenderCell {
     pub position: Position,
-    pub content: String
+    pub content: String,
+    pub foreground_color: String,
+    pub background_color: String,
 }
 
 impl SkipCell {
@@ -93,25 +106,40 @@ impl SkipCell {
         CellChoice::Render(
             RenderCell {
                 position: self.position,
-                content: String::from(content)
+                content: String::from(content),
+                foreground_color: String::from(format!("{}", color::Fg(color::White))),
+                background_color: String::from(format!("{}", color::Bg(color::Blue)))
             }
         )
     }
 }
 
-fn box_router(rectangle: Rectangle) -> impl Fn(CellChoice) -> CellChoice {    
+impl RenderCell {
+    pub fn render<W: Write> (self, out: &mut W, position: Position) {
+        write!(
+            out, 
+            "{}{}{}{}", 
+            cursor::Goto(position.x + 1, position.y + 1),             
+            self.foreground_color,
+            self.background_color,
+            self.content
+        ).unwrap(); 
+    }
+}
+
+fn bordered_area(area: Area) -> impl Fn(CellChoice) -> CellChoice {    
     move |cellchoice| match cellchoice {
         CellChoice::Render(_) => cellchoice,
         CellChoice::Skip(cell) => { 
             let position = cell.position;
-            if position.is_contained_by(&rectangle) {                
+            if position.is_contained_by(&area) {                
                 match position.to_tuple() {                    
-                    (x, y) if x == rectangle.from.x && y == rectangle.from.y => cell.choose_to_render(TOP_LEFT_CORNER),
-                    (x, y) if x == rectangle.to.x && y == rectangle.from.y => cell.choose_to_render(TOP_RIGHT_CORNER),
-                    (x, y) if x == rectangle.to.x && y == rectangle.to.y => cell.choose_to_render(BOTTOM_RIGHT_CORNER),
-                    (x, y) if x == rectangle.from.x && y == rectangle.to.y => cell.choose_to_render(BOTTOM_LEFT_CORNER),
-                    (x, _) if x == rectangle.from.x || x == rectangle.to.x => cell.choose_to_render(VERT_BOUNDARY),                        
-                    (_, y) if y == rectangle.from.y || y == rectangle.to.y => cell.choose_to_render(HORZ_BOUNDARY),                        
+                    (x, y) if x == area.from.x && y == area.from.y => cell.choose_to_render(TOP_LEFT_CORNER),
+                    (x, y) if x == area.to.x && y == area.from.y => cell.choose_to_render(TOP_RIGHT_CORNER),
+                    (x, y) if x == area.to.x && y == area.to.y => cell.choose_to_render(BOTTOM_RIGHT_CORNER),
+                    (x, y) if x == area.from.x && y == area.to.y => cell.choose_to_render(BOTTOM_LEFT_CORNER),
+                    (x, _) if x == area.from.x || x == area.to.x => cell.choose_to_render(VERT_BOUNDARY),                        
+                    (_, y) if y == area.from.y || y == area.to.y => cell.choose_to_render(HORZ_BOUNDARY),                        
                     _ => CellChoice::Skip(cell)
                 }                                    
             } else {
@@ -121,12 +149,14 @@ fn box_router(rectangle: Rectangle) -> impl Fn(CellChoice) -> CellChoice {
     }
 }
 
-fn render<W: Write> (out: &mut W, rectangle: Rectangle, cell_router: &dyn Fn(CellChoice) -> CellChoice){    
-    for x in rectangle.from.x..rectangle.to.x {
-        for y in rectangle.from.y..rectangle.to.y {            
-            match cell_router(SkipCell::choose_to_skip(Position{x, y})) {
-                CellChoice::Render(cell) => { write!(out, "{}{}", cursor::Goto(x + 1, y + 1), cell.content).unwrap(); }
-                CellChoice::Skip(_) => { write!(out, "{}{}", cursor::Goto(x + 1, y + 1), "A").unwrap(); }
+
+fn render<W: Write> (out: &mut W, area: Area, cell_router: &dyn Fn(CellChoice) -> CellChoice){    
+    for x in area.from.x..area.to.x {
+        for y in area.from.y..area.to.y {        
+            let position = Position{x, y};    
+            match cell_router(SkipCell::choose_to_skip(position)) {
+                CellChoice::Render(cell) => cell.render(out, position),
+                CellChoice::Skip(_) => { write!(out, "{}{}{}", cursor::Goto(x + 1, y + 1), color::Bg(color::Blue), " ").unwrap(); }
                 _ => {}
             };
         }
@@ -146,9 +176,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let termwidth = termsize.map(|(w,_)| w);
     let termheight = termsize.map(|(_,h)| h);
 
-    println!("{:?}", termsize);
-    println!("{:?}", termwidth);
-    println!("{:?}", termheight);
 
     let stdin = stdin();
     let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
@@ -167,23 +194,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     MouseEvent::Press(_, x, y) => {
                         // write!(stdout, "{}x", termion::cursor::Goto(x, y)).unwrap();
                         if let Some(x) = termwidth {
-                            if let Some(y) = termheight{                                
+                            if let Some(y) = termheight{           
+                                let middle = Position{
+                                    x: round::ceil((x/2).into(), 0) as u16,
+                                    y: round::ceil((y/2).into(), 0) as u16,
+                                };                     
                                 render(&mut stdout, 
-                                    Rectangle {
+                                    Area {
                                         from: Position { x: 0, y: 0 },
                                         to: Position { x, y },
                                     },                                    
                                     &compose(
-                                        box_router(
-                                            Rectangle {
-                                                from: Position { x: 2, y: 2 },
-                                                to: Position { x: x - 3, y: y - 3 },
+                                        bordered_area(
+                                            Area {
+                                                from: Position { x: 0, y: 0 },
+                                                to: Position { x: middle.x, y: y - 1 },
                                             }                                        
                                         ),
-                                        box_router(Rectangle {
-                                            from: Position { x: 0, y: 0 },
-                                            to: Position { x: x - 1, y: y - 1 },
-                                        })
+                                        compose(
+                                                bordered_area(Area {
+                                                    from: Position { x: middle.x + 1, y: 0 },
+                                                    to: Position { x: x - 1, y: y - 1 },
+                                                }),
+                                                bordered_area((Area {
+                                                    from: Position { x: middle.x + 1, y: 0 },
+                                                    to: Position { x: x - 1, y: y - 1 },
+                                                }).inside(2)),
+                                        ),
+                                                
                                     )
                                 );
                             }
@@ -218,9 +256,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             },
             _ => {}
-        }
+        }        
         stdout.flush().unwrap();
     }
+
+    write!(stdout, "{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1)).unwrap();
+    stdout.flush().unwrap();
 
     Ok(())
 }
