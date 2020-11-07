@@ -29,8 +29,7 @@ Or for live source editing
 
 ```
 docker run --rm -t \
-    -v "$(pwd)/src":/usr/src/futurecommander/src \
-    -v "$(pwd)/target-docker":/usr/src/futurecommander/target \
+    -v "$(pwd)":/usr/src/futurecommander \
     futurecommander test
 ```
 
@@ -86,5 +85,3 @@ https://github.com/narfai/futurecommander/releases/download/release.v0.4.0/futur
 ### Windows x86_64 ( mingw-w64 )
 
 https://github.com/narfai/futurecommander/releases/download/release.v0.4.0/futurecommander_win64_release.v0.4.0.exe
-
-

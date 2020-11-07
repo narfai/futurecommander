@@ -51,5 +51,5 @@ pub use self::infrastructure::VirtualState;
 
 pub mod tools;
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 pub mod sample;

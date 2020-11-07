@@ -145,7 +145,7 @@ impl <E, F> Event <E, F> for MoveEvent
 }
 
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod real_tests {
     use super::*;
@@ -264,7 +264,7 @@ mod real_tests {
 }
 
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod virtual_tests {
     use super::*;
@@ -367,4 +367,3 @@ mod virtual_tests {
         assert!(fs.as_inner().virtual_state().unwrap().is_file(samples_path.join("A/C").as_path()).unwrap());
     }
 }
-

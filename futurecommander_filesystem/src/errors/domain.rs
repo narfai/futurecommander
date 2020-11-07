@@ -116,7 +116,7 @@ impl error::Error for DomainError {
 }
 
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod errors_tests {
     use super::*;

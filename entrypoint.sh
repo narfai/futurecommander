@@ -146,7 +146,8 @@ case "$1" in
         user_cargo "test --all -v"
         ;;
     coverage)
-        user_cargo "tarpaulin --all --count --out Xml"
+        rm -Rf "${EXEC_DIR}/samples/dynamic/*"
+        user_cargo "tarpaulin --all --count --out Xml -- --test-threads=1"
         bash <(curl -s https://codecov.io/bash)
         ;;
     release)

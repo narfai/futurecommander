@@ -74,7 +74,7 @@ impl error::Error for QueryError {
     }
 }
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod errors_tests {
     use super::*;

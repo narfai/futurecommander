@@ -187,7 +187,7 @@ impl WriteableFileSystem for FileSystemAdapter<RealFileSystem> {
 
 
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -271,4 +271,3 @@ mod tests {
         assert!(chroot.join("MOVED").exists());
     }
 }
-

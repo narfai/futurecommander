@@ -72,7 +72,7 @@ impl PartialEq for dyn Entry {
     }
 }
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod tests_entry {
     use super::*;

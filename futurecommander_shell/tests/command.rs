@@ -22,7 +22,7 @@ extern crate futurecommander_filesystem;
 
 
 #[cfg(test)]
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 mod command_integration {
     use super::*;
 

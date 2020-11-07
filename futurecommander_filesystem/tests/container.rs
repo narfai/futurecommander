@@ -19,7 +19,7 @@
 
 extern crate futurecommander_filesystem;
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 mod container_integration {
     use std::{
         path:: { Path }

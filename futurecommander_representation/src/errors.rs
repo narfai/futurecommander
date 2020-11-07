@@ -42,7 +42,7 @@ impl fmt::Display for RepresentationError {
 
 impl error::Error for RepresentationError {}
 
-#[cfg_attr(tarpaulin, skip)]
+#[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod errors_tests {
     use super::*;
