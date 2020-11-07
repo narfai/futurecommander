@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - id: get_version
+        uses: battila7/get-version-action@v2
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -28,8 +30,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: fcadeillan/futurecommander:${{ github.ref }}
-          cache-from: type=registry,ref=fcadeillan/futurecommander:${{ github.ref }}
+          tags: fcadeillan/futurecommander:${{ steps.get_version.outputs.version }}
+          cache-from: type=registry,ref=fcadeillan/futurecommander:${{ steps.get_version.outputs.version }}
           cache-to: type=inline
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
@@ -37,9 +39,11 @@ jobs:
     needs: [docker]
     runs-on: ubuntu-latest
     container:
-      image: fcadeillan/futurecommander:${{ github.ref }}
+      image: fcadeillan/futurecommander:${{ steps.get_version.outputs.version }}
     steps:
       - uses: actions/checkout@v2
+      - id: get_version
+        uses: battila7/get-version-action@v2
       - name: General build
         run: cargo build --verbose --release
       - name: Run lint
@@ -50,18 +54,21 @@ jobs:
     needs: [docker]
     runs-on: ubuntu-latest
     container:
-      image: fcadeillan/futurecommander:${{ github.ref }}
+      image: fcadeillan/futurecommander:${{ steps.get_version.outputs.version }}
     steps:
+      - uses: actions/checkout@v2
+      - id: get_version
+        uses: battila7/get-version-action@v2
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: Release ${{ steps.get_version.outputs.version }}
           body: |
-            Release ${{ github.ref }}
+            Release ${{ steps.get_version.outputs.version }}
           draft: false
           prerelease: true
       - name: Linux build
