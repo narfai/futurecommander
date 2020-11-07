@@ -33,7 +33,9 @@ jobs:
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
   check:
-    runs-on: fcadeillan/futurecommander:latest
+    runs-on: ubuntu-latest
+    container:
+      image: fcadeillan/futurecommander:latest
     steps:
     - uses: actions/checkout@v2
     - name: Build
@@ -42,3 +44,17 @@ jobs:
       run: clippy --all-targets --all-features -- -D warnings
     - name: Run tests
       run: cargo test --all --verbose
+  coverage:
+    runs-on: ubuntu-latest
+    container:
+      image: fcadeillan/futurecommander:latest
+      options: --security-opt seccomp=unconfined
+    steps:
+      - uses: actions/checkout@v2
+      - name: Generate code coverage
+        run: cargo tarpaulin --all --count --out Xml -- --test-threads=1
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          fail_ci_if_error: true
