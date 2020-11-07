@@ -12,11 +12,12 @@ jobs:
   version:
     name: Retrieve proper tag name for other jobs
     runs-on: ubuntu-latest
+    outputs:
+      tagname: ${{ steps.get_version.outputs.version }}
     steps:
       - uses: actions/checkout@v2
       - id: get_version
         uses: battila7/get-version-action@v2
-      - run: echo ${{ steps.get_version.outputs.version }}
   docker:
     name: Build & push Docker image
     needs: [version]
@@ -37,8 +38,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: fcadeillan/futurecommander:${{ needs.version.outputs.output3 }}
-          cache-from: type=registry,ref=fcadeillan/futurecommander:${{ needs.version.outputs.output3 }}
+          tags: fcadeillan/futurecommander:${{ needs.version.outputs.tagname }}
+          cache-from: type=registry,ref=fcadeillan/futurecommander:${{ needs.version.outputs.tagname }}
           cache-to: type=inline
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
@@ -47,7 +48,7 @@ jobs:
     needs: [docker, version]
     runs-on: ubuntu-latest
     container:
-      image: fcadeillan/futurecommander:${{ needs.version.outputs.output3 }}
+      image: fcadeillan/futurecommander:${{ needs.version.outputs.tagname }}
     steps:
       - uses: actions/checkout@v2
       - name: General build
@@ -60,7 +61,7 @@ jobs:
     needs: [docker, version, check]
     runs-on: ubuntu-latest
     container:
-      image: fcadeillan/futurecommander:${{ needs.version.outputs.output3 }}
+      image: fcadeillan/futurecommander:${{ needs.version.outputs.tagname }}
     steps:
       - uses: actions/checkout@v2
       - name: Create Release
@@ -69,10 +70,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ needs.version.outputs.output3 }}
-          release_name: Release ${{ needs.version.outputs.output3 }}
+          tag_name: ${{ needs.version.outputs.tagname }}
+          release_name: Release ${{ needs.version.outputs.tagname }}
           body: |
-            Release ${{ needs.version.outputs.output3 }}
+            Release ${{ needs.version.outputs.tagname }}
           draft: false
           prerelease: true
       - name: Linux build
