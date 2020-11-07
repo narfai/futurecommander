@@ -29,6 +29,8 @@ jobs:
         with:
           push: true
           tags: fcadeillan/futurecommander:${{ github.ref }}
+          cache-from: type=registry,ref=fcadeillan/futurecommander:${{ github.ref }}
+          cache-to: type=inline
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
   check:
