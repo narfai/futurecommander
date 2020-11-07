@@ -43,7 +43,7 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Run lint
-      run: clippy --all-targets --all-features -- -D warnings
+      run: cargo clippy --all-targets --all-features -- -D warnings
     - name: Run tests
       run: cargo test --all --verbose
   coverage:
