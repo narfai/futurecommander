@@ -34,6 +34,7 @@ jobs:
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
   check:
+    needs: [docker]
     runs-on: ubuntu-latest
     container:
       image: fcadeillan/futurecommander:${{ github.ref }}
@@ -46,6 +47,7 @@ jobs:
       - name: Run tests
         run: cargo test --all --verbose
   release:
+    needs: [docker]
     runs-on: ubuntu-latest
     container:
       image: fcadeillan/futurecommander:${{ github.ref }}
