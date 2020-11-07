@@ -73,13 +73,3 @@ Command can be :
 ## Trello
 
 https://trello.com/b/A2BvQdR9/futurecommander
-
-## Latest release
-
-### Linux x86_64
-
-https://github.com/narfai/futurecommander/releases/download/release.v0.4.0/futurecommander_linux64_release.v0.4.0
-
-### Windows x86_64 ( mingw-w64 )
-
-https://github.com/narfai/futurecommander/releases/download/release.v0.4.0/futurecommander_win64_release.v0.4.0.exe
