@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v2
       - id: get_version
         uses: battila7/get-version-action@v2
-      - run: echo ${{ needs.version.outputs.output3 }}
+      - run: echo ${{ steps.get_version.outputs.version }}
   docker:
     name: Build & push Docker image
     needs: [version]
