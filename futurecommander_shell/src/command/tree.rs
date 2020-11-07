@@ -98,7 +98,7 @@ impl Command<InitializedTreeCommand> {
             Ok(collection) => {
                 let new_depth_list = match depth_list {
                     Some(depth_list) => {
-                        let mut new = depth_list.clone();
+                        let mut new = depth_list;
                         new.push(parent_last);
                         new
                     },
@@ -131,6 +131,3 @@ impl Command<InitializedTreeCommand> {
         Ok(())
     }
 }
-
-
-

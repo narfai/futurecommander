@@ -69,7 +69,7 @@ impl Command<InitializedMoveCommand> {
         let destination = container.status(self.0.destination.as_path())?;
 
         if ! source.exists() {
-            return Err(CommandError::DoesNotExists(self.0.source.to_path_buf()));
+            return Err(CommandError::DoesNotExists(self.0.source));
         }
 
         let event = if destination.exists() {

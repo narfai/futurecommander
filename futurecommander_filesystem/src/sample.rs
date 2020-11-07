@@ -32,7 +32,6 @@ impl Samples {
             .parent().unwrap() //debug
             .parent().unwrap() //deps
             .join("samples")
-            .to_path_buf()
     }
 
     pub fn static_samples_path() -> PathBuf {

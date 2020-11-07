@@ -71,7 +71,7 @@ impl Command<InitializedCopyCommand> {
         let destination = container.status(self.0.destination.as_path())?;
 
         if ! source.exists() {
-            return Err(CommandError::DoesNotExists(self.0.source.to_path_buf()));
+            return Err(CommandError::DoesNotExists(self.0.source));
         }
 
         let event = if destination.exists() {
@@ -234,7 +234,7 @@ mod tests {
 
         let copy_a_as_aprime = Command(InitializedCopyCommand {
             source: sample_path.join("A"),
-            destination: sample_path.join("APRIME").to_path_buf(),
+            destination: sample_path.join("APRIME"),
             merge: false,
             overwrite: false,
             guard: AvailableGuard::Zealed
@@ -243,7 +243,7 @@ mod tests {
 
         let copy_aprime_as_abeta = Command(InitializedCopyCommand {
             source: sample_path.join("APRIME"),
-            destination: sample_path.join("ABETA").clone(),
+            destination: sample_path.join("ABETA"),
             merge: false,
             overwrite: false,
             guard: AvailableGuard::Zealed

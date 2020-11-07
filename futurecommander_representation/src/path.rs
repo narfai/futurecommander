@@ -123,7 +123,7 @@ impl VirtualPath {
 
     pub fn from(identity: PathBuf, source: Option<PathBuf>, kind: Kind) -> Result<VirtualPath, RepresentationError> {
         if identity.is_relative() && (identity != PathBuf::new()) {
-            Err(RepresentationError::IsRelativePath(identity.to_path_buf()))
+            Err(RepresentationError::IsRelativePath(identity))
         } else {
             Ok(Self::_from(identity, source, kind))
         }
@@ -156,9 +156,9 @@ impl VirtualPath {
         match path.parent(){
             Some(parent) => {
                 let stripped = path.strip_prefix(parent).unwrap(); //Do not handle ".." file names
-                new_parent.join(stripped).to_path_buf()
+                new_parent.join(stripped)
             },
-            None => new_parent.join(path).to_path_buf()
+            None => new_parent.join(path)
         }
     }
 

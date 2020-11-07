@@ -104,22 +104,14 @@ impl Entry for EntryAdapter<VirtualStatus> {
 
     fn is_dir(&self) -> bool {
         match self.0.as_existing_virtual() {
-            Some(identity) =>
-                match identity.as_kind() {
-                    Kind::Directory => true,
-                    _ => false
-                },
+            Some(identity) => matches!(identity.as_kind(), Kind::Directory),
             None => false
         }
     }
 
     fn is_file(&self) -> bool {
         match self.0.as_existing_virtual() {
-            Some(identity) =>
-                match identity.as_kind() {
-                    Kind::File => true,
-                    _ => false
-                },
+            Some(identity) => matches!(identity.as_kind(), Kind::File),
             None => false
         }
     }
@@ -173,7 +165,7 @@ mod tests {
         assert!(a.is_dir());
         assert!(!a.is_file());
         assert!(!a.is_virtual());
-        assert_eq!(a.to_path(), a_path.clone());
+        assert_eq!(a.to_path(), a_path);
         assert_eq!(a.path(), a_path.as_path());
         assert_eq!(a.name(), Some(OsStr::new("MOCK")));
         assert_eq!(a.into_inner(), a_status);
@@ -197,7 +189,7 @@ mod tests {
         assert!(!a.is_dir());
         assert!(a.is_file());
         assert!(!a.is_virtual());
-        assert_eq!(a.to_path(), a_path.clone());
+        assert_eq!(a.to_path(), a_path);
         assert_eq!(a.path(), a_path.as_path());
         assert_eq!(a.name(), Some(OsStr::new("MOCK")));
         assert_eq!(a.into_inner(), a_status);

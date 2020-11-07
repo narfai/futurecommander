@@ -42,7 +42,7 @@ impl Command<RemoveCommand> {
         let path = Self::extract_path_from_args(cwd, args, "path")?;
         for ancestor in cwd.ancestors() {
             if path == ancestor {
-                return Err(CommandError::CwdIsInside(path.to_path_buf()))
+                return Err(CommandError::CwdIsInside(path))
             }
         }
 
@@ -92,8 +92,10 @@ mod tests {
 
         let b_path = sample_path.join(&Path::new("B"));
 
+        // https://github.com/rust-lang/rust-clippy/issues/5595
+        #[allow(clippy::redundant_clone)]
         let remove_b = Command(InitializedRemoveCommand {
-            path: b_path.to_path_buf(),
+             path: b_path.to_path_buf(),
             recursive: true,
             guard: AvailableGuard::Zealed
         });

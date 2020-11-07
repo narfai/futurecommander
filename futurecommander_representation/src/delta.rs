@@ -53,6 +53,8 @@ impl VirtualDelta {
             let parent = Self::get_parent_or_root(identity);
 
             if !self.hierarchy.contains_key(parent.as_path()) {
+                // https://github.com/rust-lang/rust-clippy/issues/5595
+                #[allow(clippy::redundant_clone)]
                 self.hierarchy.insert(parent.to_path_buf(), VirtualChildren::default());
             }
 

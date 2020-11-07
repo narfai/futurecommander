@@ -42,8 +42,8 @@ use rustyline::{
     validate::{self, MatchingBracketValidator, Validator}
 };
 
-static WHITE_PROMPT: &'static str = "\x1b[1;97m>>\x1b[0m ";
-static RED_PROMPT: &'static str = "\x1b[1;91m>>\x1b[0m ";
+static WHITE_PROMPT: &str = "\x1b[1;97m>>\x1b[0m ";
+static RED_PROMPT: &str = "\x1b[1;91m>>\x1b[0m ";
 
 const fn available_commands() -> [&'static str; 18] {
     [
@@ -106,7 +106,7 @@ impl  <'a>VirtualHelper<'a>  {
             if pos <= replacement.len() {
                 replacement.replace_range(..pos, "");
             }
-            Pair { display: command.to_string(), replacement: replacement.clone() }
+            Pair { display: command, replacement }
         }).collect()
     }
 
@@ -116,7 +116,7 @@ impl  <'a>VirtualHelper<'a>  {
             if pos <= replacement.len() {
                 replacement.replace_range(..pos, "");
             }
-            Pair { display: command.to_string(), replacement: replacement.clone() }
+            Pair { display: command, replacement }
         }).collect()
     }
 

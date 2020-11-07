@@ -142,7 +142,7 @@ mod tests {
         assert!(a.is_dir());
         assert!(!a.is_file());
         assert!(!a.is_virtual());
-        assert_eq!(a.to_path(), a_path.clone());
+        assert_eq!(a.to_path(), a_path);
         assert_eq!(a.path(), a_path.as_path());
         assert_eq!(a.name(), Some(OsStr::new("A")));
         assert_eq!(a.as_inner(), &a_path.as_path());
@@ -160,7 +160,7 @@ mod tests {
         assert!(!f.is_dir());
         assert!(f.is_file());
         assert!(!f.is_virtual());
-        assert_eq!(f.to_path(), f_path.clone());
+        assert_eq!(f.to_path(), f_path);
         assert_eq!(f.path(), f_path.as_path());
         assert_eq!(f.name(), Some(OsStr::new("F")));
         assert_eq!(f.as_inner(), &f_path.as_path());
@@ -178,7 +178,7 @@ mod tests {
         assert!(!z.is_dir());
         assert!(!z.is_file());
         assert!(!z.is_virtual());
-        assert_eq!(z.to_path(), z_path.clone());
+        assert_eq!(z.to_path(), z_path);
         assert_eq!(z.path(), z_path.as_path());
         assert_eq!(z.name(), Some(OsStr::new("Z")));
         assert_eq!(z.as_inner(), &z_path.as_path());

@@ -48,10 +48,10 @@ use crate::{
 impl FileSystemAdapter<RealFileSystem> {
     fn _copy_file(&self, src: &Path, dst: &Path, on_read: &dyn Fn(usize)) -> Result<usize, Error> {
         File::open(src)
-            .and_then(|src_file| Ok(BufReader::with_capacity(self.0.read_buffer_size,src_file)))
+            .map(|src_file| BufReader::with_capacity(self.0.read_buffer_size,src_file))
             .and_then(|reader|
                 File::create(dst)
-                    .and_then(|dst_file| Ok((reader, BufWriter::with_capacity(self.0.write_buffer_size,dst_file) ) ) )
+                    .map(|dst_file| (reader, BufWriter::with_capacity(self.0.write_buffer_size,dst_file) ) )
             )
             .and_then(|(mut reader, mut writer)| {
                 let mut read = 0;

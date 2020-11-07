@@ -102,10 +102,7 @@ mod container_integration {
             .unwrap()
             .into_inner();
 
-        assert!(match stated_a.state() {
-            VirtualState::Exists => true,
-            _ => false
-        });
+        assert!(matches!(stated_a.state(), VirtualState::Exists));
 
         let virtual_identity = stated_a.into_existing_virtual().unwrap();
 

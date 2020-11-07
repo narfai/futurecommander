@@ -238,7 +238,7 @@ mod tests {
                         VirtualState::Exists,
                         VirtualPath::from(
                             a_path.clone(),
-                            Some(a_path.clone()),
+                            Some(a_path),
                             Kind::Directory
                         ).unwrap()
                     )
@@ -254,7 +254,7 @@ mod tests {
                         VirtualState::Exists,
                         VirtualPath::from(
                             b_path.clone(),
-                            Some(b_path.clone()),
+                            Some(b_path),
                             Kind::Directory
                         ).unwrap()
                     )
@@ -270,7 +270,7 @@ mod tests {
                         VirtualState::Exists,
                         VirtualPath::from(
                             b_path.clone(),
-                            Some(b_path.clone()),
+                            Some(b_path),
                             Kind::File
                         ).unwrap()
                     )

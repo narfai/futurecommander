@@ -53,7 +53,7 @@ pub struct InitializedImportCommand {
 impl Command<InitializedImportCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
         if ! self.0.path.exists() {
-            return Err(CommandError::DoesNotExists(self.0.path.clone()));
+            return Err(CommandError::DoesNotExists(self.0.path));
         }
 
         container.emit_json(read_to_string(self.0.path.as_path())?)?;
