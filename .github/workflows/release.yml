@@ -39,7 +39,7 @@ jobs:
         with:
           push: true
           tags: fcadeillan/futurecommander:${{ needs.version.outputs.tagname }}
-          cache-from: type=registry,ref=fcadeillan/futurecommander:${{ needs.version.outputs.tagname }}
+          cache-from: type=registry,ref=fcadeillan/futurecommander:latest
           cache-to: type=inline
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
