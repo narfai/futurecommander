@@ -9,13 +9,18 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  docker:
-    name: Build & push Docker image
-    runs-on: ubuntu-latest
+  version:
     steps:
       - uses: actions/checkout@v2
       - id: get_version
         uses: battila7/get-version-action@v2
+      - run: echo ${{ needs.version.outputs.output3 }}
+  docker:
+    name: Build & push Docker image
+    needs: [version]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -30,20 +35,19 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: fcadeillan/futurecommander:${{ steps.get_version.outputs.version }}
-          cache-from: type=registry,ref=fcadeillan/futurecommander:${{ steps.get_version.outputs.version }}
+          tags: fcadeillan/futurecommander:${{ needs.version.outputs.output3 }}
+          cache-from: type=registry,ref=fcadeillan/futurecommander:${{ needs.version.outputs.output3 }}
           cache-to: type=inline
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
   check:
-    needs: [docker]
+    name: Check if release is OK
+    needs: [docker, version]
     runs-on: ubuntu-latest
     container:
-      image: fcadeillan/futurecommander:${{ steps.get_version.outputs.version }}
+      image: fcadeillan/futurecommander:${{ needs.version.outputs.output3 }}
     steps:
       - uses: actions/checkout@v2
-      - id: get_version
-        uses: battila7/get-version-action@v2
       - name: General build
         run: cargo build --verbose --release
       - name: Run lint
@@ -51,24 +55,22 @@ jobs:
       - name: Run tests
         run: cargo test --all --verbose
   release:
-    needs: [docker]
+    needs: [docker, version, check]
     runs-on: ubuntu-latest
     container:
-      image: fcadeillan/futurecommander:${{ steps.get_version.outputs.version }}
+      image: fcadeillan/futurecommander:${{ needs.version.outputs.output3 }}
     steps:
       - uses: actions/checkout@v2
-      - id: get_version
-        uses: battila7/get-version-action@v2
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.get_version.outputs.version }}
-          release_name: Release ${{ steps.get_version.outputs.version }}
+          tag_name: ${{ needs.version.outputs.output3 }}
+          release_name: Release ${{ needs.version.outputs.output3 }}
           body: |
-            Release ${{ steps.get_version.outputs.version }}
+            Release ${{ needs.version.outputs.output3 }}
           draft: false
           prerelease: true
       - name: Linux build
@@ -92,6 +94,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: .//target/x86_64-pc-windows-gnu/release/futurecommander.exe
+          asset_path: ./target/x86_64-pc-windows-gnu/release/futurecommander.exe
           asset_name: futurecommander_win64.exe
           asset_content_type: application/vnd.microsoft.portable-executable
