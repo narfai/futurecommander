@@ -38,83 +38,6 @@ function build_linux {
     echo "$EXEC_DIR/target/release/futurecommander"
 }
 
-function release {
-    go get github.com/itchio/gothub
-
-    if [[ -z "${GITHUB_TOKEN}" ]]; then
-        exit 1
-    fi
-
-    branch=$(git rev-parse --abbrev-ref HEAD | tr \/ . | tr \_ .)
-    build=$(date "+%y%m%d%s")
-
-    linux_file=$(build_linux)
-    echo "Build $linux_file OK"
-
-    windows_file=$(build_windows)
-    echo "Build $windows_file OK"
-
-    user_cargo "clippy --all-targets --all-features -- -D warnings"
-
-    existing_remote=$(git remote -v | grep -i release | xargs)
-    echo "EXISTING REMOTE : ${existing_remote}"
-    if [[ ! -z "${existing_remote}" ]]; then
-        git remote remove release 2> /dev/null
-    fi
-
-    git remote add release https://narfai:${GITHUB_TOKEN}@github.com/narfai/futurecommander.git 2> /dev/null
-
-    existing_local_tags=$(git tag | grep -i ${branch} | xargs)
-    echo "LOCAL TAGS : ${existing_local_tags}"
-    if [[ -z  "${existing_local_tags}" ]]; then
-        git tag "${branch}" 2> /dev/null
-    fi
-
-    existing_remote_tags=$(git ls-remote --tags release | grep -i ${branch} | xargs)
-    echo "REMOTE TAGS : ${existing_local_tags}"
-    if [[ -z  "${existing_remote_tags}" ]]; then
-        git push --tags release 2> /dev/null
-    fi
-
-
-    if [[ -z "$(${GOTHUB} info --user narfai --repo futurecommander | jq '.Releases' | grep -i ${branch} | xargs)" ]]; then
-        echo "Create new release"
-        ${GOTHUB} release \
-           --user narfai \
-           --repo futurecommander \
-           --tag "${branch}" \
-           --name "${branch}" \
-           --description "Auto-release ${branch} ( Build $build )" \
-           --pre-release
-    else
-        echo "Update existing release"
-        ${GOTHUB} edit \
-            --user narfai \
-            --repo futurecommander \
-            --tag "${branch}" \
-            --name "${branch}" \
-            --description "Auto-release ${branch} ( Build $build )"
-    fi
-
-    echo "Upload $linux_file"
-    ${GOTHUB} upload \
-        --user narfai \
-        --repo futurecommander \
-        --tag "${branch}" \
-        --name "futurecommander_linux64_${branch}" \
-        --file "$linux_file" \
-        --replace
-
-    echo "Upload $windows_file"
-    ${GOTHUB} upload \
-        --user narfai \
-        --repo futurecommander \
-        --tag "${branch}" \
-        --name "futurecommander_win64_${branch}.exe" \
-        --file "$windows_file" \
-        --replace
-}
-
 echo "BARE UID"
 if [[ ${BARE_UID} -ne 0 ]]; then
     useradd -u "${BARE_UID}" -g staff -d /usr/src/futurecommander futurecommander 2> /dev/null
@@ -149,9 +72,6 @@ case "$1" in
         rm -Rf "${EXEC_DIR}/samples/dynamic/*"
         user_cargo "tarpaulin --all --count --out Xml -- --test-threads=1"
         bash <(curl -s https://codecov.io/bash)
-        ;;
-    release)
-        release
         ;;
     run|"")
         user_cargo run
