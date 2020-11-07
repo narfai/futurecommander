@@ -56,12 +56,12 @@ impl Position {
         (self.x, self.y)
     }
 
-    fn is_contained_by(&self, area: &Area) -> bool {        
+    fn is_contained_by(&self, area: &Area) -> bool {
         self.x >= area.from.x && self.x <= area.to.x && self.y >= area.from.y && self.y <= area.to.y
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 struct Area {
     pub from: Position,
     pub to: Position
@@ -96,8 +96,8 @@ struct RenderCell {
 impl SkipCell {
     pub fn choose_to_skip(position: Position) -> CellChoice {
         CellChoice::Skip(
-            SkipCell { 
-                position 
+            SkipCell {
+                position
             }
         )
     }
@@ -117,43 +117,108 @@ impl SkipCell {
 impl RenderCell {
     pub fn render<W: Write> (self, out: &mut W, position: Position) {
         write!(
-            out, 
-            "{}{}{}{}", 
-            cursor::Goto(position.x + 1, position.y + 1),             
+            out,
+            "{}{}{}{}",
+            cursor::Goto(position.x + 1, position.y + 1),
             self.foreground_color,
             self.background_color,
             self.content
-        ).unwrap(); 
+        ).unwrap();
     }
 }
 
-fn bordered_area(area: Area) -> impl Fn(CellChoice) -> CellChoice {    
+fn bordered_area(area: Area) -> impl Fn(CellChoice) -> CellChoice {
     move |cellchoice| match cellchoice {
         CellChoice::Render(_) => cellchoice,
-        CellChoice::Skip(cell) => { 
-            let position = cell.position;
-            if position.is_contained_by(&area) {                
-                match position.to_tuple() {                    
+        CellChoice::Skip(cell) => {
+            if cell.position.is_contained_by(&area) {
+                match cell.position.to_tuple() {
                     (x, y) if x == area.from.x && y == area.from.y => cell.choose_to_render(TOP_LEFT_CORNER),
                     (x, y) if x == area.to.x && y == area.from.y => cell.choose_to_render(TOP_RIGHT_CORNER),
                     (x, y) if x == area.to.x && y == area.to.y => cell.choose_to_render(BOTTOM_RIGHT_CORNER),
                     (x, y) if x == area.from.x && y == area.to.y => cell.choose_to_render(BOTTOM_LEFT_CORNER),
-                    (x, _) if x == area.from.x || x == area.to.x => cell.choose_to_render(VERT_BOUNDARY),                        
-                    (_, y) if y == area.from.y || y == area.to.y => cell.choose_to_render(HORZ_BOUNDARY),                        
+                    (x, _) if x == area.from.x || x == area.to.x => cell.choose_to_render(VERT_BOUNDARY),
+                    (_, y) if y == area.from.y || y == area.to.y => cell.choose_to_render(HORZ_BOUNDARY),
                     _ => CellChoice::Skip(cell)
-                }                                    
+                }
             } else {
                 CellChoice::Skip(cell)
-            }            
+            }
         }
     }
 }
 
+#[derive(Debug)]
+struct ExplorerState {
+    pub selected: Option<u16>,
+    pub nodes: Vec<String>
+}
 
-fn render<W: Write> (out: &mut W, area: Area, cell_router: &dyn Fn(CellChoice) -> CellChoice){    
+fn explorer(area: Area, state: ExplorerState) -> impl Fn(CellChoice) -> CellChoice {
+    compose(
+        bordered_area(area),
+        move |cellchoice| match cellchoice {
+            CellChoice::Render(_) => cellchoice,
+            CellChoice::Skip(cell) => {
+                let inside_area = area.inside(1);
+                if cell.position.is_contained_by(&inside_area) {
+                    let inner = Position {
+                        y: cell.position.y - inside_area.from.y,
+                        x: cell.position.x - inside_area.from.x,
+                    };
+                    if inner.y < state.nodes.len() as u16{
+                        if let Some(c) = state.nodes[inner.y as usize].chars().nth(inner.x as usize) {
+                            cell.choose_to_render(&String::from(c))
+                        } else {
+                            CellChoice::Skip(cell)
+                        }
+                    } else {
+                        CellChoice::Skip(cell)
+                    }
+                } else {
+                    CellChoice::Skip(cell)
+                }
+            }
+        }
+    )
+}
+
+#[derive(Debug)]
+struct LayoutState {
+    pub left_explorer: ExplorerState,
+    pub right_explorer: ExplorerState
+}
+
+fn layout(area: Area, state: LayoutState)  -> impl Fn(CellChoice) -> CellChoice {
+    let middle = Position{
+        x: round::ceil((area.to.x/2).into(), 0) as u16,
+        y: round::ceil((area.to.y/2).into(), 0) as u16,
+    };
+    compose(
+        explorer(
+            Area {
+                from: Position { x: area.from.x, y: area.from.y },
+                to: Position { x: middle.x, y: area.to.y - 1 },
+            },
+            state.left_explorer
+        ),
+        explorer(
+            Area {
+                from: Position { x: middle.x + 1, y: area.from.y },
+                to: Position { x: area.to.x - 1, y: area.to.y - 1},
+            },
+            state.right_explorer
+        ),
+
+    )
+}
+
+
+
+fn render<W: Write> (out: &mut W, area: Area, cell_router: &dyn Fn(CellChoice) -> CellChoice){
     for x in area.from.x..area.to.x {
-        for y in area.from.y..area.to.y {        
-            let position = Position{x, y};    
+        for y in area.from.y..area.to.y {
+            let position = Position{x, y};
             match cell_router(SkipCell::choose_to_skip(position)) {
                 CellChoice::Render(cell) => cell.render(out, position),
                 CellChoice::Skip(_) => { write!(out, "{}{}{}", cursor::Goto(x + 1, y + 1), color::Bg(color::Blue), " ").unwrap(); }
@@ -162,7 +227,6 @@ fn render<W: Write> (out: &mut W, area: Area, cell_router: &dyn Fn(CellChoice) -
         }
     }
 }
-
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -183,7 +247,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     write!(stdout, "{}", termion::clear::All).unwrap();
     stdout.flush().unwrap();
 
-    // let panel = ExplorerPanel::default();
+    let layout_state = LayoutState {
+        left_explorer: ExplorerState {
+            selected: None,
+            nodes: vec!["A".into(), "B".into(), "C".into()]
+        },
+        right_explorer: ExplorerState {
+            selected: None,
+            nodes: vec!["C".into(), "D".into(), "E".into()]
+        }
+    };
 
     for c in stdin.events() {
         let event = c.unwrap();
@@ -194,39 +267,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     MouseEvent::Press(_, x, y) => {
                         // write!(stdout, "{}x", termion::cursor::Goto(x, y)).unwrap();
                         if let Some(x) = termwidth {
-                            if let Some(y) = termheight{           
-                                let middle = Position{
-                                    x: round::ceil((x/2).into(), 0) as u16,
-                                    y: round::ceil((y/2).into(), 0) as u16,
-                                };                     
-                                render(&mut stdout, 
-                                    Area {
-                                        from: Position { x: 0, y: 0 },
-                                        to: Position { x, y },
-                                    },                                    
-                                    &compose(
-                                        bordered_area(
-                                            Area {
-                                                from: Position { x: 0, y: 0 },
-                                                to: Position { x: middle.x, y: y - 1 },
-                                            }                                        
-                                        ),
-                                        compose(
-                                                bordered_area(Area {
-                                                    from: Position { x: middle.x + 1, y: 0 },
-                                                    to: Position { x: x - 1, y: y - 1 },
-                                                }),
-                                                bordered_area((Area {
-                                                    from: Position { x: middle.x + 1, y: 0 },
-                                                    to: Position { x: x - 1, y: y - 1 },
-                                                }).inside(2)),
-                                        ),
-                                                
-                                    )
+                            if let Some(y) = termheight {
+                                let render_area = Area {
+                                    from: Position { x: 0, y: 0 },
+                                    to: Position { x, y },
+                                };
+                                render(
+                                    &mut stdout,
+                                    render_area,
+                                    &layout(render_area, &layout_state)
                                 );
                             }
                         };
-                        
+
                         /* let request = tonic::Request::new(stream::iter(vec![
                             RemoveNodeRequest {
                                 status:RequestStatus::Initiating as i32,
@@ -256,7 +309,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             },
             _ => {}
-        }        
+        }
         stdout.flush().unwrap();
     }
 
@@ -277,4 +330,3 @@ ExplorerPanel
 ActionMenu
     MenuEntry
 */
-
