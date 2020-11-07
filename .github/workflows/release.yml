@@ -10,6 +10,8 @@ env:
 
 jobs:
   version:
+    name: Retrieve proper tag name for other jobs
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - id: get_version
