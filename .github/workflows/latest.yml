@@ -1,4 +1,4 @@
-name: Master CI/CD
+name: Latest
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  docker_build_and_push:
+  docker:
     name: Build & push Docker image
     runs-on: ubuntu-latest
     steps:
@@ -32,7 +32,7 @@ jobs:
           tags: fcadeillan/futurecommander:latest
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
-  build_and_test:
+  check:
     runs-on: fcadeillan/futurecommander:latest
     steps:
     - uses: actions/checkout@v2

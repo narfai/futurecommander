@@ -2,9 +2,10 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
+![Master CI](https://github.com/actions/narfai/futurecommander/workflows/Latest/badge.svg)
+
 [![codecov](https://codecov.io/gh/narfai/futurecommander/branch/master/graph/badge.svg)](https://codecov.io/gh/narfai/futurecommander)
 
-![Docker Build Status](https://img.shields.io/docker/cloud/build/fcadeillan/futurecommander.svg)
 
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=narfai/futurecommander)](https://dependabot.com)
 
