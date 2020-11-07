@@ -68,7 +68,7 @@ impl <E, F> Event <E, F> for MoveEvent
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
-    fn atomize(&self, fs: &F, guard: &mut Guard) -> Result<AtomicTransaction, DomainError> {
+    fn atomize(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
         let source = fs.status(self.source())?;
 
         if !source.exists() {

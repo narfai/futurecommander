@@ -7,5 +7,3 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 futurecommander_shell = { version = "0.4.0", path = "../futurecommander_shell" }
-futurecommander_daemon = { version = "0.1.0", path = "../futurecommander_daemon" }
-futurecommander_client = { version = "0.1.0", path = "../futurecommander_client" }

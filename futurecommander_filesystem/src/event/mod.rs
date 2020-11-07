@@ -61,10 +61,10 @@ pub trait Event<E, F> : SerializableEvent + Debug + Send
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
-    fn atomize(&self, fs: &F, guard: &mut capability::Guard) -> Result<AtomicTransaction, DomainError>;
+    fn atomize(&self, fs: &F, guard: &mut dyn capability::Guard) -> Result<AtomicTransaction, DomainError>;
 }
 
-pub type RawVirtualEvent = Event<EntryAdapter<VirtualStatus>, FileSystemAdapter<VirtualFileSystem>>;
+pub type RawVirtualEvent = dyn Event<EntryAdapter<VirtualStatus>, FileSystemAdapter<VirtualFileSystem>>;
 pub struct VirtualEvent(pub Box<RawVirtualEvent>);
 impl VirtualEvent {
     pub fn as_inner(&self) -> &RawVirtualEvent {
@@ -75,7 +75,7 @@ impl VirtualEvent {
     }
 }
 
-pub type RawRealEvent = Event<EntryAdapter<PathBuf>, FileSystemAdapter<RealFileSystem>>;
+pub type RawRealEvent = dyn Event<EntryAdapter<PathBuf>, FileSystemAdapter<RealFileSystem>>;
 
 #[derive(Debug)]
 pub struct RealEvent(pub Box<RawRealEvent>);

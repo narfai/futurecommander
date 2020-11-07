@@ -35,14 +35,14 @@ use crate::{
 
 #[typetag::serde(tag = "type")]
 pub trait SerializableEvent : Debug {
-    fn serializable(&self) -> Box<SerializableEvent>;
+    fn serializable(&self) -> Box<dyn SerializableEvent>;
     fn virt(&self) -> VirtualEvent;
     fn real(&self) -> RealEvent;
 }
 
 #[typetag::serde]
 impl SerializableEvent for CopyEvent {
-    fn serializable(&self) -> Box<SerializableEvent> {
+    fn serializable(&self) -> Box<dyn SerializableEvent> {
         Box::new(self.clone())
     }
     fn virt(&self) -> VirtualEvent { VirtualEvent(Box::new(self.clone())) }
@@ -51,7 +51,7 @@ impl SerializableEvent for CopyEvent {
 
 #[typetag::serde]
 impl SerializableEvent for CreateEvent {
-    fn serializable(&self) -> Box<SerializableEvent> {
+    fn serializable(&self) -> Box<dyn SerializableEvent> {
         Box::new(self.clone())
     }
     fn virt(&self) -> VirtualEvent { VirtualEvent(Box::new(self.clone())) }
@@ -60,7 +60,7 @@ impl SerializableEvent for CreateEvent {
 
 #[typetag::serde]
 impl SerializableEvent for MoveEvent {
-    fn serializable(&self) -> Box<SerializableEvent> {
+    fn serializable(&self) -> Box<dyn SerializableEvent> {
         Box::new(self.clone())
     }
     fn virt(&self) -> VirtualEvent { VirtualEvent(Box::new(self.clone())) }
@@ -69,7 +69,7 @@ impl SerializableEvent for MoveEvent {
 
 #[typetag::serde]
 impl SerializableEvent for RemoveEvent {
-    fn serializable(&self) -> Box<SerializableEvent> {
+    fn serializable(&self) -> Box<dyn SerializableEvent> {
         Box::new(self.clone())
     }
     fn virt(&self) -> VirtualEvent { VirtualEvent(Box::new(self.clone())) }

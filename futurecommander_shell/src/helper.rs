@@ -232,7 +232,7 @@ impl <'a> Highlighter for VirtualHelper<'a>  {
         self.highlighter.highlight(line, pos)
     }
 
-    fn highlight_prompt<'b, 's: 'b, 'p: 'b>(&'s self, _prompt: &'p str, default: bool) -> Cow<'b, str> {
+    fn highlight_prompt<'b, 's: 'b, 'p: 'b>(&'s self, _prompt: &'p str, _default: bool) -> Cow<'b, str> {
         if self.container.is_empty() {
             Borrowed(WHITE_PROMPT)
         } else {

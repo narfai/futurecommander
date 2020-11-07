@@ -73,25 +73,6 @@ Command can be :
 
 * release ( needs `-e "GITHUB_TOKEN=..."` ) : test, lint and generate a pre-release on github containing both binaries
 
-## GUI
-
-Needs :
-- yarn
-- nodejs environment
-- cargo and a working rust 2018 environment
-- wasm-pack https://rustwasm.github.io/wasm-pack/installer/#
-
-```
-# Run daemon
-cargo run daemon &
-
-cd futurecommander_gui
-
-yarn install --dev
-yarn dev
-
-```
-
 ## Trello
 
 https://trello.com/b/A2BvQdR9/futurecommander
