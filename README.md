@@ -2,7 +2,9 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-![Master CI](https://github.com/actions/narfai/futurecommander/workflows/Latest/badge.svg)
+![Master CI](https://github.com/narfai/futurecommander/workflows/Latest/badge.svg)
+
+![Release CI/CD](https://github.com/narfai/futurecommander/workflows/Release/badge.svg)
 
 [![codecov](https://codecov.io/gh/narfai/futurecommander/branch/master/graph/badge.svg)](https://codecov.io/gh/narfai/futurecommander)
 
