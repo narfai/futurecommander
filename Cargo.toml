@@ -5,5 +5,5 @@ members = [
     "futurecommander_filesystem",
     "futurecommander_representation",
     "grpc_poc",
-    "futurecommander_proto", "futurecommander_tui"]
+    "futurecommander_proto", "futurecommander_tui", "futurecommander_daemon"]
 exclude = []

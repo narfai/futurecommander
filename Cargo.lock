@@ -210,6 +210,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "futurecommander_daemon"
+version = "0.1.0"
+dependencies = [
+ "futurecommander_proto",
+ "futures",
+ "prost",
+ "tokio",
+ "tonic",
+]
+
+[[package]]
 name = "futurecommander_filesystem"
 version = "0.4.0"
 dependencies = [
