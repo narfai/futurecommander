@@ -18,10 +18,9 @@ message Error {
 message Entry {
     string path = 1;
     string name = 2;
-    bool is_dir = 3;
+    bool is_dir = 3;   
     bool is_file = 4;
-    bool exists = 5;
-    bool is_virtual = 6;
+    bool is_virtual = 5;
 }
 
 message ListDirectoryRequest {
@@ -31,6 +30,6 @@ message ListDirectoryRequest {
 message ListDirectoryResponse {
     oneof response {
         Entry entry = 1;
-        Error error = 2;
+        Error error = 11;
     }
 }

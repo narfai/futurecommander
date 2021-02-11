@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //        Ok(req)
 //    });
      let request = tonic::Request::new(ListDirectoryRequest {
-        path:String::from("A")
+        path:String::from("/home/narfai/current2/work_own_project/futurecommander/samples/static/A")
     });
 
     let response = client.list_directory(request).await?;

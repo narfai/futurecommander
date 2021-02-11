@@ -12,3 +12,8 @@ tonic = {version="0.3.1",features = ["tls"]}
 tokio = {version="0.2",features = ["full"]}
 futures = "0.3"
 futurecommander_proto = { version = "0.0.1", path = "../futurecommander_proto" }
+futurecommander_filesystem = { version = "0.4.0", path = "../futurecommander_filesystem" }
+
+[[bin]]
+name = "daemon"
+path = "src/main.rs"

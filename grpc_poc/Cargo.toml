@@ -14,9 +14,5 @@ futures = "0.3"
 futurecommander_proto = { version = "0.0.1", path = "../futurecommander_proto" }
 
 [[bin]]
-name = "server"
-path = "src/server.rs"
-
-[[bin]]
 name = "client"
 path = "src/client.rs"
