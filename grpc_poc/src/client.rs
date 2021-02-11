@@ -4,19 +4,20 @@ use futures::stream;
 
 use futurecommander_proto::vfs::{
     virtual_file_system_client::{VirtualFileSystemClient},
-//    Entry,
-//    ListDirectoryRequest,
-//    ListDirectoryResponse,
+    Error,
+    Entry,
+    ListDirectoryRequest,
+    ListDirectoryResponse,
 //    CreateNodeRequest,
 //    CreateNodeResponse,
-    RemoveNodeRequest,
-    RemoveNodeResponse,
+//    RemoveNodeRequest,
+//    RemoveNodeResponse,
 //    CopyNodeRequest,
 //    CopyNodeResponse,
 //    MoveNodeRequest,
 //    MoveNodeResponse,
-    RequestStatus,
-    ResponseStatus,
+//    RequestStatus,
+//    ResponseStatus,
 };
 
 // required for JWT
@@ -49,25 +50,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //        );
 //        Ok(req)
 //    });
-     let request = tonic::Request::new(stream::iter(vec![
-         RemoveNodeRequest {
-            status:RequestStatus::Initiating as i32,
-            recursive: true,
-            path:String::from("A")
-         },
-         RemoveNodeRequest {
-            status:RequestStatus::Initiating as i32,
-            recursive: true,
-            path:String::from("B")
-         },
-         RemoveNodeRequest {
-            status:RequestStatus::Initiating as i32,
-            recursive: true,
-            path:String::from("C")
-         },
-     ]));
+     let request = tonic::Request::new(ListDirectoryRequest {
+        path:String::from("A")
+    });
 
-    let response = client.remove_node(request).await?;
+    let response = client.list_directory(request).await?;
     let mut inbound = response.into_inner();
 
      while let Some(res) = inbound.message().await? {

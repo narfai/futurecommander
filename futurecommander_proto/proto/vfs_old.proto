@@ -1,0 +1,94 @@
+syntax = "proto2";
+
+package vfs;
+
+service VirtualFileSystem {
+  // rpc CreateNode(stream CreateNodeRequest) returns (stream CreateNodeResponse);
+  rpc RemoveNode(stream RemoveNodeRequest) returns (stream RemoveNodeResponse);
+  // rpc ListDirectory(stream ListDirectoryRequest) returns (stream ListDirectoryResponse);
+  // rpc CopyNode(stream CopyNodeRequest) returns (stream CopyNodeResponse);
+  // rpc MoveNode(stream MoveNodeRequest) returns (stream MoveNodeResponse);
+}
+
+enum RequestStatus {
+    INITIATING = 0;
+    SKIP = 1;
+    ALLOW = 2;
+    SKIP_ALL = 3;
+    ALLOW_ALL = 4;
+    CANCEL = 5;
+}
+
+enum ResponseStatus {
+    PROCESSING = 0;
+    WAIT = 1;
+    ERROR = 2;
+    DONE = 3;
+}
+
+message Entry {
+    required string path = 1;
+    required string name = 2;
+    required bool is_dir = 3;
+    required bool is_file = 4;
+    required bool exists = 5;
+    required bool is_virtual = 6;
+}
+
+message ListDirectoryRequest {
+    required string path = 1;
+}
+message ListDirectoryResponse {
+    required ResponseStatus status = 1 [default = PROCESSING];
+    // TODO think about the one of or not
+    optional Entry entry = 2;
+    // TODO think about making a proper error def or not
+    optional string message = 3;
+    optional string error = 4;
+}
+
+message CreateNodeRequest {
+    required RequestStatus status = 1;
+    required string path = 2;
+    required bool recursive = 3;
+    required bool overwrite = 4;
+}
+message CreateNodeResponse {
+    required ResponseStatus status = 1;
+    optional string message = 2;
+    optional string error = 3;
+}
+
+message RemoveNodeRequest {
+    required RequestStatus status = 1;
+    required string path = 2;
+    required bool recursive = 3;
+}
+message RemoveNodeResponse {
+    required ResponseStatus status = 1;
+    optional string message = 2;
+    optional string error = 3;
+}
+
+message CopyNodeRequest {
+    required RequestStatus status = 1;
+    required string path = 2;
+    required bool recursive = 3;
+    required bool merge = 4;
+}
+message CopyNodeResponse {
+    required ResponseStatus status = 1;
+    optional Entry entry = 2;
+    optional string message = 3;
+    optional string error = 4;
+}
+
+message MoveNodeRequest {
+    required RequestStatus status = 1;
+}
+message MoveNodeResponse {
+    required ResponseStatus status = 1;
+    optional Entry entry = 2;
+    optional string message = 4;
+    optional string error = 3;
+}

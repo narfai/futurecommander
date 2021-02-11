@@ -3,19 +3,21 @@ use tonic::{transport::Server, Request, Response, Status};
 
 use futurecommander_proto::vfs::{
     virtual_file_system_server::{VirtualFileSystem,VirtualFileSystemServer},
-//    Entry,
-//    ListDirectoryRequest,
-//    ListDirectoryResponse,
+    Error,
+    Entry,
+    ListDirectoryRequest,
+    ListDirectoryResponse,
+    list_directory_response::Response::Entry as ListEntry,
 //    CreateNodeRequest,
 //    CreateNodeResponse,
-    RemoveNodeRequest,
-    RemoveNodeResponse,
+//    RemoveNodeRequest,
+//    RemoveNodeResponse,
 //    CopyNodeRequest,
 //    CopyNodeResponse,
 //    MoveNodeRequest,
 //    MoveNodeResponse,
-    RequestStatus,
-    ResponseStatus,
+//    RequestStatus,
+//    ResponseStatus,
 };
 
 #[derive(Default)]
@@ -23,34 +25,43 @@ pub struct Daemon {}
 
 #[tonic::async_trait]
 impl VirtualFileSystem for Daemon {
-    type RemoveNodeStream = mpsc::Receiver<Result<RemoveNodeResponse, Status>>;
-    async fn remove_node(
+    type ListDirectoryStream = mpsc::Receiver<Result<ListDirectoryResponse, Status>>;
+    async fn list_directory(
         &self,
-        request: Request<tonic::Streaming<RemoveNodeRequest>>,
-    ) -> Result<Response<Self::RemoveNodeStream>, Status> {
-        let mut streamer = request.into_inner();
+        request: Request<ListDirectoryRequest>,
+    ) -> Result<Response<Self::ListDirectoryStream>, Status> {        
         let (mut tx, rx) = mpsc::channel(4);
-        tokio::spawn(async move {
-            while let Some(req) = streamer.message().await.unwrap(){
-                println!("Got a delete request {:?}", req);
-                tx.send(Ok(RemoveNodeResponse {
-                    status: ResponseStatus::Processing as i32,
-                    message: Some(format!("{:?}/A", req.path)),
-                    error: None
-                })).await;
-                tx.send(Ok(RemoveNodeResponse {
-                    status: ResponseStatus::Processing as i32,
-                    message: Some(format!("{:?}/B", req.path)),
-                    error: None
-                }))
-                .await;
-                tx.send(Ok(RemoveNodeResponse {
-                    status: ResponseStatus::Done as i32,
-                    message: None,
-                    error: None
-                }))
-                .await;
-            }
+        tokio::spawn(async move {            
+            println!("Got a delete request {:?}", request);
+            let req = request.into_inner();
+            tx.send(Ok(ListDirectoryResponse {
+                response: Some(
+                    ListEntry(
+                        Entry {
+                            path: format!("{:?}/A", req.path),
+                            name: String::from("A"),
+                            is_dir: true,
+                            is_file: false,
+                            exists: true,
+                            is_virtual: true
+                        }
+                    )
+                )
+            })).await;
+            tx.send(Ok(ListDirectoryResponse {
+                response: Some(
+                    ListEntry(
+                        Entry {
+                            path: format!("{:?}/A", req.path),
+                            name: String::from("A"),
+                            is_dir: true,
+                            is_file: false,
+                            exists: true,
+                            is_virtual: true
+                        }
+                    )
+                )
+            })).await;
         });
         Ok(Response::new(rx))
     }
