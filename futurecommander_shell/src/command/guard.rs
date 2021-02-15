@@ -52,6 +52,7 @@ impl Guard for InteractiveGuard {
 
         if ! default && ! self.allow_all.authorize(capability) {
             let mut input = String::new();
+            // TODO / TO THINK : guards have to be serialized, therefor they can't embbed a pointer to a external resource (here, stdout)
             println!("Allow {} for target {} ?([skip]/skip_all/allow/allow_all/cancel) : ", capability, target.to_string_lossy());
             stdin().read_line(&mut input)?;
 

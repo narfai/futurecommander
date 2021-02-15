@@ -160,6 +160,10 @@ impl Delayer for Container {
     fn delay(&mut self, event: Self::Event, guard: RegistrarGuard) {
         self.event_queue.push_back((RealEvent(event), guard));
     }
+
+    fn delay(&mut self, transaction: AtomicTransaction) {
+
+    }
 }
 
 
@@ -168,6 +172,12 @@ impl Listener<&RawVirtualEvent> for Container {
         event.atomize(&self.virtual_fs, &mut guard)?
              .apply(&mut self.virtual_fs)?;
         Ok(guard)
+    }
+
+    //TODO Serialize the transaction, not the event + guard
+    fn exp_emit(&mut self, transaction: AtomicTransaction) -> Result<(),DomainError>{
+        transaction.apply(&mut self.virtual_fs)?;
+        Ok(())
     }
 }
 
