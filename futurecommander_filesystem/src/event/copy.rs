@@ -30,9 +30,6 @@ use crate::{
         Capability,
         Guard
     },
-    event::{
-        Event
-    },
     port::{
         Entry,
         ReadableFileSystem,
@@ -50,7 +47,6 @@ pub struct CopyEvent {
 }
 
 impl CopyEvent {
-    //App
     pub fn new(source: &Path, destination: &Path, merge: bool, overwrite: bool) -> CopyEvent {
         CopyEvent {
             source: source.to_path_buf(),
@@ -86,14 +82,18 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &CopyEvent, fs: &
                 if guard.authorize(Capability::Merge, event.merge(), event.destination())? {
                     for child in fs.read_dir(source.path())? {
                         transaction.merge(
-                            CopyEvent::new(
-                                child.path(),
-                                destination.path()
-                                    .join(child.name().unwrap())
-                                    .as_path(),
-                                    event.merge(),
-                                    event.overwrite()
-                            ).atomize(fs, guard)?
+                            atomize(
+                                &CopyEvent::new(
+                                    child.path(),
+                                    destination.path()
+                                        .join(child.name().unwrap())
+                                        .as_path(),
+                                        event.merge(),
+                                        event.overwrite()
+                                ),
+                                fs, 
+                                guard
+                            )?
                         );
                     }
                 }
@@ -120,14 +120,18 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &CopyEvent, fs: &
         });
         for child in fs.read_maintained(source.path())? {
             transaction.merge(
-                CopyEvent::new(
-                    child.path(),
-                    destination.path()
-                        .join(child.name().unwrap())
-                        .as_path(),
-                        event.merge(),
-                        event.overwrite()
-                ).atomize(fs, guard)?
+                atomize(
+                    &CopyEvent::new(
+                        child.path(),
+                        destination.path()
+                            .join(child.name().unwrap())
+                            .as_path(),
+                            event.merge(),
+                            event.overwrite()
+                    ),
+                    fs, 
+                    guard
+                )?
             );
         }
     } else if source.is_file() {
@@ -138,15 +142,6 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &CopyEvent, fs: &
     }
     Ok(transaction)
 } 
-
-impl <E, F> Event <E, F> for CopyEvent
-    where F: ReadableFileSystem<Item=E>,
-          E: Entry {
-
-    fn atomize(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
-       atomize(self, fs, guard)
-    }
-}
 
 
 #[cfg(not(tarpaulin_include))]
@@ -170,15 +165,18 @@ mod real_tests {
         let chroot = Samples::init_simple_chroot("copy_operation_dir");
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
-        CopyEvent::new(
-            chroot.join("RDIR").as_path(),
-            chroot.join("COPIED").as_path(),
-            false,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CopyEvent::new(
+                chroot.join("RDIR").as_path(),
+                chroot.join("COPIED").as_path(),
+                false,
+                false
+            ), 
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(chroot.join("RDIR/RFILEA").exists());
         assert!(chroot.join("COPIED/RFILEA").exists());
@@ -189,15 +187,18 @@ mod real_tests {
         let chroot = Samples::init_simple_chroot("copy_operation_dir_merge_overwrite");
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
-        CopyEvent::new(
-            chroot.join("RDIR").as_path(),
-            chroot.join("RDIR2").as_path(),
-            true,
-            true
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CopyEvent::new(
+                chroot.join("RDIR").as_path(),
+                chroot.join("RDIR2").as_path(),
+                true,
+                true
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(chroot.join("RDIR/RFILEB").exists());
         assert!(chroot.join("RDIR2/RFILEA").exists());
@@ -214,15 +215,18 @@ mod real_tests {
         let chroot = Samples::init_simple_chroot("copy_operation_file");
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
-        CopyEvent::new(
-            chroot.join("RDIR/RFILEB").as_path(),
-            chroot.join("RDIR2/RFILEB").as_path(),
-            false,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CopyEvent::new(
+                chroot.join("RDIR/RFILEB").as_path(),
+                chroot.join("RDIR2/RFILEB").as_path(),
+                false,
+                false
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(chroot.join("RDIR/RFILEB").exists());
         assert!(chroot.join("RDIR2/RFILEB").exists());
@@ -237,15 +241,18 @@ mod real_tests {
         let chroot = Samples::init_simple_chroot("copy_operation_file_overwrite");
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
-        CopyEvent::new(
-            chroot.join("RDIR/RFILEB").as_path(),
-            chroot.join("RDIR2/RFILEB").as_path(),
-            false,
-            true
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CopyEvent::new(
+                chroot.join("RDIR/RFILEB").as_path(),
+                chroot.join("RDIR2/RFILEB").as_path(),
+                false,
+                true
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(chroot.join("RDIR/RFILEB").exists());
         assert!(chroot.join("RDIR2/RFILEB").exists());
@@ -280,15 +287,18 @@ mod virtual_tests {
         let samples_path = Samples::static_samples_path();
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        CopyEvent::new(
-            samples_path.join("A").as_path(),
-            samples_path.join("Z").as_path(),
-            false,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CopyEvent::new(
+                samples_path.join("A").as_path(),
+                samples_path.join("Z").as_path(),
+                false,
+                false
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("Z").as_path()).unwrap());
         assert!(fs.as_inner().virtual_state().unwrap().is_directory(samples_path.join("Z").as_path()).unwrap());
@@ -303,15 +313,18 @@ mod virtual_tests {
         let gitkeep = samples_path.join("B/.gitkeep");
         fs.as_inner_mut().mut_sub_state().attach(gitkeep.as_path(),Some(gitkeep.as_path()), Kind::File).unwrap();
 
-        CopyEvent::new(
-            samples_path.join("B").as_path(),
-            samples_path.join("A").as_path(),
-            true,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CopyEvent::new(
+                samples_path.join("B").as_path(),
+                samples_path.join("A").as_path(),
+                true,
+                false
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("A/D").as_path()).unwrap());
         assert!(fs.as_inner().virtual_state().unwrap().is_directory(samples_path.join("A/D").as_path()).unwrap());
@@ -322,15 +335,18 @@ mod virtual_tests {
         let samples_path = Samples::static_samples_path();
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        CopyEvent::new(
-            samples_path.join("F").as_path(),
-            samples_path.join("Z").as_path(),
-            false,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CopyEvent::new(
+                samples_path.join("F").as_path(),
+                samples_path.join("Z").as_path(),
+                false,
+                false
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("Z").as_path()).unwrap());
         assert!(fs.as_inner().virtual_state().unwrap().is_file(samples_path.join("Z").as_path()).unwrap());
@@ -341,15 +357,18 @@ mod virtual_tests {
         let samples_path = Samples::static_samples_path();
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        CopyEvent::new(
-            samples_path.join("F").as_path(),
-            samples_path.join("A/C").as_path(),
-            false,
-            true
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CopyEvent::new(
+                samples_path.join("F").as_path(),
+                samples_path.join("A/C").as_path(),
+                false,
+                true
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+        .apply(&mut fs)
+        .unwrap();
 
         assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("A/C").as_path()).unwrap());
         assert!(fs.as_inner().virtual_state().unwrap().is_file(samples_path.join("A/C").as_path()).unwrap());

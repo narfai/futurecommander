@@ -31,10 +31,6 @@ use crate::{
         Guard,
         Capability
     },
-    event::{
-        Event,
-        SerializableKind
-    },
     port::{
         Entry,
         ReadableFileSystem,
@@ -42,6 +38,34 @@ use crate::{
         AtomicTransaction
     },
 };
+
+
+#[derive(Serialize, Deserialize, Clone, Debug, Copy)]
+pub enum SerializableKind {
+    File,
+    Directory,
+    Unknown
+}
+
+impl From<Kind> for SerializableKind {
+    fn from(kind: Kind) -> Self {
+        match kind {
+            Kind::File => SerializableKind::File,
+            Kind::Directory => SerializableKind::Directory,
+            Kind::Unknown => SerializableKind::Unknown,
+        }
+    }
+}
+
+impl From<SerializableKind> for Kind {
+    fn from(kind: SerializableKind) -> Self {
+        match kind {
+            SerializableKind::File => Kind::File,
+            SerializableKind::Directory => Kind::Directory,
+            SerializableKind::Unknown => Kind::Unknown,
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreateEvent {
@@ -119,15 +143,6 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &CreateEvent, fs:
     Ok(transaction)
 }
 
-impl <E, F> Event <E, F> for CreateEvent
-    where F: ReadableFileSystem<Item=E>,
-          E: Entry {
-
-    fn atomize(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
-       atomize(self, fs, guard)
-    }
-}
-
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod real_tests {
@@ -151,15 +166,18 @@ mod real_tests {
         let chroot = Samples::init_simple_chroot("create_operation_directory");
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
-        CreateEvent::new(
-            chroot.join("CREATED").as_path(),
-            Kind::Directory,
-            false,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CreateEvent::new(
+                chroot.join("CREATED").as_path(),
+                Kind::Directory,
+                false,
+                false
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(chroot.join("CREATED").is_dir());
         assert!(chroot.join("CREATED").exists());
@@ -171,15 +189,18 @@ mod real_tests {
         let chroot = Samples::init_simple_chroot("create_operation_directory_recursive");
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
-        CreateEvent::new(
-            chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
-            Kind::Directory,
-            true,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CreateEvent::new(
+                chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
+                Kind::Directory,
+                true,
+                false
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(chroot.join("CREATED/NESTED/DIRECTORY").exists());
         assert!(chroot.join("CREATED/NESTED/DIRECTORY").is_dir());
@@ -190,15 +211,18 @@ mod real_tests {
         let chroot = Samples::init_simple_chroot("create_operation_file");
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
-        CreateEvent::new(
-            chroot.join("CREATED").as_path(),
-            Kind::File,
-            false,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CreateEvent::new(
+                chroot.join("CREATED").as_path(),
+                Kind::File,
+                false,
+                false
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(chroot.join("CREATED").exists());
         assert!(chroot.join("CREATED").is_file());
@@ -211,15 +235,18 @@ mod real_tests {
 
         let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
 
-        CreateEvent::new(
-            chroot.join("RDIR/RFILEA").as_path(),
-            Kind::File,
-            false,
-            true
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CreateEvent::new(
+                chroot.join("RDIR/RFILEA").as_path(),
+                Kind::File,
+                false,
+                true
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(chroot.join("RDIR/RFILEA").exists());
         assert_ne!(a_len, chroot.join("RDIR/RFILEA").metadata().unwrap().len());
@@ -251,15 +278,18 @@ mod virtual_tests {
         let chroot = Samples::init_simple_chroot("virtual_create_operation_directory");
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        CreateEvent::new(
-            chroot.join("CREATED").as_path(),
-            Kind::Directory,
-            false,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CreateEvent::new(
+                chroot.join("CREATED").as_path(),
+                Kind::Directory,
+                false,
+                false
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("CREATED").as_path()).unwrap());
         assert!(fs.as_inner().virtual_state().unwrap().is_directory(chroot.join("CREATED").as_path()).unwrap());
@@ -271,16 +301,18 @@ mod virtual_tests {
         let chroot = Samples::init_simple_chroot("virtual_create_operation_directory_recursive");
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        let opcodes = CreateEvent::new(
-            chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
-            Kind::Directory,
-            true,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap();
-
-        opcodes.apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CreateEvent::new(
+                chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
+                Kind::Directory,
+                true,
+                false
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("CREATED/NESTED/DIRECTORY").as_path()).unwrap());
         assert!(fs.as_inner().virtual_state().unwrap().is_directory(chroot.join("CREATED/NESTED/DIRECTORY").as_path()).unwrap());
@@ -291,15 +323,18 @@ mod virtual_tests {
         let chroot = Samples::init_simple_chroot("virtual_create_operation_file");
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        CreateEvent::new(
-            chroot.join("CREATED").as_path(),
-            Kind::File,
-            false,
-            false
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap()
-            .apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CreateEvent::new(
+                chroot.join("CREATED").as_path(),
+                Kind::File,
+                false,
+                false
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         assert!(fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("CREATED").as_path()).unwrap());
         assert!(fs.as_inner().virtual_state().unwrap().is_file(chroot.join("CREATED").as_path()).unwrap());
@@ -310,16 +345,18 @@ mod virtual_tests {
         let chroot = Samples::init_simple_chroot("virtual_create_operation_file_overwrite");
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        let opcodes = CreateEvent::new(
-            chroot.join("RDIR/RFILEA").as_path(),
-            Kind::File,
-            false,
-            true
-        ).atomize(&fs, &mut ZealedGuard)
-            .unwrap();
-
-        opcodes.apply(&mut fs)
-            .unwrap();
+        atomize(
+            &CreateEvent::new(
+                chroot.join("RDIR/RFILEA").as_path(),
+                Kind::File,
+                false,
+                true
+            ),
+            &fs, 
+            &mut ZealedGuard
+        ).unwrap()
+         .apply(&mut fs)
+         .unwrap();
 
         let entry = fs.status(chroot.join("RDIR/RFILEA").as_path()).unwrap();
 

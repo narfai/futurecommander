@@ -21,7 +21,6 @@ mod copy;
 mod create;
 mod mov;
 mod remove;
-mod serializable;
 
 pub mod capability;
 
@@ -29,14 +28,16 @@ pub use self::{
     copy::CopyEvent,
     create::CreateEvent,
     mov::MoveEvent,
-    remove::RemoveEvent,
-    serializable::{ SerializableEvent, SerializableKind }
+    remove::RemoveEvent
 };
 
 use std::{
     fmt::Debug,
     path::{ PathBuf }
 };
+
+
+use serde::{Serialize, Deserialize};
 
 use crate::{
     errors::DomainError,
@@ -58,14 +59,14 @@ use crate::{
     }
 };
 
-pub trait Event<E, F> : SerializableEvent + Debug + Send
+/* pub trait Event<E, F> : SerializableEvent + Debug + Send
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
     fn atomize(&self, fs: &F, guard: &mut dyn capability::Guard) -> Result<AtomicTransaction, DomainError>;
-}
+} */
 
-pub type RawVirtualEvent = dyn Event<EntryAdapter<VirtualStatus>, FileSystemAdapter<VirtualFileSystem>>;
+/* pub type RawVirtualEvent = dyn Event<EntryAdapter<VirtualStatus>, FileSystemAdapter<VirtualFileSystem>>;
 pub struct VirtualEvent(pub Box<RawVirtualEvent>);
 impl VirtualEvent {
     pub fn as_inner(&self) -> &RawVirtualEvent {
@@ -77,8 +78,8 @@ impl VirtualEvent {
 }
 
 pub type RawRealEvent = dyn Event<EntryAdapter<PathBuf>, FileSystemAdapter<RealFileSystem>>;
-
-#[derive(Debug)]
+ */
+/* #[derive(Debug)]
 pub struct RealEvent(pub Box<RawRealEvent>);
 impl RealEvent {
     pub fn as_inner(&self) -> &RawRealEvent {
@@ -87,19 +88,18 @@ impl RealEvent {
     pub fn into_inner(self) -> Box<RawRealEvent> {
         self.0
     }
-}
+} */
 
 
-pub trait Listener<E> {
-    fn emit(&mut self, event: &RawVirtualEvent, guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError>;
+pub trait Listener {
+    fn emit(&mut self, event: &FileSystemEvent, guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError>;
 }
 
 pub trait Delayer {
-    type Event;
-    fn delay(&mut self, event: Self::Event, guard: RegistrarGuard);
+    fn delay(&mut self, event: FileSystemEvent, guard: RegistrarGuard);
 }
 
-
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FileSystemEvent {
     Create(create::CreateEvent),
     Copy(copy::CopyEvent),
@@ -108,7 +108,7 @@ pub enum FileSystemEvent {
 }
 
 impl FileSystemEvent {
-    fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+    pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
         match self {
             FileSystemEvent::Create(event) => create::atomize(event, fs, guard),
             FileSystemEvent::Copy(event) => copy::atomize(event, fs, guard),

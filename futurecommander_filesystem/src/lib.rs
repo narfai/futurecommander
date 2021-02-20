@@ -31,7 +31,6 @@ pub use self::{
     event::{
         Listener,
         Delayer,
-        Event,
         capability
     },
     port::{

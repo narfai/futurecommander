@@ -29,10 +29,7 @@ use crate::{
     event::{
         Listener,
         Delayer,
-        RealEvent,
-        RawRealEvent,
-        RawVirtualEvent,
-        SerializableEvent,
+        FileSystemEvent,
     },
     port::{
         ReadableFileSystem,
@@ -48,7 +45,7 @@ use crate::{
     }
 };
 
-type Commitment = (RealEvent, RegistrarGuard);
+type Commitment = (FileSystemEvent, RegistrarGuard);
 
 #[derive(Debug)]
 pub struct EventQueue(VecDeque<Commitment>);
@@ -73,9 +70,9 @@ impl EventQueue {
     }
 
     pub fn serialize(&self) -> Result<String, serde_json::Error> {
-        let mut serializable : Vec<(Box<dyn SerializableEvent>, &RegistrarGuard)> = Vec::new();
+        let mut serializable : Vec<(&FileSystemEvent, &RegistrarGuard)> = Vec::new();
         for (event, guard) in self.0.iter() {
-            serializable.push((event.as_inner().serializable(), &guard));
+            serializable.push((event, guard));
         }
         serde_json::to_string(&serializable)
     }
@@ -104,7 +101,7 @@ impl Container {
     }
 
     pub fn apply(&mut self) -> Result<(), DomainError> {
-        while let Some((RealEvent(event), mut guard)) = self.event_queue.pop_front() {
+        while let Some((event, mut guard)) = self.event_queue.pop_front() {
             event.atomize(&self.real_fs, &mut guard)?
                 .apply(&mut self.real_fs)?;
         }
@@ -134,11 +131,11 @@ impl Container {
     }
 
     pub fn emit_json(&mut self, json: String) -> Result<(), DomainError> {
-        let events : Vec<(Box<dyn SerializableEvent>, RegistrarGuard)> = serde_json::from_str(json.as_str()).unwrap();
+        let events : Vec<(FileSystemEvent, RegistrarGuard)> = serde_json::from_str(json.as_str()).unwrap();
         for (event, guard) in events {
-            let guard = self.emit(&*event.virt().into_inner(), guard)?;
-            self.delay(event.real().into_inner(), guard );
-        }
+            let guard = self.emit(&event, guard)?;
+            self.delay(event, guard );
+        }        
         Ok(())
     }
 }
@@ -156,15 +153,14 @@ impl ReadableFileSystem for Container {
 }
 
 impl Delayer for Container {
-    type Event = Box<RawRealEvent>;
-    fn delay(&mut self, event: Self::Event, guard: RegistrarGuard) {
-        self.event_queue.push_back((RealEvent(event), guard));
+    fn delay(&mut self, event: FileSystemEvent, guard: RegistrarGuard) {
+        self.event_queue.push_back((event, guard));
     }
 }
 
 
-impl Listener<&RawVirtualEvent> for Container {
-    fn emit(&mut self, event: &RawVirtualEvent, mut guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError> {
+impl Listener for Container {
+    fn emit(&mut self, event: &FileSystemEvent, mut guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError> {
         event.atomize(&self.virtual_fs, &mut guard)?
              .apply(&mut self.virtual_fs)?;
         Ok(guard)
