@@ -167,42 +167,50 @@ mod errors_tests {
 
         let expected_error = DomainError::CopyIntoItSelf(source.clone(), destination.clone());
         assert_two_errors_equals(
-            &MoveEvent::new(
-            source.as_path(),
-            destination.as_path(),
-            true,
-            false
-                ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &MoveEvent::new(
-            source.as_path(),
-            destination.as_path(),
-            true,
-            false
-                ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-            source.as_path(),
-            destination.as_path(),
-            true,
-            false
-                ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
+            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-            source.as_path(),
-            destination.as_path(),
-            true,
-            false
-                ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                source.as_path(),
+                destination.as_path(),
+                true,
+                false
+                )
+            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
     }
@@ -218,41 +226,49 @@ mod errors_tests {
 
         let expected_error = DomainError::MergeNotAllowed(destination.clone());
         assert_two_errors_equals(
-            &MoveEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                false,
-                false
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    false,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &MoveEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                false,
-                false
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    false,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                false,
-                false
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    false,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                false,
-                false
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    false,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
@@ -269,61 +285,73 @@ mod errors_tests {
 
         let expected_error = DomainError::OverwriteNotAllowed(destination.clone());
         assert_two_errors_equals(
-            &MoveEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &MoveEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CreateEvent::new(
-                destination.as_path(),
-                Kind::File,
-                false,
-                false
+            &FileSystemEvent::Create(
+                CreateEvent::new(
+                    destination.as_path(),
+                    Kind::File,
+                    false,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CreateEvent::new(
-                destination.as_path(),
-                Kind::File,
-                false,
-                false
+            &FileSystemEvent::Create(
+                CreateEvent::new(
+                    destination.as_path(),
+                    Kind::File,
+                    false,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
@@ -340,21 +368,25 @@ mod errors_tests {
         let expected_error = DomainError::DirectoryOverwriteNotAllowed(to_overwrite.clone());
 
         assert_two_errors_equals(
-            &CreateEvent::new(
-                to_overwrite.as_path(),
-                Kind::Directory,
-                false,
-                false
+            &FileSystemEvent::Create(
+                CreateEvent::new(
+                    to_overwrite.as_path(),
+                    Kind::Directory,
+                    false,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CreateEvent::new(
-                to_overwrite.as_path(),
-                Kind::Directory,
-                false,
-                false
+            &FileSystemEvent::Create(
+                CreateEvent::new(
+                    to_overwrite.as_path(),
+                    Kind::Directory,
+                    false,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
@@ -371,41 +403,49 @@ mod errors_tests {
 
         let expected_error = DomainError::MergeFileWithDirectory(source.clone(), destination.clone());
         assert_two_errors_equals(
-            &MoveEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &MoveEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
@@ -423,41 +463,49 @@ mod errors_tests {
 
         let expected_error = DomainError::OverwriteDirectoryWithFile(source.clone(), destination.clone());
         assert_two_errors_equals(
-            &MoveEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                true
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    true
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &MoveEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                true
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    true
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                true
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    true
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                true
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    source.as_path(),
+                    destination.as_path(),
+                    true,
+                    true
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
@@ -474,21 +522,25 @@ mod errors_tests {
         let expected_error = DomainError::CreateUnknown(dummy.clone());
 
         assert_two_errors_equals(
-            &CreateEvent::new(
-                dummy.as_path(),
-                Kind::Unknown,
-                false,
-                false
+            &FileSystemEvent::Create(
+                CreateEvent::new(
+                    dummy.as_path(),
+                    Kind::Unknown,
+                    false,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CreateEvent::new(
-                dummy.as_path(),
-                Kind::Unknown,
-                false,
-                false
+            &FileSystemEvent::Create(
+                CreateEvent::new(
+                    dummy.as_path(),
+                    Kind::Unknown,
+                    false,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
@@ -505,17 +557,21 @@ mod errors_tests {
         let expected_error = DomainError::DoesNotExists(not_exists.clone());
 
         assert_two_errors_equals(
-            &RemoveEvent::new(
-                not_exists.as_path(),
-                false
+            &FileSystemEvent::Remove(
+                RemoveEvent::new(
+                    not_exists.as_path(),
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &RemoveEvent::new(
-                not_exists.as_path(),
-                false
+            &FileSystemEvent::Remove(
+                RemoveEvent::new(
+                    not_exists.as_path(),
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
@@ -532,17 +588,21 @@ mod errors_tests {
         let expected_error = DomainError::RecursiveNotAllowed(not_empty_dir.clone());
 
         assert_two_errors_equals(
-            &RemoveEvent::new(
-                not_empty_dir.as_path(),
-                false
+            &FileSystemEvent::Remove(
+                RemoveEvent::new(
+                    not_empty_dir.as_path(),
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &RemoveEvent::new(
-                not_empty_dir.as_path(),
-                false
+            &FileSystemEvent::Remove(
+                RemoveEvent::new(
+                    not_empty_dir.as_path(),
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
@@ -560,41 +620,49 @@ mod errors_tests {
 
         let expected_error = DomainError::SourceDoesNotExists(not_existing_source.clone());
         assert_two_errors_equals(
-            &MoveEvent::new(
-                not_existing_source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    not_existing_source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &MoveEvent::new(
-                not_existing_source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Move(
+                MoveEvent::new(
+                    not_existing_source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-                not_existing_source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    not_existing_source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &CopyEvent::new(
-                not_existing_source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &FileSystemEvent::Copy(
+                CopyEvent::new(
+                    not_existing_source.as_path(),
+                    destination.as_path(),
+                    true,
+                    false
+                )
             ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
             &expected_error
         );

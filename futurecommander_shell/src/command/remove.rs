@@ -25,7 +25,8 @@ use futurecommander_filesystem::{
     Container,
     RemoveEvent,
     Listener,
-    Delayer
+    Delayer,
+    FileSystemEvent
 };
 
 use crate::command::{
@@ -66,10 +67,12 @@ pub struct InitializedRemoveCommand {
 
 impl Command<InitializedRemoveCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        let event = RemoveEvent::new(self.0.path.as_path(), self.0.recursive);
+        let event = FileSystemEvent::Remove(
+            RemoveEvent::new(self.0.path.as_path(), self.0.recursive)
+        );
 
         let guard = container.emit(&event, self.0.guard.registrar())?;
-        container.delay(Box::new(event), guard);
+        container.delay(event, guard);
         Ok(())
     }
 }

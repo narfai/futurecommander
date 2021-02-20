@@ -35,6 +35,7 @@ mod container_integration {
         Kind,
         CopyEvent,
         ReadableFileSystem,
+        FileSystemEvent,
         RemoveEvent,
         Listener,
         Delayer,
@@ -62,41 +63,49 @@ mod container_integration {
     rm APRIME
     */
     pub fn _no_dangling(fs: &mut Container, chroot: &Path) {
-        let cp_a_aprime = CopyEvent::new(
-            chroot.join("A").as_path(),
-            chroot.join("APRIME").as_path(),
-            true,
-            false
+        let cp_a_aprime = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("A").as_path(),
+                chroot.join("APRIME").as_path(),
+                true,
+                false
+            )
         );
 
         let guard = fs.emit(&cp_a_aprime, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(cp_a_aprime), guard);
+        fs.delay(cp_a_aprime, guard);
 
-        let rm_a = RemoveEvent::new(
-            chroot.join("A").as_path(),
-            true
+        let rm_a = FileSystemEvent::Remove(
+            RemoveEvent::new(
+                chroot.join("A").as_path(),
+                true
+            )
         );
 
         let guard = fs.emit(&rm_a, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(rm_a), guard);
+        fs.delay(rm_a, guard);
 
-        let cp_aprime_chroot = CopyEvent::new(
-            chroot.join("APRIME").as_path(),
-            chroot.join("A").as_path(),
-            true,
-            false
+        let cp_aprime_chroot = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("APRIME").as_path(),
+                chroot.join("A").as_path(),
+                true,
+                false
+            )
         );
 
         let guard = fs.emit(&cp_aprime_chroot, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(cp_aprime_chroot), guard);
+        fs.delay(cp_aprime_chroot, guard);
 
-        let rm_aprime = RemoveEvent::new(
-            chroot.join("APRIME").as_path(),
-            true
+        let rm_aprime = FileSystemEvent::Remove(
+            RemoveEvent::new(
+                chroot.join("APRIME").as_path(),
+                true
+            )
         );
 
         let guard = fs.emit(&rm_aprime, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(rm_aprime), guard);
+        fs.delay(rm_aprime, guard);
 
         let stated_a = fs.status(chroot.join("A").as_path())
             .unwrap()
@@ -142,79 +151,95 @@ mod container_integration {
         rm Z
         */
 
-        let cp_ac_chroot = CopyEvent::new(
-            chroot.join("A/C").as_path(),
-            chroot.join("C").as_path(),
-            true,
-            false
+        let cp_ac_chroot = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("A/C").as_path(),
+                chroot.join("C").as_path(),
+                true,
+                false
+            )
         );
 
         let guard = fs.emit(&cp_ac_chroot, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(cp_ac_chroot), guard);
+        fs.delay(cp_ac_chroot, guard);
 
-        let rm_ac = RemoveEvent::new(
-            chroot.join("A/C").as_path(),
-            true
+        let rm_ac = FileSystemEvent::Remove(
+            RemoveEvent::new(
+                chroot.join("A/C").as_path(),
+                true
+            )
         );
 
         let guard = fs.emit(&rm_ac, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(rm_ac), guard);
+        fs.delay(rm_ac, guard);
 
-        let cp_c_z = CopyEvent::new(
-            chroot.join("C").as_path(),
-            chroot.join("Z").as_path(),
-            true,
-            false
+        let cp_c_z = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("C").as_path(),
+                chroot.join("Z").as_path(),
+                true,
+                false
+            )
         );
 
         let guard = fs.emit(&cp_c_z, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(cp_c_z), guard);
+        fs.delay(cp_c_z, guard);
 
 
-        let rm_c = RemoveEvent::new(
-            chroot.join("C").as_path(),
-            true
+        let rm_c = FileSystemEvent::Remove(
+            RemoveEvent::new(
+                chroot.join("C").as_path(),
+                true
+            )
         );
 
         let guard = fs.emit(&rm_c, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(rm_c), guard);
+        fs.delay(rm_c, guard);
 
-        let cp_b_c = CopyEvent::new(
-            chroot.join("B").as_path(),
-            chroot.join("C").as_path(),
-            true,
-            false
+        let cp_b_c = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("B").as_path(),
+                chroot.join("C").as_path(),
+                true,
+                false
+            )
         );
 
         let guard = fs.emit(&cp_b_c, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(cp_b_c), guard);
+        fs.delay(cp_b_c, guard);
 
-        let rm_b = RemoveEvent::new(
-            chroot.join("B").as_path(),
-            true
+        let rm_b = FileSystemEvent::Remove(
+            RemoveEvent::new(
+                chroot.join("B").as_path(),
+                true
+            )
         );
 
         let guard = fs.emit(&rm_b, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(rm_b), guard);
+        fs.delay(rm_b, guard);
 
-        let cp_z_b = CopyEvent::new(
-            chroot.join("Z").as_path(),
-            chroot.join("B").as_path(),
-            true,
-            false
+        let cp_z_b = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("Z").as_path(),
+                chroot.join("B").as_path(),
+                true,
+                false
+            )
         );
 
         let guard = fs.emit(&cp_z_b, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(cp_z_b), guard);
+        fs.delay(cp_z_b, guard);
 
 
-        let rm_z = RemoveEvent::new(
-            chroot.join("Z").as_path(),
-            true
+        let rm_z = FileSystemEvent::Remove(
+            RemoveEvent::new(
+                chroot.join("Z").as_path(),
+                true
+            )
         );
 
         let guard = fs.emit(&rm_z, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(rm_z), guard);
+        fs.delay(rm_z, guard);
 
 
         let stated_b = fs.status(chroot.join("B").as_path())
@@ -249,32 +274,38 @@ mod container_integration {
         rm A/D/G //<- should no appear
     */
     pub fn _some_nesting(fs: &mut Container, chroot: &Path) {
-        let cp_c_a = CopyEvent::new(
-            chroot.join("C").as_path(),
-            chroot.join("A").join("C").as_path(),
-            true,
-            false
+        let cp_c_a = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("C").as_path(),
+                chroot.join("A").join("C").as_path(),
+                true,
+                false
+            )
         );
 
         let guard = fs.emit(&cp_c_a, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(cp_c_a), guard);
+        fs.delay(cp_c_a, guard);
 
-        let cp_acd_a = CopyEvent::new(
-            chroot.join("A/C/D").as_path(),
-            chroot.join("A").join("D").as_path(),
-            true,
-            false
+        let cp_acd_a = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("A/C/D").as_path(),
+                chroot.join("A").join("D").as_path(),
+                true,
+                false
+            )
         );
 
         let guard = fs.emit(&cp_acd_a, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(cp_acd_a), guard);
+        fs.delay(cp_acd_a, guard);
 
-        let rm_adg = RemoveEvent::new(
-            chroot.join("A/D/G").as_path(),
-            true
+        let rm_adg = FileSystemEvent::Remove(
+            RemoveEvent::new(
+                chroot.join("A/D/G").as_path(),
+                true
+            )
         );
         let guard = fs.emit(&rm_adg, RegistrarGuard::default()).unwrap();
-        fs.delay(Box::new(rm_adg), guard);
+        fs.delay(rm_adg, guard);
 
         let stated_ad = fs.status(chroot.join("A/D").as_path())
             .unwrap()
