@@ -182,15 +182,17 @@ mod tests {
     fn copy_directory_recursively() {
         let chroot = Samples::init_simple_chroot("container_copy_directory_recursively");
         let mut container = Container::new();
-        let event = CopyEvent::new(
-            chroot.join("RDIR").as_path(),
-            chroot.join("COPIED").as_path(),
-            false,
-            false
+        let event = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("RDIR").as_path(),
+                chroot.join("COPIED").as_path(),
+                false,
+                false
+            )
         );
 
         let guard = container.emit(&event, RegistrarGuard::default()).unwrap();
-        container.delay(Box::new(event), guard);
+        container.delay(event, guard);
 
         assert!(container.status(chroot.join("COPIED").as_path()).unwrap().exists());
         assert!(container.status(chroot.join("COPIED/RFILEA").as_path()).unwrap().exists());
@@ -201,15 +203,18 @@ mod tests {
     fn can_export_virtual_state_into_json_string() {
         let chroot = Samples::init_simple_chroot("can_export_virtual_state_into_json_string");
         let mut container = Container::new();
-        let event = CopyEvent::new(
-            chroot.join("RDIR").as_path(),
-            chroot.join("COPIED").as_path(),
-            false,
-            false
+        let event = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("RDIR").as_path(),
+                chroot.join("COPIED").as_path(),
+                false,
+                false
+            )
         );
-        container.delay(Box::new(event), RegistrarGuard::default());
+
+        container.delay(event, RegistrarGuard::default());
         let expected : String = format!(
-            "[[{{\"type\":\"CopyEvent\",\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}},{{\"inner\":{{\"type\":\"ZealedGuard\"}},\"registry\":{{}}}}]]",
+            "[[{{\"Copy\":{{\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}}}},{{\"inner\":{{\"type\":\"ZealedGuard\"}},\"registry\":{{}}}}]]",
             chroot.join("RDIR").to_string_lossy(),
             chroot.join("COPIED").to_string_lossy(),
         );
@@ -221,11 +226,13 @@ mod tests {
     fn can_import_virtual_state_from_json_string() {
         let chroot = Samples::init_simple_chroot("can_import_virtual_state_from_json_string");
         let mut container_a = Container::new();
-        let event = CopyEvent::new(
-            chroot.join("RDIR").as_path(),
-            chroot.join("COPIED").as_path(),
-            false,
-            false
+        let event = FileSystemEvent::Copy(
+            CopyEvent::new(
+                chroot.join("RDIR").as_path(),
+                chroot.join("COPIED").as_path(),
+                false,
+                false
+            )
         );
 
         let guard = container_a.emit(&event, RegistrarGuard::default()).unwrap();
@@ -234,7 +241,7 @@ mod tests {
         assert!(a_stat.exists());
         assert!(a_stat.is_dir());
 
-        container_a.delay(Box::new(event), guard);
+        container_a.delay(event, guard);
 
         let mut container_b = Container::new();
 

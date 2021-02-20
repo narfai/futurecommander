@@ -127,7 +127,7 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &CopyEvent, fs: &
                             .join(child.name().unwrap())
                             .as_path(),
                             event.merge(),
-                            event.overwrite()
+                            event.overwrite()                            
                     ),
                     fs, 
                     guard

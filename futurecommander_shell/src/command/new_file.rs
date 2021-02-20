@@ -27,7 +27,8 @@ use futurecommander_filesystem::{
     Kind,
     CreateEvent,
     Listener,
-    Delayer
+    Delayer,
+    FileSystemEvent
 };
 
 use crate::command::{
@@ -62,15 +63,17 @@ pub struct InitializedNewFileCommand {
 
 impl Command<InitializedNewFileCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        let event = CreateEvent::new(
-            self.0.path.as_path(),
-            Kind::File,
-            self.0.recursive,
-            self.0.overwrite
+        let event = FileSystemEvent::Create(
+            CreateEvent::new(
+                self.0.path.as_path(),
+                Kind::File,
+                self.0.recursive,
+                self.0.overwrite
+            )
         );
 
         let guard = container.emit(&event, self.0.guard.registrar())?;
-        container.delay(Box::new(event), guard);
+        container.delay(event, guard);
         Ok(())
     }
 }

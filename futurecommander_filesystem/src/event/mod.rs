@@ -17,6 +17,12 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::{
+    fmt::Debug
+};
+
+use serde::{Serialize, Deserialize};
+
 mod copy;
 mod create;
 mod mov;
@@ -31,14 +37,6 @@ pub use self::{
     remove::RemoveEvent
 };
 
-use std::{
-    fmt::Debug,
-    path::{ PathBuf }
-};
-
-
-use serde::{Serialize, Deserialize};
-
 use crate::{
     errors::DomainError,
     capability::{
@@ -47,49 +45,10 @@ use crate::{
     },
     port::{
         Entry,
-        EntryAdapter,
-        FileSystemAdapter,
         ReadableFileSystem,
         AtomicTransaction
-    },
-    infrastructure::{
-        VirtualStatus,
-        VirtualFileSystem,
-        RealFileSystem
     }
 };
-
-/* pub trait Event<E, F> : SerializableEvent + Debug + Send
-    where F: ReadableFileSystem<Item=E>,
-          E: Entry {
-
-    fn atomize(&self, fs: &F, guard: &mut dyn capability::Guard) -> Result<AtomicTransaction, DomainError>;
-} */
-
-/* pub type RawVirtualEvent = dyn Event<EntryAdapter<VirtualStatus>, FileSystemAdapter<VirtualFileSystem>>;
-pub struct VirtualEvent(pub Box<RawVirtualEvent>);
-impl VirtualEvent {
-    pub fn as_inner(&self) -> &RawVirtualEvent {
-        &*self.0
-    }
-    pub fn into_inner(self) -> Box<RawVirtualEvent>{
-        self.0
-    }
-}
-
-pub type RawRealEvent = dyn Event<EntryAdapter<PathBuf>, FileSystemAdapter<RealFileSystem>>;
- */
-/* #[derive(Debug)]
-pub struct RealEvent(pub Box<RawRealEvent>);
-impl RealEvent {
-    pub fn as_inner(&self) -> &RawRealEvent {
-        &*self.0
-    }
-    pub fn into_inner(self) -> Box<RawRealEvent> {
-        self.0
-    }
-} */
-
 
 pub trait Listener {
     fn emit(&mut self, event: &FileSystemEvent, guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError>;

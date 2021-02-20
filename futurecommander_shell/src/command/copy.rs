@@ -27,7 +27,8 @@ use futurecommander_filesystem::{
     Listener,
     Delayer,
     ReadableFileSystem,
-    Entry
+    Entry,
+    FileSystemEvent
 };
 
 use crate::{
@@ -74,27 +75,29 @@ impl Command<InitializedCopyCommand> {
             return Err(CommandError::DoesNotExists(self.0.source));
         }
 
-        let event = if destination.exists() {
-            if destination.is_dir() {
-                CopyEvent::new(
-                    self.0.source.as_path(),
-                    self.0.destination
-                        .join(self.0.source.file_name().unwrap())
-                        .as_path(),
-                    self.0.merge,
-                    self.0.overwrite
-                )
-            } else if source.is_dir() {
-                return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
+        let event = FileSystemEvent::Copy(
+            if destination.exists() {
+                if destination.is_dir() {                    
+                    CopyEvent::new(
+                        self.0.source.as_path(),
+                        self.0.destination
+                            .join(self.0.source.file_name().unwrap())
+                            .as_path(),
+                        self.0.merge,
+                        self.0.overwrite
+                    )                    
+                } else if source.is_dir() {
+                    return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
+                } else {
+                    return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
+                }
             } else {
-                return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
+                CopyEvent::new(self.0.source.as_path(), self.0.destination.as_path(), self.0.merge, self.0.overwrite)
             }
-        } else {
-            CopyEvent::new(self.0.source.as_path(), self.0.destination.as_path(), self.0.merge, self.0.overwrite)
-        };
+        );
 
         let guard = container.emit(&event, self.0.guard.registrar())?;
-        container.delay(Box::new(event), guard);
+        container.delay(event, guard);
         Ok(())
     }
 }
