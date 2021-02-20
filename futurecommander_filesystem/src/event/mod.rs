@@ -41,6 +41,7 @@ use std::{
 use crate::{
     errors::DomainError,
     capability::{
+        Guard,
         RegistrarGuard
     },
     port::{
@@ -96,4 +97,23 @@ pub trait Listener<E> {
 pub trait Delayer {
     type Event;
     fn delay(&mut self, event: Self::Event, guard: RegistrarGuard);
+}
+
+
+pub enum FileSystemEvent {
+    Create(create::CreateEvent),
+    Copy(copy::CopyEvent),
+    Move(mov::MoveEvent),
+    Remove(remove::RemoveEvent)
+}
+
+impl FileSystemEvent {
+    fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+        match self {
+            FileSystemEvent::Create(event) => create::atomize(event, fs, guard),
+            FileSystemEvent::Copy(event) => copy::atomize(event, fs, guard),
+            FileSystemEvent::Move(event) => mov::atomize(event, fs, guard),
+            FileSystemEvent::Remove(event) => remove::atomize(event, fs, guard),
+        }
+    }
 }

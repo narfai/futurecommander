@@ -59,39 +59,43 @@ impl RemoveEvent {
     pub fn recursive(&self) -> bool { self.recursive }
 }
 
+pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &RemoveEvent, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+    let entry = fs.status(event.path())?;
+    let mut transaction = AtomicTransaction::default();
+
+    if !entry.exists() {
+        return Err(DomainError::DoesNotExists(event.path().to_path_buf()))
+    }
+
+    if entry.is_file() {
+        transaction.add(Atomic::RemoveFile(entry.path().to_path_buf()));
+    } else if entry.is_dir() {
+        let children = fs.read_dir(entry.path())?;
+
+        if children.is_empty() {
+            transaction.add(Atomic::RemoveEmptyDirectory(entry.path().to_path_buf()))
+        } else if guard.authorize(Capability::Recursive, event.recursive(), event.path())? {
+            for child in children {
+                transaction.merge(
+                    RemoveEvent::new(
+                        child.path(),
+                        true
+                    ).atomize(fs, guard)?
+                )
+            }
+            transaction.add(Atomic::RemoveEmptyDirectory(entry.path().to_path_buf()))
+        }
+    }
+
+    Ok(transaction)
+}
+
 impl <E, F> Event <E, F> for RemoveEvent
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
     fn atomize(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
-        let entry = fs.status(self.path())?;
-        let mut transaction = AtomicTransaction::default();
-
-        if !entry.exists() {
-            return Err(DomainError::DoesNotExists(self.path().to_path_buf()))
-        }
-
-        if entry.is_file() {
-            transaction.add(Atomic::RemoveFile(entry.path().to_path_buf()));
-        } else if entry.is_dir() {
-            let children = fs.read_dir(entry.path())?;
-
-            if children.is_empty() {
-                transaction.add(Atomic::RemoveEmptyDirectory(entry.path().to_path_buf()))
-            } else if guard.authorize(Capability::Recursive, self.recursive(), self.path())? {
-                for child in children {
-                    transaction.merge(
-                        RemoveEvent::new(
-                            child.path(),
-                            true
-                        ).atomize(fs, guard)?
-                    )
-                }
-                transaction.add(Atomic::RemoveEmptyDirectory(entry.path().to_path_buf()))
-            }
-        }
-
-        Ok(transaction)
+       atomize(self, fs, guard)
     }
 }
 

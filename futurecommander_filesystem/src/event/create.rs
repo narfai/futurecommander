@@ -67,62 +67,64 @@ impl CreateEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
+fn recursive_dir_creation<E, F> (fs: &F, mut ancestors: &mut Ancestors<'_>) -> Result<AtomicTransaction, DomainError>
+    where F: ReadableFileSystem<Item=E>,
+          E: Entry {
+
+    let mut transaction = AtomicTransaction::default();
+    if let Some(path) = ancestors.next() {
+        let entry = fs.status(path)?;
+        if !entry.exists() {
+            transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
+            transaction.add(Atomic::CreateEmptyDirectory(entry.to_path()));
+        }
+    }
+    Ok(transaction)
+}
+
+pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &CreateEvent, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+    let entry = fs.status(event.path())?;
+    let mut transaction = AtomicTransaction::default();
+    let mut ancestors = event.path().ancestors();
+    ancestors.next();
+
+    match event.kind() {
+        Kind::Directory => {
+            if entry.exists() {
+                return Err(DomainError::DirectoryOverwriteNotAllowed(entry.to_path()))
+            } else {
+                if event.recursive() {
+                    transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
+                }
+                transaction.add(Atomic::CreateEmptyDirectory(entry.to_path()));
+            }
+        },
+        Kind::File => {
+            if entry.exists() {
+                if guard.authorize(Capability::Overwrite, event.overwrite(), event.path())? {
+                    if event.recursive() {
+                        transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
+                    }
+                    transaction.add(Atomic::RemoveFile(entry.to_path()));
+                    transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
+                }
+            } else {
+                transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
+            }
+        },
+        Kind::Unknown => {
+            return Err(DomainError::CreateUnknown(entry.to_path()))
+        }
+    }
+    Ok(transaction)
+}
 
 impl <E, F> Event <E, F> for CreateEvent
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
     fn atomize(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
-        let entry = fs.status(self.path())?;
-        let mut transaction = AtomicTransaction::default();
-
-        fn recursive_dir_creation<E, F> (fs: &F, mut ancestors: &mut Ancestors<'_>) -> Result<AtomicTransaction, DomainError>
-            where F: ReadableFileSystem<Item=E>,
-                  E: Entry {
-
-            let mut transaction = AtomicTransaction::default();
-            if let Some(path) = ancestors.next() {
-                let entry = fs.status(path)?;
-                if !entry.exists() {
-                    transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
-                    transaction.add(Atomic::CreateEmptyDirectory(entry.to_path()));
-                }
-            }
-            Ok(transaction)
-        }
-
-        let mut ancestors = self.path().ancestors();
-        ancestors.next();
-
-        match self.kind() {
-            Kind::Directory => {
-                if entry.exists() {
-                    return Err(DomainError::DirectoryOverwriteNotAllowed(entry.to_path()))
-                } else {
-                    if self.recursive() {
-                        transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
-                    }
-                    transaction.add(Atomic::CreateEmptyDirectory(entry.to_path()));
-                }
-            },
-            Kind::File => {
-                if entry.exists() {
-                    if guard.authorize(Capability::Overwrite, self.overwrite(), self.path())? {
-                        if self.recursive() {
-                            transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
-                        }
-                        transaction.add(Atomic::RemoveFile(entry.to_path()));
-                        transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
-                    }
-                } else {
-                    transaction.add(Atomic::CreateEmptyFile(entry.to_path()));
-                }
-            },
-            Kind::Unknown => {
-                return Err(DomainError::CreateUnknown(entry.to_path()))
-            }
-        }
-        Ok(transaction)
+       atomize(self, fs, guard)
     }
 }
 

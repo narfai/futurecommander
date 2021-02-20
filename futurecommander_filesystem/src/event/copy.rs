@@ -66,81 +66,85 @@ impl CopyEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
+pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &CopyEvent, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+    let source = fs.status(event.source())?;
+
+    if !source.exists() {
+        return Err(DomainError::SourceDoesNotExists(event.source().to_path_buf()))
+    }
+
+    let mut transaction = AtomicTransaction::default();
+    let destination = fs.status(event.destination())?;
+
+    if source.is_dir() && destination.is_contained_by(&source) {
+        return Err(DomainError::CopyIntoItSelf(source.to_path(), destination.to_path()));
+    }
+
+    if destination.exists() {
+        if source.is_dir() {
+            if destination.is_dir() {
+                if guard.authorize(Capability::Merge, event.merge(), event.destination())? {
+                    for child in fs.read_dir(source.path())? {
+                        transaction.merge(
+                            CopyEvent::new(
+                                child.path(),
+                                destination.path()
+                                    .join(child.name().unwrap())
+                                    .as_path(),
+                                    event.merge(),
+                                    event.overwrite()
+                            ).atomize(fs, guard)?
+                        );
+                    }
+                }
+            } else {
+                return Err(DomainError::MergeFileWithDirectory(source.to_path(), destination.to_path()))
+            }
+        } else if source.is_file() {
+            if destination.is_file() {
+                if guard.authorize(Capability::Overwrite, event.overwrite(), event.destination())? {
+                    transaction.add(Atomic::RemoveFile(destination.to_path()));
+                    transaction.add(Atomic::CopyFileToFile {
+                        source: source.to_path(),
+                        destination: destination.to_path()
+                    });
+                }
+            } else {
+                return Err(DomainError::OverwriteDirectoryWithFile(source.to_path(), destination.to_path()))
+            }
+        }
+    } else if source.is_dir() {
+        transaction.add(Atomic::BindDirectoryToDirectory {
+            source: source.to_path(),
+            destination: destination.to_path()
+        });
+        for child in fs.read_maintained(source.path())? {
+            transaction.merge(
+                CopyEvent::new(
+                    child.path(),
+                    destination.path()
+                        .join(child.name().unwrap())
+                        .as_path(),
+                        event.merge(),
+                        event.overwrite()
+                ).atomize(fs, guard)?
+            );
+        }
+    } else if source.is_file() {
+        transaction.add(Atomic::CopyFileToFile{
+            source: source.to_path(),
+            destination: destination.to_path()
+        });
+    }
+    Ok(transaction)
+} 
+
 impl <E, F> Event <E, F> for CopyEvent
     where F: ReadableFileSystem<Item=E>,
           E: Entry {
 
     fn atomize(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
-        let source = fs.status(self.source())?;
-
-        if !source.exists() {
-            return Err(DomainError::SourceDoesNotExists(self.source().to_path_buf()))
-        }
-
-        let mut transaction = AtomicTransaction::default();
-        let destination = fs.status(self.destination())?;
-
-        if source.is_dir() && destination.is_contained_by(&source) {
-            return Err(DomainError::CopyIntoItSelf(source.to_path(), destination.to_path()));
-        }
-
-        if destination.exists() {
-            if source.is_dir() {
-                if destination.is_dir() {
-                    if guard.authorize(Capability::Merge, self.merge(), self.destination())? {
-                        for child in fs.read_dir(source.path())? {
-                            transaction.merge(
-                                CopyEvent::new(
-                                    child.path(),
-                                    destination.path()
-                                        .join(child.name().unwrap())
-                                        .as_path(),
-                                    self.merge(),
-                                    self.overwrite()
-                                ).atomize(fs, guard)?
-                            );
-                        }
-                    }
-                } else {
-                    return Err(DomainError::MergeFileWithDirectory(source.to_path(), destination.to_path()))
-                }
-            } else if source.is_file() {
-                if destination.is_file() {
-                    if guard.authorize(Capability::Overwrite, self.overwrite(), self.destination())? {
-                        transaction.add(Atomic::RemoveFile(destination.to_path()));
-                        transaction.add(Atomic::CopyFileToFile {
-                            source: source.to_path(),
-                            destination: destination.to_path()
-                        });
-                    }
-                } else {
-                    return Err(DomainError::OverwriteDirectoryWithFile(source.to_path(), destination.to_path()))
-                }
-            }
-        } else if source.is_dir() {
-            transaction.add(Atomic::BindDirectoryToDirectory {
-                source: source.to_path(),
-                destination: destination.to_path()
-            });
-            for child in fs.read_maintained(source.path())? {
-                transaction.merge(
-                    CopyEvent::new(
-                        child.path(),
-                        destination.path()
-                            .join(child.name().unwrap())
-                            .as_path(),
-                        self.merge(),
-                        self.overwrite()
-                    ).atomize(fs, guard)?
-                );
-            }
-        } else if source.is_file() {
-            transaction.add(Atomic::CopyFileToFile{
-                source: source.to_path(),
-                destination: destination.to_path()
-            });
-        }
-        Ok(transaction)
+       atomize(self, fs, guard)
     }
 }
 
