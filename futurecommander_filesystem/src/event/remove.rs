@@ -28,7 +28,8 @@ use crate::{
     errors::{ DomainError },
     capability::{
         Guard,
-        Capability
+        Capability,
+        RegistrarGuard
     },
     port::{
         Entry,
@@ -56,7 +57,7 @@ impl RemoveOperationDefinition {
     pub fn recursive(&self) -> bool { self.recursive }
 }
 
-pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: &RemoveOperationDefinition, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: RemoveOperationDefinition, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
     let entry = fs.status(definition.path())?;
     let mut transaction = AtomicTransaction::default();
 
@@ -75,7 +76,7 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: &RemoveOpera
             for child in children {
                 transaction.merge(
                     atomize(
-                        &RemoveOperationDefinition::new(
+                        RemoveOperationDefinition::new(
                             child.path(),
                             true
                         ),
@@ -105,7 +106,7 @@ mod real_tests {
             RealFileSystem
         },
         capability::{
-            ZealedGuard
+            ZealousGuard
         }
     };
 
@@ -115,12 +116,12 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &RemoveOperationDefinition::new(
+            RemoveOperationDefinition::new(
                 chroot.join("RDIR/RFILEA").as_path(),
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -134,12 +135,12 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &RemoveOperationDefinition::new(
+            RemoveOperationDefinition::new(
                 chroot.join("RDIR3").as_path(),
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -153,12 +154,12 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &RemoveOperationDefinition::new(
+            RemoveOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 true
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -183,7 +184,7 @@ mod virtual_tests {
             VirtualFileSystem
         },
         capability::{
-            ZealedGuard
+            ZealousGuard
         }
     };
 
@@ -193,12 +194,12 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &RemoveOperationDefinition::new(
+            RemoveOperationDefinition::new(
                 chroot.join("RDIR/RFILEA").as_path(),
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -212,12 +213,12 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &RemoveOperationDefinition::new(
+            RemoveOperationDefinition::new(
                 chroot.join("RDIR3").as_path(),
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -231,12 +232,12 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &RemoveOperationDefinition::new(
+            RemoveOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 true
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();

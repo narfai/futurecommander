@@ -106,7 +106,7 @@ mod tests {
         save_command.execute(&mut container).unwrap();
 
         let expected : String = format!(
-            "[[{{\"Copy\":{{\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}}}},{{\"inner\":{{\"type\":\"InteractiveGuard\",\"skip_all\":{{\"merge\":false,\"overwrite\":false,\"recursive\":false}},\"allow_all\":{{\"merge\":false,\"overwrite\":false,\"recursive\":false}}}},\"registry\":{{}}}}]]",
+            "[{{\"Copy\":[{{\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}},{{}}]}}]",
             sample_path.join("A").to_string_lossy(),
             sample_path.join("APRIME").to_string_lossy(),
         );

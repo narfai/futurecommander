@@ -44,26 +44,22 @@ use std::{
 // pub struct ReadGuard<R: Read>(Box<dyn Guard>, R);
 // Note : it would probably make the methods emit and delay use generics
 
-#[typetag::serde(tag = "type")]
-pub trait Guard : Debug + Send {
+pub trait Guard: Debug {
     fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError>;
 }
 
-#[derive(Serialize, Deserialize,Debug, Clone)]
+#[derive(Debug)]
 pub struct BlindGuard;
 
-#[typetag::serde]
 impl Guard for BlindGuard {
     fn authorize(&mut self, _capability: Capability, _default: bool, _target: &Path) -> Result<bool, DomainError> {
         Ok(true)
     }
 }
 
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug)]
 pub struct QuietGuard;
 
-#[typetag::serde]
 impl Guard for QuietGuard {
     fn authorize(&mut self, _capability: Capability, default: bool, _target: &Path) -> Result<bool, DomainError> {
         Ok(default)
@@ -71,11 +67,10 @@ impl Guard for QuietGuard {
 }
 
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ZealedGuard;
+#[derive(Debug)]
+pub struct ZealousGuard;
 
-#[typetag::serde]
-impl Guard for ZealedGuard {
+impl Guard for ZealousGuard {
     fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError> {
         match capability {
             Capability::Merge => {
@@ -133,7 +128,7 @@ mod tests {
         let target = Path::new("/virtual/directory");
         let default = true;
 
-        let mut zealed = ZealedGuard;
+        let mut zealed = ZealousGuard;
         assert!(zealed.authorize(Capability::Overwrite, default, target).unwrap());
         assert!(zealed.authorize(Capability::Merge, default, target).unwrap());
         assert!(zealed.authorize(Capability::Recursive, default, target).unwrap());
@@ -151,7 +146,7 @@ mod tests {
 
     #[test]
     fn zealed_guard_block_sensible_operation(){
-        let mut guard = ZealedGuard;
+        let mut guard = ZealousGuard;
         let target = Path::new("/virtual/directory");
         let default = false;
 

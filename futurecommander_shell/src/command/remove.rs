@@ -25,7 +25,6 @@ use futurecommander_filesystem::{
     Container,
     RemoveOperationDefinition,
     Listener,
-    Delayer,
     FileSystemOperation
 };
 
@@ -67,12 +66,12 @@ pub struct InitializedRemoveCommand {
 
 impl Command<InitializedRemoveCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        let event = FileSystemOperation::remove(
-            RemoveOperationDefinition::new(self.0.path.as_path(), self.0.recursive)
-        );
-
-        let guard = container.emit(&event, self.0.guard.registrar())?;
-        container.delay(event, guard);
+        container.emit(
+            FileSystemOperation::remove(
+                RemoveOperationDefinition::new(self.0.path.as_path(), self.0.recursive)
+            ), 
+            self.0.guard.to_guard()
+        )?;
         Ok(())
     }
 }

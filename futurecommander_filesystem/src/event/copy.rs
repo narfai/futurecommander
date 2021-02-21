@@ -28,7 +28,8 @@ use crate::{
     errors::{DomainError},
     capability::{
         Capability,
-        Guard
+        Guard,
+        RegistrarGuard
     },
     port::{
         Entry,
@@ -62,7 +63,7 @@ impl CopyOperationDefinition {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
-pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: &CopyOperationDefinition, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: CopyOperationDefinition, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
     let source = fs.status(definition.source())?;
 
     if !source.exists() {
@@ -83,7 +84,7 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: &CopyOperati
                     for child in fs.read_dir(source.path())? {
                         transaction.merge(
                             atomize(
-                                &CopyOperationDefinition::new(
+                                CopyOperationDefinition::new(
                                     child.path(),
                                     destination.path()
                                         .join(child.name().unwrap())
@@ -121,7 +122,7 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: &CopyOperati
         for child in fs.read_maintained(source.path())? {
             transaction.merge(
                 atomize(
-                    &CopyOperationDefinition::new(
+                    CopyOperationDefinition::new(
                         child.path(),
                         destination.path()
                             .join(child.name().unwrap())
@@ -156,7 +157,7 @@ mod real_tests {
             FileSystemAdapter
         },
         capability::{
-            ZealedGuard
+            ZealousGuard
         }
     };
 
@@ -166,14 +167,14 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &CopyOperationDefinition::new(
+            CopyOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 chroot.join("COPIED").as_path(),
                 false,
                 false
             ), 
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -188,14 +189,14 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &CopyOperationDefinition::new(
+            CopyOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 chroot.join("RDIR2").as_path(),
                 true,
                 true
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -216,14 +217,14 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &CopyOperationDefinition::new(
+            CopyOperationDefinition::new(
                 chroot.join("RDIR/RFILEB").as_path(),
                 chroot.join("RDIR2/RFILEB").as_path(),
                 false,
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -242,14 +243,14 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &CopyOperationDefinition::new(
+            CopyOperationDefinition::new(
                 chroot.join("RDIR/RFILEB").as_path(),
                 chroot.join("RDIR2/RFILEB").as_path(),
                 false,
                 true
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -278,7 +279,7 @@ mod virtual_tests {
         },
         Kind,
         capability::{
-            ZealedGuard
+            ZealousGuard
         }
     };
 
@@ -288,14 +289,14 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CopyOperationDefinition::new(
+            CopyOperationDefinition::new(
                 samples_path.join("A").as_path(),
                 samples_path.join("Z").as_path(),
                 false,
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -314,14 +315,14 @@ mod virtual_tests {
         fs.as_inner_mut().mut_sub_state().attach(gitkeep.as_path(),Some(gitkeep.as_path()), Kind::File).unwrap();
 
         atomize(
-            &CopyOperationDefinition::new(
+            CopyOperationDefinition::new(
                 samples_path.join("B").as_path(),
                 samples_path.join("A").as_path(),
                 true,
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -336,14 +337,14 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CopyOperationDefinition::new(
+            CopyOperationDefinition::new(
                 samples_path.join("F").as_path(),
                 samples_path.join("Z").as_path(),
                 false,
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -358,14 +359,14 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CopyOperationDefinition::new(
+            CopyOperationDefinition::new(
                 samples_path.join("F").as_path(),
                 samples_path.join("A/C").as_path(),
                 false,
                 true
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
         .apply(&mut fs)
         .unwrap();

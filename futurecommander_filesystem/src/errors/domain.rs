@@ -174,7 +174,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -186,7 +186,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -198,7 +198,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -210,7 +210,7 @@ mod errors_tests {
                 true,
                 false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
     }
@@ -233,7 +233,7 @@ mod errors_tests {
                     false,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -245,7 +245,7 @@ mod errors_tests {
                     false,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -257,7 +257,7 @@ mod errors_tests {
                     false,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -269,7 +269,7 @@ mod errors_tests {
                     false,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
     }
@@ -292,7 +292,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -304,7 +304,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -316,7 +316,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -328,7 +328,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -340,7 +340,7 @@ mod errors_tests {
                     false,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -352,7 +352,7 @@ mod errors_tests {
                     false,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
     }
@@ -375,7 +375,7 @@ mod errors_tests {
                     false,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -387,7 +387,7 @@ mod errors_tests {
                     false,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
     }
@@ -410,7 +410,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -422,7 +422,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -434,7 +434,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -446,7 +446,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
     }
@@ -470,7 +470,7 @@ mod errors_tests {
                     true,
                     true
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -482,7 +482,7 @@ mod errors_tests {
                     true,
                     true
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -494,7 +494,7 @@ mod errors_tests {
                     true,
                     true
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -506,7 +506,7 @@ mod errors_tests {
                     true,
                     true
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
     }
@@ -529,7 +529,7 @@ mod errors_tests {
                     false,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -541,7 +541,7 @@ mod errors_tests {
                     false,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
     }
@@ -562,7 +562,7 @@ mod errors_tests {
                     not_exists.as_path(),
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -572,7 +572,7 @@ mod errors_tests {
                     not_exists.as_path(),
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
     }
@@ -588,22 +588,22 @@ mod errors_tests {
         let expected_error = DomainError::RecursiveNotAllowed(not_empty_dir.clone());
 
         assert_two_errors_equals(
-            &FileSystemOperation::remove(
+            &&FileSystemOperation::remove(
                 RemoveOperationDefinition::new(
                     not_empty_dir.as_path(),
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::remove(
+            &&FileSystemOperation::remove(
                 RemoveOperationDefinition::new(
                     not_empty_dir.as_path(),
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -627,7 +627,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -639,7 +639,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -651,7 +651,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&vfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
 
@@ -663,7 +663,7 @@ mod errors_tests {
                     true,
                     false
                 )
-            ).atomize(&rfs, &mut ZealedGuard).err().unwrap(),
+            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
             &expected_error
         );
     }

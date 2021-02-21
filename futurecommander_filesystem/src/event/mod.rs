@@ -18,7 +18,9 @@
  */
 
 use std::{
-    fmt::Debug
+    fmt::Debug,
+    collections::HashMap,
+    path::PathBuf
 };
 
 use serde::{Serialize, Deserialize};
@@ -41,7 +43,8 @@ use crate::{
     errors::DomainError,
     capability::{
         Guard,
-        RegistrarGuard
+        RegistrarGuard,
+        Capabilities
     },
     port::{
         Entry,
@@ -51,48 +54,42 @@ use crate::{
 };
 
 pub trait Listener {
-    fn emit(&mut self, operation: &FileSystemOperation, guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError>;
+    fn emit(&mut self, operation: FileSystemOperation, guard: Box<dyn Guard>) -> Result<(), DomainError>;
 }
 
-pub trait Delayer {
-    fn delay(&mut self, operation: FileSystemOperation, guard: RegistrarGuard);
-}
-
-pub trait Previewer {
-    fn preview<G: Guard>(&mut self, operation: FileSystemOperation, guard: &G);
-}
+pub type OperationRegistry = HashMap<PathBuf, Capabilities>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FileSystemOperation {
-    Create(CreateOperationDefinition),
-    Copy(CopyOperationDefinition),
-    Move(MoveOperationDefinition),
-    Remove(RemoveOperationDefinition)
+    Create(CreateOperationDefinition, OperationRegistry),
+    Copy(CopyOperationDefinition, OperationRegistry),
+    Move(MoveOperationDefinition, OperationRegistry),
+    Remove(RemoveOperationDefinition, OperationRegistry)
 }
 
 impl FileSystemOperation {
-    pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+    pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(self, fs: &F, guard: Box<dyn Guard>) -> Result<AtomicTransaction, DomainError> {
         match self {
-            FileSystemOperation::Create(operation) => create::atomize(operation, fs, guard),
-            FileSystemOperation::Copy(operation) => copy::atomize(operation, fs, guard),
-            FileSystemOperation::Move(operation) => mov::atomize(operation, fs, guard),
-            FileSystemOperation::Remove(operation) => remove::atomize(operation, fs, guard),
+            FileSystemOperation::Create(operation, registry) => create::atomize(operation, fs, &mut RegistrarGuard::new(guard, registry)),
+            FileSystemOperation::Copy(operation, registry) => copy::atomize(operation, fs, &mut RegistrarGuard::new(guard, registry)),
+            FileSystemOperation::Move(operation, registry) => mov::atomize(operation, fs, &mut RegistrarGuard::new(guard, registry)),
+            FileSystemOperation::Remove(operation, registry) => remove::atomize(operation, fs, &mut RegistrarGuard::new(guard, registry)),
         }
     }
 
     pub fn create(definition: CreateOperationDefinition) -> Self {
-        FileSystemOperation::Create(definition)
+        FileSystemOperation::Create(definition, HashMap::new())
     }
 
     pub fn copy(definition: CopyOperationDefinition) -> Self {
-        FileSystemOperation::Copy(definition)
+        FileSystemOperation::Copy(definition, HashMap::new())
     }
 
     pub fn mov(definition: MoveOperationDefinition) -> Self {
-        FileSystemOperation::Move(definition)
+        FileSystemOperation::Move(definition, HashMap::new())
     }
 
     pub fn remove(definition: RemoveOperationDefinition) -> Self {
-        FileSystemOperation::Remove(definition)
+        FileSystemOperation::Remove(definition, HashMap::new())
     }
 }

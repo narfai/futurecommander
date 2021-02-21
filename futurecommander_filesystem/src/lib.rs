@@ -30,7 +30,6 @@ pub use self::{
     errors::{ DomainError, QueryError },
     event::{
         Listener,
-        Delayer,
         capability
     },
     port::{

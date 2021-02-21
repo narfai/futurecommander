@@ -29,7 +29,8 @@ use crate::{
     errors::{ DomainError },
     capability::{
         Guard,
-        Capability
+        Capability,
+        RegistrarGuard
     },
     port::{
         Entry,
@@ -106,7 +107,7 @@ fn recursive_dir_creation<E, F> (fs: &F, mut ancestors: &mut Ancestors<'_>) -> R
     Ok(transaction)
 }
 
-pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: &CreateOperationDefinition, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: CreateOperationDefinition, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
     let entry = fs.status(definition.path())?;
     let mut transaction = AtomicTransaction::default();
     let mut ancestors = definition.path().ancestors();
@@ -157,7 +158,7 @@ mod real_tests {
             RealFileSystem
         },
         capability::{
-            ZealedGuard
+            ZealousGuard
         }
     };
 
@@ -167,14 +168,14 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &CreateOperationDefinition::new(
+            CreateOperationDefinition::new(
                 chroot.join("CREATED").as_path(),
                 Kind::Directory,
                 false,
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -190,14 +191,14 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &CreateOperationDefinition::new(
+            CreateOperationDefinition::new(
                 chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
                 Kind::Directory,
                 true,
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -212,14 +213,14 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &CreateOperationDefinition::new(
+            CreateOperationDefinition::new(
                 chroot.join("CREATED").as_path(),
                 Kind::File,
                 false,
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -236,14 +237,14 @@ mod real_tests {
         let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
 
         atomize(
-            &CreateOperationDefinition::new(
+            CreateOperationDefinition::new(
                 chroot.join("RDIR/RFILEA").as_path(),
                 Kind::File,
                 false,
                 true
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -268,7 +269,7 @@ mod virtual_tests {
             VirtualFileSystem
         },
         capability::{
-            ZealedGuard
+            ZealousGuard
         }
     };
 
@@ -279,14 +280,14 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CreateOperationDefinition::new(
+            CreateOperationDefinition::new(
                 chroot.join("CREATED").as_path(),
                 Kind::Directory,
                 false,
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -302,14 +303,14 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CreateOperationDefinition::new(
+            CreateOperationDefinition::new(
                 chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
                 Kind::Directory,
                 true,
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -324,14 +325,14 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CreateOperationDefinition::new(
+            CreateOperationDefinition::new(
                 chroot.join("CREATED").as_path(),
                 Kind::File,
                 false,
                 false
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();
@@ -346,14 +347,14 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CreateOperationDefinition::new(
+            CreateOperationDefinition::new(
                 chroot.join("RDIR/RFILEA").as_path(),
                 Kind::File,
                 false,
                 true
             ),
             &fs, 
-            &mut ZealedGuard
+            &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
          .unwrap();

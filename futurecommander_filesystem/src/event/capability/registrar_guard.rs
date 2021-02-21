@@ -24,28 +24,36 @@ use std::{
 use serde::{ Serialize, Deserialize };
 
 use crate::{
+    OperationRegistry,
     DomainError,
     capability::{
         Capability,
         Guard,
         Capabilities,
-        ZealedGuard
+        ZealousGuard
     }
 };
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub struct RegistrarGuard {
     inner: Box<dyn Guard>,
-    registry: HashMap<PathBuf, Capabilities>
+    registry: OperationRegistry
 }
 
-impl Default for RegistrarGuard {
+/* impl Default for RegistrarGuard {
     fn default() -> Self {
-        Self::from(Box::new(ZealedGuard))
+        Self::from(&mut ZealousGuard)
     }
-}
+} */
 
 impl RegistrarGuard {
+    pub fn new(guard: Box<dyn Guard>, registry: OperationRegistry) -> Self {
+        RegistrarGuard {
+            inner: guard,
+            registry
+        }
+    }
+
     pub fn from(guard: Box<dyn Guard>) -> Self {
         RegistrarGuard {
             inner: guard,
@@ -54,7 +62,6 @@ impl RegistrarGuard {
     }
 }
 
-#[typetag::serde]
 impl Guard for RegistrarGuard {
     fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError> {
         let capabilities = match self.registry.get(&target.to_path_buf()) {

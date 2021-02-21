@@ -33,7 +33,6 @@ use futurecommander_filesystem::{
     Kind,
     CreateOperationDefinition,
     Listener,
-    Delayer,
     FileSystemOperation
 };
 
@@ -64,17 +63,17 @@ pub struct InitializedNewDirectoryCommand {
 
 impl Command<InitializedNewDirectoryCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        let event = FileSystemOperation::create(
-            CreateOperationDefinition::new(
-                self.0.path.as_path(),
-                Kind::Directory,
-                self.0.recursive,
-                self.0.overwrite
-            )
-        );
-
-        let guard = container.emit(&event, self.0.guard.registrar())?;
-        container.delay(event, guard);
+        container.emit(
+            FileSystemOperation::create(
+                CreateOperationDefinition::new(
+                    self.0.path.as_path(),
+                    Kind::Directory,
+                    self.0.recursive,
+                    self.0.overwrite
+                )
+            ), 
+            self.0.guard.to_guard()
+        )?;
         Ok(())
     }
 }

@@ -31,19 +31,18 @@ use futurecommander_filesystem::{
         Guard,
         Capability,
         RegistrarGuard,
-        ZealedGuard,
+        ZealousGuard,
         BlindGuard,
         QuietGuard
     }
 };
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Default, Debug)]
 pub struct InteractiveGuard {
     skip_all: Capabilities,
     allow_all: Capabilities
 }
 
-#[typetag::serde]
 impl Guard for InteractiveGuard {
     fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError> {
         if self.skip_all.authorize(capability) {
@@ -85,13 +84,13 @@ pub enum AvailableGuard {
 }
 
 impl AvailableGuard {
-    pub fn registrar(&self) -> RegistrarGuard {
+    pub fn to_guard(&self) -> Box<dyn Guard> {
         match self {
-            AvailableGuard::Zealed => RegistrarGuard::from(Box::new(ZealedGuard)),
-            AvailableGuard::Blind => RegistrarGuard::from(Box::new(BlindGuard)),
-            AvailableGuard::Quiet => RegistrarGuard::from(Box::new(QuietGuard)),
-            AvailableGuard::Interactive => RegistrarGuard::from(Box::new(InteractiveGuard::default())),
-        }
+            AvailableGuard::Zealed => Box::new(ZealousGuard),
+            AvailableGuard::Blind => Box::new(BlindGuard),
+            AvailableGuard::Quiet => Box::new(QuietGuard),
+            AvailableGuard::Interactive => Box::new(InteractiveGuard::default()),
+        }        
     }
 
     pub fn available(s: &str) -> bool {

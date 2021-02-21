@@ -38,10 +38,9 @@ mod container_integration {
         FileSystemOperation,
         RemoveOperationDefinition,
         Listener,
-        Delayer,
         Entry,
         capability::{
-            RegistrarGuard
+            ZealousGuard
         }
     };
 
@@ -72,9 +71,8 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&cp_a_aprime, RegistrarGuard::default()).unwrap();
-        fs.delay(cp_a_aprime, guard);
-
+        fs.emit(cp_a_aprime, Box::new(ZealousGuard)).unwrap();
+        
         let rm_a = FileSystemOperation::remove(
             RemoveOperationDefinition::new(
                 chroot.join("A").as_path(),
@@ -82,8 +80,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&rm_a, RegistrarGuard::default()).unwrap();
-        fs.delay(rm_a, guard);
+        fs.emit(rm_a, Box::new(ZealousGuard)).unwrap();
 
         let cp_aprime_chroot = FileSystemOperation::copy(
             CopyOperationDefinition::new(
@@ -94,8 +91,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&cp_aprime_chroot, RegistrarGuard::default()).unwrap();
-        fs.delay(cp_aprime_chroot, guard);
+        fs.emit(cp_aprime_chroot, Box::new(ZealousGuard)).unwrap();
 
         let rm_aprime = FileSystemOperation::remove(
             RemoveOperationDefinition::new(
@@ -104,8 +100,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&rm_aprime, RegistrarGuard::default()).unwrap();
-        fs.delay(rm_aprime, guard);
+        fs.emit(rm_aprime, Box::new(ZealousGuard)).unwrap();
 
         let stated_a = fs.status(chroot.join("A").as_path())
             .unwrap()
@@ -160,8 +155,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&cp_ac_chroot, RegistrarGuard::default()).unwrap();
-        fs.delay(cp_ac_chroot, guard);
+        fs.emit(cp_ac_chroot, Box::new(ZealousGuard)).unwrap();
 
         let rm_ac = FileSystemOperation::remove(
             RemoveOperationDefinition::new(
@@ -170,8 +164,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&rm_ac, RegistrarGuard::default()).unwrap();
-        fs.delay(rm_ac, guard);
+        fs.emit(rm_ac, Box::new(ZealousGuard)).unwrap();
 
         let cp_c_z = FileSystemOperation::copy(
             CopyOperationDefinition::new(
@@ -182,9 +175,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&cp_c_z, RegistrarGuard::default()).unwrap();
-        fs.delay(cp_c_z, guard);
-
+        fs.emit(cp_c_z, Box::new(ZealousGuard)).unwrap();
 
         let rm_c = FileSystemOperation::remove(
             RemoveOperationDefinition::new(
@@ -193,8 +184,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&rm_c, RegistrarGuard::default()).unwrap();
-        fs.delay(rm_c, guard);
+        fs.emit(rm_c, Box::new(ZealousGuard)).unwrap();
 
         let cp_b_c = FileSystemOperation::copy(
             CopyOperationDefinition::new(
@@ -205,8 +195,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&cp_b_c, RegistrarGuard::default()).unwrap();
-        fs.delay(cp_b_c, guard);
+        fs.emit(cp_b_c, Box::new(ZealousGuard)).unwrap();
 
         let rm_b = FileSystemOperation::remove(
             RemoveOperationDefinition::new(
@@ -215,8 +204,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&rm_b, RegistrarGuard::default()).unwrap();
-        fs.delay(rm_b, guard);
+        fs.emit(rm_b, Box::new(ZealousGuard)).unwrap();
 
         let cp_z_b = FileSystemOperation::copy(
             CopyOperationDefinition::new(
@@ -227,9 +215,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&cp_z_b, RegistrarGuard::default()).unwrap();
-        fs.delay(cp_z_b, guard);
-
+        fs.emit(cp_z_b, Box::new(ZealousGuard)).unwrap();
 
         let rm_z = FileSystemOperation::remove(
             RemoveOperationDefinition::new(
@@ -238,9 +224,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&rm_z, RegistrarGuard::default()).unwrap();
-        fs.delay(rm_z, guard);
-
+        fs.emit(rm_z, Box::new(ZealousGuard)).unwrap();
 
         let stated_b = fs.status(chroot.join("B").as_path())
             .unwrap();
@@ -283,8 +267,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&cp_c_a, RegistrarGuard::default()).unwrap();
-        fs.delay(cp_c_a, guard);
+        fs.emit(cp_c_a, Box::new(ZealousGuard)).unwrap();
 
         let cp_acd_a = FileSystemOperation::copy(
             CopyOperationDefinition::new(
@@ -295,8 +278,7 @@ mod container_integration {
             )
         );
 
-        let guard = fs.emit(&cp_acd_a, RegistrarGuard::default()).unwrap();
-        fs.delay(cp_acd_a, guard);
+        fs.emit(cp_acd_a, Box::new(ZealousGuard)).unwrap();
 
         let rm_adg = FileSystemOperation::remove(
             RemoveOperationDefinition::new(
@@ -304,8 +286,7 @@ mod container_integration {
                 true
             )
         );
-        let guard = fs.emit(&rm_adg, RegistrarGuard::default()).unwrap();
-        fs.delay(rm_adg, guard);
+        fs.emit(rm_adg, Box::new(ZealousGuard)).unwrap();
 
         let stated_ad = fs.status(chroot.join("A/D").as_path())
             .unwrap()

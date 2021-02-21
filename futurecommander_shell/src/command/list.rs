@@ -55,8 +55,6 @@ pub struct InitializedListCommand {
     pub path: PathBuf
 }
 
-
-
 impl Command<InitializedListCommand> {
     pub fn execute<W : Write>(self, out: &mut W, container: &mut Container) -> Result<(), CommandError> {
         let collection = container.read_dir(self.0.path.as_path())?;

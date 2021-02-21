@@ -24,11 +24,12 @@ use std::{
 use crate::{
     errors:: { DomainError, QueryError },
     capability::{
-        RegistrarGuard
+        RegistrarGuard,
+        ZealousGuard,
+        Guard
     },
     event::{
         Listener,
-        Delayer,
         FileSystemOperation,
     },
     port::{
@@ -36,7 +37,6 @@ use crate::{
         FileSystemAdapter,
         EntryAdapter,
         EntryCollection
-
     },
     infrastructure::{
         VirtualFileSystem,
@@ -45,24 +45,22 @@ use crate::{
     }
 };
 
-type Commitment = (FileSystemOperation, RegistrarGuard);
-
 #[derive(Debug)]
-pub struct EventQueue(VecDeque<Commitment>);
+pub struct OperationQueue(VecDeque<FileSystemOperation>);
 
-impl Default for EventQueue {
-    fn default() -> EventQueue {
-        EventQueue(VecDeque::new())
+impl Default for OperationQueue {
+    fn default() -> OperationQueue {
+        OperationQueue(VecDeque::new())
     }
 }
 
-impl EventQueue {
-    pub fn pop_front(&mut self) -> Option<Commitment>{
+impl OperationQueue {
+    pub fn pop_front(&mut self) -> Option<FileSystemOperation>{
         self.0.pop_front()
     }
 
-    pub fn push_back(&mut self, commitment: Commitment){
-        self.0.push_back(commitment)
+    pub fn push_back(&mut self, operation: FileSystemOperation){
+        self.0.push_back(operation)
     }
 
     pub fn clear(&mut self) {
@@ -70,9 +68,9 @@ impl EventQueue {
     }
 
     pub fn serialize(&self) -> Result<String, serde_json::Error> {
-        let mut serializable : Vec<(&FileSystemOperation, &RegistrarGuard)> = Vec::new();
-        for (event, guard) in self.0.iter() {
-            serializable.push((event, guard));
+        let mut serializable : Vec<&FileSystemOperation> = Vec::new();
+        for operation in self.0.iter() {
+            serializable.push(operation);
         }
         serde_json::to_string(&serializable)
     }
@@ -82,7 +80,7 @@ impl EventQueue {
 pub struct Container {
     virtual_fs  : FileSystemAdapter<VirtualFileSystem>,
     real_fs     : FileSystemAdapter<RealFileSystem>,
-    event_queue : EventQueue
+    operation_queue : OperationQueue
 }
 
 impl Default for Container {
@@ -96,13 +94,13 @@ impl Container {
         Container {
             virtual_fs: FileSystemAdapter(VirtualFileSystem::default()),
             real_fs:    FileSystemAdapter(RealFileSystem::default()),
-            event_queue: EventQueue::default()
+            operation_queue: OperationQueue::default()
         }
     }
 
     pub fn apply(&mut self) -> Result<(), DomainError> {
-        while let Some((event, mut guard)) = self.event_queue.pop_front() {
-            event.atomize(&self.real_fs, &mut guard)?
+        while let Some(operation) = self.operation_queue.pop_front() {
+            operation.atomize(&self.real_fs, Box::new(ZealousGuard))?
                 .apply(&mut self.real_fs)?;
         }
         self.reset();
@@ -111,7 +109,7 @@ impl Container {
 
     pub fn reset(&mut self) {
         self.virtual_fs.as_inner_mut().reset();
-        self.event_queue.clear()
+        self.operation_queue.clear()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -127,14 +125,14 @@ impl Container {
     }
 
     pub fn to_json(&self) -> Result<String, DomainError> {
-        Ok(self.event_queue.serialize()?)
+        Ok(self.operation_queue.serialize()?)
     }
 
     pub fn emit_json(&mut self, json: String) -> Result<(), DomainError> {
-        let events : Vec<(FileSystemOperation, RegistrarGuard)> = serde_json::from_str(json.as_str()).unwrap();
-        for (event, guard) in events {
-            let guard = self.emit(&event, guard)?;
-            self.delay(event, guard );
+        let operations : Vec<FileSystemOperation> = serde_json::from_str(json.as_str()).unwrap();
+        for operation in operations {
+            self.emit(operation.clone(), Box::new(ZealousGuard))?;
+            self.operation_queue.push_back(operation);
         }        
         Ok(())
     }
@@ -152,19 +150,12 @@ impl ReadableFileSystem for Container {
     }
 }
 
-impl Delayer for Container {
-    fn delay(&mut self, event: FileSystemOperation, guard: RegistrarGuard) {
-        // TODO does it really matters to store the entire registrar here ?
-        self.event_queue.push_back((event, guard));
-    }
-}
-
-
 impl Listener for Container {
-    fn emit(&mut self, event: &FileSystemOperation, mut guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError> {
-        event.atomize(&self.virtual_fs, &mut guard)?
+    fn emit(&mut self, operation: FileSystemOperation, guard: Box<dyn Guard>) -> Result<(), DomainError> {
+        operation.clone().atomize(&self.virtual_fs, guard)?
              .apply(&mut self.virtual_fs)?;
-        Ok(guard)
+        self.operation_queue.push_back(operation);
+        Ok(())
     }
 }
 
@@ -192,8 +183,7 @@ mod tests {
             )
         );
 
-        let guard = container.emit(&event, RegistrarGuard::default()).unwrap();
-        container.delay(event, guard);
+        container.emit(event, Box::new(ZealousGuard)).unwrap();
 
         assert!(container.status(chroot.join("COPIED").as_path()).unwrap().exists());
         assert!(container.status(chroot.join("COPIED/RFILEA").as_path()).unwrap().exists());
@@ -213,9 +203,9 @@ mod tests {
             )
         );
 
-        container.delay(event, RegistrarGuard::default());
+        container.emit(event, Box::new(ZealousGuard)).unwrap();
         let expected : String = format!(
-            "[[{{\"Copy\":{{\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}}}},{{\"inner\":{{\"type\":\"ZealedGuard\"}},\"registry\":{{}}}}]]",
+            "[{{\"Copy\":[{{\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}},{{}}]}}]",
             chroot.join("RDIR").to_string_lossy(),
             chroot.join("COPIED").to_string_lossy(),
         );
@@ -236,13 +226,11 @@ mod tests {
             )
         );
 
-        let guard = container_a.emit(&event, RegistrarGuard::default()).unwrap();
+        container_a.emit(event, Box::new(ZealousGuard)).unwrap();
         assert!(!container_a.is_empty());
         let a_stat = container_a.status(chroot.join("COPIED").as_path()).unwrap();
         assert!(a_stat.exists());
         assert!(a_stat.is_dir());
-
-        container_a.delay(event, guard);
 
         let mut container_b = Container::new();
 

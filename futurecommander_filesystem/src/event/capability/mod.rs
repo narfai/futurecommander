@@ -27,7 +27,7 @@ use std::{
 
 pub use self::{
     capabilities::Capabilities,
-    guard::{ Guard, ZealedGuard, BlindGuard, QuietGuard },
+    guard::{ Guard, ZealousGuard, BlindGuard, QuietGuard },
     registrar_guard::{ RegistrarGuard }
 };
 

@@ -27,7 +27,6 @@ use futurecommander_filesystem::{
     ReadableFileSystem,
     Entry,
     Listener,
-    Delayer,
     FileSystemOperation
 };
 
@@ -73,34 +72,34 @@ impl Command<InitializedMoveCommand> {
             return Err(CommandError::DoesNotExists(self.0.source));
         }
 
-        let event = FileSystemOperation::mov(
-            if destination.exists() {
-                if destination.is_dir() {
+        container.emit(
+            FileSystemOperation::mov(
+                if destination.exists() {
+                    if destination.is_dir() {
+                        MoveOperationDefinition::new(
+                            self.0.source.as_path(),
+                            self.0.destination
+                                .join(self.0.source.file_name().unwrap())
+                                .as_path(),
+                            self.0.merge,
+                            self.0.overwrite
+                        )
+                    } else if source.is_dir() {
+                        return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
+                    } else {
+                        return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
+                    }
+                } else {
                     MoveOperationDefinition::new(
                         self.0.source.as_path(),
-                        self.0.destination
-                            .join(self.0.source.file_name().unwrap())
-                            .as_path(),
+                        self.0.destination.as_path(),
                         self.0.merge,
                         self.0.overwrite
                     )
-                } else if source.is_dir() {
-                    return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
-                } else {
-                    return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
                 }
-            } else {
-                MoveOperationDefinition::new(
-                    self.0.source.as_path(),
-                    self.0.destination.as_path(),
-                    self.0.merge,
-                    self.0.overwrite
-                )
-            }
-        );
-
-        let guard = container.emit(&event, self.0.guard.registrar())?;
-        container.delay(event, guard);
+            ), 
+            self.0.guard.to_guard()
+        )?;
         Ok(())
     }
 }
