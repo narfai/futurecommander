@@ -31,10 +31,10 @@ mod remove;
 pub mod capability;
 
 pub use self::{
-    copy::CopyEvent,
-    create::CreateEvent,
-    mov::MoveEvent,
-    remove::RemoveEvent
+    copy::CopyOperationDefinition,
+    create::CreateOperationDefinition,
+    mov::MoveOperationDefinition,
+    remove::RemoveOperationDefinition
 };
 
 use crate::{
@@ -51,28 +51,28 @@ use crate::{
 };
 
 pub trait Listener {
-    fn emit(&mut self, event: &FileSystemEvent, guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError>;
+    fn emit(&mut self, event: &FileSystemOperation, guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError>;
 }
 
 pub trait Delayer {
-    fn delay(&mut self, event: FileSystemEvent, guard: RegistrarGuard);
+    fn delay(&mut self, event: FileSystemOperation, guard: RegistrarGuard);
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum FileSystemEvent {
-    Create(create::CreateEvent),
-    Copy(copy::CopyEvent),
-    Move(mov::MoveEvent),
-    Remove(remove::RemoveEvent)
+pub enum FileSystemOperation {
+    Create(create::CreateOperationDefinition),
+    Copy(copy::CopyOperationDefinition),
+    Move(mov::MoveOperationDefinition),
+    Remove(remove::RemoveOperationDefinition)
 }
 
-impl FileSystemEvent {
+impl FileSystemOperation {
     pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(&self, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
         match self {
-            FileSystemEvent::Create(event) => create::atomize(event, fs, guard),
-            FileSystemEvent::Copy(event) => copy::atomize(event, fs, guard),
-            FileSystemEvent::Move(event) => mov::atomize(event, fs, guard),
-            FileSystemEvent::Remove(event) => remove::atomize(event, fs, guard),
+            FileSystemOperation::Create(operation) => create::atomize(operation, fs, guard),
+            FileSystemOperation::Copy(operation) => copy::atomize(operation, fs, guard),
+            FileSystemOperation::Move(operation) => mov::atomize(operation, fs, guard),
+            FileSystemOperation::Remove(operation) => remove::atomize(operation, fs, guard),
         }
     }
 }

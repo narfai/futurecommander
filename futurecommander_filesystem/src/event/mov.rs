@@ -38,16 +38,16 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct MoveEvent {
+pub struct MoveOperationDefinition {
     source: PathBuf,
     destination: PathBuf,
     merge: bool,
     overwrite: bool, //To honour overwrite or merge error, we should crawl recursively the entire vfs children of dst ...
 }
 
-impl MoveEvent {
-    pub fn new(source: &Path, destination: &Path, merge: bool, overwrite: bool) -> MoveEvent {
-        MoveEvent {
+impl MoveOperationDefinition {
+    pub fn new(source: &Path, destination: &Path, merge: bool, overwrite: bool) -> MoveOperationDefinition {
+        MoveOperationDefinition {
             source: source.to_path_buf(),
             destination: destination.to_path_buf(),
             merge,
@@ -61,15 +61,15 @@ impl MoveEvent {
     pub fn overwrite(&self) -> bool { self.overwrite }
 }
 
-pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &MoveEvent, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
-    let source = fs.status(event.source())?;
+pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: &MoveOperationDefinition, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+    let source = fs.status(definition.source())?;
 
     if !source.exists() {
-        return Err(DomainError::SourceDoesNotExists(event.source().to_path_buf()))
+        return Err(DomainError::SourceDoesNotExists(definition.source().to_path_buf()))
     }
 
     let mut transaction = AtomicTransaction::default();
-    let destination = fs.status(event.destination())?;
+    let destination = fs.status(definition.destination())?;
 
     if source.is_dir() && destination.is_contained_by(&source) {
         return Err(DomainError::CopyIntoItSelf(source.to_path(), destination.to_path()));
@@ -78,17 +78,17 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &MoveEvent, fs: &
     if destination.exists() {
         if source.is_dir() {
             if destination.is_dir() {
-                if guard.authorize(Capability::Merge, event.merge(), event.destination())? {
+                if guard.authorize(Capability::Merge, definition.merge(), definition.destination())? {
                     for child in fs.read_dir(source.path())? {
                         transaction.merge(
                             atomize(
-                                &MoveEvent::new(
+                                &MoveOperationDefinition::new(
                                     child.path(),
                                     destination.path()
                                         .join(child.name().unwrap())
                                         .as_path(),
-                                    event.merge(),
-                                    event.overwrite()
+                                    definition.merge(),
+                                    definition.overwrite()
                                 ),
                                 fs, 
                                 guard
@@ -102,7 +102,7 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &MoveEvent, fs: &
             }
         } else if source.is_file() {
             if destination.is_file() {
-                if guard.authorize(Capability::Overwrite, event.overwrite(), event.destination())? {
+                if guard.authorize(Capability::Overwrite, definition.overwrite(), definition.destination())? {
                     transaction.add(Atomic::RemoveFile(destination.to_path()));
                     transaction.add(Atomic::MoveFileToFile {
                         source: source.to_path(),
@@ -121,13 +121,13 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &MoveEvent, fs: &
         for child in fs.read_maintained(source.path())? {
             transaction.merge(
                 atomize(
-                    &MoveEvent::new(
+                    &MoveOperationDefinition::new(
                         child.path(),
                         destination.path()
                             .join(child.name().unwrap())
                             .as_path(),
-                        event.merge(),
-                        event.overwrite()
+                        definition.merge(),
+                        definition.overwrite()
                     ),
                     fs, guard
                 )?
@@ -167,7 +167,7 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &MoveEvent::new(
+            &MoveOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 chroot.join("MOVED").as_path(),
                 false,
@@ -193,7 +193,7 @@ mod real_tests {
         let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
 
         atomize(
-            &MoveEvent::new(
+            &MoveOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 chroot.join("RDIR2").as_path(),
                 true,
@@ -223,7 +223,7 @@ mod real_tests {
         let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
 
         atomize(
-            &MoveEvent::new(
+            &MoveOperationDefinition::new(
                 chroot.join("RDIR/RFILEA").as_path(),
                 chroot.join("MOVED").as_path(),
                 false,
@@ -251,7 +251,7 @@ mod real_tests {
         let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
 
         atomize(
-            &MoveEvent::new(
+            &MoveOperationDefinition::new(
                 chroot.join("RDIR/RFILEA").as_path(),
                 chroot.join("RDIR2/RFILEA").as_path(),
                 false,
@@ -298,7 +298,7 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &MoveEvent::new(
+            &MoveOperationDefinition::new(
                 samples_path.join("A").as_path(),
                 samples_path.join("Z").as_path(),
                 false,
@@ -325,7 +325,7 @@ mod virtual_tests {
         fs.as_inner_mut().mut_sub_state().attach(gitkeep.as_path(),Some(gitkeep.as_path()), Kind::File).unwrap();
 
         atomize(
-            &MoveEvent::new(
+            &MoveOperationDefinition::new(
                 samples_path.join("B").as_path(),
                 samples_path.join("A").as_path(),
                 true,
@@ -348,7 +348,7 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &MoveEvent::new(
+            &MoveOperationDefinition::new(
                 samples_path.join("F").as_path(),
                 samples_path.join("Z").as_path(),
                 false,
@@ -371,7 +371,7 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &MoveEvent::new(
+            &MoveOperationDefinition::new(
                 samples_path.join("F").as_path(),
                 samples_path.join("A/C").as_path(),
                 false,

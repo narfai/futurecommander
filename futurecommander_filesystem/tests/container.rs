@@ -33,10 +33,10 @@ mod container_integration {
         Container,
         sample::Samples,
         Kind,
-        CopyEvent,
+        CopyOperationDefinition,
         ReadableFileSystem,
-        FileSystemEvent,
-        RemoveEvent,
+        FileSystemOperation,
+        RemoveOperationDefinition,
         Listener,
         Delayer,
         Entry,
@@ -63,8 +63,8 @@ mod container_integration {
     rm APRIME
     */
     pub fn _no_dangling(fs: &mut Container, chroot: &Path) {
-        let cp_a_aprime = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let cp_a_aprime = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("A").as_path(),
                 chroot.join("APRIME").as_path(),
                 true,
@@ -75,8 +75,8 @@ mod container_integration {
         let guard = fs.emit(&cp_a_aprime, RegistrarGuard::default()).unwrap();
         fs.delay(cp_a_aprime, guard);
 
-        let rm_a = FileSystemEvent::Remove(
-            RemoveEvent::new(
+        let rm_a = FileSystemOperation::Remove(
+            RemoveOperationDefinition::new(
                 chroot.join("A").as_path(),
                 true
             )
@@ -85,8 +85,8 @@ mod container_integration {
         let guard = fs.emit(&rm_a, RegistrarGuard::default()).unwrap();
         fs.delay(rm_a, guard);
 
-        let cp_aprime_chroot = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let cp_aprime_chroot = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("APRIME").as_path(),
                 chroot.join("A").as_path(),
                 true,
@@ -97,8 +97,8 @@ mod container_integration {
         let guard = fs.emit(&cp_aprime_chroot, RegistrarGuard::default()).unwrap();
         fs.delay(cp_aprime_chroot, guard);
 
-        let rm_aprime = FileSystemEvent::Remove(
-            RemoveEvent::new(
+        let rm_aprime = FileSystemOperation::Remove(
+            RemoveOperationDefinition::new(
                 chroot.join("APRIME").as_path(),
                 true
             )
@@ -151,8 +151,8 @@ mod container_integration {
         rm Z
         */
 
-        let cp_ac_chroot = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let cp_ac_chroot = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("A/C").as_path(),
                 chroot.join("C").as_path(),
                 true,
@@ -163,8 +163,8 @@ mod container_integration {
         let guard = fs.emit(&cp_ac_chroot, RegistrarGuard::default()).unwrap();
         fs.delay(cp_ac_chroot, guard);
 
-        let rm_ac = FileSystemEvent::Remove(
-            RemoveEvent::new(
+        let rm_ac = FileSystemOperation::Remove(
+            RemoveOperationDefinition::new(
                 chroot.join("A/C").as_path(),
                 true
             )
@@ -173,8 +173,8 @@ mod container_integration {
         let guard = fs.emit(&rm_ac, RegistrarGuard::default()).unwrap();
         fs.delay(rm_ac, guard);
 
-        let cp_c_z = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let cp_c_z = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("C").as_path(),
                 chroot.join("Z").as_path(),
                 true,
@@ -186,8 +186,8 @@ mod container_integration {
         fs.delay(cp_c_z, guard);
 
 
-        let rm_c = FileSystemEvent::Remove(
-            RemoveEvent::new(
+        let rm_c = FileSystemOperation::Remove(
+            RemoveOperationDefinition::new(
                 chroot.join("C").as_path(),
                 true
             )
@@ -196,8 +196,8 @@ mod container_integration {
         let guard = fs.emit(&rm_c, RegistrarGuard::default()).unwrap();
         fs.delay(rm_c, guard);
 
-        let cp_b_c = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let cp_b_c = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("B").as_path(),
                 chroot.join("C").as_path(),
                 true,
@@ -208,8 +208,8 @@ mod container_integration {
         let guard = fs.emit(&cp_b_c, RegistrarGuard::default()).unwrap();
         fs.delay(cp_b_c, guard);
 
-        let rm_b = FileSystemEvent::Remove(
-            RemoveEvent::new(
+        let rm_b = FileSystemOperation::Remove(
+            RemoveOperationDefinition::new(
                 chroot.join("B").as_path(),
                 true
             )
@@ -218,8 +218,8 @@ mod container_integration {
         let guard = fs.emit(&rm_b, RegistrarGuard::default()).unwrap();
         fs.delay(rm_b, guard);
 
-        let cp_z_b = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let cp_z_b = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("Z").as_path(),
                 chroot.join("B").as_path(),
                 true,
@@ -231,8 +231,8 @@ mod container_integration {
         fs.delay(cp_z_b, guard);
 
 
-        let rm_z = FileSystemEvent::Remove(
-            RemoveEvent::new(
+        let rm_z = FileSystemOperation::Remove(
+            RemoveOperationDefinition::new(
                 chroot.join("Z").as_path(),
                 true
             )
@@ -274,8 +274,8 @@ mod container_integration {
         rm A/D/G //<- should no appear
     */
     pub fn _some_nesting(fs: &mut Container, chroot: &Path) {
-        let cp_c_a = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let cp_c_a = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("C").as_path(),
                 chroot.join("A").join("C").as_path(),
                 true,
@@ -286,8 +286,8 @@ mod container_integration {
         let guard = fs.emit(&cp_c_a, RegistrarGuard::default()).unwrap();
         fs.delay(cp_c_a, guard);
 
-        let cp_acd_a = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let cp_acd_a = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("A/C/D").as_path(),
                 chroot.join("A").join("D").as_path(),
                 true,
@@ -298,8 +298,8 @@ mod container_integration {
         let guard = fs.emit(&cp_acd_a, RegistrarGuard::default()).unwrap();
         fs.delay(cp_acd_a, guard);
 
-        let rm_adg = FileSystemEvent::Remove(
-            RemoveEvent::new(
+        let rm_adg = FileSystemOperation::Remove(
+            RemoveOperationDefinition::new(
                 chroot.join("A/D/G").as_path(),
                 true
             )

@@ -39,14 +39,14 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RemoveEvent {
+pub struct RemoveOperationDefinition {
     path: PathBuf,
     recursive: bool
 }
 
-impl RemoveEvent {
-    pub fn new(path: &Path, recursive: bool) -> RemoveEvent {
-        RemoveEvent {
+impl RemoveOperationDefinition {
+    pub fn new(path: &Path, recursive: bool) -> RemoveOperationDefinition {
+        RemoveOperationDefinition {
             path: path.to_path_buf(),
             recursive
         }
@@ -56,12 +56,12 @@ impl RemoveEvent {
     pub fn recursive(&self) -> bool { self.recursive }
 }
 
-pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &RemoveEvent, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
-    let entry = fs.status(event.path())?;
+pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: &RemoveOperationDefinition, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+    let entry = fs.status(definition.path())?;
     let mut transaction = AtomicTransaction::default();
 
     if !entry.exists() {
-        return Err(DomainError::DoesNotExists(event.path().to_path_buf()))
+        return Err(DomainError::DoesNotExists(definition.path().to_path_buf()))
     }
 
     if entry.is_file() {
@@ -71,11 +71,11 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &RemoveEvent, fs:
 
         if children.is_empty() {
             transaction.add(Atomic::RemoveEmptyDirectory(entry.path().to_path_buf()))
-        } else if guard.authorize(Capability::Recursive, event.recursive(), event.path())? {
+        } else if guard.authorize(Capability::Recursive, definition.recursive(), definition.path())? {
             for child in children {
                 transaction.merge(
                     atomize(
-                        &RemoveEvent::new(
+                        &RemoveOperationDefinition::new(
                             child.path(),
                             true
                         ),
@@ -115,7 +115,7 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &RemoveEvent::new(
+            &RemoveOperationDefinition::new(
                 chroot.join("RDIR/RFILEA").as_path(),
                 false
             ),
@@ -134,7 +134,7 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &RemoveEvent::new(
+            &RemoveOperationDefinition::new(
                 chroot.join("RDIR3").as_path(),
                 false
             ),
@@ -153,7 +153,7 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &RemoveEvent::new(
+            &RemoveOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 true
             ),
@@ -193,7 +193,7 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &RemoveEvent::new(
+            &RemoveOperationDefinition::new(
                 chroot.join("RDIR/RFILEA").as_path(),
                 false
             ),
@@ -212,7 +212,7 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &RemoveEvent::new(
+            &RemoveOperationDefinition::new(
                 chroot.join("RDIR3").as_path(),
                 false
             ),
@@ -231,7 +231,7 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &RemoveEvent::new(
+            &RemoveOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 true
             ),

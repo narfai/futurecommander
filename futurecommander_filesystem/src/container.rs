@@ -29,7 +29,7 @@ use crate::{
     event::{
         Listener,
         Delayer,
-        FileSystemEvent,
+        FileSystemOperation,
     },
     port::{
         ReadableFileSystem,
@@ -45,7 +45,7 @@ use crate::{
     }
 };
 
-type Commitment = (FileSystemEvent, RegistrarGuard);
+type Commitment = (FileSystemOperation, RegistrarGuard);
 
 #[derive(Debug)]
 pub struct EventQueue(VecDeque<Commitment>);
@@ -70,7 +70,7 @@ impl EventQueue {
     }
 
     pub fn serialize(&self) -> Result<String, serde_json::Error> {
-        let mut serializable : Vec<(&FileSystemEvent, &RegistrarGuard)> = Vec::new();
+        let mut serializable : Vec<(&FileSystemOperation, &RegistrarGuard)> = Vec::new();
         for (event, guard) in self.0.iter() {
             serializable.push((event, guard));
         }
@@ -131,7 +131,7 @@ impl Container {
     }
 
     pub fn emit_json(&mut self, json: String) -> Result<(), DomainError> {
-        let events : Vec<(FileSystemEvent, RegistrarGuard)> = serde_json::from_str(json.as_str()).unwrap();
+        let events : Vec<(FileSystemOperation, RegistrarGuard)> = serde_json::from_str(json.as_str()).unwrap();
         for (event, guard) in events {
             let guard = self.emit(&event, guard)?;
             self.delay(event, guard );
@@ -153,14 +153,15 @@ impl ReadableFileSystem for Container {
 }
 
 impl Delayer for Container {
-    fn delay(&mut self, event: FileSystemEvent, guard: RegistrarGuard) {
+    fn delay(&mut self, event: FileSystemOperation, guard: RegistrarGuard) {
+        // TODO does it really matters to store the entire registrar here ?
         self.event_queue.push_back((event, guard));
     }
 }
 
 
 impl Listener for Container {
-    fn emit(&mut self, event: &FileSystemEvent, mut guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError> {
+    fn emit(&mut self, event: &FileSystemOperation, mut guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError> {
         event.atomize(&self.virtual_fs, &mut guard)?
              .apply(&mut self.virtual_fs)?;
         Ok(guard)
@@ -173,7 +174,7 @@ mod tests {
     use super::*;
 
     use crate::{
-        event::CopyEvent,
+        event::CopyOperationDefinition,
         sample::Samples,
         Entry
     };
@@ -182,8 +183,8 @@ mod tests {
     fn copy_directory_recursively() {
         let chroot = Samples::init_simple_chroot("container_copy_directory_recursively");
         let mut container = Container::new();
-        let event = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let event = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 chroot.join("COPIED").as_path(),
                 false,
@@ -203,8 +204,8 @@ mod tests {
     fn can_export_virtual_state_into_json_string() {
         let chroot = Samples::init_simple_chroot("can_export_virtual_state_into_json_string");
         let mut container = Container::new();
-        let event = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let event = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 chroot.join("COPIED").as_path(),
                 false,
@@ -226,8 +227,8 @@ mod tests {
     fn can_import_virtual_state_from_json_string() {
         let chroot = Samples::init_simple_chroot("can_import_virtual_state_from_json_string");
         let mut container_a = Container::new();
-        let event = FileSystemEvent::Copy(
-            CopyEvent::new(
+        let event = FileSystemOperation::Copy(
+            CopyOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 chroot.join("COPIED").as_path(),
                 false,

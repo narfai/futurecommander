@@ -31,10 +31,10 @@ use crate::{
 use futurecommander_filesystem::{
     Container,
     Kind,
-    CreateEvent,
+    CreateOperationDefinition,
     Listener,
     Delayer,
-    FileSystemEvent
+    FileSystemOperation
 };
 
 pub struct NewDirectoryCommand {}
@@ -64,8 +64,8 @@ pub struct InitializedNewDirectoryCommand {
 
 impl Command<InitializedNewDirectoryCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        let event = FileSystemEvent::Create(
-            CreateEvent::new(
+        let event = FileSystemOperation::Create(
+            CreateOperationDefinition::new(
                 self.0.path.as_path(),
                 Kind::Directory,
                 self.0.recursive,

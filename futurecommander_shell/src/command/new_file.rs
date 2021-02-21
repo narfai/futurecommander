@@ -25,10 +25,10 @@ use clap::ArgMatches;
 use futurecommander_filesystem::{
     Container,
     Kind,
-    CreateEvent,
+    CreateOperationDefinition,
     Listener,
     Delayer,
-    FileSystemEvent
+    FileSystemOperation
 };
 
 use crate::command::{
@@ -63,8 +63,8 @@ pub struct InitializedNewFileCommand {
 
 impl Command<InitializedNewFileCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        let event = FileSystemEvent::Create(
-            CreateEvent::new(
+        let event = FileSystemOperation::Create(
+            CreateOperationDefinition::new(
                 self.0.path.as_path(),
                 Kind::File,
                 self.0.recursive,

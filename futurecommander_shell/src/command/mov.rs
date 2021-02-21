@@ -23,12 +23,12 @@ use clap::ArgMatches;
 
 use futurecommander_filesystem::{
     Container,
-    MoveEvent,
+    MoveOperationDefinition,
     ReadableFileSystem,
     Entry,
     Listener,
     Delayer,
-    FileSystemEvent
+    FileSystemOperation
 };
 
 use crate::command::{
@@ -73,10 +73,10 @@ impl Command<InitializedMoveCommand> {
             return Err(CommandError::DoesNotExists(self.0.source));
         }
 
-        let event = FileSystemEvent::Move(
+        let event = FileSystemOperation::Move(
             if destination.exists() {
                 if destination.is_dir() {
-                    MoveEvent::new(
+                    MoveOperationDefinition::new(
                         self.0.source.as_path(),
                         self.0.destination
                             .join(self.0.source.file_name().unwrap())
@@ -90,7 +90,7 @@ impl Command<InitializedMoveCommand> {
                     return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
                 }
             } else {
-                MoveEvent::new(
+                MoveOperationDefinition::new(
                     self.0.source.as_path(),
                     self.0.destination.as_path(),
                     self.0.merge,

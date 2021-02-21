@@ -23,12 +23,12 @@ use clap::ArgMatches;
 
 use futurecommander_filesystem::{
     Container,
-    CopyEvent,
+    CopyOperationDefinition,
     Listener,
     Delayer,
     ReadableFileSystem,
     Entry,
-    FileSystemEvent
+    FileSystemOperation
 };
 
 use crate::{
@@ -75,10 +75,10 @@ impl Command<InitializedCopyCommand> {
             return Err(CommandError::DoesNotExists(self.0.source));
         }
 
-        let event = FileSystemEvent::Copy(
+        let event = FileSystemOperation::Copy(
             if destination.exists() {
                 if destination.is_dir() {                    
-                    CopyEvent::new(
+                    CopyOperationDefinition::new(
                         self.0.source.as_path(),
                         self.0.destination
                             .join(self.0.source.file_name().unwrap())
@@ -92,7 +92,7 @@ impl Command<InitializedCopyCommand> {
                     return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
                 }
             } else {
-                CopyEvent::new(self.0.source.as_path(), self.0.destination.as_path(), self.0.merge, self.0.overwrite)
+                CopyOperationDefinition::new(self.0.source.as_path(), self.0.destination.as_path(), self.0.merge, self.0.overwrite)
             }
         );
 

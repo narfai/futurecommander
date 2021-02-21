@@ -68,16 +68,16 @@ impl From<SerializableKind> for Kind {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CreateEvent {
+pub struct CreateOperationDefinition {
     path: PathBuf,
     kind: SerializableKind,
     recursive: bool,
     overwrite: bool
 }
 
-impl CreateEvent {
-    pub fn new(path: &Path, kind: Kind, recursive: bool, overwrite: bool) -> CreateEvent {
-        CreateEvent {
+impl CreateOperationDefinition {
+    pub fn new(path: &Path, kind: Kind, recursive: bool, overwrite: bool) -> CreateOperationDefinition {
+        CreateOperationDefinition {
             path: path.to_path_buf(),
             kind: kind.into(),
             recursive,
@@ -106,18 +106,18 @@ fn recursive_dir_creation<E, F> (fs: &F, mut ancestors: &mut Ancestors<'_>) -> R
     Ok(transaction)
 }
 
-pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &CreateEvent, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
-    let entry = fs.status(event.path())?;
+pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: &CreateOperationDefinition, fs: &F, guard: &mut dyn Guard) -> Result<AtomicTransaction, DomainError> {
+    let entry = fs.status(definition.path())?;
     let mut transaction = AtomicTransaction::default();
-    let mut ancestors = event.path().ancestors();
+    let mut ancestors = definition.path().ancestors();
     ancestors.next();
 
-    match event.kind() {
+    match definition.kind() {
         Kind::Directory => {
             if entry.exists() {
                 return Err(DomainError::DirectoryOverwriteNotAllowed(entry.to_path()))
             } else {
-                if event.recursive() {
+                if definition.recursive() {
                     transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
                 }
                 transaction.add(Atomic::CreateEmptyDirectory(entry.to_path()));
@@ -125,8 +125,8 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(event: &CreateEvent, fs:
         },
         Kind::File => {
             if entry.exists() {
-                if guard.authorize(Capability::Overwrite, event.overwrite(), event.path())? {
-                    if event.recursive() {
+                if guard.authorize(Capability::Overwrite, definition.overwrite(), definition.path())? {
+                    if definition.recursive() {
                         transaction.merge(recursive_dir_creation(fs, &mut ancestors)?);
                     }
                     transaction.add(Atomic::RemoveFile(entry.to_path()));
@@ -167,7 +167,7 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &CreateEvent::new(
+            &CreateOperationDefinition::new(
                 chroot.join("CREATED").as_path(),
                 Kind::Directory,
                 false,
@@ -190,7 +190,7 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &CreateEvent::new(
+            &CreateOperationDefinition::new(
                 chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
                 Kind::Directory,
                 true,
@@ -212,7 +212,7 @@ mod real_tests {
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
         atomize(
-            &CreateEvent::new(
+            &CreateOperationDefinition::new(
                 chroot.join("CREATED").as_path(),
                 Kind::File,
                 false,
@@ -236,7 +236,7 @@ mod real_tests {
         let a_len = chroot.join("RDIR/RFILEA").metadata().unwrap().len();
 
         atomize(
-            &CreateEvent::new(
+            &CreateOperationDefinition::new(
                 chroot.join("RDIR/RFILEA").as_path(),
                 Kind::File,
                 false,
@@ -279,7 +279,7 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CreateEvent::new(
+            &CreateOperationDefinition::new(
                 chroot.join("CREATED").as_path(),
                 Kind::Directory,
                 false,
@@ -302,7 +302,7 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CreateEvent::new(
+            &CreateOperationDefinition::new(
                 chroot.join("CREATED/NESTED/DIRECTORY").as_path(),
                 Kind::Directory,
                 true,
@@ -324,7 +324,7 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CreateEvent::new(
+            &CreateOperationDefinition::new(
                 chroot.join("CREATED").as_path(),
                 Kind::File,
                 false,
@@ -346,7 +346,7 @@ mod virtual_tests {
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
         atomize(
-            &CreateEvent::new(
+            &CreateOperationDefinition::new(
                 chroot.join("RDIR/RFILEA").as_path(),
                 Kind::File,
                 false,

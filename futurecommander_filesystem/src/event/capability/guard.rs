@@ -32,6 +32,18 @@ use crate::{
     }
 };
 
+use std::{
+    io::{ Read, Write }
+};
+
+
+// TODO : add an implementation of WriteGuard<W> and ReadGuard<R> for sharing W and R streams types respectively
+// That implementation should by example, in the shell, allow the InteractiveGuard to Read from stdin and write in stdout
+// Plus : guard may not be a trait with is subspecialization but much more a generic wrapper/adapter Guard<T> ( more idomatic )
+// pub struct WriteGuard<W: Write>(Box<dyn Guard>, W);
+// pub struct ReadGuard<R: Read>(Box<dyn Guard>, R);
+// Note : it would probably make the methods emit and delay use generics
+
 #[typetag::serde(tag = "type")]
 pub trait Guard : Debug + Send {
     fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError>;

@@ -23,10 +23,10 @@ use clap::ArgMatches;
 
 use futurecommander_filesystem::{
     Container,
-    RemoveEvent,
+    RemoveOperationDefinition,
     Listener,
     Delayer,
-    FileSystemEvent
+    FileSystemOperation
 };
 
 use crate::command::{
@@ -67,8 +67,8 @@ pub struct InitializedRemoveCommand {
 
 impl Command<InitializedRemoveCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        let event = FileSystemEvent::Remove(
-            RemoveEvent::new(self.0.path.as_path(), self.0.recursive)
+        let event = FileSystemOperation::Remove(
+            RemoveOperationDefinition::new(self.0.path.as_path(), self.0.recursive)
         );
 
         let guard = container.emit(&event, self.0.guard.registrar())?;
