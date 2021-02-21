@@ -73,7 +73,7 @@ impl Command<InitializedMoveCommand> {
             return Err(CommandError::DoesNotExists(self.0.source));
         }
 
-        let event = FileSystemOperation::Move(
+        let event = FileSystemOperation::mov(
             if destination.exists() {
                 if destination.is_dir() {
                     MoveOperationDefinition::new(

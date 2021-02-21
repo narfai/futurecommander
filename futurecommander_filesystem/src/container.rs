@@ -183,7 +183,7 @@ mod tests {
     fn copy_directory_recursively() {
         let chroot = Samples::init_simple_chroot("container_copy_directory_recursively");
         let mut container = Container::new();
-        let event = FileSystemOperation::Copy(
+        let event = FileSystemOperation::copy(
             CopyOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 chroot.join("COPIED").as_path(),
@@ -204,7 +204,7 @@ mod tests {
     fn can_export_virtual_state_into_json_string() {
         let chroot = Samples::init_simple_chroot("can_export_virtual_state_into_json_string");
         let mut container = Container::new();
-        let event = FileSystemOperation::Copy(
+        let event = FileSystemOperation::copy(
             CopyOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 chroot.join("COPIED").as_path(),
@@ -227,7 +227,7 @@ mod tests {
     fn can_import_virtual_state_from_json_string() {
         let chroot = Samples::init_simple_chroot("can_import_virtual_state_from_json_string");
         let mut container_a = Container::new();
-        let event = FileSystemOperation::Copy(
+        let event = FileSystemOperation::copy(
             CopyOperationDefinition::new(
                 chroot.join("RDIR").as_path(),
                 chroot.join("COPIED").as_path(),

@@ -51,19 +51,23 @@ use crate::{
 };
 
 pub trait Listener {
-    fn emit(&mut self, event: &FileSystemOperation, guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError>;
+    fn emit(&mut self, operation: &FileSystemOperation, guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError>;
 }
 
 pub trait Delayer {
-    fn delay(&mut self, event: FileSystemOperation, guard: RegistrarGuard);
+    fn delay(&mut self, operation: FileSystemOperation, guard: RegistrarGuard);
+}
+
+pub trait Previewer {
+    fn preview<G: Guard>(&mut self, operation: FileSystemOperation, guard: &G);
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FileSystemOperation {
-    Create(create::CreateOperationDefinition),
-    Copy(copy::CopyOperationDefinition),
-    Move(mov::MoveOperationDefinition),
-    Remove(remove::RemoveOperationDefinition)
+    Create(CreateOperationDefinition),
+    Copy(CopyOperationDefinition),
+    Move(MoveOperationDefinition),
+    Remove(RemoveOperationDefinition)
 }
 
 impl FileSystemOperation {
@@ -74,5 +78,21 @@ impl FileSystemOperation {
             FileSystemOperation::Move(operation) => mov::atomize(operation, fs, guard),
             FileSystemOperation::Remove(operation) => remove::atomize(operation, fs, guard),
         }
+    }
+
+    pub fn create(definition: CreateOperationDefinition) -> Self {
+        FileSystemOperation::Create(definition)
+    }
+
+    pub fn copy(definition: CopyOperationDefinition) -> Self {
+        FileSystemOperation::Copy(definition)
+    }
+
+    pub fn mov(definition: MoveOperationDefinition) -> Self {
+        FileSystemOperation::Move(definition)
+    }
+
+    pub fn remove(definition: RemoveOperationDefinition) -> Self {
+        FileSystemOperation::Remove(definition)
     }
 }

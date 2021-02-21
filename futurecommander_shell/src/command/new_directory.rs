@@ -64,7 +64,7 @@ pub struct InitializedNewDirectoryCommand {
 
 impl Command<InitializedNewDirectoryCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        let event = FileSystemOperation::Create(
+        let event = FileSystemOperation::create(
             CreateOperationDefinition::new(
                 self.0.path.as_path(),
                 Kind::Directory,

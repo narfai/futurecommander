@@ -75,7 +75,7 @@ impl Command<InitializedCopyCommand> {
             return Err(CommandError::DoesNotExists(self.0.source));
         }
 
-        let event = FileSystemOperation::Copy(
+        let event = FileSystemOperation::copy(
             if destination.exists() {
                 if destination.is_dir() {                    
                     CopyOperationDefinition::new(

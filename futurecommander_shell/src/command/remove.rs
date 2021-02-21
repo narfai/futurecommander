@@ -67,7 +67,7 @@ pub struct InitializedRemoveCommand {
 
 impl Command<InitializedRemoveCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        let event = FileSystemOperation::Remove(
+        let event = FileSystemOperation::remove(
             RemoveOperationDefinition::new(self.0.path.as_path(), self.0.recursive)
         );
 

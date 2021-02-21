@@ -167,7 +167,7 @@ mod errors_tests {
 
         let expected_error = DomainError::CopyIntoItSelf(source.clone(), destination.clone());
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -179,7 +179,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -191,7 +191,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -203,7 +203,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                 source.as_path(),
                 destination.as_path(),
@@ -226,7 +226,7 @@ mod errors_tests {
 
         let expected_error = DomainError::MergeNotAllowed(destination.clone());
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -238,7 +238,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -250,7 +250,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -262,7 +262,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -285,7 +285,7 @@ mod errors_tests {
 
         let expected_error = DomainError::OverwriteNotAllowed(destination.clone());
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -297,7 +297,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -309,7 +309,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -321,7 +321,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -333,7 +333,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Create(
+            &FileSystemOperation::create(
                 CreateOperationDefinition::new(
                     destination.as_path(),
                     Kind::File,
@@ -345,7 +345,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Create(
+            &FileSystemOperation::create(
                 CreateOperationDefinition::new(
                     destination.as_path(),
                     Kind::File,
@@ -368,7 +368,7 @@ mod errors_tests {
         let expected_error = DomainError::DirectoryOverwriteNotAllowed(to_overwrite.clone());
 
         assert_two_errors_equals(
-            &FileSystemOperation::Create(
+            &FileSystemOperation::create(
                 CreateOperationDefinition::new(
                     to_overwrite.as_path(),
                     Kind::Directory,
@@ -380,7 +380,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Create(
+            &FileSystemOperation::create(
                 CreateOperationDefinition::new(
                     to_overwrite.as_path(),
                     Kind::Directory,
@@ -403,7 +403,7 @@ mod errors_tests {
 
         let expected_error = DomainError::MergeFileWithDirectory(source.clone(), destination.clone());
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -415,7 +415,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -427,7 +427,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -439,7 +439,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -463,7 +463,7 @@ mod errors_tests {
 
         let expected_error = DomainError::OverwriteDirectoryWithFile(source.clone(), destination.clone());
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -475,7 +475,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -487,7 +487,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -499,7 +499,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     source.as_path(),
                     destination.as_path(),
@@ -522,7 +522,7 @@ mod errors_tests {
         let expected_error = DomainError::CreateUnknown(dummy.clone());
 
         assert_two_errors_equals(
-            &FileSystemOperation::Create(
+            &FileSystemOperation::create(
                 CreateOperationDefinition::new(
                     dummy.as_path(),
                     Kind::Unknown,
@@ -534,7 +534,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Create(
+            &FileSystemOperation::create(
                 CreateOperationDefinition::new(
                     dummy.as_path(),
                     Kind::Unknown,
@@ -557,7 +557,7 @@ mod errors_tests {
         let expected_error = DomainError::DoesNotExists(not_exists.clone());
 
         assert_two_errors_equals(
-            &FileSystemOperation::Remove(
+            &FileSystemOperation::remove(
                 RemoveOperationDefinition::new(
                     not_exists.as_path(),
                     false
@@ -567,7 +567,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Remove(
+            &FileSystemOperation::remove(
                 RemoveOperationDefinition::new(
                     not_exists.as_path(),
                     false
@@ -588,7 +588,7 @@ mod errors_tests {
         let expected_error = DomainError::RecursiveNotAllowed(not_empty_dir.clone());
 
         assert_two_errors_equals(
-            &FileSystemOperation::Remove(
+            &FileSystemOperation::remove(
                 RemoveOperationDefinition::new(
                     not_empty_dir.as_path(),
                     false
@@ -598,7 +598,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Remove(
+            &FileSystemOperation::remove(
                 RemoveOperationDefinition::new(
                     not_empty_dir.as_path(),
                     false
@@ -620,7 +620,7 @@ mod errors_tests {
 
         let expected_error = DomainError::SourceDoesNotExists(not_existing_source.clone());
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     not_existing_source.as_path(),
                     destination.as_path(),
@@ -632,7 +632,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Move(
+            &FileSystemOperation::mov(
                 MoveOperationDefinition::new(
                     not_existing_source.as_path(),
                     destination.as_path(),
@@ -644,7 +644,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     not_existing_source.as_path(),
                     destination.as_path(),
@@ -656,7 +656,7 @@ mod errors_tests {
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::Copy(
+            &FileSystemOperation::copy(
                 CopyOperationDefinition::new(
                     not_existing_source.as_path(),
                     destination.as_path(),
