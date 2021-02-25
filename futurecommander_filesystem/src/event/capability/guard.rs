@@ -44,7 +44,7 @@ use std::{
 // pub struct ReadGuard<R: Read>(Box<dyn Guard>, R);
 // Note : it would probably make the methods emit and delay use generics
 
-pub trait Guard: Debug {
+pub trait Guard {
     fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError>;
 }
 

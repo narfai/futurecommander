@@ -17,9 +17,12 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::Path;
 use clap::ArgMatches;
-use std::path::PathBuf;
+use std::{
+    io::{Read, Write},
+    path::{ Path, PathBuf }
+};
+
 use crate::{
     command::{
         errors::CommandError,

@@ -34,7 +34,6 @@ use crate::{
     }
 };
 
-#[derive(Debug)]
 pub struct RegistrarGuard {
     inner: Box<dyn Guard>,
     registry: OperationRegistry

@@ -154,7 +154,7 @@ impl Listener for Container {
     fn emit(&mut self, operation: FileSystemOperation, guard: Box<dyn Guard>) -> Result<(), DomainError> {
         operation.clone().atomize(&self.virtual_fs, guard)?
              .apply(&mut self.virtual_fs)?;
-        self.operation_queue.push_back(operation);
+        self.operation_queue.push_back(operation); //TODO BUG ( write a test ) : operation.registry is not persisted here a.k.a user choices are not either
         Ok(())
     }
 }

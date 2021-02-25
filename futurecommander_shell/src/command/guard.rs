@@ -18,7 +18,7 @@
  */
 
 use std::{
-    io::{ stdin },
+    io::{ stdin, stdout, Read, Write },
     path::{ Path }
 };
 
@@ -30,18 +30,18 @@ use futurecommander_filesystem::{
         Capabilities,
         Guard,
         Capability,
-        RegistrarGuard,
         ZealousGuard,
         BlindGuard,
         QuietGuard
     }
 };
 
-#[derive(Default, Debug)]
+#[derive(Debug, Default)]
 pub struct InteractiveGuard {
     skip_all: Capabilities,
     allow_all: Capabilities
 }
+
 
 impl Guard for InteractiveGuard {
     fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError> {
