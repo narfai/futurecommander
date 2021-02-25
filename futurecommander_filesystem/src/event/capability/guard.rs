@@ -22,18 +22,11 @@ use std::{
     fmt::{ Debug }
 };
 
-
-use serde::{ Serialize, Deserialize };
-
 use crate::{
     DomainError,
     capability::{
         Capability
     }
-};
-
-use std::{
-    io::{ Read, Write }
 };
 
 

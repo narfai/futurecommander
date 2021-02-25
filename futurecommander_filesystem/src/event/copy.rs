@@ -28,8 +28,7 @@ use crate::{
     errors::{DomainError},
     capability::{
         Capability,
-        Guard,
-        RegistrarGuard
+        Guard
     },
     port::{
         Entry,

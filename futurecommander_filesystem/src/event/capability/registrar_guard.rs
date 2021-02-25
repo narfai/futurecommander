@@ -17,11 +17,9 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 use std::{
-    path::{ Path, PathBuf },
+    path::{ Path },
     collections::HashMap
 };
-
-use serde::{ Serialize, Deserialize };
 
 use crate::{
     OperationRegistry,
@@ -29,8 +27,7 @@ use crate::{
     capability::{
         Capability,
         Guard,
-        Capabilities,
-        ZealousGuard
+        Capabilities
     }
 };
 

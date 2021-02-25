@@ -29,6 +29,7 @@ mod copy;
 mod create;
 mod mov;
 mod remove;
+mod rnd;
 
 pub mod capability;
 

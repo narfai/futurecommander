@@ -18,11 +18,9 @@
  */
 
 use std::{
-    io::{ stdin, stdout, Read, Write },
+    io::{ stdin },
     path::{ Path }
 };
-
-use serde::{ Serialize, Deserialize };
 
 use futurecommander_filesystem::{
     DomainError,

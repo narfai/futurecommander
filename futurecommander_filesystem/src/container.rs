@@ -24,7 +24,6 @@ use std::{
 use crate::{
     errors:: { DomainError, QueryError },
     capability::{
-        RegistrarGuard,
         ZealousGuard,
         Guard
     },
