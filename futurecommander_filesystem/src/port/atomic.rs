@@ -71,6 +71,10 @@ impl Atomic {
 pub struct AtomicTransaction(pub Vec<Atomic>);
 
 impl AtomicTransaction {
+    pub fn new(atomics: Vec<Atomic>) -> Self{
+        AtomicTransaction(atomics)
+    }
+
     pub fn add(&mut self, atomic: Atomic) {
         self.0.push(atomic)
     }
