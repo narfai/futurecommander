@@ -18,7 +18,7 @@
  */
 
 mod event;
-
+mod operation;
 mod port;
 mod infrastructure;
 mod errors;

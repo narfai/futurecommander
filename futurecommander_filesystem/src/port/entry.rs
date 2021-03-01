@@ -34,6 +34,8 @@ impl <T>EntryAdapter<T> {
     }
 }
 
+//TODO SIMPLIFY TO A POJO
+
 pub trait Entry {
     fn path(&self) -> &Path;
     fn to_path(&self) -> PathBuf;

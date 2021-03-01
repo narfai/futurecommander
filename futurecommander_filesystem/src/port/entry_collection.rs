@@ -30,6 +30,8 @@ use crate::{
     }
 };
 
+//TODO DELETE AND REPLACE BY FS ITERATORS
+
 #[derive(Debug, Default)]
 pub struct EntryCollection<T>(pub Vec<T>)
     where T: Entry;

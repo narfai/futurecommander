@@ -30,6 +30,7 @@ use crate::{
 
 };
 
+//TODO move to operation and rename AtomicOperation
 #[derive(Debug)]
 pub enum Atomic {
     CreateEmptyDirectory(PathBuf),
@@ -52,7 +53,7 @@ pub enum Atomic {
 }
 
 impl Atomic {
-    pub fn apply<F: WriteableFileSystem>(self, fs: &mut F) -> Result<(), InfrastructureError> {
+    pub fn apply<F: WriteableFileSystem>(&self, fs: &mut F) -> Result<(), InfrastructureError> {
         use self::Atomic::*;
         match self {
             CreateEmptyDirectory(path) => fs.create_empty_directory(path.as_path()),
@@ -67,6 +68,7 @@ impl Atomic {
     }
 }
 
+// TODO TO DELETE
 #[derive(Default, Debug)]
 pub struct AtomicTransaction(pub Vec<Atomic>);
 
