@@ -1,12 +1,12 @@
 /*
     TLDR;
-    The "read operations" must apply as late as possible. 
+    The "read operations" must apply as late as possible.
     Les lectures doivent s'effectuer le plus tard possible
     réécrire les fonctions "atomize" de manière plus fonctionnelle et peut-être faire des fonctions de haut ordre pour les différentes étapes temporelles
-    stream duplex ? 
+    stream duplex ?
 
     # OK / Prooved
-    Faire un iterateur recursif ( le chainer optionnellement )!! 
+    Faire un iterateur recursif ( le chainer optionnellement )!!
     Les écritures doivent s'effectuer le plus tôt possible
     Les opérations doivent pouvoir être intérrompues ou reprises de manière asynchrone
     Les opérations doivent se mettre en pause toutes seules en attente d'un choix de la part de l'utilisateur de manière asynchrone
@@ -16,7 +16,7 @@
     //2 Le fs applique les transactions jusqu'a l'apparition d'un choix ou que l'operation soit terminée
     //3 L'utilisateur résout un choix
     //4 Le fs applique les transactions jusqu'a l'apparition d'un choix ou que l'operation soit terminée
-    
+
 */
 
 use std::{
@@ -38,7 +38,7 @@ use crate::{
     },
     infrastructure::{
         VirtualFileSystem,
-        
+
     },
     port::{
         Entry,
@@ -49,29 +49,6 @@ use crate::{
         AtomicTransaction
     }
 };
-
-#[test]
-fn rnd() {
-    let chroot = Samples::init_simple_chroot("virtual_remove_operation_directory_recursive");
-    let mut fs = FileSystemAdapter(VirtualFileSystem::default());
-
-    let def = RemoveOperationDefinition::new(
-        chroot.join("RDIR").as_path(),
-        true
-    );
-    
-
-    /* 
-    atomize(
-        def,
-        &fs, 
-        &mut ZealousGuard
-    ).unwrap()
-     .apply(&mut fs)
-     .unwrap();
-    */
-    assert!(!fs.as_inner().virtual_state().unwrap().is_virtual(chroot.join("RDIR").as_path()).unwrap());
-}
 
 #[test]
 fn poc(){
@@ -86,19 +63,14 @@ pub enum Scheduling {
     DirectoryCopy
 }
 
-pub struct Choice { 
-    scheduling: Scheduling, 
-    transaction: AtomicTransaction,
-    source: PathBuf,
-    destination: PathBuf
+pub struct Choice {
+    pub scheduling: Scheduling,
+    pub transaction: AtomicTransaction,
+    pub source: PathBuf,
+    pub destination: PathBuf
 }
 
-pub struct Operation {
-    choice: Choice,
-    children: Vec<Operation>
-}
-
-impl Operation {
+impl Choice {
     pub fn schedule<E: Entry>(source: &E, destination: &E) -> Result<Scheduling, DomainError> {
         if destination.exists() {
             if source.is_dir() {
@@ -124,7 +96,7 @@ impl Operation {
             Err(DomainError::Custom(String::from("Unknown node source type")))
         }
     }
-    
+
     pub fn transaction<E: Entry>(scheduling: &Scheduling, source: &E, destination: &E) -> AtomicTransaction {
         match scheduling {
             Scheduling::FileCopy =>
@@ -135,7 +107,7 @@ impl Operation {
                     }
                 ])
             ,
-            Scheduling::FileOverwrite => 
+            Scheduling::FileOverwrite =>
                 AtomicTransaction::new(vec![
                     Atomic::RemoveFile(destination.to_path()),
                     Atomic::CopyFileToFile {
@@ -144,7 +116,7 @@ impl Operation {
                     }
                 ])
             ,
-            Scheduling::DirectoryCopy => 
+            Scheduling::DirectoryCopy =>
                 AtomicTransaction::new(vec![Atomic::BindDirectoryToDirectory {
                     source: source.to_path(),
                     destination: destination.to_path()
@@ -154,77 +126,89 @@ impl Operation {
         }
     }
 
-    pub fn new<E: Entry, F: ReadableFileSystem<Item=E>>(definition: CopyOperationDefinition, fs: &F) -> Result<Self, DomainError> {
-        let source = fs.status(definition.source())?;
+    pub fn new<F: ReadableFileSystem>(fs: &F, source_path: &Path, destination_path: &Path) -> Result<Self, DomainError> {
+        let source = fs.status(source_path)?;
         if !source.exists() {
-            return Err(DomainError::SourceDoesNotExists(definition.source().to_path_buf()))
+            return Err(DomainError::SourceDoesNotExists(source_path.to_path_buf()))
         }
 
-        let destination = fs.status(definition.destination())?;
+        let destination = fs.status(destination_path)?;
         if source.is_dir() && destination.is_contained_by(&source) {
             return Err(DomainError::CopyIntoItSelf(source.to_path(), destination.to_path()));
         }
 
         let scheduling = Self::schedule(&source, &destination)?;
 
-        Ok(Operation{ 
-            choice: Choice{ 
-                scheduling, 
-                transaction: Self::transaction(&scheduling, &source, &destination), 
-                source: source.to_path(), 
-                destination: destination.to_path() 
-            },
-            children: match scheduling {
-                Scheduling::DirectoryMerge => {
-                    let mut children = Vec::new();
-                    for child in fs.read_dir(source.path())? {
-                        children.push(
-                            Operation::new(
-                                CopyOperationDefinition::new(
-                                    child.path(),                     
-                                    destination.path().join(child.name().unwrap()).as_path(), 
-                                    definition.merge(), 
-                                    definition.overwrite()
-                                ), 
-                                fs
-                            )?
-                        )
-                    }
-                    children  
-                },
-                Scheduling::DirectoryCopy => {
-                    let mut children = Vec::new();
-                    for child in fs.read_maintained(source.path())? {
-                        children.push(
-                            Operation::new(
-                                CopyOperationDefinition::new(
-                                    child.path(),
-                                    destination.path()
-                                        .join(child.name().unwrap())
-                                        .as_path(),
-                                        definition.merge(),
-                                        definition.overwrite()                            
-                                ), 
-                                fs
-                            )?
-                        )
-                    }
-                    children
-                },
-                _ => Vec::new()
-            }            
+        Ok(Choice {
+                transaction: Self::transaction(&scheduling, &source, &destination),
+                scheduling,
+                source: source.to_path(),
+                destination: destination.to_path()
         })
     }
+}
 
-    pub fn choices<'a>(&'a self) -> Box<dyn Iterator<Item = &Choice> + 'a> {
-        Box::new(
-            iter::once(&self.choice)
-                .chain(
-                    self.children
-                        .iter()
-                        .map(|operation| operation.choices())
-                        .flatten()
-                )
-        )
-    }    
+pub struct ChoiceIter<'a, E: Entry, F: ReadableFileSystem<Item=E>> {
+    fs: &'a F,
+    source: PathBuf,
+    destination: PathBuf,
+    send_itself: bool,
+
+    children_iter: Box<dyn Iterator<Item = E> + 'a>,
+    choice_iter: Box<dyn Iterator<Item = Result<Choice, DomainError>> + 'a>
+}
+
+impl <'a, E: Entry + 'a, F: ReadableFileSystem<Item=E>> Iterator for ChoiceIter<'a, E, F> {
+    type Item = Result<Choice, DomainError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.send_itself {
+            match Choice::new(self.fs, &self.source, &self.destination) {
+                Ok(choice) => {
+                    self.send_itself = false;
+                    match choice.scheduling {
+                        Scheduling::DirectoryMerge => {
+                            match self.fs.read_dir(&self.source) {
+                                Ok(collection) => {
+                                    self.children_iter = Box::new(collection.into_iter());
+                                },
+                                Err(err) => return Some(Err(err.into()))
+                            }
+                        },
+                        Scheduling::DirectoryCopy => {
+                            match self.fs.read_maintained(&self.source) {
+                                Ok(collection) => {
+                                    self.children_iter = Box::new(collection.into_iter());
+                                },
+                                Err(err) => return Some(Err(err.into()))
+                            }
+                        },
+                        _ => {}
+                    }
+                    Some(Ok(choice))
+                },
+                Err(err) => Some(Err(err))
+            }
+        } else {
+            if let Some(choice) = self.choice_iter.next() {
+                Some(choice)
+            } else {
+                if let Some(entry) = self.children_iter.next() {
+                    self.choice_iter = Box::new(
+                        ChoiceIter {
+                            fs: self.fs,
+                            source: entry.to_path(),
+                            send_itself: false,
+                            destination: self.destination.join(entry.name().unwrap()).to_path_buf(),
+                            children_iter: Box::new(iter::empty()),
+                            choice_iter: Box::new(iter::empty())
+                        }
+                    );
+                    self.next()
+                } else {
+                    None
+                }
+            }
+        }
+    }
 }
