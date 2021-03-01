@@ -52,10 +52,21 @@ use crate::{
 
 #[test]
 fn poc(){
+    let samples_path = Samples::static_samples_path();
+    let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
+    let mut it = CopyOperationGenerator::new(samples_path.join("B"), samples_path.join("A"));
+
+    while let Some(Ok(choice)) = it.next(&fs) {
+        println!("Iterator : {:?}", choice);
+        choice.transaction.apply(&mut fs);
+    }
+
+    assert!(fs.as_inner().virtual_state().unwrap().is_virtual(samples_path.join("A/D").as_path()).unwrap());
+    assert!(fs.as_inner().virtual_state().unwrap().is_directory(samples_path.join("A/D").as_path()).unwrap());
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Scheduling {
     DirectoryMerge,
     FileOverwrite,
@@ -63,14 +74,15 @@ pub enum Scheduling {
     DirectoryCopy
 }
 
-pub struct Choice {
+#[derive(Debug)]
+pub struct CopyOperation {
     pub scheduling: Scheduling,
     pub transaction: AtomicTransaction,
     pub source: PathBuf,
     pub destination: PathBuf
 }
 
-impl Choice {
+impl CopyOperation {
     pub fn schedule<E: Entry>(source: &E, destination: &E) -> Result<Scheduling, DomainError> {
         if destination.exists() {
             if source.is_dir() {
@@ -139,7 +151,7 @@ impl Choice {
 
         let scheduling = Self::schedule(&source, &destination)?;
 
-        Ok(Choice {
+        Ok(CopyOperation {
                 transaction: Self::transaction(&scheduling, &source, &destination),
                 scheduling,
                 source: source.to_path(),
@@ -148,37 +160,44 @@ impl Choice {
     }
 }
 
-pub struct ChoiceIter<'a, E: Entry, F: ReadableFileSystem<Item=E>> {
-    fs: &'a F,
+pub struct CopyOperationGenerator<'a, E: Entry + 'a> {
     source: PathBuf,
     destination: PathBuf,
-    send_itself: bool,
 
-    children_iter: Box<dyn Iterator<Item = E> + 'a>,
-    choice_iter: Box<dyn Iterator<Item = Result<Choice, DomainError>> + 'a>
+    send_itself: bool,
+    children_iterator: Box<dyn Iterator<Item = E> + 'a>,
+    choice_generator: Option<Box<CopyOperationGenerator<'a, E>>>
 }
 
-impl <'a, E: Entry + 'a, F: ReadableFileSystem<Item=E>> Iterator for ChoiceIter<'a, E, F> {
-    type Item = Result<Choice, DomainError>;
+impl <'a, E: Entry + 'a >CopyOperationGenerator<'a, E> {
+    pub fn new(source: PathBuf, destination: PathBuf) -> Self {
+        CopyOperationGenerator {
+            source,
+            destination,
+            send_itself: false,
+            children_iterator: Box::new(iter::empty()),
+            choice_generator: None,
+        }
+    }
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.send_itself {
-            match Choice::new(self.fs, &self.source, &self.destination) {
+    fn next<F: ReadableFileSystem<Item=E>>(&mut self, fs: &F) -> Option<Result<CopyOperation, DomainError>> {
+        if !self.send_itself {
+            match CopyOperation::new(fs, &self.source, &self.destination) {
                 Ok(choice) => {
-                    self.send_itself = false;
+                    self.send_itself = true;
                     match choice.scheduling {
                         Scheduling::DirectoryMerge => {
-                            match self.fs.read_dir(&self.source) {
+                            match fs.read_dir(&self.source) {
                                 Ok(collection) => {
-                                    self.children_iter = Box::new(collection.into_iter());
+                                    self.children_iterator = Box::new(collection.into_iter());
                                 },
                                 Err(err) => return Some(Err(err.into()))
                             }
                         },
                         Scheduling::DirectoryCopy => {
-                            match self.fs.read_maintained(&self.source) {
+                            match fs.read_maintained(&self.source) {
                                 Ok(collection) => {
-                                    self.children_iter = Box::new(collection.into_iter());
+                                    self.children_iterator = Box::new(collection.into_iter());
                                 },
                                 Err(err) => return Some(Err(err.into()))
                             }
@@ -190,25 +209,23 @@ impl <'a, E: Entry + 'a, F: ReadableFileSystem<Item=E>> Iterator for ChoiceIter<
                 Err(err) => Some(Err(err))
             }
         } else {
-            if let Some(choice) = self.choice_iter.next() {
-                Some(choice)
-            } else {
-                if let Some(entry) = self.children_iter.next() {
-                    self.choice_iter = Box::new(
-                        ChoiceIter {
-                            fs: self.fs,
-                            source: entry.to_path(),
-                            send_itself: false,
-                            destination: self.destination.join(entry.name().unwrap()).to_path_buf(),
-                            children_iter: Box::new(iter::empty()),
-                            choice_iter: Box::new(iter::empty())
-                        }
-                    );
-                    self.next()
-                } else {
-                    None
+            if let Some(choice_iter) = &mut self.choice_generator {
+                if let Some(choice) = choice_iter.next(fs) {
+                    return Some(choice)
                 }
             }
+            if let Some(entry) = self.children_iterator.next() {
+                self.choice_generator = Some(Box::new(
+                    CopyOperationGenerator::new(
+                        entry.to_path(),
+                        self.destination.join(entry.name().unwrap()).to_path_buf()
+                    )
+                ));
+                self.next(fs)
+            } else {
+                None
+            }
+
         }
     }
 }
