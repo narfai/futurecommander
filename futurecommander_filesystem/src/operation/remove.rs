@@ -91,7 +91,7 @@ impl RemoveOperation {
 }
 
 pub enum RemoveOperationGeneratorState<'a, E: Entry> {
-    Init,
+    Uninitialized,
     ChildrenOperation {
         scheduling: RemoveScheduling,
         children_iterator: Box<dyn Iterator<Item = E> + 'a>,
@@ -109,7 +109,7 @@ pub struct RemoveOperationGenerator<'a, E: Entry + 'a> {
 impl <'a, E: Entry + 'a>RemoveOperationGenerator<'a, E> {
     pub fn new(definition: RemoveBatchDefinition) -> Self {
         RemoveOperationGenerator {
-            state: RemoveOperationGeneratorState::Init,
+            state: RemoveOperationGeneratorState::Uninitialized,
             definition
         }
     }
@@ -119,7 +119,7 @@ impl <'a, E: Entry> OperationGenerator<E> for RemoveOperationGenerator<'a, E> {
     type Item = RemoveOperation;
     fn next<F: ReadableFileSystem<Item=E>>(&mut self, fs: &F) -> Result<Option<Self::Item>, DomainError> {
         match &mut self.state {
-            RemoveOperationGeneratorState::Init => {
+            RemoveOperationGeneratorState::Uninitialized => {
                 let scheduling = RemoveOperation::schedule(fs, &self.definition.path)?;
                 match scheduling {
                     RemoveScheduling::RecursiveDirectoryRemoval => {

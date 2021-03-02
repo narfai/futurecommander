@@ -46,7 +46,17 @@ pub struct CopyOperation {
 }
 
 impl CopyOperation {
-    fn schedule<E: Entry>(source: &E, destination: &E) -> Result<CopyScheduling, DomainError> {
+    fn schedule<F: ReadableFileSystem>(fs: &F, source_path: &Path, destination_path: &Path) -> Result<CopyScheduling, DomainError> {
+        let source = fs.status(source_path)?;
+        if !source.exists() {
+            return Err(DomainError::SourceDoesNotExists(source_path.to_path_buf()))
+        }
+
+        let destination = fs.status(destination_path)?;
+        if source.is_dir() && destination.is_contained_by(&source) {
+            return Err(DomainError::CopyIntoItSelf(source.to_path(), destination.to_path()));
+        }
+
         if destination.exists() {
             if source.is_dir() {
                 if destination.is_dir() {
@@ -72,63 +82,28 @@ impl CopyOperation {
         }
     }
 
-    fn transaction<E: Entry>(scheduling: &CopyScheduling, source: &E, destination: &E) -> Vec<Atomic> {
+    fn transaction(scheduling: &CopyScheduling, source: PathBuf, destination: PathBuf) -> Vec<Atomic> {
         match scheduling {
             CopyScheduling::FileCopy => vec![
-                Atomic::CopyFileToFile{
-                    source: source.to_path(),
-                    destination: destination.to_path()
-                }
+                Atomic::CopyFileToFile{ source, destination }
             ],
             CopyScheduling::FileOverwrite => vec![
-                Atomic::RemoveFile(destination.to_path()),
-                Atomic::CopyFileToFile {
-                    source: source.to_path(),
-                    destination: destination.to_path()
-                }
+                Atomic::RemoveFile(destination.clone()),
+                Atomic::CopyFileToFile{ source, destination }
             ],
             CopyScheduling::DirectoryCopy => vec![
-                Atomic::BindDirectoryToDirectory {
-                    source: source.to_path(),
-                    destination: destination.to_path()
-                }
+                Atomic::BindDirectoryToDirectory { source, destination }
             ],
             _ => Vec::new()
         }
     }
 
-    fn new<F: ReadableFileSystem>(fs: &F, source_path: &Path, destination_path: &Path) -> Result<Self, DomainError> {
-        let source = fs.status(source_path)?;
-        if !source.exists() {
-            return Err(DomainError::SourceDoesNotExists(source_path.to_path_buf()))
-        }
-
-        let destination = fs.status(destination_path)?;
-        if source.is_dir() && destination.is_contained_by(&source) {
-            return Err(DomainError::CopyIntoItSelf(source.to_path(), destination.to_path()));
-        }
-
-        let scheduling = Self::schedule(&source, &destination)?;
-
-        Ok(
-            CopyOperation {
-                transaction: Self::transaction(&scheduling, &source, &destination),
-                scheduling,
-                source: source.to_path(),
-                destination: destination.to_path()
-            }
-        )
-    }
-
-    fn children<'a, E: Entry + 'a, F: ReadableFileSystem<Item=E>>(fs: &F, operation: &Self) -> Result<Option<Box<dyn Iterator<Item = E> + 'a>>, DomainError>{
-        match operation.scheduling {
-            CopyScheduling::DirectoryMerge => {
-                Ok(Some(Box::new(fs.read_dir(&operation.source)?.into_iter())))
-            },
-            CopyScheduling::DirectoryCopy => {
-                Ok(Some(Box::new(fs.read_maintained(&operation.source)?.into_iter())))
-            },
-            _ => Ok(None)
+    fn new(scheduling: CopyScheduling, source_path: &Path, destination_path: &Path) -> Self {
+        CopyOperation {
+            transaction: Self::transaction(&scheduling, source_path.to_path_buf(), destination_path.to_path_buf()),
+            scheduling,
+            source: source_path.to_path_buf(),
+            destination: destination_path.to_path_buf()
         }
     }
 }
@@ -142,20 +117,26 @@ impl Operation for CopyOperation {
     }
 }
 
+pub enum CopyOperationGeneratorState<'a, E: Entry + 'a> {
+    Uninitialized,
+    SelfOperation(CopyScheduling),
+    ChildrenOperation {
+        children_iterator: Box<dyn Iterator<Item = E> + 'a>,
+        opt_operation_generator: Option<Box<CopyOperationGenerator<'a, E>>>
+    },
+    Terminated
+}
+
 pub struct CopyOperationGenerator<'a, E: Entry + 'a> {
-    pub definition: CopyBatchDefinition,
-    pub sent_itself: bool, //TODO instead of that aweful trick, find a better way to craft iterators on fly
-    pub children_iterator: Box<dyn Iterator<Item = E> + 'a>,
-    pub operation_generator: Option<Box<CopyOperationGenerator<'a, E>>>
+    definition: CopyBatchDefinition,
+    state: CopyOperationGeneratorState<'a, E>
 }
 
 impl <'a, E: Entry + 'a>CopyOperationGenerator<'a, E> {
     pub fn new(definition: CopyBatchDefinition) -> Self {
         CopyOperationGenerator {
-            definition,
-            sent_itself: false,
-            children_iterator: Box::new(iter::empty()),
-            operation_generator: None
+            state: CopyOperationGeneratorState::Uninitialized,
+            definition
         }
     }
 }
@@ -163,32 +144,51 @@ impl <'a, E: Entry + 'a>CopyOperationGenerator<'a, E> {
 impl <'a, E: Entry> OperationGenerator<E> for CopyOperationGenerator<'a, E> {
     type Item = CopyOperation;
     fn next<F: ReadableFileSystem<Item=E>>(&mut self, fs: &F) -> Result<Option<Self::Item>, DomainError> {
-        if let Some(operation_generator) = &mut self.operation_generator {
-            if let Some(operation) = operation_generator.next(fs)? {
-                return Ok(Some(operation))
-            }
-        }
-        if !self.sent_itself {
-            let operation = CopyOperation::new(fs, &self.definition.source, &self.definition.destination)?;
-            self.sent_itself = true;
-            match CopyOperation::children(fs, &operation)? {
-                Some(children_iterator) => { self.children_iterator = children_iterator },
-                None => {}
-            }
-            Ok(Some(operation))
-        } else if let Some(entry) = self.children_iterator.next() {
-            self.operation_generator = Some(Box::new(
-                CopyOperationGenerator::new(
-                    CopyBatchDefinition::new(
-                        entry.to_path(),
-                        //TODO #NoUnwrap
-                        self.definition.destination.join(entry.name().unwrap()).to_path_buf()
-                    )
-                )
-            ));
-            self.next(fs)
-        } else {
-            Ok(None)
+        match &mut self.state {
+            CopyOperationGeneratorState::Uninitialized => {
+                let scheduling = CopyOperation::schedule(fs, &self.definition.source, &self.definition.destination)?;
+                self.state = CopyOperationGeneratorState::SelfOperation(scheduling);
+                self.next(fs)
+            },
+            CopyOperationGeneratorState::SelfOperation(scheduling) => {
+                let _scheduling = scheduling.clone();
+
+                self.state = match _scheduling {
+                    CopyScheduling::DirectoryMerge => CopyOperationGeneratorState::ChildrenOperation {
+                        children_iterator: Box::new(fs.read_dir(&self.definition.source)?.into_iter()),
+                        opt_operation_generator: None
+                    },
+                    CopyScheduling::DirectoryCopy => CopyOperationGeneratorState::ChildrenOperation {
+                        children_iterator: Box::new(fs.read_maintained(&self.definition.source)?.into_iter()),
+                        opt_operation_generator: None
+                    },
+                    _ => CopyOperationGeneratorState::Terminated
+                };
+
+                Ok(Some(CopyOperation::new(_scheduling, &self.definition.source, &self.definition.destination)))
+            },
+            CopyOperationGeneratorState::ChildrenOperation { children_iterator, opt_operation_generator }=> {
+                if let Some(operation_generator) = opt_operation_generator {
+                    if let Some(operation) = operation_generator.next(fs)? {
+                        return Ok(Some(operation));
+                    }
+                }
+                if let Some(entry) = children_iterator.next() {
+                    *opt_operation_generator = Some(Box::new(
+                        CopyOperationGenerator::new(
+                            CopyBatchDefinition::new(
+                                entry.to_path(),
+                                //TODO #NoUnwrap
+                                self.definition.destination.join(entry.name().unwrap()).to_path_buf()
+                            )
+                        )
+                    ));
+                } else {
+                    self.state = CopyOperationGeneratorState::Terminated;
+                }
+                self.next(fs)
+            },
+            CopyOperationGeneratorState::Terminated => Ok(None)
         }
     }
 }
