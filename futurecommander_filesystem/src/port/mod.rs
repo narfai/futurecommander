@@ -25,7 +25,7 @@ mod atomic;
 mod serializable;
 
 pub use self::{
-    operation::{ Operation, OperationGenerator, OperationGeneratorAdapter },
+    operation::{ Operation, OperationGenerator },
     entry_collection::{ EntryCollection },
     entry::{ EntryAdapter, Entry },
     filesystem::{ FileSystemAdapter, WriteableFileSystem, ReadableFileSystem, FileSystemTransaction },

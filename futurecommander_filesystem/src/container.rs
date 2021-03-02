@@ -132,7 +132,7 @@ impl Container {
         for operation in operations {
             self.emit(operation.clone(), Box::new(ZealousGuard))?;
             self.operation_queue.push_back(operation);
-        }        
+        }
         Ok(())
     }
 }
@@ -146,6 +146,10 @@ impl ReadableFileSystem for Container {
 
     fn status(&self, path: &Path) -> Result<Self::Item, QueryError> {
         self.virtual_fs.status(path)
+    }
+
+    fn is_directory_empty(&self, path: &Path) -> Result<bool, QueryError> {
+        self.virtual_fs.is_directory_empty(path)
     }
 }
 

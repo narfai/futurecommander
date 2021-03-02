@@ -1,5 +1,6 @@
 use std::{
-    path::{ Path, PathBuf }
+    path::{ Path, PathBuf },
+    iter
 };
 
 use crate::{
@@ -11,8 +12,7 @@ use crate::{
         Atomic,
         Entry,
         Operation,
-        OperationGenerator,
-        OperationGeneratorAdapter
+        OperationGenerator
     }
 };
 
@@ -142,7 +142,25 @@ impl Operation for CopyOperation {
     }
 }
 
-impl <'a, E: Entry> OperationGenerator<E> for OperationGeneratorAdapter<'a, E, CopyBatchDefinition> {
+pub struct CopyOperationGenerator<'a, E: Entry + 'a> {
+    pub definition: CopyBatchDefinition,
+    pub sent_itself: bool, //TODO instead of that aweful trick, find a better way to craft iterators on fly
+    pub children_iterator: Box<dyn Iterator<Item = E> + 'a>,
+    pub operation_generator: Option<Box<CopyOperationGenerator<'a, E>>>
+}
+
+impl <'a, E: Entry + 'a>CopyOperationGenerator<'a, E> {
+    pub fn new(definition: CopyBatchDefinition) -> Self {
+        CopyOperationGenerator {
+            definition,
+            sent_itself: false,
+            children_iterator: Box::new(iter::empty()),
+            operation_generator: None
+        }
+    }
+}
+
+impl <'a, E: Entry> OperationGenerator<E> for CopyOperationGenerator<'a, E> {
     type Item = CopyOperation;
     fn next<F: ReadableFileSystem<Item=E>>(&mut self, fs: &F) -> Result<Option<Self::Item>, DomainError> {
         if let Some(operation_generator) = &mut self.operation_generator {
@@ -151,7 +169,7 @@ impl <'a, E: Entry> OperationGenerator<E> for OperationGeneratorAdapter<'a, E, C
             }
         }
         if !self.sent_itself {
-            let operation = CopyOperation::new(fs, &self.inner.source, &self.inner.destination)?;
+            let operation = CopyOperation::new(fs, &self.definition.source, &self.definition.destination)?;
             self.sent_itself = true;
             match CopyOperation::children(fs, &operation)? {
                 Some(children_iterator) => { self.children_iterator = children_iterator },
@@ -160,10 +178,11 @@ impl <'a, E: Entry> OperationGenerator<E> for OperationGeneratorAdapter<'a, E, C
             Ok(Some(operation))
         } else if let Some(entry) = self.children_iterator.next() {
             self.operation_generator = Some(Box::new(
-                OperationGeneratorAdapter::new(
+                CopyOperationGenerator::new(
                     CopyBatchDefinition::new(
                         entry.to_path(),
-                        self.inner.destination.join(entry.name().unwrap()).to_path_buf()
+                        //TODO #NoUnwrap
+                        self.definition.destination.join(entry.name().unwrap()).to_path_buf()
                     )
                 )
             ));
@@ -173,7 +192,6 @@ impl <'a, E: Entry> OperationGenerator<E> for OperationGeneratorAdapter<'a, E, C
         }
     }
 }
-
 
 
 #[cfg(not(tarpaulin_include))]
@@ -189,10 +207,10 @@ mod real_tests {
 
     #[test]
     fn copy_operation_dir(){
-        let chroot = Samples::init_simple_chroot("copy_operation_dir");
+        let chroot = Samples::init_simple_chroot("operation_copy_operation_dir");
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
-        let mut generator = OperationGeneratorAdapter::new(CopyBatchDefinition::new(
+        let mut generator = CopyOperationGenerator::new(CopyBatchDefinition::new(
             chroot.join("RDIR"),
             chroot.join("COPIED"),
         ));
@@ -207,10 +225,10 @@ mod real_tests {
 
     #[test]
     fn copy_operation_dir_merge_overwrite(){
-        let chroot = Samples::init_simple_chroot("copy_operation_dir_merge_overwrite");
+        let chroot = Samples::init_simple_chroot("operation_copy_operation_dir_merge_overwrite");
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
-        let mut generator = OperationGeneratorAdapter::new(CopyBatchDefinition::new(
+        let mut generator = CopyOperationGenerator::new(CopyBatchDefinition::new(
             chroot.join("RDIR"),
             chroot.join("RDIR2"),
         ));
@@ -231,10 +249,10 @@ mod real_tests {
 
     #[test]
     fn copy_operation_file(){
-        let chroot = Samples::init_simple_chroot("copy_operation_file");
+        let chroot = Samples::init_simple_chroot("operation_copy_operation_file");
         let mut fs = FileSystemAdapter(RealFileSystem::default());
 
-        let mut generator = OperationGeneratorAdapter::new(CopyBatchDefinition::new(
+        let mut generator = CopyOperationGenerator::new(CopyBatchDefinition::new(
             chroot.join("RDIR/RFILEB"),
             chroot.join("RDIR2/RFILEB"),
         ));
@@ -276,7 +294,7 @@ mod virtual_tests {
         let samples_path = Samples::static_samples_path();
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        let mut generator = OperationGeneratorAdapter::new(CopyBatchDefinition::new(
+        let mut generator = CopyOperationGenerator::new(CopyBatchDefinition::new(
             samples_path.join("A"),
             samples_path.join("Z"),
         ));
@@ -298,7 +316,7 @@ mod virtual_tests {
         let gitkeep = samples_path.join("B/.gitkeep");
         fs.as_inner_mut().mut_sub_state().attach(gitkeep.as_path(),Some(gitkeep.as_path()), Kind::File).unwrap();
 
-        let mut generator = OperationGeneratorAdapter::new(CopyBatchDefinition::new(
+        let mut generator = CopyOperationGenerator::new(CopyBatchDefinition::new(
             samples_path.join("B"),
             samples_path.join("A"),
         ));
@@ -316,7 +334,7 @@ mod virtual_tests {
         let samples_path = Samples::static_samples_path();
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        let mut generator = OperationGeneratorAdapter::new(CopyBatchDefinition::new(
+        let mut generator = CopyOperationGenerator::new(CopyBatchDefinition::new(
             samples_path.join("F"),
             samples_path.join("Z"),
         ));
@@ -334,7 +352,7 @@ mod virtual_tests {
         let samples_path = Samples::static_samples_path();
         let mut fs = FileSystemAdapter(VirtualFileSystem::default());
 
-        let mut generator = OperationGeneratorAdapter::new(CopyBatchDefinition::new(
+        let mut generator = CopyOperationGenerator::new(CopyBatchDefinition::new(
             samples_path.join("F"),
             samples_path.join("A/C"),
         ));

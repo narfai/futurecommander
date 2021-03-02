@@ -49,6 +49,7 @@ pub trait ReadableFileSystem {
     fn read_maintained(&self, path: &Path) -> Result<EntryCollection<Self::Item>,QueryError> {
         self.read_dir(path)
     }
+    fn is_directory_empty(&self, path: &Path) -> Result<bool, QueryError>;
 }
 
 pub trait WriteableFileSystem: ReadableFileSystem {

@@ -131,7 +131,7 @@ impl ReadableFileSystem for FileSystemAdapter<VirtualFileSystem> {
                 None => return Err(QueryError::ReadTargetDoesNotExists(path.to_path_buf()))
             };
 
-        let mut entry_collection= EntryCollection::new();
+        let mut entry_collection = EntryCollection::new();
 
         let real_path = directory.as_source().unwrap_or_else(|| directory.as_identity());
         if real_path.exists() {
@@ -195,6 +195,13 @@ impl ReadableFileSystem for FileSystemAdapter<VirtualFileSystem> {
                 .filter(|entry: &EntryAdapter<VirtualStatus>|{
                     entry.as_inner().state == VirtualState::ExistsVirtually
                 }).collect()
+        )
+    }
+
+    fn is_directory_empty(&self, path: &Path) -> Result<bool, QueryError> {
+        let status = self.status(path)?;
+        Ok(
+            status.is_dir() && self.read_dir(path)?.iter().next().is_none()
         )
     }
 }

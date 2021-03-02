@@ -42,4 +42,8 @@ impl ReadableFileSystem for FileSystemAdapter<RealFileSystem> {
     fn status(&self, path: &Path) -> Result<Self::Item, QueryError> {
         Ok(EntryAdapter(path.to_path_buf()))
     }
+
+    fn is_directory_empty(&self, path: &Path) -> Result<bool, QueryError> {
+        Ok(path.is_dir() && path.read_dir()?.next().is_none())
+    }
 }
