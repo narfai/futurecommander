@@ -46,6 +46,7 @@ pub struct CopyOperation {
 }
 
 impl CopyOperation {
+    //TODO schedule takes def
     fn schedule<F: ReadableFileSystem>(fs: &F, source_path: &Path, destination_path: &Path) -> Result<CopyScheduling, DomainError> {
         let source = fs.status(source_path)?;
         if !source.exists() {
@@ -82,6 +83,7 @@ impl CopyOperation {
         }
     }
 
+    //TODO transact takes definition
     fn transaction(scheduling: &CopyScheduling, source: PathBuf, destination: PathBuf) -> Vec<Atomic> {
         match scheduling {
             CopyScheduling::FileCopy => vec![
@@ -276,16 +278,9 @@ mod virtual_tests {
 
     use crate::{
         sample::Samples,
-        port::{
-            FileSystemAdapter
-        },
-        infrastructure::{
-            VirtualFileSystem
-        },
-        Kind,
-        capability::{
-            ZealousGuard
-        }
+        port::{ FileSystemAdapter },
+        infrastructure::{ VirtualFileSystem },
+        Kind
     };
 
     #[test]
