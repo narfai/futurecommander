@@ -47,7 +47,5 @@ pub use self::{
 //Mainly for testing
 pub use self::infrastructure::VirtualState;
 
-pub mod tools;
-
 #[cfg(not(tarpaulin_include))]
 pub mod sample;
