@@ -17,3 +17,5 @@ pub trait OperationGenerator<E: Entry> {
     type Item: Operation;
     fn next<F: ReadableFileSystem<Item=E>>(&mut self, fs: &F) -> Result<Option<Self::Item>, DomainError>;
 }
+
+//Generalize OperationScheduler<S>, OperationGenerator, OperationGeneratorState<S, D>

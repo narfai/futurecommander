@@ -16,6 +16,7 @@ use crate::{
     }
 };
 
+#[derive(Clone)]
 pub struct CopyBatchDefinition {
     source: PathBuf,
     destination: PathBuf
@@ -39,10 +40,9 @@ pub enum CopyScheduling {
 }
 
 pub struct CopyOperation {
-    pub scheduling: CopyScheduling,
-    pub transaction: Vec<Atomic>,
-    pub source: PathBuf,
-    pub destination: PathBuf
+    scheduling: CopyScheduling,
+    transaction: Vec<Atomic>,
+    definition: CopyBatchDefinition
 }
 
 impl CopyOperation {
@@ -98,12 +98,11 @@ impl CopyOperation {
         }
     }
 
-    fn new(scheduling: CopyScheduling, source_path: &Path, destination_path: &Path) -> Self {
+    fn new(scheduling: CopyScheduling, definition: CopyBatchDefinition) -> Self {
         CopyOperation {
-            transaction: Self::transaction(&scheduling, source_path.to_path_buf(), destination_path.to_path_buf()),
+            transaction: Self::transaction(&scheduling, definition.source.clone(), definition.destination.clone()),
             scheduling,
-            source: source_path.to_path_buf(),
-            destination: destination_path.to_path_buf()
+            definition
         }
     }
 }
@@ -165,7 +164,7 @@ impl <'a, E: Entry> OperationGenerator<E> for CopyOperationGenerator<'a, E> {
                     _ => CopyOperationGeneratorState::Terminated
                 };
 
-                Ok(Some(CopyOperation::new(_scheduling, &self.definition.source, &self.definition.destination)))
+                Ok(Some(CopyOperation::new(_scheduling, self.definition.clone())))
             },
             CopyOperationGeneratorState::ChildrenOperation { children_iterator, opt_operation_generator }=> {
                 if let Some(operation_generator) = opt_operation_generator {

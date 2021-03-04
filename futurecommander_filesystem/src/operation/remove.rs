@@ -16,6 +16,7 @@ use crate::{
     }
 };
 
+#[derive(Clone)]
 pub struct RemoveBatchDefinition {
     path: PathBuf
 }
@@ -34,9 +35,9 @@ pub enum RemoveScheduling {
 }
 
 pub struct RemoveOperation {
-    pub scheduling: RemoveScheduling,
-    pub transaction: Vec<Atomic>,
-    pub path: PathBuf
+    scheduling: RemoveScheduling,
+    transaction: Vec<Atomic>,
+    definition: RemoveBatchDefinition
 }
 
 impl Operation for RemoveOperation {
@@ -81,11 +82,11 @@ impl RemoveOperation {
         }
     }
 
-    fn new(scheduling: RemoveScheduling, path: &Path) -> Self {
+    fn new(scheduling: RemoveScheduling, definition: RemoveBatchDefinition) -> Self {
         RemoveOperation {
-            transaction: Self::transaction(&scheduling, &path),
+            transaction: Self::transaction(&scheduling, &definition.path),
             scheduling,
-            path: path.to_path_buf()
+            definition
         }
     }
 }
@@ -153,7 +154,7 @@ impl <'a, E: Entry> OperationGenerator<E> for RemoveOperationGenerator<'a, E> {
             RemoveOperationGeneratorState::SelfOperation(scheduling) => {
                 let _scheduling = scheduling.clone();
                 self.state = RemoveOperationGeneratorState::Terminated;
-                Ok(Some(RemoveOperation::new(_scheduling, &self.definition.path)))
+                Ok(Some(RemoveOperation::new(_scheduling, self.definition.clone())))
             },
             RemoveOperationGeneratorState::Terminated => Ok(None)
         }
