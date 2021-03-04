@@ -3,8 +3,8 @@ use crate::{
 };
 
 pub struct OperationGenerator<S: Default, R: Request> {
-    pub request: R,
-    pub state: S
+    pub(in crate::operation) request: R,
+    pub(in crate::operation) state: S
 }
 
 impl <S: Default, R: Request>OperationGenerator<S, R> {

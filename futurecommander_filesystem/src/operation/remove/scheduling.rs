@@ -21,7 +21,7 @@ impl Scheduler for RemoveOperation {
             ],
             EmptyDirectoryRemoval|RecursiveDirectoryRemoval => vec![
                 MicroOperation::RemoveEmptyDirectory(self.request().path().to_path_buf())
-            ],
-            _ => Vec::new()       }
+            ]
+        }
     }
 }
