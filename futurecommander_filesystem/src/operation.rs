@@ -3,6 +3,7 @@ mod generator;
 mod operation;
 
 mod copy;
+mod remove;
 
 use crate::{
     errors::DomainError,
