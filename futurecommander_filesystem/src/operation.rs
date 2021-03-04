@@ -5,6 +5,7 @@ mod operation;
 mod copy;
 mod remove;
 mod create;
+mod mov;
 
 use crate::{
     errors::DomainError,
