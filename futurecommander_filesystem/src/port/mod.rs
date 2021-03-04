@@ -17,7 +17,6 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod operation;
 mod entry;
 mod entry_collection;
 mod filesystem;
@@ -25,7 +24,6 @@ mod atomic;
 mod serializable;
 
 pub use self::{
-    operation::{ Operation, OperationGenerator },
     entry_collection::{ EntryCollection },
     entry::{ EntryAdapter, Entry },
     filesystem::{ FileSystemAdapter, WriteableFileSystem, ReadableFileSystem, FileSystemTransaction },
