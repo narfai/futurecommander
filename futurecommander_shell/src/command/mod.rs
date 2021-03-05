@@ -17,6 +17,8 @@
  * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::{ tools::normalize };
+
 pub mod errors;
 pub use self::errors::CommandError;
 
@@ -59,7 +61,7 @@ impl <C>Command<C> {
     pub fn extract_path_from_args(cwd: &Path, args: &ArgMatches<'_>, key: &str) -> Result<PathBuf, CommandError> {
         match args.value_of(key) {
             Some(str_path) => {
-                Ok(futurecommander_filesystem::tools::normalize(&cwd.join(Path::new(str_path.trim()))))
+                Ok(normalize(&cwd.join(Path::new(str_path.trim()))))
             },
             None => Err(CommandError::ArgumentMissing("generic".to_string(), key.to_string(), args.usage().to_string()))
         }
@@ -68,7 +70,7 @@ impl <C>Command<C> {
     pub fn extract_path_and_trail_from_args(cwd: &Path, args: &ArgMatches<'_>, key: &str) -> Result<(PathBuf, bool), CommandError> {
         match args.value_of(key) {
             Some(str_path) => Ok((
-                futurecommander_filesystem::tools::normalize(&cwd.join(Path::new(str_path.trim()))),
+                normalize(&cwd.join(Path::new(str_path.trim()))),
                 str_path.chars().last().unwrap() == MAIN_SEPARATOR
             )),
             None => Err(CommandError::ArgumentMissing("generic".to_string(), key.to_string(), args.usage().to_string()))

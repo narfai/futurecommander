@@ -32,9 +32,10 @@ use clap::{ App, ArgMatches };
 use futurecommander_filesystem::{
     Container,
     Kind,
-    ReadableFileSystem,
-    tools::{ absolute }
+    ReadableFileSystem
 };
+
+use crate::{ tools::absolute };
 
 use crate::{
     helper::VirtualHelper,
