@@ -1,18 +1,17 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
 mod generator;
 mod request;
 mod scheduling;
 mod strategy;
 
-use crate::{
-    operation::{
-        generator::{ OperationGenerator },
-        operation::{ Operation }
-    }
+use super::{
+    OperationGenerator,
+    Operation
 };
-
-use self::{ generator::MoveGeneratorState };
-
 pub use self::{
+    generator::MoveGeneratorState,
     request::MoveRequest,
     strategy::MoveStrategy
 };
@@ -24,14 +23,18 @@ type MoveGenerator<'a, E> = OperationGenerator<MoveGeneratorState<'a, E>, MoveRe
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod real_tests {
-    use super::*;
-
     use crate::{
         sample::Samples,
-        port::{ FileSystemAdapter },
-        infrastructure::{ RealFileSystem },
-        operation::{ OperationInterface, OperationGeneratorInterface },
+        infrastructure::{
+            FileSystemAdapter,
+            RealFileSystem
+        },
     };
+    use super::super::{
+        OperationInterface,
+        OperationGeneratorInterface
+    };
+    use super::*;
 
     #[test]
     fn move_operation_dir(){
@@ -132,15 +135,19 @@ mod real_tests {
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod virtual_tests {
-    use super::*;
-
     use crate::{
         sample::Samples,
         Kind,
-        port::{ FileSystemAdapter },
-        infrastructure::{ VirtualFileSystem },
-        operation::{ OperationInterface, OperationGeneratorInterface },
+        infrastructure::{
+            VirtualFileSystem,
+            FileSystemAdapter
+        }
     };
+    use super::super::{
+        OperationInterface,
+        OperationGeneratorInterface
+    };
+    use super::*;
 
     #[test]
     fn virtual_move_operation_directory(){

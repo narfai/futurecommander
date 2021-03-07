@@ -1,11 +1,18 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
+use serde::{ Serialize, Deserialize };
 use std::path::{ PathBuf, Path };
+use super::super::{ Request };
 
-use crate::operation::{ Request };
-
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct MoveRequest {
     source: PathBuf,
     destination: PathBuf
+}
+
+impl Request for MoveRequest {
+    fn target(&self) -> &Path { &self.destination }
 }
 
 impl MoveRequest {
@@ -17,5 +24,3 @@ impl MoveRequest {
 
     pub fn destination(&self) -> &Path { &self.destination }
 }
-
-impl Request for MoveRequest {}

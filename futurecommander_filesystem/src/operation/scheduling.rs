@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
 use std::{ path::{ PathBuf }};
 use crate::{
-    infrastructure::errors::{ InfrastructureError },
-    port::{
-        WriteableFileSystem
-    }
+    InfrastructureError,
+    WriteableFileSystem
 };
 
 #[derive(Debug)]

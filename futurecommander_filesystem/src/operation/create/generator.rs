@@ -1,20 +1,22 @@
-use std::path::PathBuf;
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
+use std::path::PathBuf;
 use crate::{
     Kind,
     Entry,
     ReadableFileSystem,
-    DomainError,
-    operation::{
+    DomainError
+};
+use super::{
+    super::{
         OperationGeneratorInterface,
-        Strategist,
-        create::{
-            CreateOperation,
-            CreateGenerator,
-            request::CreateRequest,
-            strategy::CreateStrategy
-        }
-    }
+        Strategist
+    },
+    CreateOperation,
+    CreateGenerator,
+    request::CreateRequest,
+    strategy::CreateStrategy,
 };
 
 pub enum CreateGeneratorState {
@@ -24,8 +26,13 @@ pub enum CreateGeneratorState {
     Terminated
 }
 
-impl Default for CreateGeneratorState {
-    fn default() -> Self { CreateGeneratorState::Uninitialized }
+impl CreateGenerator {
+    pub fn new(request: CreateRequest) -> Self {
+        CreateGenerator {
+            request,
+            state: CreateGeneratorState::Uninitialized
+        }
+    }
 }
 
 impl <E: Entry, F: ReadableFileSystem<Item=E>>OperationGeneratorInterface<E, F> for CreateGenerator {

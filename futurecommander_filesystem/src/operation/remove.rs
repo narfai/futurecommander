@@ -1,18 +1,17 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
 mod generator;
 mod request;
 mod scheduling;
 mod strategy;
 
-use crate::{
-    operation::{
-        generator::{ OperationGenerator },
-        operation::{ Operation }
-    }
+use super::{
+    OperationGenerator,
+    Operation
 };
-
-use self::{ generator::RemoveGeneratorState };
-
 pub use self::{
+    generator::RemoveGeneratorState,
     request::RemoveRequest,
     strategy::RemoveStrategy
 };
@@ -24,14 +23,19 @@ type RemoveGenerator<'a, E> = OperationGenerator<RemoveGeneratorState<'a, E>, Re
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod real_tests {
-    use super::*;
-
     use crate::{
         sample::Samples,
-        port::{ FileSystemAdapter },
-        infrastructure::{ RealFileSystem },
-        operation::{ OperationInterface, OperationGeneratorInterface },
+        infrastructure::{
+            RealFileSystem,
+            FileSystemAdapter
+        },
     };
+    use super::super::{
+        OperationInterface,
+        OperationGeneratorInterface
+    };
+    use super::*;
+
 
     #[test]
     fn operation_remove_operation_file() {
@@ -87,14 +91,18 @@ mod real_tests {
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod virtual_tests {
-    use super::*;
-
     use crate::{
         sample::Samples,
-        port::{ FileSystemAdapter },
-        infrastructure::{ VirtualFileSystem },
-        operation::{ OperationInterface, OperationGeneratorInterface }
+        infrastructure::{
+            VirtualFileSystem,
+            FileSystemAdapter
+        }
     };
+    use super::super::{
+        OperationInterface,
+        OperationGeneratorInterface
+    };
+    use super::*;
 
     #[test]
     fn operation_virtual_remove_operation_file() {

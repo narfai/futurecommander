@@ -1,40 +1,17 @@
-/*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+mod adapter;
+mod collection;
+mod serializable;
 
-use std::{
-    cmp ::{ Ordering },
-    ffi ::{ OsStr },
-    path::{ Path, PathBuf },
+pub use self::{
+    adapter::EntryAdapter,
+    collection::EntryCollection
 };
 
-#[derive(Debug)]
-pub struct EntryAdapter<T>(pub T);
-impl <T>EntryAdapter<T> {
-    pub fn into_inner(self) -> T {
-        self.0
-    }
-    pub fn as_inner(&self) -> &T {
-        &self.0
-    }
-}
-
-//TODO SIMPLIFY TO A POJO
+use std::{
+    path::{ Path, PathBuf },
+    ffi::{ OsStr },
+    cmp::{ Ordering }
+};
 
 pub trait Entry {
     fn path(&self) -> &Path;
@@ -76,7 +53,7 @@ impl PartialEq for dyn Entry {
 
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
-mod tests_entry {
+mod entry_tests {
     use super::*;
 
     use crate::{ sample::Samples };
@@ -134,3 +111,31 @@ mod tests_entry {
         assert_eq!(z.into_inner(), z_path.as_path());
     }
 }
+
+#[cfg(not(tarpaulin_include))]
+#[cfg(test)]
+mod collection_tests {
+    use std::path::Path;
+    use crate::EntryAdapter;
+    use super::*;
+
+    #[test]
+    fn entry_collection_contains() {
+        let mut c = EntryCollection::new();
+        c.add(EntryAdapter(Path::new("A")));
+
+        assert!(c.contains(&EntryAdapter(Path::new("A"))));
+        assert_eq!(c.len(), 1);
+    }
+
+    #[test]
+    fn entry_collection_is_empty() {
+        let c = EntryCollection::<EntryAdapter<&Path>>::new();
+
+        assert!(c.is_empty());
+        assert_eq!(c.len(), 0);
+    }
+}
+
+
+

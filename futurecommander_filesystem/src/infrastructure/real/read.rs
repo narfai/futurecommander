@@ -1,22 +1,20 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
 use std::{
     path::{ Path, PathBuf }
 };
-
 use crate::{
-    errors::{
-        QueryError
-    },
-    port::{
-        ReadableFileSystem,
-        FileSystemAdapter,
-        EntryAdapter,
-        EntryCollection
-    },
-    infrastructure::real::{
-        RealFileSystem
-    }
+    QueryError,
+    EntryAdapter,
+    EntryCollection
 };
+use super::super::{
+    RealFileSystem,
+    ReadableFileSystem,
+    FileSystemAdapter
+};
+
 impl ReadableFileSystem for FileSystemAdapter<RealFileSystem> {
     type Item = EntryAdapter<PathBuf>;
 

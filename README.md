@@ -73,3 +73,9 @@ Command can be :
 ## Trello
 
 https://trello.com/b/A2BvQdR9/futurecommander
+
+## Licensing
+
+https://www.gnu.org/prep/maintain/html_node/Copyright-Notices.html
+We use copyright ranges, meaning that :
+> every year in the range, inclusive, really is a “copyrightable” year that would be listed individually

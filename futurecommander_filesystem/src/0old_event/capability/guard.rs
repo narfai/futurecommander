@@ -1,21 +1,5 @@
-/*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
 use std::{
     path::{ Path },
@@ -24,10 +8,18 @@ use std::{
 
 use crate::{
     DomainError,
-    guard::{
+    capability::{
         Capability
     }
 };
+
+
+// TODO : add an implementation of WriteGuard<W> and ReadGuard<R> for sharing W and R streams types respectively
+// That implementation should by example, in the shell, allow the InteractiveGuard to Read from stdin and write in stdout
+// Plus : guard may not be a trait with is subspecialization but much more a generic wrapper/adapter Guard<T> ( more idomatic )
+// pub struct WriteGuard<W: Write>(Box<dyn Guard>, W);
+// pub struct ReadGuard<R: Read>(Box<dyn Guard>, R);
+// Note : it would probably make the methods emit and delay use generics
 
 pub trait Guard {
     fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError>;

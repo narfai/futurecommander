@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
 mod scheduling;
 mod generator;
 mod operation;
@@ -7,22 +10,30 @@ mod remove;
 mod create;
 mod mov;
 
+use std::path::Path;
+use serde::{ Serialize };
 use crate::{
-    errors::DomainError,
-    infrastructure::errors::InfrastructureError,
-    port::{
-        ReadableFileSystem,
-        WriteableFileSystem,
-        Entry
-    }
+    DomainError,
+    InfrastructureError,
+    WriteableFileSystem,
+    ReadableFileSystem,
+    Entry
 };
-
 pub use self::{
     generator::{ OperationGenerator },
-    copy::{ CopyRequest }
+    operation::{ Operation },
+    scheduling::{ Scheduling, MicroOperation },
+    copy::{ CopyRequest, CopyStrategy },
+    mov::{ MoveRequest, MoveStrategy },
+    create::{ CreateRequest, CreateStrategy },
+    remove::{ RemoveRequest, RemoveStrategy },
 };
 
-pub trait Request: Clone {}
+
+pub trait Strategy: Copy + Serialize {}
+pub trait Request: Clone + Serialize {
+    fn target(&self) -> &Path;
+}
 
 pub trait Scheduler {
     fn schedule(&self) -> scheduling::Scheduling;
@@ -33,7 +44,7 @@ pub trait Strategist {
     fn strategize<F: ReadableFileSystem>(&self, fs: &F) -> Result<Self::Strategy, DomainError>;
 }
 
-pub trait OperationInterface: Scheduler {
+pub trait OperationInterface: Scheduler + Serialize {
     fn apply<F: WriteableFileSystem>(&self, fs: &mut F) -> Result<(), InfrastructureError>;
 }
 

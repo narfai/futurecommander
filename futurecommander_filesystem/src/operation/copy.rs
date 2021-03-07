@@ -1,18 +1,17 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
 mod generator;
 mod request;
 mod scheduling;
 mod strategy;
 
-use crate::{
-    operation::{
-        generator::{ OperationGenerator },
-        operation::{ Operation }
-    }
+use super::{
+    OperationGenerator,
+    Operation
 };
-
-use self::{ generator::CopyGeneratorState };
-
 pub use self::{
+    generator::CopyGeneratorState,
     request::CopyRequest,
     strategy::CopyStrategy
 };
@@ -24,14 +23,19 @@ type CopyGenerator<'a, E> = OperationGenerator<CopyGeneratorState<'a, E>, CopyRe
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod real_tests {
-    use super::*;
-
     use crate::{
         sample::Samples,
-        infrastructure::RealFileSystem,
-        port::{ FileSystemAdapter },
-        operation::{ OperationInterface, OperationGeneratorInterface },
+        infrastructure::{
+            RealFileSystem,
+            FileSystemAdapter
+        }
     };
+    use super::super::{
+        OperationInterface,
+        OperationGeneratorInterface
+    };
+    use super::*;
+
 
     #[test]
     fn copy_operation_dir(){
@@ -101,15 +105,20 @@ mod real_tests {
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod virtual_tests {
-    use super::*;
-
     use crate::{
         sample::Samples,
-        port::{ FileSystemAdapter },
-        infrastructure::{ VirtualFileSystem },
-        Kind,
-        operation::{ OperationInterface, OperationGeneratorInterface },
+        infrastructure::{
+            FileSystemAdapter,
+            VirtualFileSystem
+        },
+        Kind
     };
+    use super::super::{
+        OperationInterface,
+        OperationGeneratorInterface
+    };
+    use super::*;
+
 
     #[test]
     fn virtual_copy_operation_directory(){

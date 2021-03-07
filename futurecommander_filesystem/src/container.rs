@@ -1,50 +1,46 @@
-/*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
 use std::{
     path::{ Path },
     collections::vec_deque::VecDeque
 };
 
 use crate::{
-    errors:: { DomainError, QueryError },
-    capability::{
+    DomainError,
+    QueryError,
+    ReadableFileSystem,
+    EntryAdapter,
+    EntryCollection,
+    infrastructure::{
+        FileSystemAdapter,
+        VirtualFileSystem,
+        VirtualStatus,
+        RealFileSystem,
+    },
+    guard::{
         ZealousGuard,
         Guard
     },
-    event::{
-        Listener,
-        FileSystemOperation,
+    operation::{
+        Operation,
+        OperationWrapper,
+        Request,
+        OperationGeneratorInterface,
+        OperationGenerator,
+        OperationInterface,
+        Scheduler
     },
-    port::{
-        ReadableFileSystem,
-        FileSystemAdapter,
-        EntryAdapter,
-        EntryCollection
-    },
-    infrastructure::{
-        VirtualFileSystem,
-        VirtualStatus,
-        RealFileSystem
-    }
 };
 
+/*
+== TODO test ==
+User choices about capabilities should be preserved between emit & apply
+
+*/
+
 #[derive(Debug)]
+//pub struct OperationQueue(VecDeque<OperationWrapper>);
 pub struct OperationQueue(VecDeque<FileSystemOperation>);
 
 impl Default for OperationQueue {
@@ -135,7 +131,25 @@ impl Container {
         }
         Ok(())
     }
+
+    fn emit<R: Request, G: Guard>(&mut self, request: R, guard: G) -> Result<(), DomainError> {
+        let mut generator = OperationGenerator::new(request);
+        while let Some(operation) = generator.next(self) {
+            if guard.authorize(operation.strategy().into(), false, operation.request().target)? {
+                operation.apply(self.virtual_fs)?;
+                self.operation_queue.push_back(operation);
+            }
+        }
+        Ok(())
+    }
+
+    /* pub fn emit_operation(&mut self, operation: OperationWrapper) -> Result<(), DomainError>{
+        operation.apply(&mut self.virtual_fs)?;
+        self.operation_queue.push_back(operation);
+        Ok(())
+    } */
 }
+
 
 impl ReadableFileSystem for Container {
     type Item = EntryAdapter<VirtualStatus>;
@@ -150,15 +164,6 @@ impl ReadableFileSystem for Container {
 
     fn is_directory_empty(&self, path: &Path) -> Result<bool, QueryError> {
         self.virtual_fs.is_directory_empty(path)
-    }
-}
-
-impl Listener for Container {
-    fn emit(&mut self, operation: FileSystemOperation, guard: Box<dyn Guard>) -> Result<(), DomainError> {
-        operation.clone().atomize(&self.virtual_fs, guard)?
-             .apply(&mut self.virtual_fs)?;
-        self.operation_queue.push_back(operation); //TODO BUG ( write a test ) : operation.registry is not persisted here a.k.a user choices are not either
-        Ok(())
     }
 }
 

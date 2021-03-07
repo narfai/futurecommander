@@ -1,17 +1,20 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
 use crate::{
     Entry,
     ReadableFileSystem,
-    DomainError,
-    operation::{
+    DomainError
+};
+use super::{
+    super::{
         OperationGeneratorInterface,
         Strategist,
-        remove::{
-            RemoveOperation,
-            RemoveGenerator,
-            request::RemoveRequest,
-            strategy::RemoveStrategy
-        }
-    }
+    },
+    RemoveOperation,
+    RemoveGenerator,
+    request::RemoveRequest,
+    strategy::RemoveStrategy
 };
 
 pub enum RemoveGeneratorState<'a, E: Entry + 'a> {
@@ -25,8 +28,13 @@ pub enum RemoveGeneratorState<'a, E: Entry + 'a> {
     Terminated
 }
 
-impl <E: Entry>Default for RemoveGeneratorState<'_, E> {
-    fn default() -> Self { RemoveGeneratorState::Uninitialized }
+impl <E: Entry>RemoveGenerator<'_, E> {
+    pub fn new(request: RemoveRequest) -> Self {
+        RemoveGenerator {
+            request,
+            state: RemoveGeneratorState::Uninitialized
+        }
+    }
 }
 
 impl <E: Entry, F: ReadableFileSystem<Item=E>>OperationGeneratorInterface<E, F> for RemoveGenerator<'_, E> {

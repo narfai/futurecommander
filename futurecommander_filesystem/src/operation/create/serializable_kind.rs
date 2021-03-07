@@ -1,5 +1,7 @@
-use serde::{ Serialize, Deserialize };
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
+use serde::{ Serialize, Deserialize };
 use crate::{ Kind };
 
 #[derive(Serialize, Deserialize, Clone, Debug, Copy)]

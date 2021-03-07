@@ -1,15 +1,14 @@
-use crate::{
-    operation::{
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
+use super::{
+    super::{
         Scheduler,
-        scheduling::{
-            Scheduling,
-            MicroOperation
-        },
-        remove::{
-            RemoveStrategy,
-            RemoveOperation
-        }
-    }
+        Scheduling,
+        MicroOperation
+    },
+    RemoveStrategy,
+    RemoveOperation
 };
 
 impl Scheduler for RemoveOperation {

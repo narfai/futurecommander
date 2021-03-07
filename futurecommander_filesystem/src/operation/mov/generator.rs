@@ -1,17 +1,20 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
 use crate::{
     Entry,
     ReadableFileSystem,
-    DomainError,
-    operation::{
+    DomainError
+};
+use super::{
+    super::{
         OperationGeneratorInterface,
         Strategist,
-        mov::{
-            MoveOperation,
-            MoveGenerator,
-            request::MoveRequest,
-            strategy::MoveStrategy
-        }
-    }
+    },
+    MoveOperation,
+    MoveGenerator,
+    request::MoveRequest,
+    strategy::MoveStrategy
 };
 
 pub enum MoveGeneratorState<'a, E: Entry + 'a> {
@@ -25,8 +28,13 @@ pub enum MoveGeneratorState<'a, E: Entry + 'a> {
     Terminated
 }
 
-impl <E: Entry>Default for MoveGeneratorState<'_, E> {
-    fn default() -> Self { MoveGeneratorState::Uninitialized }
+impl <E: Entry>MoveGenerator<'_, E> {
+    pub fn new(request: MoveRequest) -> Self {
+        MoveGenerator {
+            request,
+            state: MoveGeneratorState::Uninitialized
+        }
+    }
 }
 
 impl <E: Entry, F: ReadableFileSystem<Item=E>>OperationGeneratorInterface<E, F> for MoveGenerator<'_, E> {

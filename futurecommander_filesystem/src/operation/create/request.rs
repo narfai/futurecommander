@@ -1,18 +1,22 @@
-use std::path::{ PathBuf, Path };
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
-use crate::{
-    Kind,
-    operation::{
-        Request,
-        create::serializable_kind::SerializableKind
-    }
+use serde::{ Serialize, Deserialize };
+use std::path::{ PathBuf, Path };
+use crate::Kind;
+use super::{
+    super::Request,
+    serializable_kind::SerializableKind
 };
 
-
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct CreateRequest {
     path: PathBuf,
     kind: SerializableKind
+}
+
+impl Request for CreateRequest {
+    fn target(&self) -> &Path { &self.path }
 }
 
 impl CreateRequest {
@@ -24,5 +28,3 @@ impl CreateRequest {
 
     pub fn kind(&self) -> Kind { self.kind.into() }
 }
-
-impl Request for CreateRequest {}

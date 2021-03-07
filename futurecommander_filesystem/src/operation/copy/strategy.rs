@@ -1,19 +1,41 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
+use serde::{ Serialize, Deserialize };
 use crate::{
+    Capability,
     Entry,
     ReadableFileSystem,
-    DomainError,
-    operation::{
-        Strategist,
-        copy::CopyGenerator
-    }
+    DomainError
+};
+use super::{
+    super::{
+        Strategy,
+        Strategist
+    },
+    CopyGenerator
 };
 
-#[derive(Copy, Clone, Debug)]
+
+#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 pub enum CopyStrategy {
     DirectoryMerge,
     FileOverwrite,
     FileCopy,
     DirectoryCopy
+}
+
+impl Strategy for CopyStrategy {}
+
+impl From<CopyStrategy> for Option<Capability> {
+    fn from(strategy: CopyStrategy) -> Self {
+        use CopyStrategy::*;
+        match strategy {
+            DirectoryMerge => Some(Capability::Merge),
+            FileOverwrite => Some(Capability::Overwrite),
+            _ => None
+        }
+    }
 }
 
 impl <E: Entry>Strategist for CopyGenerator<'_, E> {

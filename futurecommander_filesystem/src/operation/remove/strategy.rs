@@ -1,18 +1,38 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
+use serde::{ Serialize, Deserialize };
 use crate::{
     Entry,
     ReadableFileSystem,
     DomainError,
-    operation::{
-        Strategist,
-        remove::RemoveGenerator
-    }
+    Capability
+};
+use super::{
+    super::{
+        Strategy,
+        Strategist
+    },
+    RemoveGenerator
 };
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 pub enum RemoveStrategy {
     FileRemoval,
     EmptyDirectoryRemoval,
     RecursiveDirectoryRemoval
+}
+
+impl Strategy for RemoveStrategy {}
+
+impl From<RemoveStrategy> for Option<Capability> {
+    fn from(strategy: RemoveStrategy) -> Self {
+        use RemoveStrategy::*;
+        match strategy {
+            RecursiveDirectoryRemoval => Some(Capability::Recursive),
+            _ => None
+        }
+    }
 }
 
 impl <E: Entry>Strategist for RemoveGenerator<'_, E> {

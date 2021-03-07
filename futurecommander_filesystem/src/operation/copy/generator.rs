@@ -1,17 +1,20 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
 use crate::{
     Entry,
     ReadableFileSystem,
     DomainError,
-    operation::{
+};
+use super::{
+    super::{
         OperationGeneratorInterface,
         Strategist,
-        copy::{
-            CopyOperation,
-            CopyGenerator,
-            request::CopyRequest,
-            strategy::CopyStrategy
-        }
-    }
+    },
+    CopyOperation,
+    CopyGenerator,
+    request::CopyRequest,
+    strategy::CopyStrategy
 };
 
 pub enum CopyGeneratorState<'a, E: Entry + 'a> {
@@ -24,8 +27,13 @@ pub enum CopyGeneratorState<'a, E: Entry + 'a> {
     Terminated
 }
 
-impl <E: Entry>Default for CopyGeneratorState<'_, E> {
-    fn default() -> Self { CopyGeneratorState::Uninitialized }
+impl <E: Entry>CopyGenerator<'_, E> {
+    pub fn new(request: CopyRequest) -> Self {
+        CopyGenerator {
+            request,
+            state: CopyGeneratorState::Uninitialized
+        }
+    }
 }
 
 impl <E: Entry, F: ReadableFileSystem<Item=E>>OperationGeneratorInterface<E, F> for CopyGenerator<'_, E> {

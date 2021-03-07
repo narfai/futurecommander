@@ -1,19 +1,25 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
+
+use serde::{ Serialize, Deserialize };
 use crate::{
-    port::WriteableFileSystem,
-    infrastructure::errors::InfrastructureError,
-    operation::{
-        Request,
-        Scheduler,
-        OperationInterface
-    }
+    WriteableFileSystem,
+    InfrastructureError,
+};
+use super::{
+    Request,
+    Strategy,
+    Scheduler,
+    OperationInterface
 };
 
-pub struct Operation<S: Copy, R: Request> {
+#[derive(Serialize, Deserialize)]
+pub struct Operation<S: Strategy, R: Request> {
     strategy: S,
     request: R
 }
 
-impl <S: Copy, R: Request>Operation<S, R> {
+impl <S: Strategy, R: Request>Operation<S, R> {
     pub fn new(strategy: S, request: R) -> Self {
         Operation { strategy, request }
     }
@@ -23,7 +29,7 @@ impl <S: Copy, R: Request>Operation<S, R> {
     pub fn request(&self) -> &R { &self.request }
 }
 
-impl <S: Copy, R: Request>OperationInterface for Operation<S, R> where Self: Scheduler {
+impl <S: Strategy, R: Request>OperationInterface for Operation<S, R> where Self: Scheduler {
     fn apply<F: WriteableFileSystem>(&self, fs: &mut F) -> Result<(), InfrastructureError> {
         for atomic_operation in self.schedule() {
             atomic_operation.apply(fs)?
@@ -31,4 +37,3 @@ impl <S: Copy, R: Request>OperationInterface for Operation<S, R> where Self: Sch
         Ok(())
     }
 }
-

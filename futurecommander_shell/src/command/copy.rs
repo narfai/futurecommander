@@ -1,21 +1,5 @@
-/*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
 use std::path::{ Path, PathBuf };
 
@@ -72,12 +56,12 @@ impl Command<InitializedCopyCommand> {
 
         if ! source.exists() {
             return Err(CommandError::DoesNotExists(self.0.source));
-        }        
+        }
 
         container.emit(
             FileSystemOperation::copy(
                 if destination.exists() {
-                    if destination.is_dir() {                    
+                    if destination.is_dir() {
                         CopyOperationDefinition::new(
                             self.0.source.as_path(),
                             self.0.destination
@@ -85,7 +69,7 @@ impl Command<InitializedCopyCommand> {
                                 .as_path(),
                             self.0.merge,
                             self.0.overwrite
-                        )                    
+                        )
                     } else if source.is_dir() {
                         return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
                     } else {
@@ -94,7 +78,7 @@ impl Command<InitializedCopyCommand> {
                 } else {
                     CopyOperationDefinition::new(self.0.source.as_path(), self.0.destination.as_path(), self.0.merge, self.0.overwrite)
                 }
-            ), 
+            ),
             self.0.guard.to_guard()
         )?;
         Ok(())

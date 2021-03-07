@@ -1,21 +1,5 @@
-/*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
 use std::{
     path::{ PathBuf, Path },
@@ -91,7 +75,7 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: CopyOperatio
                                         definition.merge(),
                                         definition.overwrite()
                                 ),
-                                fs, 
+                                fs,
                                 guard
                             )?
                         );
@@ -127,9 +111,9 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: CopyOperatio
                             .join(child.name().unwrap())
                             .as_path(),
                             definition.merge(),
-                            definition.overwrite()                            
+                            definition.overwrite()
                     ),
-                    fs, 
+                    fs,
                     guard
                 )?
             );
@@ -141,7 +125,7 @@ pub fn atomize<E: Entry, F: ReadableFileSystem<Item=E>>(definition: CopyOperatio
         });
     }
     Ok(transaction)
-} 
+}
 
 
 #[cfg(not(tarpaulin_include))]
@@ -171,8 +155,8 @@ mod real_tests {
                 chroot.join("COPIED").as_path(),
                 false,
                 false
-            ), 
-            &fs, 
+            ),
+            &fs,
             &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
@@ -194,7 +178,7 @@ mod real_tests {
                 true,
                 true
             ),
-            &fs, 
+            &fs,
             &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
@@ -222,7 +206,7 @@ mod real_tests {
                 false,
                 false
             ),
-            &fs, 
+            &fs,
             &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
@@ -248,7 +232,7 @@ mod real_tests {
                 false,
                 true
             ),
-            &fs, 
+            &fs,
             &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
@@ -294,7 +278,7 @@ mod virtual_tests {
                 false,
                 false
             ),
-            &fs, 
+            &fs,
             &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
@@ -320,7 +304,7 @@ mod virtual_tests {
                 true,
                 false
             ),
-            &fs, 
+            &fs,
             &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
@@ -342,7 +326,7 @@ mod virtual_tests {
                 false,
                 false
             ),
-            &fs, 
+            &fs,
             &mut ZealousGuard
         ).unwrap()
          .apply(&mut fs)
@@ -364,7 +348,7 @@ mod virtual_tests {
                 false,
                 true
             ),
-            &fs, 
+            &fs,
             &mut ZealousGuard
         ).unwrap()
         .apply(&mut fs)
