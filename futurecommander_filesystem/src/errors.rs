@@ -11,9 +11,12 @@ pub use self::query::QueryError;
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod query_errors {
-    use std::path::{
-        Path,
-        PathBuf
+    use std::{
+        error,
+        path::{
+            Path,
+            PathBuf
+        }
     };
     use crate::{
         Kind,
@@ -84,6 +87,14 @@ mod domain_errors {
             FileSystemAdapter,
             RealFileSystem,
             VirtualFileSystem
+        },
+        operation::{
+            OperationGenerator,
+            OperationGeneratorInterface,
+            CreateRequest,
+            RemoveRequest,
+            MoveRequest,
+            CopyRequest
         }
     };
     use super::*;
@@ -119,193 +130,44 @@ mod domain_errors {
         let destination = sample_path.join("B/D/B");
 
         let expected_error = DomainError::CopyIntoItSelf(source.clone(), destination.clone());
+
         assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                MoveRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                MoveRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                CopyRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                source.as_path(),
-                destination.as_path(),
-                true,
-                false
+            &OperationGenerator::new(
+                CopyRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-    }
-
-    #[test]
-    fn error_merge_not_allowed() {
-        let sample_path = Samples::static_samples_path();
-        let vfs = FileSystemAdapter(VirtualFileSystem::default());
-        let rfs = FileSystemAdapter(RealFileSystem::default());
-
-        let source = sample_path.join("B");
-        let destination = sample_path.join("A");
-
-        let expected_error = DomainError::MergeNotAllowed(destination.clone());
-        assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    false,
-                    false
-                )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-
-        assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    false,
-                    false
-                )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-
-        assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    false,
-                    false
-                )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-
-        assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    false,
-                    false
-                )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-    }
-
-    #[test]
-    fn error_overwrite_not_allowed() {
-        let sample_path = Samples::static_samples_path();
-        let vfs = FileSystemAdapter(VirtualFileSystem::default());
-        let rfs = FileSystemAdapter(RealFileSystem::default());
-
-        let source = sample_path.join("F");
-        let destination = sample_path.join("A/C");
-
-        let expected_error = DomainError::OverwriteNotAllowed(destination.clone());
-        assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
-                )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-
-        assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
-                )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-
-        assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
-                )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-
-        assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
-                )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-
-        assert_two_errors_equals(
-            &FileSystemOperation::create(
-                CreateOperationDefinition::new(
-                    destination.as_path(),
-                    Kind::File,
-                    false,
-                    false
-                )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-
-        assert_two_errors_equals(
-            &FileSystemOperation::create(
-                CreateOperationDefinition::new(
-                    destination.as_path(),
-                    Kind::File,
-                    false,
-                    false
-                )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
     }
@@ -316,31 +178,27 @@ mod domain_errors {
         let vfs = FileSystemAdapter(VirtualFileSystem::default());
         let rfs = FileSystemAdapter(RealFileSystem::default());
 
-        let to_overwrite = sample_path.join("A/C");
+        let to_overwrite = sample_path.join("A");
 
         let expected_error = DomainError::DirectoryOverwriteNotAllowed(to_overwrite.clone());
 
         assert_two_errors_equals(
-            &FileSystemOperation::create(
-                CreateOperationDefinition::new(
-                    to_overwrite.as_path(),
-                    Kind::Directory,
-                    false,
-                    false
+            &OperationGenerator::new(
+                CreateRequest::new(
+                    to_overwrite.to_path_buf(),
+                    Kind::Directory
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::create(
-                CreateOperationDefinition::new(
-                    to_overwrite.as_path(),
-                    Kind::Directory,
-                    false,
-                    false
+            &OperationGenerator::new(
+                CreateRequest::new(
+                    to_overwrite.to_path_buf(),
+                    Kind::Directory
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
     }
@@ -355,51 +213,44 @@ mod domain_errors {
         let destination = sample_path.join("A/C");
 
         let expected_error = DomainError::MergeFileWithDirectory(source.clone(), destination.clone());
+
         assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                MoveRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                MoveRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                CopyRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                CopyRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
     }
@@ -410,56 +261,47 @@ mod domain_errors {
         let vfs = FileSystemAdapter(VirtualFileSystem::default());
         let rfs = FileSystemAdapter(RealFileSystem::default());
 
-
         let source = sample_path.join("A/C");
         let destination = sample_path.join("B");
 
         let expected_error = DomainError::OverwriteDirectoryWithFile(source.clone(), destination.clone());
         assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    true
+            &OperationGenerator::new(
+                MoveRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    true
+            &OperationGenerator::new(
+                MoveRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    true
+            &OperationGenerator::new(
+                CopyRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    source.as_path(),
-                    destination.as_path(),
-                    true,
-                    true
+            &OperationGenerator::new(
+                CopyRequest::new(
+                    source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
     }
@@ -470,31 +312,27 @@ mod domain_errors {
         let vfs = FileSystemAdapter(VirtualFileSystem::default());
         let rfs = FileSystemAdapter(RealFileSystem::default());
 
-        let dummy = sample_path.join("A");
+        let dummy = sample_path.join("A/UNKNOW");
 
         let expected_error = DomainError::CreateUnknown(dummy.clone());
 
         assert_two_errors_equals(
-            &FileSystemOperation::create(
-                CreateOperationDefinition::new(
-                    dummy.as_path(),
-                    Kind::Unknown,
-                    false,
-                    false
+            &OperationGenerator::new(
+                CreateRequest::new(
+                    dummy.to_path_buf(),
+                    Kind::Unknown
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::create(
-                CreateOperationDefinition::new(
-                    dummy.as_path(),
-                    Kind::Unknown,
-                    false,
-                    false
+            &OperationGenerator::new(
+                CreateRequest::new(
+                    dummy.to_path_buf(),
+                    Kind::Unknown
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
     }
@@ -510,56 +348,22 @@ mod domain_errors {
         let expected_error = DomainError::DoesNotExists(not_exists.clone());
 
         assert_two_errors_equals(
-            &FileSystemOperation::remove(
-                RemoveOperationDefinition::new(
-                    not_exists.as_path(),
-                    false
+            &OperationGenerator::new(
+                RemoveRequest::new(
+                    not_exists.to_path_buf()
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::remove(
-                RemoveOperationDefinition::new(
-                    not_exists.as_path(),
-                    false
+            &OperationGenerator::new(
+                RemoveRequest::new(
+                    not_exists.to_path_buf()
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
-    }
-
-    #[test]
-    fn error_delete_recursive_not_allowed() {
-        let sample_path = Samples::static_samples_path();
-        let vfs = FileSystemAdapter(VirtualFileSystem::default());
-        let rfs = FileSystemAdapter(RealFileSystem::default());
-
-        let not_empty_dir = sample_path.join("A");
-
-        let expected_error = DomainError::RecursiveNotAllowed(not_empty_dir.clone());
-
-        assert_two_errors_equals(
-            &&FileSystemOperation::remove(
-                RemoveOperationDefinition::new(
-                    not_empty_dir.as_path(),
-                    false
-                )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-
-        assert_two_errors_equals(
-            &&FileSystemOperation::remove(
-                RemoveOperationDefinition::new(
-                    not_empty_dir.as_path(),
-                    false
-                )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
-            &expected_error
-        );
-
     }
 
     #[test]
@@ -572,51 +376,44 @@ mod domain_errors {
         let destination = sample_path.join("NEW");
 
         let expected_error = DomainError::SourceDoesNotExists(not_existing_source.clone());
+
         assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    not_existing_source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                MoveRequest::new(
+                    not_existing_source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::mov(
-                MoveOperationDefinition::new(
-                    not_existing_source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                MoveRequest::new(
+                    not_existing_source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    not_existing_source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                CopyRequest::new(
+                    not_existing_source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&vfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&rfs).err().unwrap(),
             &expected_error
         );
 
         assert_two_errors_equals(
-            &FileSystemOperation::copy(
-                CopyOperationDefinition::new(
-                    not_existing_source.as_path(),
-                    destination.as_path(),
-                    true,
-                    false
+            &OperationGenerator::new(
+                CopyRequest::new(
+                    not_existing_source.to_path_buf(),
+                    destination.to_path_buf()
                 )
-            ).atomize(&rfs, Box::new(ZealousGuard)).err().unwrap(),
+            ).next(&vfs).err().unwrap(),
             &expected_error
         );
     }

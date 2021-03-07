@@ -24,7 +24,11 @@ impl <G: Guard>PresetGuard<G> {
 }
 
 impl <G: Guard>Guard for PresetGuard<G> {
-    fn authorize(&mut self, capability: Capability, target: &Path) -> Result<bool, DomainError> {
-        Ok(self.capabilities.authorize(capability) || self.inner.authorize(capability, target)?)
+    fn authorize(&mut self, target: &Path, capability: Option<Capability>) -> Result<bool, DomainError> {
+        if let Some(capability) = capability {
+            Ok(self.capabilities.authorize(capability) || self.inner.authorize(target, Some(capability))?)
+        } else {
+            Ok(self.inner.authorize(target, None)?)
+        }
     }
 }

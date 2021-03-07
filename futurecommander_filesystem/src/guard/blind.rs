@@ -12,7 +12,7 @@ use super::{ Guard };
 pub struct BlindGuard;
 
 impl Guard for BlindGuard {
-    fn authorize(&mut self, _capability: Capability, _target: &Path) -> Result<bool, DomainError> {
+    fn authorize(&mut self, _target: &Path, _capability: Option<Capability>) -> Result<bool, DomainError> {
         Ok(true)
     }
 }

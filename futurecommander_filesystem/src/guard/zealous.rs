@@ -12,17 +12,19 @@ use super::{ Guard };
 pub struct ZealousGuard;
 
 impl Guard for ZealousGuard {
-    fn authorize(&mut self, capability: Capability, target: &Path) -> Result<bool, DomainError> {
-        match capability {
-            Capability::Merge => Err(
-                DomainError::MergeNotAllowed(target.to_path_buf())
-            ),
-            Capability::Overwrite => Err(
-                DomainError::OverwriteNotAllowed(target.to_path_buf())
-            ),
-            Capability::Recursive => Err(
-                DomainError::RecursiveNotAllowed(target.to_path_buf())
-            )
-        }
+    fn authorize(&mut self, target: &Path, capability: Option<Capability>) -> Result<bool, DomainError> {
+        if let Some(capability) = capability {
+            match capability {
+                Capability::Merge => Err(
+                    DomainError::MergeNotAllowed(target.to_path_buf())
+                ),
+                Capability::Overwrite => Err(
+                    DomainError::OverwriteNotAllowed(target.to_path_buf())
+                ),
+                Capability::Recursive => Err(
+                    DomainError::RecursiveNotAllowed(target.to_path_buf())
+                )
+            }
+        } else { Ok(true) }
     }
 }

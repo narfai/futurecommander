@@ -19,7 +19,7 @@ pub use self::{
 };
 
 pub trait Guard {
-    fn authorize(&mut self, capability: Capability, target: &Path) -> Result<bool, DomainError>;
+    fn authorize(&mut self, target: &Path, capability: Option<Capability>) -> Result<bool, DomainError>;
 }
 
 #[cfg(not(tarpaulin_include))]
@@ -44,9 +44,9 @@ mod tests {
             ZealousGuard,
             Capabilities::default() + Overwrite + Merge + Recursive
         );
-        assert!(preset.authorize(Capability::Overwrite, target).unwrap());
-        assert!(preset.authorize(Capability::Merge, target).unwrap());
-        assert!(preset.authorize(Capability::Recursive, target).unwrap());
+        assert!(preset.authorize(target, Some(Capability::Overwrite)).unwrap());
+        assert!(preset.authorize(target, Some(Capability::Merge)).unwrap());
+        assert!(preset.authorize(target, Some(Capability::Recursive)).unwrap());
     }
 
     #[test]
@@ -55,15 +55,15 @@ mod tests {
         let target = Path::new("/virtual/directory");
 
         assert_two_errors_equals(
-            &guard.authorize(Capability::Overwrite, target).err().unwrap(),
+            &guard.authorize(target, Some(Capability::Overwrite)).err().unwrap(),
             &DomainError::OverwriteNotAllowed(target.to_path_buf())
         );
         assert_two_errors_equals(
-            &guard.authorize(Capability::Merge, target).err().unwrap(),
+            &guard.authorize(target, Some(Capability::Merge)).err().unwrap(),
             &DomainError::MergeNotAllowed(target.to_path_buf())
         );
         assert_two_errors_equals(
-            &guard.authorize(Capability::Recursive, target).err().unwrap(),
+            &guard.authorize(target, Some(Capability::Recursive)).err().unwrap(),
             &DomainError::RecursiveNotAllowed(target.to_path_buf())
         );
     }
@@ -73,9 +73,9 @@ mod tests {
         let mut guard = SkipGuard;
         let target = Path::new("/virtual/directory");
 
-        assert_eq!(guard.authorize(Capability::Overwrite, target).unwrap(), false);
-        assert_eq!(guard.authorize(Capability::Merge, target).unwrap(), false);
-        assert_eq!(guard.authorize(Capability::Recursive, target).unwrap(), false);
+        assert_eq!(guard.authorize(target, Some(Capability::Overwrite)).unwrap(), false);
+        assert_eq!(guard.authorize(target, Some(Capability::Merge)).unwrap(), false);
+        assert_eq!(guard.authorize(target, Some(Capability::Recursive)).unwrap(), false);
     }
 
     #[test]
@@ -84,8 +84,8 @@ mod tests {
         let target = Path::new("/virtual/directory");
         let default = false;
 
-        assert_eq!(guard.authorize(Capability::Overwrite, target).unwrap(), true);
-        assert_eq!(guard.authorize(Capability::Merge, target).unwrap(), true);
-        assert_eq!(guard.authorize(Capability::Recursive, target).unwrap(), true);
+        assert_eq!(guard.authorize(target, Some(Capability::Overwrite)).unwrap(), true);
+        assert_eq!(guard.authorize(target, Some(Capability::Merge)).unwrap(), true);
+        assert_eq!(guard.authorize(target, Some(Capability::Recursive)).unwrap(), true);
     }
 }

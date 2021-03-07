@@ -27,12 +27,9 @@ pub enum CopyGeneratorState<'a, E: Entry + 'a> {
     Terminated
 }
 
-impl <E: Entry>CopyGenerator<'_, E> {
-    pub fn new(request: CopyRequest) -> Self {
-        CopyGenerator {
-            request,
-            state: CopyGeneratorState::Uninitialized
-        }
+impl <'a, E: Entry>Default for CopyGeneratorState<'a, E> {
+    fn default() -> Self {
+        Self::Uninitialized
     }
 }
 

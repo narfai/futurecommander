@@ -21,7 +21,7 @@ use crate::{
 };
 pub use self::{
     generator::{ OperationGenerator },
-    operation::{ Operation },
+    operation::{ Operation, OperationWrapper },
     scheduling::{ Scheduling, MicroOperation },
     copy::{ CopyRequest, CopyStrategy },
     mov::{ MoveRequest, MoveStrategy },
@@ -44,7 +44,7 @@ pub trait Strategist {
     fn strategize<F: ReadableFileSystem>(&self, fs: &F) -> Result<Self::Strategy, DomainError>;
 }
 
-pub trait OperationInterface: Scheduler + Serialize {
+pub trait OperationInterface: Scheduler + Serialize + Into<OperationWrapper> {
     fn apply<F: WriteableFileSystem>(&self, fs: &mut F) -> Result<(), InfrastructureError>;
 }
 

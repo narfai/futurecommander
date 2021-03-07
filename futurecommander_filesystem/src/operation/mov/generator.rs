@@ -28,12 +28,9 @@ pub enum MoveGeneratorState<'a, E: Entry + 'a> {
     Terminated
 }
 
-impl <E: Entry>MoveGenerator<'_, E> {
-    pub fn new(request: MoveRequest) -> Self {
-        MoveGenerator {
-            request,
-            state: MoveGeneratorState::Uninitialized
-        }
+impl <'a, E: Entry> Default for MoveGeneratorState<'a, E> {
+    fn default() -> Self {
+        Self::Uninitialized
     }
 }
 

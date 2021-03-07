@@ -13,7 +13,7 @@ use super::{ Guard };
 pub struct SkipGuard;
 
 impl Guard for SkipGuard {
-    fn authorize(&mut self, _capability: Capability, _target: &Path) -> Result<bool, DomainError> {
+    fn authorize(&mut self, _target: &Path, _capability: Option<Capability>) -> Result<bool, DomainError> {
         Ok(false)
     }
 }

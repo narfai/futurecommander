@@ -28,12 +28,9 @@ pub enum RemoveGeneratorState<'a, E: Entry + 'a> {
     Terminated
 }
 
-impl <E: Entry>RemoveGenerator<'_, E> {
-    pub fn new(request: RemoveRequest) -> Self {
-        RemoveGenerator {
-            request,
-            state: RemoveGeneratorState::Uninitialized
-        }
+impl <'a, E: Entry> Default for RemoveGeneratorState<'a, E> {
+    fn default() -> Self {
+        Self::Uninitialized
     }
 }
 

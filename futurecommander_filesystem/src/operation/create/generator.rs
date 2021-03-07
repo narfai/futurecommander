@@ -26,12 +26,9 @@ pub enum CreateGeneratorState {
     Terminated
 }
 
-impl CreateGenerator {
-    pub fn new(request: CreateRequest) -> Self {
-        CreateGenerator {
-            request,
-            state: CreateGeneratorState::Uninitialized
-        }
+impl Default for CreateGeneratorState {
+    fn default() -> Self {
+        Self::Uninitialized
     }
 }
 

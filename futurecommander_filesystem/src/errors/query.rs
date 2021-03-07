@@ -7,7 +7,6 @@ use std::{
     fmt,
     path::PathBuf
 };
-
 use crate::{ RepresentationError };
 
 #[derive(Debug)]
