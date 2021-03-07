@@ -18,7 +18,11 @@ use crate::{
         RealFileSystem,
     },
     guard::{
-        Guard
+        Guard,
+        PresetGuard,
+        ZealousGuard,
+        SkipGuard,
+        BlindGuard
     },
     operation::{
         CopyRequest,
@@ -48,7 +52,7 @@ impl Container {
         }
     }
 
-    pub fn copy<G: Guard>(&mut self, source: &Path, destination: &Path, guard: &mut G) -> Result<(), DomainError> {
+    pub fn copy(&mut self, source: &Path, destination: &Path, guard: &mut dyn Guard) -> Result<(), DomainError> {
         let mut generator = OperationGenerator::new(
             CopyRequest::new(
                 source.to_path_buf(),
@@ -63,7 +67,7 @@ impl Container {
         Ok(())
     }
 
-    pub fn mov<G: Guard>(&mut self, source: &Path, destination: &Path, guard: &mut G) -> Result<(), DomainError> {
+    pub fn mov(&mut self, source: &Path, destination: &Path, guard: &mut dyn Guard) -> Result<(), DomainError> {
         let mut generator = OperationGenerator::new(
             MoveRequest::new(
                 source.to_path_buf(),
@@ -78,7 +82,7 @@ impl Container {
         Ok(())
     }
 
-    pub fn create<G: Guard>(&mut self, path: &Path, kind: Kind, guard: &mut G) -> Result<(), DomainError> {
+    pub fn create(&mut self, path: &Path, kind: Kind, guard: &mut dyn Guard) -> Result<(), DomainError> {
         let mut generator = OperationGenerator::new(
             CreateRequest::new(
                 path.to_path_buf(),
@@ -93,7 +97,7 @@ impl Container {
         Ok(())
     }
 
-    pub fn remove<G: Guard>(&mut self, path: &Path, guard: &mut G) -> Result<(), DomainError> {
+    pub fn remove(&mut self, path: &Path, guard: &mut dyn Guard) -> Result<(), DomainError> {
         let mut generator = OperationGenerator::new(RemoveRequest::new(path.to_path_buf()));
         while let Some(operation) = generator.next(&self.virtual_fs)? {
             if guard.authorize(operation.request().target(), operation.strategy().into())? {
@@ -126,12 +130,12 @@ impl Container {
         self.virtual_fs.as_inner().is_empty()
     }
 
-    pub fn to_json(&self) -> Result<String, serde_json::Error> {
+    pub fn to_json(&self) -> Result<String, DomainError> {
         let mut serializable : Vec<&OperationWrapper> = Vec::new();
         for operation in self.operation_queue.iter() {
             serializable.push(operation);
         }
-        serde_json::to_string(&serializable)
+        Ok(serde_json::to_string(&serializable)?)
     }
 
     pub fn emit_json(&mut self, json: String) -> Result<(), DomainError> {

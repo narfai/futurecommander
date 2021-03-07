@@ -7,9 +7,7 @@ use clap::ArgMatches;
 
 use futurecommander_filesystem::{
     Container,
-    RemoveOperationDefinition,
-    Listener,
-    FileSystemOperation
+    Capabilities
 };
 
 use crate::command::{
@@ -50,11 +48,9 @@ pub struct InitializedRemoveCommand {
 
 impl Command<InitializedRemoveCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        container.emit(
-            FileSystemOperation::remove(
-                RemoveOperationDefinition::new(self.0.path.as_path(), self.0.recursive)
-            ),
-            self.0.guard.to_guard()
+        container.remove(
+            &self.0.path,
+            &mut *self.0.guard.to_guard(Capabilities::new(false, false, self.0.recursive))
         )?;
         Ok(())
     }

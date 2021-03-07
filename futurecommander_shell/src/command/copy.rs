@@ -7,11 +7,9 @@ use clap::ArgMatches;
 
 use futurecommander_filesystem::{
     Container,
-    CopyOperationDefinition,
-    Listener,
     ReadableFileSystem,
     Entry,
-    FileSystemOperation
+    Capabilities
 };
 
 use crate::{
@@ -58,29 +56,25 @@ impl Command<InitializedCopyCommand> {
             return Err(CommandError::DoesNotExists(self.0.source));
         }
 
-        container.emit(
-            FileSystemOperation::copy(
-                if destination.exists() {
-                    if destination.is_dir() {
-                        CopyOperationDefinition::new(
-                            self.0.source.as_path(),
-                            self.0.destination
-                                .join(self.0.source.file_name().unwrap())
-                                .as_path(),
-                            self.0.merge,
-                            self.0.overwrite
-                        )
-                    } else if source.is_dir() {
-                        return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
-                    } else {
-                        return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
-                    }
-                } else {
-                    CopyOperationDefinition::new(self.0.source.as_path(), self.0.destination.as_path(), self.0.merge, self.0.overwrite)
-                }
-            ),
-            self.0.guard.to_guard()
-        )?;
+        if destination.exists() {
+            if destination.is_dir() {
+                container.copy(
+                    &self.0.source,
+                    &self.0.destination.join(self.0.source.file_name().unwrap()),
+                    &mut *self.0.guard.to_guard(Capabilities::new(self.0.merge, self.0.overwrite, false))
+                )?;
+            } else if source.is_dir() {
+                return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
+            } else {
+                return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
+            }
+        } else {
+            container.copy(
+                &self.0.source,
+                &self.0.destination,
+                &mut *self.0.guard.to_guard(Capabilities::new(self.0.merge, self.0.overwrite, false))
+            )?;
+        }
         Ok(())
     }
 }

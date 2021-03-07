@@ -17,9 +17,7 @@ use crate::{
 use futurecommander_filesystem::{
     Container,
     Kind,
-    CreateOperationDefinition,
-    Listener,
-    FileSystemOperation
+    Capabilities
 };
 
 pub struct NewDirectoryCommand {}
@@ -41,7 +39,7 @@ impl Command<NewDirectoryCommand> {
 
 pub struct InitializedNewDirectoryCommand {
     pub path: PathBuf,
-    pub recursive: bool,
+    pub recursive: bool, //TODO delete
     pub overwrite: bool,
     pub guard: AvailableGuard
 
@@ -49,16 +47,10 @@ pub struct InitializedNewDirectoryCommand {
 
 impl Command<InitializedNewDirectoryCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        container.emit(
-            FileSystemOperation::create(
-                CreateOperationDefinition::new(
-                    self.0.path.as_path(),
-                    Kind::Directory,
-                    self.0.recursive,
-                    self.0.overwrite
-                )
-            ),
-            self.0.guard.to_guard()
+        container.create(
+            &self.0.path,
+            Kind::Directory,
+            &mut *self.0.guard.to_guard(Capabilities::new(false, self.0.overwrite, false))
         )?;
         Ok(())
     }

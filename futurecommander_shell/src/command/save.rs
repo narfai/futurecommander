@@ -90,7 +90,7 @@ mod tests {
         save_command.execute(&mut container).unwrap();
 
         let expected : String = format!(
-            "[{{\"Copy\":[{{\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}},{{}}]}}]",
+            "[{{\"Copy\":{{\"strategy\":\"DirectoryCopy\",\"request\":{{\"source\":\"{}\",\"destination\":\"{}\"}}}}}}]",
             sample_path.join("A").to_string_lossy(),
             sample_path.join("APRIME").to_string_lossy(),
         );

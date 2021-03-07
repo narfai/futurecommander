@@ -37,6 +37,7 @@ pub use self::{
         Request
     },
     guard::{
+        Guard,
         ZealousGuard,
         SkipGuard,
         PresetGuard,

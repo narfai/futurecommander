@@ -8,14 +8,13 @@ use std::{
 
 use futurecommander_filesystem::{
     DomainError,
-    capability::{
-        Capabilities,
-        Guard,
-        Capability,
-        ZealousGuard,
-        BlindGuard,
-        QuietGuard
-    }
+    Capabilities,
+    Guard,
+    Capability,
+    ZealousGuard,
+    BlindGuard,
+    SkipGuard,
+    PresetGuard
 };
 
 #[derive(Debug, Default)]
@@ -26,31 +25,35 @@ pub struct InteractiveGuard {
 
 
 impl Guard for InteractiveGuard {
-    fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError> {
-        if self.skip_all.authorize(capability) {
-            return Ok(false)
-        }
+    fn authorize(&mut self, target: &Path, capability: Option<Capability>) -> Result<bool, DomainError> {
+        if let Some(capability) = capability {
+            if self.skip_all.authorize(capability) {
+                return Ok(false)
+            }
 
-        if ! default && ! self.allow_all.authorize(capability) {
-            let mut input = String::new();
-            println!("Allow {} for target {} ?([skip]/skip_all/allow/allow_all/cancel) : ", capability, target.to_string_lossy());
-            stdin().read_line(&mut input)?;
+            if ! self.allow_all.authorize(capability) {
+                let mut input = String::new();
+                println!("Allow {} for target {} ?([skip]/skip_all/allow/allow_all/cancel) : ", capability, target.to_string_lossy());
+                stdin().read_line(&mut input)?;
 
-            match input.trim() {
-                "skip" => Ok(false),
-                "allow" => Ok(true),
-                "skip_all" => {
-                    self.skip_all = self.skip_all + capability;
-                    Ok(false)
-                },
-                "allow_all" => {
-                    self.allow_all = self.allow_all + capability;
-                    Ok(true)
-                },
-                "cancel" =>
-                    Err(DomainError::UserCancelled)
-                ,
-                _ => Ok(false)
+                match input.trim() {
+                    "skip" => Ok(false),
+                    "allow" => Ok(true),
+                    "skip_all" => {
+                        self.skip_all = self.skip_all + capability;
+                        Ok(false)
+                    },
+                    "allow_all" => {
+                        self.allow_all = self.allow_all + capability;
+                        Ok(true)
+                    },
+                    "cancel" =>
+                        Err(DomainError::UserCancelled)
+                    ,
+                    _ => Ok(false)
+                }
+            } else {
+                Ok(true)
             }
         } else {
             Ok(true)
@@ -61,22 +64,22 @@ impl Guard for InteractiveGuard {
 pub enum AvailableGuard {
     Zealed,
     Blind,
-    Quiet,
+    Skip,
     Interactive
 }
 
 impl AvailableGuard {
-    pub fn to_guard(&self) -> Box<dyn Guard> {
+    pub fn to_guard(&self, capabilities: Capabilities) -> Box<dyn Guard> {
         match self {
-            AvailableGuard::Zealed => Box::new(ZealousGuard),
-            AvailableGuard::Blind => Box::new(BlindGuard),
-            AvailableGuard::Quiet => Box::new(QuietGuard),
-            AvailableGuard::Interactive => Box::new(InteractiveGuard::default()),
+            AvailableGuard::Zealed => Box::new(PresetGuard::new(ZealousGuard, capabilities)),
+            AvailableGuard::Blind => Box::new(PresetGuard::new(BlindGuard, capabilities)),
+            AvailableGuard::Skip => Box::new(PresetGuard::new(SkipGuard, capabilities)),
+            AvailableGuard::Interactive => Box::new(PresetGuard::new(InteractiveGuard::default(), capabilities)),
         }
     }
 
     pub fn available(s: &str) -> bool {
-        vec!["interactive", "zealed", "quiet", "blind"].contains(&s)
+        vec!["interactive", "zealed", "skip", "blind"].contains(&s)
     }
 }
 
@@ -85,7 +88,7 @@ impl From<&str> for AvailableGuard {
         match s.trim() {
             "interactive" => AvailableGuard::Interactive,
             "zealed" => AvailableGuard::Zealed,
-            "quiet" => AvailableGuard::Quiet,
+            "skip" => AvailableGuard::Skip,
             "blind" => AvailableGuard::Blind,
             _ => Self::default()
         }

@@ -56,7 +56,6 @@ impl Shell {
                     },
                     None => Err(CommandError::InvalidCommand)
                 },
-            ("debug_container",     Some(_matches)) => { println!("{:#?}", self.container); Ok(()) },
             ("debug_add_state",     Some(_matches)) => unimplemented!(),
             ("debug_sub_state",     Some(_matches)) => unimplemented!(),
             ("debug_transaction",   Some(_matches)) => unimplemented!(),

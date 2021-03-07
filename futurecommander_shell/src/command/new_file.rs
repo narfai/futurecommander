@@ -9,9 +9,7 @@ use clap::ArgMatches;
 use futurecommander_filesystem::{
     Container,
     Kind,
-    CreateOperationDefinition,
-    Listener,
-    FileSystemOperation
+    Capabilities
 };
 
 use crate::command::{
@@ -46,16 +44,10 @@ pub struct InitializedNewFileCommand {
 
 impl Command<InitializedNewFileCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        container.emit(
-            FileSystemOperation::create(
-                CreateOperationDefinition::new(
-                    self.0.path.as_path(),
-                    Kind::File,
-                    self.0.recursive,
-                    self.0.overwrite
-                )
-            ),
-            self.0.guard.to_guard()
+        container.create(
+            &self.0.path,
+            Kind::File,
+            &mut *self.0.guard.to_guard(Capabilities::new(false, self.0.overwrite, false))
         )?;
         Ok(())
     }

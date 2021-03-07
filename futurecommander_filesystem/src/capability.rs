@@ -39,6 +39,10 @@ pub struct Capabilities {
 }
 
 impl Capabilities {
+    pub fn new(merge: bool, overwrite: bool, recursive: bool) -> Capabilities {
+        Capabilities { merge, overwrite, recursive }
+    }
+
     pub fn merge(self) -> bool {
         self.merge
     }

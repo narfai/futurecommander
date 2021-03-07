@@ -2,18 +2,13 @@
 // Copyright (C) 2019-2021 François CADEILLAN
 
 use std::path::{ Path, PathBuf };
-
 use clap::ArgMatches;
-
 use futurecommander_filesystem::{
     Container,
-    MoveOperationDefinition,
     ReadableFileSystem,
     Entry,
-    Listener,
-    FileSystemOperation
+    Capabilities
 };
-
 use crate::command::{
     Command,
     errors::CommandError,
@@ -56,34 +51,25 @@ impl Command<InitializedMoveCommand> {
             return Err(CommandError::DoesNotExists(self.0.source));
         }
 
-        container.emit(
-            FileSystemOperation::mov(
-                if destination.exists() {
-                    if destination.is_dir() {
-                        MoveOperationDefinition::new(
-                            self.0.source.as_path(),
-                            self.0.destination
-                                .join(self.0.source.file_name().unwrap())
-                                .as_path(),
-                            self.0.merge,
-                            self.0.overwrite
-                        )
-                    } else if source.is_dir() {
-                        return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
-                    } else {
-                        return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
-                    }
-                } else {
-                    MoveOperationDefinition::new(
-                        self.0.source.as_path(),
-                        self.0.destination.as_path(),
-                        self.0.merge,
-                        self.0.overwrite
-                    )
-                }
-            ),
-            self.0.guard.to_guard()
-        )?;
+        if destination.exists() {
+            if destination.is_dir() {
+                container.mov(
+                    &self.0.source,
+                    &self.0.destination.join(self.0.source.file_name().unwrap()),
+                    &mut *self.0.guard.to_guard(Capabilities::new(self.0.merge, self.0.overwrite, false))
+                )?;
+            } else if source.is_dir() {
+                return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
+            } else {
+                return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
+            }
+        } else {
+            container.mov(
+                &self.0.source,
+                &self.0.destination,
+                &mut *self.0.guard.to_guard(Capabilities::new(self.0.merge, self.0.overwrite, false))
+            )?;
+        }
         Ok(())
     }
 }
