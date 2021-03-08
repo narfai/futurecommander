@@ -57,6 +57,7 @@ impl Container {
             )
         );
         while let Some(operation) = generator.next(&self.virtual_fs)? {
+            println!("COPY OP");
             if guard.authorize(operation.request().target(), operation.strategy().into())? {
                 self.emit(operation)?;
             }
@@ -150,6 +151,10 @@ impl ReadableFileSystem for Container {
 
     fn read_dir(&self, path: &Path) -> Result<EntryCollection<Self::Item>,QueryError> {
         self.virtual_fs.read_dir(path)
+    }
+
+    fn read_maintained(&self, path: &Path) -> Result<EntryCollection<Self::Item>,QueryError> {
+        self.virtual_fs.read_maintained(path)
     }
 
     fn status(&self, path: &Path) -> Result<Self::Item, QueryError> {

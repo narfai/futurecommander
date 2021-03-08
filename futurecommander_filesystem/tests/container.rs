@@ -215,23 +215,24 @@ mod container_integration {
 
         assert!(!stated_adg.exists());
     }
-/*
+
     // TODO
     #[test]
     pub fn apply_a_vfs_to_real_fs() {
         let chroot = Samples::init_advanced_chroot("hybrid_apply_a_vfs_to_real_fs");
         let mut fs = Container::new();
 
-/*         fs.copy(
+         fs.copy(
             &chroot.join("A"),
             &chroot.join("APRIME"),
             &mut PresetGuard::new(ZealousGuard, Capabilities::default() + Capability::Merge)
-        ).unwrap(); */
-        _no_dangling(&mut fs, chroot.as_path());
+        ).unwrap();
+        //_no_dangling(&mut fs, chroot.as_path());
 
         println!("{:?}", fs);
-        _copy_file_dir_interversion(&mut fs, chroot.as_path());
-        _some_nesting(&mut fs, chroot.as_path());
+        println!("{:?}", fs.read_maintained(&chroot.join("A")));
+        //_copy_file_dir_interversion(&mut fs, chroot.as_path());
+        //_some_nesting(&mut fs, chroot.as_path());
 
         fs.apply().unwrap();
 
@@ -259,5 +260,4 @@ mod container_integration {
         let ad = chroot.join("A/D/G");
         assert!(!ad.exists()); */
     }
-*/
 }

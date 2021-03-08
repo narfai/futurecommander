@@ -53,7 +53,6 @@ impl <E: Entry, F: ReadableFileSystem<Item=E>>OperationGeneratorInterface<E, F> 
                         opt_operation_generator: None
                     },
                     CopyStrategy::DirectoryCopy => {
-                        println!("INSIDE COPY SELF DC {:?}", _strategy);
                         ChildrenOperation {
                             children_iterator: Box::new(fs.read_maintained(self.request.source())?.into_iter()),
                             opt_operation_generator: None
@@ -74,7 +73,6 @@ impl <E: Entry, F: ReadableFileSystem<Item=E>>OperationGeneratorInterface<E, F> 
                     }
                 }
                 if let Some(entry) = children_iterator.next() {
-                    println!("INSIDE COPY CHILDREN {:?}", entry.name());
                     *opt_operation_generator = Some(Box::new(
                         CopyGenerator::new(
                             CopyRequest::new(

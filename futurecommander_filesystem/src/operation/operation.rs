@@ -39,7 +39,6 @@ impl <S: Strategy, R: Request>Operation<S, R> {
 impl <S: Strategy, R: Request>OperationInterface for Operation<S, R> where Self: Scheduler + Into<OperationWrapper> {
     fn apply<F: WriteableFileSystem>(&self, fs: &mut F) -> Result<(), InfrastructureError> {
         for atomic_operation in self.schedule() {
-            println!("SCHEDULED OPERATION {:?}", atomic_operation);
             atomic_operation.apply(fs)?
         }
         Ok(())
