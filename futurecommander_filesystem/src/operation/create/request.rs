@@ -9,7 +9,7 @@ use super::{
     serializable_kind::SerializableKind
 };
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct CreateRequest {
     path: PathBuf,
     kind: SerializableKind

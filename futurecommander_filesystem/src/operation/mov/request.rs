@@ -5,7 +5,7 @@ use serde::{ Serialize, Deserialize };
 use std::path::{ PathBuf, Path };
 use super::super::{ Request };
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct MoveRequest {
     source: PathBuf,
     destination: PathBuf

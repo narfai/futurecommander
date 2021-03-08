@@ -19,10 +19,6 @@ use crate::{
     },
     guard::{
         Guard,
-        PresetGuard,
-        ZealousGuard,
-        SkipGuard,
-        BlindGuard
     },
     operation::{
         CopyRequest,
@@ -37,6 +33,7 @@ use crate::{
     },
 };
 
+#[derive(Debug)]
 pub struct Container {
     virtual_fs  : FileSystemAdapter<VirtualFileSystem>,
     real_fs     : FileSystemAdapter<RealFileSystem>,
