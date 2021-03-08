@@ -1,21 +1,5 @@
-/*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
 use std::path::Path;
 use std::path::PathBuf;
@@ -25,10 +9,7 @@ use clap::ArgMatches;
 use futurecommander_filesystem::{
     Container,
     Kind,
-    CreateEvent,
-    Listener,
-    Delayer,
-    FileSystemEvent
+    Capabilities
 };
 
 use crate::command::{
@@ -63,17 +44,11 @@ pub struct InitializedNewFileCommand {
 
 impl Command<InitializedNewFileCommand> {
     pub fn execute(self, container: &mut Container) -> Result<(), CommandError> {
-        let event = FileSystemEvent::Create(
-            CreateEvent::new(
-                self.0.path.as_path(),
-                Kind::File,
-                self.0.recursive,
-                self.0.overwrite
-            )
-        );
-
-        let guard = container.emit(&event, self.0.guard.registrar())?;
-        container.delay(event, guard);
+        container.create(
+            &self.0.path,
+            Kind::File,
+            &mut *self.0.guard.to_guard(Capabilities::new(false, self.0.overwrite, false))
+        )?;
         Ok(())
     }
 }

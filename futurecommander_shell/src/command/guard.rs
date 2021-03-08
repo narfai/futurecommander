@@ -1,75 +1,59 @@
-/*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
 use std::{
     io::{ stdin },
     path::{ Path }
 };
 
-use serde::{ Serialize, Deserialize };
-
 use futurecommander_filesystem::{
     DomainError,
-    capability::{
-        Capabilities,
-        Guard,
-        Capability,
-        RegistrarGuard,
-        ZealedGuard,
-        BlindGuard,
-        QuietGuard
-    }
+    Capabilities,
+    Guard,
+    Capability,
+    ZealousGuard,
+    BlindGuard,
+    SkipGuard,
+    PresetGuard
 };
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Debug, Default)]
 pub struct InteractiveGuard {
     skip_all: Capabilities,
     allow_all: Capabilities
 }
 
-#[typetag::serde]
+
 impl Guard for InteractiveGuard {
-    fn authorize(&mut self, capability: Capability, default: bool, target: &Path) -> Result<bool, DomainError> {
-        if self.skip_all.authorize(capability) {
-            return Ok(false)
-        }
+    fn authorize(&mut self, target: &Path, capability: Option<Capability>) -> Result<bool, DomainError> {
+        if let Some(capability) = capability {
+            if self.skip_all.authorize(capability) {
+                return Ok(false)
+            }
 
-        if ! default && ! self.allow_all.authorize(capability) {
-            let mut input = String::new();
-            println!("Allow {} for target {} ?([skip]/skip_all/allow/allow_all/cancel) : ", capability, target.to_string_lossy());
-            stdin().read_line(&mut input)?;
+            if ! self.allow_all.authorize(capability) {
+                let mut input = String::new();
+                println!("Allow {} for target {} ?([skip]/skip_all/allow/allow_all/cancel) : ", capability, target.to_string_lossy());
+                stdin().read_line(&mut input)?;
 
-            match input.trim() {
-                "skip" => Ok(false),
-                "allow" => Ok(true),
-                "skip_all" => {
-                    self.skip_all = self.skip_all + capability;
-                    Ok(false)
-                },
-                "allow_all" => {
-                    self.allow_all = self.allow_all + capability;
-                    Ok(true)
-                },
-                "cancel" =>
-                    Err(DomainError::UserCancelled)
-                ,
-                _ => Ok(false)
+                match input.trim() {
+                    "skip" => Ok(false),
+                    "allow" => Ok(true),
+                    "skip_all" => {
+                        self.skip_all = self.skip_all + capability;
+                        Ok(false)
+                    },
+                    "allow_all" => {
+                        self.allow_all = self.allow_all + capability;
+                        Ok(true)
+                    },
+                    "cancel" =>
+                        Err(DomainError::UserCancelled)
+                    ,
+                    _ => Ok(false)
+                }
+            } else {
+                Ok(true)
             }
         } else {
             Ok(true)
@@ -80,22 +64,22 @@ impl Guard for InteractiveGuard {
 pub enum AvailableGuard {
     Zealed,
     Blind,
-    Quiet,
+    Skip,
     Interactive
 }
 
 impl AvailableGuard {
-    pub fn registrar(&self) -> RegistrarGuard {
+    pub fn to_guard(&self, capabilities: Capabilities) -> Box<dyn Guard> {
         match self {
-            AvailableGuard::Zealed => RegistrarGuard::from(Box::new(ZealedGuard)),
-            AvailableGuard::Blind => RegistrarGuard::from(Box::new(BlindGuard)),
-            AvailableGuard::Quiet => RegistrarGuard::from(Box::new(QuietGuard)),
-            AvailableGuard::Interactive => RegistrarGuard::from(Box::new(InteractiveGuard::default())),
+            AvailableGuard::Zealed => Box::new(PresetGuard::new(ZealousGuard, capabilities)),
+            AvailableGuard::Blind => Box::new(PresetGuard::new(BlindGuard, capabilities)),
+            AvailableGuard::Skip => Box::new(PresetGuard::new(SkipGuard, capabilities)),
+            AvailableGuard::Interactive => Box::new(PresetGuard::new(InteractiveGuard::default(), capabilities)),
         }
     }
 
     pub fn available(s: &str) -> bool {
-        vec!["interactive", "zealed", "quiet", "blind"].contains(&s)
+        vec!["interactive", "zealed", "skip", "blind"].contains(&s)
     }
 }
 
@@ -104,7 +88,7 @@ impl From<&str> for AvailableGuard {
         match s.trim() {
             "interactive" => AvailableGuard::Interactive,
             "zealed" => AvailableGuard::Zealed,
-            "quiet" => AvailableGuard::Quiet,
+            "skip" => AvailableGuard::Skip,
             "blind" => AvailableGuard::Blind,
             _ => Self::default()
         }

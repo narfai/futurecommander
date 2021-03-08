@@ -1,54 +1,51 @@
-/*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
-mod event;
-
-mod port;
-mod infrastructure;
 mod errors;
+mod capability;
+mod entry;
+mod infrastructure;
+mod operation;
+mod guard;
 mod container;
 
-pub use futurecommander_representation::Kind;
+
+pub use futurecommander_representation::{
+    errors::RepresentationError,
+    Kind
+};
+
+//TODO sub mod internal
 
 pub use self::{
     errors::{ DomainError, QueryError },
-    event::{
-        Listener,
-        Delayer,
-        capability
+    capability::{
+        Capability,
+        Capabilities
     },
-    port::{
+    entry::{
         Entry,
-        ReadableFileSystem,
-        WriteableFileSystem,
-        EntryAdapter,
         EntryCollection,
-        SerializableEntry
+        EntryAdapter
     },
-    event::*,
+    infrastructure::{
+        InfrastructureError,
+        ReadableFileSystem,
+        WriteableFileSystem
+    },
+    operation::{
+        Request
+    },
+    guard::{
+        Guard,
+        ZealousGuard,
+        SkipGuard,
+        PresetGuard,
+        BlindGuard
+    },
     container::Container
 };
 
-//Mainly for testing
-pub use self::infrastructure::VirtualState;
-
-pub mod tools;
 
 #[cfg(not(tarpaulin_include))]
 pub mod sample;

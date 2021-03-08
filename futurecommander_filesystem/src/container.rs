@@ -1,94 +1,43 @@
-/*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 use std::{
     path::{ Path },
     collections::vec_deque::VecDeque
 };
-
+use serde::{ Serialize };
 use crate::{
-    errors:: { DomainError, QueryError },
-    capability::{
-        RegistrarGuard
-    },
-    event::{
-        Listener,
-        Delayer,
-        FileSystemEvent,
-    },
-    port::{
-        ReadableFileSystem,
-        FileSystemAdapter,
-        EntryAdapter,
-        EntryCollection
-
-    },
+    Kind,
+    DomainError,
+    QueryError,
+    ReadableFileSystem,
+    EntryAdapter,
+    EntryCollection,
     infrastructure::{
+        FileSystemAdapter,
         VirtualFileSystem,
         VirtualStatus,
-        RealFileSystem
-    }
+        RealFileSystem,
+    },
+    guard::{
+        Guard,
+    },
+    operation::{
+        CopyRequest,
+        RemoveRequest,
+        MoveRequest,
+        CreateRequest,
+        OperationWrapper,
+        Request,
+        OperationGeneratorInterface,
+        OperationGenerator,
+        OperationInterface,
+    },
 };
-
-type Commitment = (FileSystemEvent, RegistrarGuard);
-
-#[derive(Debug)]
-pub struct EventQueue(VecDeque<Commitment>);
-
-impl Default for EventQueue {
-    fn default() -> EventQueue {
-        EventQueue(VecDeque::new())
-    }
-}
-
-impl EventQueue {
-    pub fn pop_front(&mut self) -> Option<Commitment>{
-        self.0.pop_front()
-    }
-
-    pub fn push_back(&mut self, commitment: Commitment){
-        self.0.push_back(commitment)
-    }
-
-    pub fn clear(&mut self) {
-        self.0.clear()
-    }
-
-    pub fn serialize(&self) -> Result<String, serde_json::Error> {
-        let mut serializable : Vec<(&FileSystemEvent, &RegistrarGuard)> = Vec::new();
-        for (event, guard) in self.0.iter() {
-            serializable.push((event, guard));
-        }
-        serde_json::to_string(&serializable)
-    }
-}
 
 #[derive(Debug)]
 pub struct Container {
     virtual_fs  : FileSystemAdapter<VirtualFileSystem>,
     real_fs     : FileSystemAdapter<RealFileSystem>,
-    event_queue : EventQueue
-}
-
-impl Default for Container {
-    fn default() -> Self {
-        Self::new()
-    }
+    operation_queue : VecDeque<OperationWrapper>
 }
 
 impl Container {
@@ -96,14 +45,74 @@ impl Container {
         Container {
             virtual_fs: FileSystemAdapter(VirtualFileSystem::default()),
             real_fs:    FileSystemAdapter(RealFileSystem::default()),
-            event_queue: EventQueue::default()
+            operation_queue: VecDeque::new()
         }
     }
 
+    pub fn copy(&mut self, source: &Path, destination: &Path, guard: &mut dyn Guard) -> Result<(), DomainError> {
+        let mut generator = OperationGenerator::new(
+            CopyRequest::new(
+                source.to_path_buf(),
+                destination.to_path_buf()
+            )
+        );
+        while let Some(operation) = generator.next(&self.virtual_fs)? {
+            if guard.authorize(operation.request().target(), operation.strategy().into())? {
+                self.emit(operation)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn mov(&mut self, source: &Path, destination: &Path, guard: &mut dyn Guard) -> Result<(), DomainError> {
+        let mut generator = OperationGenerator::new(
+            MoveRequest::new(
+                source.to_path_buf(),
+                destination.to_path_buf()
+            )
+        );
+        while let Some(operation) = generator.next(&self.virtual_fs)? {
+            if guard.authorize(operation.request().target(), operation.strategy().into())? {
+                self.emit(operation)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn create(&mut self, path: &Path, kind: Kind, guard: &mut dyn Guard) -> Result<(), DomainError> {
+        let mut generator = OperationGenerator::new(
+            CreateRequest::new(
+                path.to_path_buf(),
+                kind
+            )
+        );
+        while let Some(operation) = generator.next(&self.virtual_fs)? {
+            if guard.authorize(operation.request().target(), operation.strategy().into())? {
+                self.emit(operation)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn remove(&mut self, path: &Path, guard: &mut dyn Guard) -> Result<(), DomainError> {
+        let mut generator = OperationGenerator::new(RemoveRequest::new(path.to_path_buf()));
+        while let Some(operation) = generator.next(&self.virtual_fs)? {
+            if guard.authorize(operation.request().target(), operation.strategy().into())? {
+                self.emit(operation)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn emit<O: OperationInterface>(&mut self, operation: O) -> Result<(), DomainError> {
+        operation.apply(&mut self.virtual_fs)?;
+        self.operation_queue.push_back(operation.into());
+        Ok(())
+    }
+
     pub fn apply(&mut self) -> Result<(), DomainError> {
-        while let Some((event, mut guard)) = self.event_queue.pop_front() {
-            event.atomize(&self.real_fs, &mut guard)?
-                .apply(&mut self.real_fs)?;
+        while let Some(operation_wrapper) = self.operation_queue.pop_front() {
+            operation_wrapper.apply(&mut self.real_fs)?;
         }
         self.reset();
         Ok(())
@@ -111,31 +120,27 @@ impl Container {
 
     pub fn reset(&mut self) {
         self.virtual_fs.as_inner_mut().reset();
-        self.event_queue.clear()
+        self.operation_queue.clear()
     }
 
     pub fn is_empty(&self) -> bool {
         self.virtual_fs.as_inner().is_empty()
     }
 
-    pub fn vfs(&self) -> &FileSystemAdapter<VirtualFileSystem> {
-        &self.virtual_fs
-    }
-
-    pub fn rfs(&self) -> &FileSystemAdapter<RealFileSystem> {
-        &self.real_fs
-    }
-
     pub fn to_json(&self) -> Result<String, DomainError> {
-        Ok(self.event_queue.serialize()?)
+        let mut serializable : Vec<&OperationWrapper> = Vec::new();
+        for operation in self.operation_queue.iter() {
+            serializable.push(operation);
+        }
+        Ok(serde_json::to_string(&serializable)?)
     }
 
     pub fn emit_json(&mut self, json: String) -> Result<(), DomainError> {
-        let events : Vec<(FileSystemEvent, RegistrarGuard)> = serde_json::from_str(json.as_str()).unwrap();
-        for (event, guard) in events {
-            let guard = self.emit(&event, guard)?;
-            self.delay(event, guard );
-        }        
+        let operations : Vec<OperationWrapper> = serde_json::from_str(json.as_str()).unwrap();
+        for operation in operations {
+            operation.clone().apply(&mut self.virtual_fs)?;
+            self.operation_queue.push_back(operation);
+        }
         Ok(())
     }
 }
@@ -150,22 +155,12 @@ impl ReadableFileSystem for Container {
     fn status(&self, path: &Path) -> Result<Self::Item, QueryError> {
         self.virtual_fs.status(path)
     }
-}
 
-impl Delayer for Container {
-    fn delay(&mut self, event: FileSystemEvent, guard: RegistrarGuard) {
-        self.event_queue.push_back((event, guard));
+    fn is_directory_empty(&self, path: &Path) -> Result<bool, QueryError> {
+        self.virtual_fs.is_directory_empty(path)
     }
 }
 
-
-impl Listener for Container {
-    fn emit(&mut self, event: &FileSystemEvent, mut guard: RegistrarGuard) -> Result<RegistrarGuard, DomainError> {
-        event.atomize(&self.virtual_fs, &mut guard)?
-             .apply(&mut self.virtual_fs)?;
-        Ok(guard)
-    }
-}
 
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
@@ -173,26 +168,21 @@ mod tests {
     use super::*;
 
     use crate::{
-        event::CopyEvent,
         sample::Samples,
-        Entry
+        Entry,
+        guard::ZealousGuard
     };
 
     #[test]
     fn copy_directory_recursively() {
         let chroot = Samples::init_simple_chroot("container_copy_directory_recursively");
         let mut container = Container::new();
-        let event = FileSystemEvent::Copy(
-            CopyEvent::new(
-                chroot.join("RDIR").as_path(),
-                chroot.join("COPIED").as_path(),
-                false,
-                false
-            )
-        );
 
-        let guard = container.emit(&event, RegistrarGuard::default()).unwrap();
-        container.delay(event, guard);
+        container.copy(
+            &chroot.join("RDIR"),
+            &chroot.join("COPIED"),
+            &mut ZealousGuard
+        ).unwrap();
 
         assert!(container.status(chroot.join("COPIED").as_path()).unwrap().exists());
         assert!(container.status(chroot.join("COPIED/RFILEA").as_path()).unwrap().exists());
@@ -203,18 +193,14 @@ mod tests {
     fn can_export_virtual_state_into_json_string() {
         let chroot = Samples::init_simple_chroot("can_export_virtual_state_into_json_string");
         let mut container = Container::new();
-        let event = FileSystemEvent::Copy(
-            CopyEvent::new(
-                chroot.join("RDIR").as_path(),
-                chroot.join("COPIED").as_path(),
-                false,
-                false
-            )
-        );
+        container.copy(
+            &chroot.join("RDIR"),
+            &chroot.join("COPIED"),
+            &mut ZealousGuard
+        ).unwrap();
 
-        container.delay(event, RegistrarGuard::default());
         let expected : String = format!(
-            "[[{{\"Copy\":{{\"source\":\"{}\",\"destination\":\"{}\",\"merge\":false,\"overwrite\":false}}}},{{\"inner\":{{\"type\":\"ZealedGuard\"}},\"registry\":{{}}}}]]",
+            "[{{\"Copy\":{{\"strategy\":\"DirectoryCopy\",\"request\":{{\"source\":\"{}\",\"destination\":\"{}\"}}}}}}]",
             chroot.join("RDIR").to_string_lossy(),
             chroot.join("COPIED").to_string_lossy(),
         );
@@ -226,22 +212,16 @@ mod tests {
     fn can_import_virtual_state_from_json_string() {
         let chroot = Samples::init_simple_chroot("can_import_virtual_state_from_json_string");
         let mut container_a = Container::new();
-        let event = FileSystemEvent::Copy(
-            CopyEvent::new(
-                chroot.join("RDIR").as_path(),
-                chroot.join("COPIED").as_path(),
-                false,
-                false
-            )
-        );
+        container_a.copy(
+            &chroot.join("RDIR"),
+            &chroot.join("COPIED"),
+            &mut ZealousGuard
+        ).unwrap();
 
-        let guard = container_a.emit(&event, RegistrarGuard::default()).unwrap();
         assert!(!container_a.is_empty());
         let a_stat = container_a.status(chroot.join("COPIED").as_path()).unwrap();
         assert!(a_stat.exists());
         assert!(a_stat.is_dir());
-
-        container_a.delay(event, guard);
 
         let mut container_b = Container::new();
 

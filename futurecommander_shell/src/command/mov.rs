@@ -1,36 +1,14 @@
-/*
- * Copyright 2019 François CADEILLAN
- *
- * This file is part of FutureCommander.
- *
- * FutureCommander is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FutureCommander is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with FutureCommander.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
 use std::path::{ Path, PathBuf };
-
 use clap::ArgMatches;
-
 use futurecommander_filesystem::{
     Container,
-    MoveEvent,
     ReadableFileSystem,
     Entry,
-    Listener,
-    Delayer,
-    FileSystemEvent
+    Capabilities
 };
-
 use crate::command::{
     Command,
     errors::CommandError,
@@ -73,34 +51,25 @@ impl Command<InitializedMoveCommand> {
             return Err(CommandError::DoesNotExists(self.0.source));
         }
 
-        let event = FileSystemEvent::Move(
-            if destination.exists() {
-                if destination.is_dir() {
-                    MoveEvent::new(
-                        self.0.source.as_path(),
-                        self.0.destination
-                            .join(self.0.source.file_name().unwrap())
-                            .as_path(),
-                        self.0.merge,
-                        self.0.overwrite
-                    )
-                } else if source.is_dir() {
-                    return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
-                } else {
-                    return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
-                }
+        if destination.exists() {
+            if destination.is_dir() {
+                container.mov(
+                    &self.0.source,
+                    &self.0.destination.join(self.0.source.file_name().unwrap()),
+                    &mut *self.0.guard.to_guard(Capabilities::new(self.0.merge, self.0.overwrite, false))
+                )?;
+            } else if source.is_dir() {
+                return Err(CommandError::DirectoryIntoAFile(source.to_path(), destination.to_path()))
             } else {
-                MoveEvent::new(
-                    self.0.source.as_path(),
-                    self.0.destination.as_path(),
-                    self.0.merge,
-                    self.0.overwrite
-                )
+                return Err(CommandError::CustomError(format!("Overwrite {:?} {:?}", source.is_dir(), destination.is_dir()))) //OVERWRITE
             }
-        );
-
-        let guard = container.emit(&event, self.0.guard.registrar())?;
-        container.delay(event, guard);
+        } else {
+            container.mov(
+                &self.0.source,
+                &self.0.destination,
+                &mut *self.0.guard.to_guard(Capabilities::new(self.0.merge, self.0.overwrite, false))
+            )?;
+        }
         Ok(())
     }
 }

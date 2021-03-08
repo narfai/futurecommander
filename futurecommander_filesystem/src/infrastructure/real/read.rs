@@ -1,22 +1,20 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2019-2021 François CADEILLAN
 
 use std::{
     path::{ Path, PathBuf }
 };
-
 use crate::{
-    errors::{
-        QueryError
-    },
-    port::{
-        ReadableFileSystem,
-        FileSystemAdapter,
-        EntryAdapter,
-        EntryCollection
-    },
-    infrastructure::real::{
-        RealFileSystem
-    }
+    QueryError,
+    EntryAdapter,
+    EntryCollection
 };
+use super::super::{
+    RealFileSystem,
+    ReadableFileSystem,
+    FileSystemAdapter
+};
+
 impl ReadableFileSystem for FileSystemAdapter<RealFileSystem> {
     type Item = EntryAdapter<PathBuf>;
 
@@ -41,5 +39,9 @@ impl ReadableFileSystem for FileSystemAdapter<RealFileSystem> {
 
     fn status(&self, path: &Path) -> Result<Self::Item, QueryError> {
         Ok(EntryAdapter(path.to_path_buf()))
+    }
+
+    fn is_directory_empty(&self, path: &Path) -> Result<bool, QueryError> {
+        Ok(path.is_dir() && path.read_dir()?.next().is_none())
     }
 }

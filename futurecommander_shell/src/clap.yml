@@ -185,8 +185,6 @@ subcommands:
       about: Reset virtual state
   - apply:
       about: Apply Operations to real file system
-  - debug_container:
-      about: show current container state
   - debug_add_state:
       about: show add delta current state
   - debug_sub_state:
