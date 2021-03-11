@@ -185,14 +185,14 @@ mod container_integration {
     pub fn _some_nesting(fs: &mut Container, chroot: &Path) {
         fs.copy(
             &chroot.join("C"),
-            &chroot.join("A"),
-            &mut PresetGuard::new(ZealousGuard, Capabilities::default() + Capability::Merge)
+            &chroot.join("A/C"),
+            &mut PresetGuard::new(ZealousGuard, Capabilities::default())
         ).unwrap();
 
         fs.copy(
             &chroot.join("A/C/D"),
-            &chroot.join("A"),
-            &mut PresetGuard::new(ZealousGuard, Capabilities::default() + Capability::Merge)
+            &chroot.join("A/D"),
+            &mut PresetGuard::new(ZealousGuard, Capabilities::default())
         ).unwrap();
 
         fs.remove(
@@ -222,26 +222,13 @@ mod container_integration {
         let chroot = Samples::init_advanced_chroot("hybrid_apply_a_vfs_to_real_fs");
         let mut fs = Container::new();
 
-         fs.copy(
-            &chroot.join("A"),
-            &chroot.join("APRIME"),
-            &mut PresetGuard::new(ZealousGuard, Capabilities::default() + Capability::Merge)
-        ).unwrap();
-        //_no_dangling(&mut fs, chroot.as_path());
-
-        println!("{:?}", fs);
-        println!("{:?}", fs.read_maintained(&chroot.join("A")));
-        //_copy_file_dir_interversion(&mut fs, chroot.as_path());
-        //_some_nesting(&mut fs, chroot.as_path());
+        _no_dangling(&mut fs, chroot.as_path());
+        _copy_file_dir_interversion(&mut fs, chroot.as_path());
+        _some_nesting(&mut fs, chroot.as_path());
 
         fs.apply().unwrap();
 
-        let aprime_c = chroot.join("APRIME/C");
-        assert!(aprime_c.exists())
-
-
-
- /*        let c = chroot.join("C");
+        let c = chroot.join("C");
         assert!(c.exists());
         assert!(c.is_dir());
 
@@ -258,6 +245,6 @@ mod container_integration {
         assert!(ad.is_dir());
 
         let ad = chroot.join("A/D/G");
-        assert!(!ad.exists()); */
+        assert!(!ad.exists());
     }
 }

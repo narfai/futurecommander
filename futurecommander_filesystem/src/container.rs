@@ -19,6 +19,7 @@ use crate::{
     },
     guard::{
         Guard,
+        ZealousGuard
     },
     operation::{
         CopyRequest,
@@ -57,7 +58,6 @@ impl Container {
             )
         );
         while let Some(operation) = generator.next(&self.virtual_fs)? {
-            println!("COPY OP");
             if guard.authorize(operation.request().target(), operation.strategy().into())? {
                 self.emit(operation)?;
             }
@@ -112,9 +112,52 @@ impl Container {
     }
 
     pub fn apply(&mut self) -> Result<(), DomainError> {
+        let mut guard = ZealousGuard;
         while let Some(operation_wrapper) = self.operation_queue.pop_front() {
-            operation_wrapper.apply(&mut self.real_fs)?;
+            match operation_wrapper {
+                OperationWrapper::Copy{ request, strategy: _ } => {
+                    let mut generator = OperationGenerator::new(request);
+                    while let Some(operation) = generator.next(&self.real_fs)? {
+                        if guard.authorize(operation.request().target(), operation.strategy().into())? {
+                            operation.apply(&mut self.real_fs)?
+                        }
+                    }
+                },
+                OperationWrapper::Move{ request, strategy: _ } => {
+                    let mut generator = OperationGenerator::new(request);
+                    while let Some(operation) = generator.next(&self.real_fs)? {
+                        if guard.authorize(operation.request().target(), operation.strategy().into())? {
+                            operation.apply(&mut self.real_fs)?
+                        }
+                    }
+                },
+                OperationWrapper::Remove{ request, strategy: _ } => {
+                    let mut generator = OperationGenerator::new(request);
+                    while let Some(operation) = generator.next(&self.real_fs)? {
+                        if guard.authorize(operation.request().target(), operation.strategy().into())? {
+                            operation.apply(&mut self.real_fs)?
+                        }
+                    }
+                },
+                OperationWrapper::Create{ request, strategy: _ } => {
+                    let mut generator = OperationGenerator::new(request);
+                    while let Some(operation) = generator.next(&self.real_fs)? {
+                        if guard.authorize(operation.request().target(), operation.strategy().into())? {
+                            operation.apply(&mut self.real_fs)?
+                        }
+                    }
+                },
+            }
         }
+        /*
+            TODO THINK
+            fundamentally, all strategy discovering ( aka read fs based decision ) is made over the vfs,
+            those choices should be re-made over the rfs mainly because of read_maintained behavior differences
+            WAY A/ store the request and user choices
+            WAY B/ extract operations from filesystem by understanding the différences between vfs & rfs
+            WAY C/ make vfs & rfs really iso
+            WAY X/ Simplify the filesystem, refactor everything, draw better apis ...
+        */
         self.reset();
         Ok(())
     }
