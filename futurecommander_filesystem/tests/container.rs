@@ -247,4 +247,12 @@ mod container_integration {
         let ad = chroot.join("A/D/G");
         assert!(!ad.exists());
     }
+
+    /* TODO TEST
+        cd samples/static
+        mv A B/
+        apply
+        ERROR : error : Command error : container operation error: Source /home/narfai/current2/code_own_source/futurecommander/samples/static/A does not exists
+        TODO : exists => exist
+    */
 }
