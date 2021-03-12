@@ -89,16 +89,16 @@ pub struct OpenOptions; // Options and flags which can be used to configure how 
 pub struct Permissions; // Representation of the various permissions on a file.
 */
 
-pub fn metadata(){ unimplemented!(); }         // Given a path, query the file system to get information about a file, directory, etc.
-pub fn read_dir(){ unimplemented!(); }         // Returns an iterator over the entries within a directory.
+pub fn metadata<P: AsRef<Path>>(path: P) -> Result<Metadata, FsError> { unimplemented!(); }  // Given a path, query the file system to get information about a file, directory, etc.
+pub fn read_dir<P: AsRef<Path>>(path: P) -> Result<ReadDir, FsError> { unimplemented!(); }   // Returns an iterator over the entries within a directory.
 
-pub fn create_dir(){ unimplemented!(); }       // Creates a new, empty directory at the provided path
-pub fn create_dir_all(){ unimplemented!(); }   // Recursively create a directory and all of its parent components if they are missing.
-pub fn copy(){ unimplemented!(); }             // Copies the contents of one file to another. This function will also copy the permission bits of the original file to the destination file.
-pub fn rename(){ unimplemented!(); }           // Rename a file or directory to a new name, replacing the original file if to already exists.
-pub fn remove_dir(){ unimplemented!(); }       // Removes an empty directory.
-pub fn remove_dir_all(){ unimplemented!(); }   // Removes a directory at this path, after removing all its contents. Use carefully!
-pub fn remove_file(){ unimplemented!(); }      // Removes a file from the filesystem.
+pub fn create_dir<P: AsRef<Path>>(path: P) -> Result<(), FsError>{ unimplemented!(); }       // Creates a new, empty directory at the provided path
+pub fn create_dir_all<P: AsRef<Path>>(path: P) -> Result<(), FsError>{ unimplemented!(); }   // Recursively create a directory and all of its parent components if they are missing.
+pub fn copy<P: AsRef<Path>, Q: AsRef<Path>>(from: P, to: Q) -> Result<u64, FsError>{ unimplemented!(); }    // Copies the contents of one file to another. This function will also copy the permission bits of the original file to the destination file.
+pub fn rename<P: AsRef<Path>, Q: AsRef<Path>>(from: P, to: Q) -> Result<(), FsError>{ unimplemented!(); }   // Rename a file or directory to a new name, replacing the original file if to already exists.
+pub fn remove_dir<P: AsRef<Path>>(path: P) -> Result<(), FsError>{ unimplemented!(); }       // Removes an empty directory.
+pub fn remove_dir_all<P: AsRef<Path>>(path: P) -> Result<(), FsError>{ unimplemented!(); }   // Removes a directory at this path, after removing all its contents. Use carefully!
+pub fn remove_file<P: AsRef<Path>>(path: P) -> Result<(), FsError>{ unimplemented!(); }      // Removes a file from the filesystem.
 
 /*
 pub fn canonicalize(){ unimplemented!(); }     // Returns the canonical, absolute form of a path with all intermediate components normalized and symbolic links resolved.
