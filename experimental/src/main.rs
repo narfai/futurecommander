@@ -25,7 +25,6 @@ impl error::Error for NodeError {
 }
 
 // ================================================================= //
-
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::hash::Hasher;
@@ -52,6 +51,15 @@ impl Node {
         &self.name
     }
 
+    pub fn contains(&self, name: &str) -> bool {
+        for child in &self.children {
+            if child.name() == name {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn insert(&mut self, node: Node) -> Result<(), NodeError>{
         if self.children.contains(&node) {
             Err(NodeError::Custom(String::from("Cannot be inserted")))
@@ -73,12 +81,10 @@ impl Node {
                 Component::Normal(os_str) => {
                     let sub_path = components.as_path();
                     let mut sub_path_components = sub_path.components();
-                    match sub_path_components.next() {
-                        Some(Component::ParentDir) => {
-                            return self.find(sub_path_components.as_path());
-                        }
-                        _ => {}
+                    if let Some(Component::ParentDir) = sub_path_components.next() {
+                        return self.find(sub_path_components.as_path());
                     }
+
                     for node in &self.children {
                         if os_str == node.name() {
                             if components.next().is_none() {
@@ -103,6 +109,44 @@ impl Node {
     }
 }
 
+impl PartialEq for Node {
+    fn eq(&self, other: &Node) -> bool {
+        self.name.eq(&other.name)
+    }
+}
+
+impl Hash for Node {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+
+fn apply(node: Node, path: &Path) -> Result<(), NodeError> {
+    unimplemented!();
+}
+
+
+fn assert_two_errors_equals(left: &impl error::Error, right: &impl error::Error) {
+    assert_eq!(format!("{}", left), format!("{}", right))
+}
+
+#[test]
+fn test_cant_insert_same_node_twice(){
+    let mut node = Node::new("/");
+    node.insert(Node::new("A")).unwrap();
+    assert_two_errors_equals(
+        &NodeError::Custom(String::from("Cannot be inserted")),
+        &node.insert(Node::new("A")).err().unwrap()
+    );
+}
+
+#[test]
+fn test_contains_same_node_name(){
+    let mut node = Node::new("/");
+    node.insert(Node::new("A")).unwrap();
+    assert!(node.contains("A"))
+}
+
 #[test]
 fn test_find_node() {
     let mut node = Node::new("/");
@@ -125,18 +169,6 @@ fn test_find_node() {
     assert_eq!(Some(&Node::new("C")), node.find(&Path::new("./B/C")));
 
     assert_eq!(Some(&Node::new("/")), node.find(&Path::new("/")));
-}
-
-impl PartialEq for Node {
-    fn eq(&self, other: &Node) -> bool {
-        self.name.eq(&other.name)
-    }
-}
-
-impl Hash for Node {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-    }
 }
 
 
