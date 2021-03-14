@@ -1,25 +1,16 @@
 // ================================================================= //
 use std::error;
 use std::fmt;
-use std::io;
 
 #[derive(Debug)]
 pub enum NodeError {
-    IoError(io::Error),
-    Custom(String),
-}
-
-impl From<io::Error> for NodeError {
-    fn from(error: io::Error) -> Self {
-        NodeError::IoError(error)
-    }
+    Custom(String)
 }
 
 
 impl fmt::Display for NodeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            NodeError::IoError(error) => write!(f, "I/O error {}", error),
             NodeError::Custom(s) => write!(f, "Custom error {}", s),
         }
     }
@@ -28,54 +19,11 @@ impl fmt::Display for NodeError {
 impl error::Error for NodeError {
     fn cause(&self) -> Option<&dyn error::Error> {
         match self {
-            NodeError::IoError(err) => Some(err),
             _ => None
         }
     }
 }
 
-// ================================================================= //
-
-/**
-* Thanks to ThatsGobbles ( https://github.com/ThatsGobbles ) for his solution : https://github.com/rust-lang/rfcs/issues/2208
-* This code will be removed when os::make_absolute will be marked as stable
-*/
-pub fn normalize(p: &Path) -> PathBuf {
-    let mut stack: Vec<Component<'_>> = vec![];
-
-    for component in p.components() {
-        match component {
-            Component::CurDir => {},
-            Component::ParentDir => {
-                match stack.last().cloned() {
-                    Some(c) => {
-                        match c {
-                            Component::Prefix(_) => { stack.push(component); },
-                            Component::RootDir => {},
-                            Component::CurDir => { unreachable!(); },
-                            Component::ParentDir => { stack.push(component); },
-                            Component::Normal(_) => { let _ = stack.pop(); }
-                        }
-                    },
-                    None => { stack.push(component); }
-                }
-            },
-            _ => { stack.push(component); },
-        }
-    }
-
-    if stack.is_empty() {
-        return PathBuf::from(".");
-    }
-
-    let mut norm_path = PathBuf::new();
-
-    for item in &stack {
-        norm_path.push(item);
-    }
-
-    norm_path
-}
 // ================================================================= //
 use std::collections::HashSet;
 use std::hash::Hash;
@@ -168,13 +116,50 @@ impl Node {
         }
     }
 
-    pub fn find<'a>(&'a self, path: &'a Path) -> Option<NodeItem<'a>> {
-        for item in self.iter().skip(1) {
-            if item.path() == normalize(path){
-                return Some(item)
+    pub fn find(&self, path: &Path) -> Result<Option<&Node>, NodeError> {
+        let mut components = path.components();
+        if let Some(component) = components.next() {
+            let mut sub_path_components = components.clone();
+            if let Some(Component::ParentDir) = sub_path_components.next() {
+                return Ok(self.find(sub_path_components.as_path())?);
+            }
+
+            if let Node::Directory { name: _, children } = self {
+                match &component {
+                    Component::ParentDir => {
+                        if let Some(parent_path) = components.as_path().parent() {
+                            return Ok(self.find(parent_path)?);
+                        }
+                    },
+                    Component::Normal(os_str) => {
+                        let sub_path = components.as_path();
+
+                        for node in children {
+                            if os_str == node.name() {
+                                if components.next().is_none() {
+                                    return Ok(Some(node));
+                                } else if node.is_directory() {
+                                    if let Some(sub_node) = node.find(sub_path)? {
+                                        return Ok(Some(sub_node));
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    Component::CurDir | Component::Prefix(_) | Component::RootDir => {
+                        let sub_path = components.as_path();
+                        if ! components.next().is_none() {
+                            return self.find(sub_path);
+                        } else if component.as_os_str() == self.name() {
+                            return Ok(Some(&self));
+                        }
+                    }
+                }
+            } else {
+                return Err(NodeError::Custom("Not a Directory".into()));
             }
         }
-        None
+        Ok(None)
     }
 
     pub fn is_directory(&self) -> bool {
@@ -185,42 +170,68 @@ impl Node {
         }
     }
 
-    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = NodeItem<'a>> + 'a>{
-        self._iter(PathBuf::from(self.name()))
-    }
-
-    fn _iter<'a>(&'a self, parent_path: PathBuf) -> Box<dyn Iterator<Item = NodeItem<'a>> + 'a>{
-        if let Node::Directory{ name, children } = self {
-            let new_parent_path = parent_path.join(name);
+    pub fn items<'a>(&'a self, parent_path: &'a Path) -> Box<dyn Iterator<Item = NodeItem<'a>> + 'a>{
+        if let Node::Directory{ name: _, children } = self {
             Box::new(
-                iter::once(NodeItem { parent_path, child: &self } )
-                    .chain(
-                        children.iter()
-                            .map(move |n| n._iter(new_parent_path.clone()))
-                            .flatten()
-                    )
+                children.iter().map(|child| NodeItem {
+                    parent_path,
+                    child
+                })
             )
         } else {
-            Box::new(iter::once(NodeItem { parent_path, child: &self } ))
+            Box::new(iter::empty())
+        }
+    }
+}
+
+pub struct NodeIntoIterator<'a> {
+    path: PathBuf,
+    own_iterator: Box<dyn Iterator<Item = &'a Node> + 'a>,
+    children_iterator: Box<dyn Iterator<Item = NodeItem<'a>> + 'a>
+}
+
+impl <'a>IntoIterator for &'a Node {
+    type Item = NodeItem<'a>;
+    type IntoIter = NodeIntoIterator<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        NodeIntoIterator {
+            path: PathBuf::from(self.name()),
+            own_iterator: if let Node::Directory { name: _, children } = self {
+                Box::new(children.iter())
+            } else {
+                Box::new(iter::empty())
+            },
+            children_iterator: Box::new(iter::empty())
+        }
+    }
+}
+
+impl <'a>Iterator for NodeIntoIterator<'a> {
+    type Item = NodeItem<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(child_item) = self.children_iterator.next() {
+            Some(child_item)
+        } else {
+            if let Some(child) = self.own_iterator.next() {
+                self.path.push(child.name());
+                self.children_iterator = child.items(&'a self.path);
+                self.next()
+            } else {
+                None
+            }
         }
     }
 }
 
 #[derive(Debug)]
 pub struct NodeItem<'a>{
-    parent_path: PathBuf,
+    parent_path: &'a Path,
     child: &'a Node
 }
 
-impl <'a>NodeItem<'a> {
-    pub fn path(&self) -> PathBuf {
-        self.parent_path.join(self.child.name())
-    }
-
-    pub fn node(&self) -> &Node {
-        self.child
-    }
-}
+// (&Path, &Node, &Node)
 
 impl PartialEq for Node {
     fn eq(&self, other: &Node) -> bool {
@@ -262,11 +273,9 @@ mod tests {
         node.insert(node_a.clone()).unwrap();
         node.insert(node_b.clone()).unwrap();
 
-        let collection : Vec<PathBuf>= node.iter().map(|item| item.path()).collect();
-        collection.contains(&PathBuf::from("/"));
-        collection.contains(&PathBuf::from("/A"));
-        collection.contains(&PathBuf::from("/B"));
-        collection.contains(&PathBuf::from("/B/C"));
+        for item in node.it(None) {
+            println!("{:?}", item);
+        }
     }
 
     #[test]
@@ -298,15 +307,15 @@ mod tests {
         node.insert(node_a.clone()).unwrap();
         node.insert(node_b.clone()).unwrap();
 
-        assert_eq!(&node_a, node.find(&Path::new("/A")).unwrap().node());
-        assert_eq!(&node_a, node.find(&Path::new("/./././A")).unwrap().node());
-        assert_eq!(&node_a, node.find(&Path::new("/B/../A")).unwrap().node());
-        assert_eq!(&node_a, node.find(&Path::new("/B/../B/../A")).unwrap().node());
+        assert_eq!(Some(&node_a), node.find(&Path::new("A")).unwrap());
+        assert_eq!(Some(&node_a), node.find(&Path::new("/./././A")).unwrap());
+        assert_eq!(Some(&node_a), node.find(&Path::new("B/../A")).unwrap());
+        assert_eq!(Some(&node_a), node.find(&Path::new("B/../B/../A")).unwrap());
 
-        assert_eq!(&node_c, node.find(&Path::new("/B/C")).unwrap().node());
-        assert_eq!(&node_c, node.find(&Path::new("/B/C")).unwrap().node());
-        assert_eq!(&node_c, node.find(&Path::new("/B/C")).unwrap().node());
+        assert_eq!(Some(&node_c), node.find(&Path::new("B/C")).unwrap());
+        assert_eq!(Some(&node_c), node.find(&Path::new("/B/C")).unwrap());
+        assert_eq!(Some(&node_c), node.find(&Path::new("./B/C")).unwrap());
 
-        //assert_eq!(&node, node.find(&Path::new("/")).unwrap().node());
+        assert_eq!(Some(&node), node.find(&Path::new("/")).unwrap());
     }
 }
