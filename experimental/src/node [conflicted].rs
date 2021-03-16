@@ -101,20 +101,18 @@ pub enum Kind {
     Deleted
 }
 
-pub type Id = u128;
-
 
 #[derive(Debug, Clone)]
 pub struct Node {
     kind: Kind,
     name: OsString,
-    id: Id
+    id: u128
 }
 
 impl Eq for Node {}
 
 impl Node {
-    pub fn new_directory(id: Id, name: &str) -> Node {
+    pub fn new_directory(id: u128, name: &str) -> Node {
         Node {
             kind: Kind::Directory(HashSet::new()),
             name: name.into(),
@@ -122,7 +120,7 @@ impl Node {
         }
     }
 
-    pub fn new_file(id: Id, name: &str, source: Source) -> Node {
+    pub fn new_file(id: u128, name: &str, source: Source) -> Node {
         Node {
             kind: Kind::File(source),
             name: name.into(),
@@ -130,7 +128,7 @@ impl Node {
         }
     }
 
-    pub fn new_symlink(id: Id, name: &str, path: &Path) -> Node {
+    pub fn new_symlink(id: u128, name: &str, path: &Path) -> Node {
         Node {
             kind: Kind::Symlink(path.to_path_buf()),
             name: name.into(),
@@ -140,10 +138,6 @@ impl Node {
 
     pub fn name(&self) -> &OsString {
         &self.name
-    }
-
-    pub fn id(&self) -> Id {
-        self.id
     }
 
     pub fn contains(&self, name: &str) -> Result<bool, NodeError> {
@@ -159,7 +153,7 @@ impl Node {
         }
     }
 
-    pub fn insert(mut self, node: Node) -> Result<Self, NodeError>{
+    pub fn insert(&mut self, node: Node) -> Result<&mut Self, NodeError>{
         if let Kind::Directory(children) = &mut self.kind {
             if children.contains(&node){
                 Err(NodeError::Custom(String::from("Cannot be inserted")))
@@ -170,6 +164,13 @@ impl Node {
         } else {
             Err(NodeError::Custom("Not a Directory".into()))
         }
+    }
+
+    pub fn inserts(&mut self, nodes: impl Iterator<Item = Node>) -> Result<&mut Self, NodeError> {
+        for node in nodes {
+            self.insert(node)?;
+        }
+        Ok(self)
     }
 
     pub fn find<'a>(&'a self, path: &'a Path) -> Option<NodeItem<'a>> {
@@ -277,13 +278,13 @@ mod tests {
 
     #[test]
     fn iter_recursively() {
-        let node = Node::new_directory(0, "/")
-            .insert(Node::new_file(1, "A", Source::Touch)).unwrap()
-            .insert(
-                Node::new_directory(2, "B")
-                    .insert(Node::new_file(3, "C", Source::Touch))
-                    .unwrap()
-            ).unwrap();
+        let node = *Node::new_directory(0, "/")
+            .inserts(vec![
+                Node::new_file(1, "A", Source::Touch),
+                *Node::new_directory(2, "B").clone().insert(
+                    Node::new_file(3, "C", Source::Touch).clone()
+                ).unwrap()
+            ]).unwrap();
 
         let collection : Vec<PathBuf>= node.iter().map(|item| item.path()).collect();
         collection.contains(&PathBuf::from("/"));
@@ -295,7 +296,7 @@ mod tests {
     #[test]
     fn test_cant_insert_same_node_twice(){
         let mut node = Node::new_directory(0, "/");
-        node = node.insert(Node::new_file(1, "A", Source::Touch)).unwrap();
+        node.insert(Node::new_file(1, "A", Source::Touch)).unwrap();
         assert_two_errors_equals(
             &NodeError::Custom(String::from("Cannot be inserted")),
             &node.insert(Node::new_file(1, "A", Source::Touch)).err().unwrap()
@@ -305,7 +306,7 @@ mod tests {
     #[test]
     fn test_contains_same_node_name(){
         let mut node = Node::new_directory(0, "/");
-        node = node.insert(Node::new_file(1, "A", Source::Touch)).unwrap();
+        node.insert(Node::new_file(1, "A", Source::Touch)).unwrap();
         assert!(node.contains("A").unwrap())
     }
 
@@ -313,15 +314,15 @@ mod tests {
     fn test_find_node() {
         let mut node = Node::new_directory(0, "/");
         let node_a = Node::new_file(1, "A", Source::Touch);
-        let node_b = Node::new_directory(2, "B");
+        let mut node_b = Node::new_directory(2, "B");
         let node_c = Node::new_file(3, "C", Source::Touch);
 
-        node = node.insert(node_a.clone()).unwrap()
-            .insert(
-                node_b.clone().insert(
-                    node_c.clone()
-                ).unwrap()
-        ).unwrap();
+        node.inserts(vec![
+            node_a.clone(),
+            *node_b.clone().insert(
+                node_c.clone()
+            ).unwrap()
+        ].iter()).unwrap();
 
         assert_eq!(&node_a, node.find(&Path::new("/A")).unwrap().node());
         assert_eq!(&node_a, node.find(&Path::new("/./././A")).unwrap().node());
