@@ -86,7 +86,7 @@ impl Node {
         }
     }
 
-    pub fn with_inserted_at(self, target_parent_path: &Path, node: &Node) -> Result<Node, NodeError> {
+    pub fn with_inserted_at(&self, target_parent_path: &Path, node: &Node) -> Result<Node, NodeError> {
         self.build(
             &|parent_path, name, kind| {
                 if parent_path.join(&name) == target_parent_path {
@@ -113,7 +113,7 @@ impl Node {
         )
     }
 
-    pub fn filtered<P>(self, predicate: P) -> Result<Node, NodeError>
+    pub fn filtered<P>(&self, predicate: P) -> Result<Node, NodeError>
     where P: Fn(&Path, &Node) -> bool  {
         self.build(
             &|parent_path, name, kind|
@@ -132,10 +132,10 @@ impl Node {
         )
     }
 
-    pub fn build<'a, P>(self, builder: &'a P) -> Result<Node, NodeError>
+    pub fn build<'a, P>(&self, builder: &'a P) -> Result<Node, NodeError>
     where P: Fn(PathBuf, OsString, Kind) -> Result<Node, NodeError>  {
-        let name = PathBuf::from(self.name());
-        Node::_build(self.kind, self.name, builder, name)
+        let parent_path = PathBuf::from(self.name());
+        Node::_build(self.kind.clone(), self.name.clone(), builder, parent_path)
     }
 
     fn _build<'a, P>(kind: Kind, name: OsString, builder: &'a P, parent_path: PathBuf) -> Result<Node, NodeError>
@@ -296,12 +296,15 @@ mod tests {
     #[test]
     fn test_insertion() {
         let node_a = Node::new_directory("A");
-        let node_d = Node::new_file("D", None);
-        let mut node = Node::new_directory("/")
+        let node_d = Node::new_directory("D");
+        let node_h = Node::new_file("H", None);
+        let node = Node::new_directory("/")
             .with_inserted_at(&Path::new("/"), &node_a).unwrap()
-            .with_inserted_at(&Path::new("/A"), &node_d).unwrap();
+            .with_inserted_at(&Path::new("/A"), &node_d).unwrap()
+            .with_inserted_at(&Path::new("/A/D"), &node_h).unwrap();
 
         assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/A"))).unwrap().node());
         assert_eq!(&node_d, node.find(|item| item.path() == normalize(&Path::new("/A/D"))).unwrap().node());
+        assert_eq!(&node_h, node.find(|item| item.path() == normalize(&Path::new("/A/D/H"))).unwrap().node());
     }
 }

@@ -1,29 +1,15 @@
-/*
-mod operation_generator;
- */
-
 mod error;
 mod path;
 
 mod node;
 mod item;
 mod operation;
-
-// ================================================================= //
-
-use std::path::{ PathBuf };
-
-#[derive(Debug, Clone)]
-pub enum Operation {
-    Copy(PathBuf, PathBuf),
-    Rename(PathBuf, PathBuf),
-    RemoveFile(PathBuf),
-    RemoveDir(PathBuf),
-    RemoveDirAll(PathBuf),
-    CreateDirAll(PathBuf),
-    CreateFile(PathBuf)
-}
+mod preview;
 
 fn main() {
     println!("Hello, world!");
 }
+
+//First get the read operation iso
+//Then the write
+//Then think about a new layer of operations with user feedback
