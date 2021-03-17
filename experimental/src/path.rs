@@ -1,3 +1,5 @@
+use std::path::{ Path, PathBuf, Component };
+
 /**
 * Thanks to ThatsGobbles ( https://github.com/ThatsGobbles ) for his solution : https://github.com/rust-lang/rfcs/issues/2208
 * This code will be removed when os::make_absolute will be marked as stable

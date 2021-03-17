@@ -1,7 +1,7 @@
 mod error;
 mod node;
 mod item;
-mod scheduling;
+mod operation_generator;
 mod path;
 
 // ================================================================= //

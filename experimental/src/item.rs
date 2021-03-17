@@ -7,13 +7,20 @@ use crate::{
     node::{ Node, Kind, Source }
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NodeItem<'a>{
     parent_path: PathBuf,
     child: &'a Node
 }
 
 impl <'a>NodeItem<'a> {
+    pub fn new(parent_path: PathBuf, child: &'a Node) -> Self {
+        NodeItem {
+            parent_path,
+            child
+        }
+    }
+
     pub fn parent_path(&self) -> &Path {
         &self.parent_path
     }
@@ -47,6 +54,17 @@ impl <'a>NodeItem<'a> {
 
     pub fn is_deleted(&self) -> bool {
         matches!(self.node().kind(), Kind::Deleted)
+    }
+
+    pub fn is_deleted_or_move(&self) -> bool {
+        match self.node().kind() {
+            Kind::Deleted => true,
+            Kind::File(source) => match source {
+                Source::Move(_) => true,
+                _ => false,
+            },
+            _ => false
+        }
     }
 }
 
