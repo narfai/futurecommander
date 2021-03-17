@@ -15,63 +15,45 @@ use crate::{
     item::NodeItem
 };
 
-pub type Id = u128;
-
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub enum Source {
-    Copy(PathBuf),
-    Move(PathBuf),
-    Touch
-}
-
 #[derive(Debug, Clone)]
 pub enum Kind {
     Directory(HashSet<Node>),
-    File(Source),
-    Symlink(PathBuf),
-    Deleted
+    File(Option<PathBuf>),
+    Symlink(PathBuf)
 }
 
 #[derive(Debug, Clone)]
 pub struct Node {
     kind: Kind,
-    name: OsString,
-    id: Id
+    name: OsString
 }
 
 impl Eq for Node {}
 
 impl Node {
-    pub fn new_directory(id: Id, name: &str) -> Node {
+    pub fn new_directory(name: &str) -> Node {
         Node {
             kind: Kind::Directory(HashSet::new()),
-            name: name.into(),
-            id
+            name: name.into()
         }
     }
 
-    pub fn new_file(id: Id, name: &str, source: Source) -> Node {
+    pub fn new_file(name: &str, source: Option<PathBuf>) -> Node {
         Node {
             kind: Kind::File(source),
-            name: name.into(),
-            id
+            name: name.into()
         }
     }
 
-    pub fn new_symlink(id: Id, name: &str, path: &Path) -> Node {
+    pub fn new_symlink(name: &str, path: &Path) -> Node {
         Node {
             kind: Kind::Symlink(path.to_path_buf()),
-            name: name.into(),
-            id
+            name: name.into()
         }
     }
 
     pub fn name(&self) -> &OsString {
         &self.name
-    }
-
-    pub fn id(&self) -> Id {
-        self.id
     }
 
     pub fn kind(&self) -> &Kind {
@@ -104,9 +86,70 @@ impl Node {
         }
     }
 
-    pub fn find<'a>(&'a self, path: &'a Path) -> Option<NodeItem<'a>> {
+    pub fn with_inserted_at(self, target_parent_path: &Path, node: &Node) -> Self {
+        self.build(
+            &move |parent_path, name, kind| {
+                let path = parent_path.join(&name);
+                if path == target_parent_path {
+                    if let Kind::Directory(children) = kind {
+                        Node {
+                            kind: Kind::Directory(
+                                children.into_iter()
+                                .chain(iter::once(node.clone()))
+                                .collect()
+                            ),
+                            name
+                        }
+                    } else {
+                        Node { name, kind }
+                    }
+                } else {
+                    Node { name, kind }
+                }
+            }
+        )
+    }
+
+    pub fn filtered<P>(self, predicate: P) -> Self where P: Fn(&Path, &Node) -> bool  {
+        self.build(
+            &|parent_path, name, kind|
+            if let Kind::Directory(children) = kind {
+                Node {
+                    kind: Kind::Directory(
+                        children.into_iter()
+                        .filter(|child| predicate(&parent_path, &child))
+                        .collect()
+                    ),
+                    name
+                }
+            } else {
+                Node { name, kind }
+            }
+        )
+    }
+
+    pub fn build<'a, P>(self, builder: &'a P) -> Self where P: Fn(PathBuf, OsString, Kind) -> Node  {
+        let name = PathBuf::from(self.name());
+        Node::_build(self.kind, self.name, builder, name)
+    }
+
+    fn _build<'a, P>(kind: Kind, name: OsString, builder: &'a P, parent_path: PathBuf) -> Self where P: Fn(PathBuf, OsString, Kind) -> Node  {
+        if let Kind::Directory(children) = kind {
+            let new_parent_path = parent_path.join(&name);
+            builder(
+                parent_path,
+                name,
+                Kind::Directory(children.into_iter()
+                    .map(|child| Node::_build(child.kind, child.name, builder, new_parent_path.clone()))
+                    .collect()
+                )
+            )
+        } else { builder(parent_path, name, kind ) }
+    }
+
+    pub fn find<'a, P>(&'a self, predicate: P) -> Option<NodeItem<'a>> where P: Fn(&NodeItem<'a>) -> bool {
         for item in self.iter().skip(1) {
-            if item.path() == normalize(path){
+            if predicate(&item){
                 return Some(item)
             }
         }
@@ -148,19 +191,6 @@ impl PartialEq for Node {
     }
 }
 
-impl PartialOrd for Node {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-
-impl Ord for Node {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.id.cmp(&other.id)
-    }
-}
-
 impl Hash for Node {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.name().hash(state);
@@ -180,15 +210,15 @@ mod tests {
 
     #[test]
     fn iter_recursively() {
-        let node = Node::new_directory(0, "/")
-            .insert(Node::new_file(1, "A", Source::Touch)).unwrap()
+        let node = Node::new_directory("/")
+            .insert(Node::new_file("A", None)).unwrap()
             .insert(
-                Node::new_directory(2, "B")
-                    .insert(Node::new_file(3, "C", Source::Touch))
+                Node::new_directory("B")
+                    .insert(Node::new_file("C", None))
                     .unwrap()
             ).unwrap();
 
-        let collection : Vec<PathBuf>= node.iter().map(|item| item.path()).collect();
+        let collection : Vec<PathBuf>= node.iter().map(|item| item.path().to_path_buf()).collect();
         collection.contains(&PathBuf::from("/"));
         collection.contains(&PathBuf::from("/A"));
         collection.contains(&PathBuf::from("/B"));
@@ -197,27 +227,27 @@ mod tests {
 
     #[test]
     fn test_cant_insert_same_node_twice(){
-        let mut node = Node::new_directory(0, "/");
-        node = node.insert(Node::new_file(1, "A", Source::Touch)).unwrap();
+        let mut node = Node::new_directory("/");
+        node = node.insert(Node::new_file("A", None)).unwrap();
         assert_two_errors_equals(
             &NodeError::Custom(String::from("Cannot be inserted")),
-            &node.insert(Node::new_file(1, "A", Source::Touch)).err().unwrap()
+            &node.insert(Node::new_file("A", None)).err().unwrap()
         );
     }
 
     #[test]
     fn test_contains_same_node_name(){
-        let mut node = Node::new_directory(0, "/");
-        node = node.insert(Node::new_file(1, "A", Source::Touch)).unwrap();
+        let mut node = Node::new_directory("/");
+        node = node.insert(Node::new_file("A", None)).unwrap();
         assert!(node.contains("A").unwrap())
     }
 
     #[test]
     fn test_find_node() {
-        let mut node = Node::new_directory(0, "/");
-        let node_a = Node::new_file(1, "A", Source::Touch);
-        let node_b = Node::new_directory(2, "B");
-        let node_c = Node::new_file(3, "C", Source::Touch);
+        let mut node = Node::new_directory("/");
+        let node_a = Node::new_file("A", None);
+        let node_b = Node::new_directory("B");
+        let node_c = Node::new_file("C", None);
 
         node = node.insert(node_a.clone()).unwrap()
             .insert(
@@ -226,13 +256,45 @@ mod tests {
                 ).unwrap()
         ).unwrap();
 
-        assert_eq!(&node_a, node.find(&Path::new("/A")).unwrap().node());
-        assert_eq!(&node_a, node.find(&Path::new("/./././A")).unwrap().node());
-        assert_eq!(&node_a, node.find(&Path::new("/B/../A")).unwrap().node());
-        assert_eq!(&node_a, node.find(&Path::new("/B/../B/../A")).unwrap().node());
+        assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/A"))).unwrap().node());
+        assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/./././A"))).unwrap().node());
+        assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/B/../A"))).unwrap().node());
+        assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/B/../B/../A"))).unwrap().node());
 
-        assert_eq!(&node_c, node.find(&Path::new("/B/C")).unwrap().node());
-        assert_eq!(&node_c, node.find(&Path::new("/B/C")).unwrap().node());
-        assert_eq!(&node_c, node.find(&Path::new("/B/C")).unwrap().node());
+        assert_eq!(&node_c, node.find(|item| item.path() == normalize(&Path::new("/B/C"))).unwrap().node());
+    }
+
+    #[test]
+    fn test_filtered() {
+        let mut node = Node::new_directory("/");
+        let node_a = Node::new_file("A", None);
+        let node_b = Node::new_directory("B");
+        let node_c = Node::new_file("C", None);
+
+        node = node.insert(node_a.clone()).unwrap()
+            .insert(
+                node_b.clone().insert(
+                    node_c.clone()
+                ).unwrap()
+        ).unwrap();
+
+        assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/A"))).unwrap().node());
+        assert_eq!(&node_c, node.find(|item| item.path() == normalize(&Path::new("/B/C"))).unwrap().node());
+
+        node = node.filtered(|parent_path, child| &parent_path.join(child.name()) != Path::new("/B"));
+        assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/A"))).unwrap().node());
+        assert_eq!(None, node.find(|item| item.path() == normalize(&Path::new("/B/C"))));
+    }
+
+    #[test]
+    fn test_insertion() {
+        let node_a = Node::new_directory("A");
+        let node_d = Node::new_file("D", None);
+        let mut node = Node::new_directory("/")
+            .with_inserted_at(&Path::new("/"), &node_a)
+            .with_inserted_at(&Path::new("/A"), &node_d);
+
+        assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/A"))).unwrap().node());
+        assert_eq!(&node_d, node.find(|item| item.path() == normalize(&Path::new("/A/D"))).unwrap().node());
     }
 }

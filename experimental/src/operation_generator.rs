@@ -18,7 +18,8 @@ pub enum Operation {
     CopyFile(PathBuf, PathBuf),
     MoveFile(PathBuf, PathBuf),
     Rename(PathBuf, PathBuf),
-    RemoveNode(PathBuf),
+    RemoveFile(PathBuf),
+    RemoveDirAll(PathBuf),
     CreateDirAll(PathBuf),
     CreateFile(PathBuf)
 }
@@ -139,11 +140,12 @@ impl <'a>Iterator for OperationGenerator<'a> {
                 self.deletions.retain(|i| item != i);
 
                 let operation = match item.node().kind() {
+                    Kind::Directory(_) => Operation::RemoveDirAll(item.path()),
                     Kind::File(source) => match source {
-                        Source::Move(source_path) => Operation::RemoveNode(source_path.clone()),
-                        _ => Operation::RemoveNode(item.path())
+                        Source::Move(source_path) => Operation::RemoveFile(source_path.clone()),
+                        _ => Operation::RemoveFile(item.path())
                     },
-                    _ => Operation::RemoveNode(item.path())
+                    _ => Operation::RemoveFile(item.path())
                 };
 
                 self.state = (**next_state).clone();
@@ -183,10 +185,8 @@ mod tests {
 
         let mut node = Node::new_directory(0, "/");
         let node_z = Node::new_file(1, "Z", Source::Move(PathBuf::from("/A")));
-        let node_a = Node::new_directory(2, "A");
-        // let node_d = (3, "D", Source::Move(PathBuf::from("/C")));
-        // let node_e = (4, "E", Source::Move(PathBuf::from("/C")));
-        let node_c = Node::new_file(5, "C", Source::Move(PathBuf::from("/Z")));
+        let node_a = Node::new_file(1, "A", Source::Move(PathBuf::from("/C")));
+        let node_c = Node::new_file(1, "C", Source::Move(PathBuf::from("/Z")));
 
         node = node.insert(node_z.clone()).unwrap()
                 .insert(node_a.clone()).unwrap()

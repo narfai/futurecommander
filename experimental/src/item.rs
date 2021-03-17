@@ -4,29 +4,25 @@ use std::{
 };
 
 use crate::{
-    node::{ Node, Kind, Source }
+    node::{ Node, Kind }
 };
 
 #[derive(Debug, Clone)]
 pub struct NodeItem<'a>{
-    parent_path: PathBuf,
+    path: PathBuf,
     child: &'a Node
 }
 
 impl <'a>NodeItem<'a> {
     pub fn new(parent_path: PathBuf, child: &'a Node) -> Self {
         NodeItem {
-            parent_path,
+            path: parent_path.join(child.name()),
             child
         }
     }
 
-    pub fn parent_path(&self) -> &Path {
-        &self.parent_path
-    }
-
-    pub fn path(&self) -> PathBuf {
-        self.parent_path.join(self.child.name())
+    pub fn path(&self) -> &Path {
+        &self.path
     }
 
     pub fn node(&self) -> &Node {
@@ -35,10 +31,7 @@ impl <'a>NodeItem<'a> {
 
     pub fn source(&self) -> Option<&Path> {
         match self.child.kind() {
-            Kind::File(source) => match source {
-                Source::Copy(source_path) | Source::Move(source_path) => Some(&source_path),
-                _ => None
-            },
+            Kind::File(Some(source)) => Some(&source),
             _ => None
         }
     }
@@ -51,21 +44,6 @@ impl <'a>NodeItem<'a> {
         }
         false
     }
-
-    pub fn is_deleted(&self) -> bool {
-        matches!(self.node().kind(), Kind::Deleted)
-    }
-
-    pub fn is_deleted_or_move(&self) -> bool {
-        match self.node().kind() {
-            Kind::Deleted => true,
-            Kind::File(source) => match source {
-                Source::Move(_) => true,
-                _ => false,
-            },
-            _ => false
-        }
-    }
 }
 
 impl <'a>Eq for NodeItem<'a> {}
@@ -73,17 +51,5 @@ impl <'a>Eq for NodeItem<'a> {}
 impl <'a>PartialEq for NodeItem<'a> {
     fn eq(&self, other: &Self) -> bool {
         self.node().eq(other.node())
-    }
-}
-
-impl <'a>PartialOrd for NodeItem<'a> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl <'a>Ord for NodeItem<'a> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.node().cmp(&other.node())
     }
 }
