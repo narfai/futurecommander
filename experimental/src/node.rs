@@ -86,54 +86,60 @@ impl Node {
         }
     }
 
-    pub fn with_inserted_at(self, target_parent_path: &Path, node: &Node) -> Self {
+    pub fn with_inserted_at(self, target_parent_path: &Path, node: &Node) -> Result<Node, NodeError> {
         self.build(
-            &move |parent_path, name, kind| {
-                let path = parent_path.join(&name);
-                if path == target_parent_path {
+            &|parent_path, name, kind| {
+                if parent_path.join(&name) == target_parent_path {
                     if let Kind::Directory(children) = kind {
-                        Node {
-                            kind: Kind::Directory(
-                                children.into_iter()
-                                .chain(iter::once(node.clone()))
-                                .collect()
-                            ),
-                            name
+                        if children.contains(node) {
+                            Err(NodeError::Custom(String::from("Cannot be inserted")))
+                        } else {
+                            Ok(Node {
+                                kind: Kind::Directory(
+                                    children.into_iter()
+                                    .chain(iter::once(node.clone()))
+                                    .collect()
+                                ),
+                                name
+                            })
                         }
                     } else {
-                        Node { name, kind }
+                        Err(NodeError::Custom("Not a Directory".into()))
                     }
                 } else {
-                    Node { name, kind }
+                    Ok(Node { name, kind })
                 }
             }
         )
     }
 
-    pub fn filtered<P>(self, predicate: P) -> Self where P: Fn(&Path, &Node) -> bool  {
+    pub fn filtered<P>(self, predicate: P) -> Result<Node, NodeError>
+    where P: Fn(&Path, &Node) -> bool  {
         self.build(
             &|parent_path, name, kind|
             if let Kind::Directory(children) = kind {
-                Node {
+                Ok(Node {
                     kind: Kind::Directory(
                         children.into_iter()
                         .filter(|child| predicate(&parent_path, &child))
                         .collect()
                     ),
                     name
-                }
+                })
             } else {
-                Node { name, kind }
+                Ok(Node { name, kind })
             }
         )
     }
 
-    pub fn build<'a, P>(self, builder: &'a P) -> Self where P: Fn(PathBuf, OsString, Kind) -> Node  {
+    pub fn build<'a, P>(self, builder: &'a P) -> Result<Node, NodeError>
+    where P: Fn(PathBuf, OsString, Kind) -> Result<Node, NodeError>  {
         let name = PathBuf::from(self.name());
         Node::_build(self.kind, self.name, builder, name)
     }
 
-    fn _build<'a, P>(kind: Kind, name: OsString, builder: &'a P, parent_path: PathBuf) -> Self where P: Fn(PathBuf, OsString, Kind) -> Node  {
+    fn _build<'a, P>(kind: Kind, name: OsString, builder: &'a P, parent_path: PathBuf) -> Result<Node, NodeError>
+    where P: Fn(PathBuf, OsString, Kind) -> Result<Node, NodeError>  {
         if let Kind::Directory(children) = kind {
             let new_parent_path = parent_path.join(&name);
             builder(
@@ -141,13 +147,14 @@ impl Node {
                 name,
                 Kind::Directory(children.into_iter()
                     .map(|child| Node::_build(child.kind, child.name, builder, new_parent_path.clone()))
-                    .collect()
+                    .collect::<Result<HashSet<Node>, NodeError>>()?
                 )
             )
         } else { builder(parent_path, name, kind ) }
     }
 
-    pub fn find<'a, P>(&'a self, predicate: P) -> Option<NodeItem<'a>> where P: Fn(&NodeItem<'a>) -> bool {
+    pub fn find<'a, P>(&'a self, predicate: P) -> Option<NodeItem<'a>>
+    where P: Fn(&NodeItem<'a>) -> bool {
         for item in self.iter().skip(1) {
             if predicate(&item){
                 return Some(item)
@@ -281,7 +288,7 @@ mod tests {
         assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/A"))).unwrap().node());
         assert_eq!(&node_c, node.find(|item| item.path() == normalize(&Path::new("/B/C"))).unwrap().node());
 
-        node = node.filtered(|parent_path, child| &parent_path.join(child.name()) != Path::new("/B"));
+        node = node.filtered(|parent_path, child| &parent_path.join(child.name()) != Path::new("/B")).unwrap();
         assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/A"))).unwrap().node());
         assert_eq!(None, node.find(|item| item.path() == normalize(&Path::new("/B/C"))));
     }
@@ -291,8 +298,8 @@ mod tests {
         let node_a = Node::new_directory("A");
         let node_d = Node::new_file("D", None);
         let mut node = Node::new_directory("/")
-            .with_inserted_at(&Path::new("/"), &node_a)
-            .with_inserted_at(&Path::new("/A"), &node_d);
+            .with_inserted_at(&Path::new("/"), &node_a).unwrap()
+            .with_inserted_at(&Path::new("/A"), &node_d).unwrap();
 
         assert_eq!(&node_a, node.find(|item| item.path() == normalize(&Path::new("/A"))).unwrap().node());
         assert_eq!(&node_d, node.find(|item| item.path() == normalize(&Path::new("/A/D"))).unwrap().node());
