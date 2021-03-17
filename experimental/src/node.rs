@@ -1,90 +1,21 @@
 // ================================================================= //
-use std::error;
-use std::fmt;
-use std::io;
 
-#[derive(Debug)]
-pub enum NodeError {
-    IoError(io::Error),
-    Custom(String),
-}
+use std::{
+    collections::HashSet,
+    hash::{Hash, Hasher},
+    ffi::OsString,
+    path::{ Path, PathBuf },
+    cmp::Ordering,
+    iter
+};
 
-impl From<io::Error> for NodeError {
-    fn from(error: io::Error) -> Self {
-        NodeError::IoError(error)
-    }
-}
+use crate::{
+    error::NodeError,
+    path::normalize,
+    item::NodeItem
+};
 
-
-impl fmt::Display for NodeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            NodeError::IoError(error) => write!(f, "I/O error {}", error),
-            NodeError::Custom(s) => write!(f, "Custom error {}", s),
-        }
-    }
-}
-
-impl error::Error for NodeError {
-    fn cause(&self) -> Option<&dyn error::Error> {
-        match self {
-            NodeError::IoError(err) => Some(err),
-            _ => None
-        }
-    }
-}
-
-// ================================================================= //
-
-/**
-* Thanks to ThatsGobbles ( https://github.com/ThatsGobbles ) for his solution : https://github.com/rust-lang/rfcs/issues/2208
-* This code will be removed when os::make_absolute will be marked as stable
-*/
-pub fn normalize(p: &Path) -> PathBuf {
-    let mut stack: Vec<Component<'_>> = vec![];
-
-    for component in p.components() {
-        match component {
-            Component::CurDir => {},
-            Component::ParentDir => {
-                match stack.last().cloned() {
-                    Some(c) => {
-                        match c {
-                            Component::Prefix(_) => { stack.push(component); },
-                            Component::RootDir => {},
-                            Component::CurDir => { unreachable!(); },
-                            Component::ParentDir => { stack.push(component); },
-                            Component::Normal(_) => { let _ = stack.pop(); }
-                        }
-                    },
-                    None => { stack.push(component); }
-                }
-            },
-            _ => { stack.push(component); },
-        }
-    }
-
-    if stack.is_empty() {
-        return PathBuf::from(".");
-    }
-
-    let mut norm_path = PathBuf::new();
-
-    for item in &stack {
-        norm_path.push(item);
-    }
-
-    norm_path
-}
-// ================================================================= //
-use std::collections::HashSet;
-use std::hash::Hash;
-use std::hash::Hasher;
-use std::ffi::OsString;
-use std::path::Path;
-use std::path::PathBuf;
-use std::path::Component;
-use std::iter;
+pub type Id = u128;
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Source {
@@ -100,9 +31,6 @@ pub enum Kind {
     Symlink(PathBuf),
     Deleted
 }
-
-pub type Id = u128;
-
 
 #[derive(Debug, Clone)]
 pub struct Node {
@@ -144,6 +72,10 @@ impl Node {
 
     pub fn id(&self) -> Id {
         self.id
+    }
+
+    pub fn kind(&self) -> &Kind {
+        &self.kind
     }
 
     pub fn contains(&self, name: &str) -> Result<bool, NodeError> {
@@ -208,55 +140,24 @@ impl Node {
             Box::new(iter::once(NodeItem { parent_path, child: &self } ))
         }
     }
-
-
-
-    //Synchronize approach is the best in regards of providing best effort against unwatched filesystem changes
-    //Have to output a generator of operations over the fs
-    //Next try with :
-    // - Timestamps
-    // - Vfs file source references
-    // - Vfs source tracking
-    // - Real time application of operations over filesystem
-    // - Generate operations in order to let guard decision
-    // To represent :
-    // Deletion has to happen _in order_ because it have warrant about directory's children unicity : it frees a name's slot in a directory
-    // Copy also have that warraant : it _reserve_ a name's slot in a directory
-    // Move combines both : it frees a name's slot in a directory and reserve one into another OR THE SAME !
-}
-
-#[derive(Debug)]
-pub struct NodeItem<'a>{
-    parent_path: PathBuf,
-    child: &'a Node
-}
-
-impl <'a>NodeItem<'a> {
-    pub fn parent_path(&self) -> &Path {
-        &self.parent_path
-    }
-
-    pub fn path(&self) -> PathBuf {
-        self.parent_path.join(self.child.name())
-    }
-
-    pub fn node(&self) -> &Node {
-        self.child
-    }
-
-    fn is_contained_by(&self, path: &Path) -> bool {
-        for ancestor in self.path().ancestors() {
-            if path == ancestor {
-                return true;
-            }
-        }
-        false
-    }
 }
 
 impl PartialEq for Node {
-    fn eq(&self, other: &Node) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.name().eq(other.name())
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.id.cmp(&other.id)
     }
 }
 
@@ -266,10 +167,12 @@ impl Hash for Node {
     }
 }
 
+
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::error;
 
     fn assert_two_errors_equals(left: &impl error::Error, right: &impl error::Error) {
         assert_eq!(format!("{}", left), format!("{}", right))
