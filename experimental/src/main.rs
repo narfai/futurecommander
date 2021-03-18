@@ -1,4 +1,6 @@
 mod error;
+mod path;
+
 mod filesystem;
 mod preview;
 mod container;
@@ -16,7 +18,7 @@ use self::{
 
 pub use {
     container::Container,
-    filesystem::{ ReadFileSystem, WriteFileSystem }
+    filesystem::{ ReadFileSystem, WriteFileSystem, FileType, Metadata }
 };
 
 type Result<T> = result::Result<T, FileSystemError>;

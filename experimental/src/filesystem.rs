@@ -14,7 +14,7 @@ use crate::{
 
 pub use self::{
     readdir::{ ReadDir, DirEntry },
-    metadata::{ FileType, Metadata },
+    metadata::{ FileType, Metadata, FileTypeExt, MetadataExt },
     path_ext::{ PathExt }
 };
 
