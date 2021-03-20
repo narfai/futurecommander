@@ -72,10 +72,11 @@ impl Iterator for ReadDir {
             Real(dir_entries) => {
                 match dir_entries.pop() {
                     Some(entry) => match entry.file_type() {
-                        Ok(file_type) => match file_type.into_virtual_file_type() {
-                            Ok(virtual_file_type) => Some(Ok(DirEntry::new(&entry.path(), entry.file_name(), virtual_file_type))), //TODO DirEntryExt FsDirEntry -> DirEntry
-                            Err(err) => Some(Err(err.into()))
-                        }
+                        Ok(file_type) => Some(
+                            file_type.into_virtual_file_type().and_then(
+                                |virtual_file_type| Ok(DirEntry::new(&entry.path(), entry.file_name(), virtual_file_type))
+                            )
+                        ),
                         Err(err) => Some(Err(err.into()))
                     },
                     None => {
@@ -86,10 +87,19 @@ impl Iterator for ReadDir {
             },
             Virtual => {
                 match self.nodes.pop() {
-                    Some(node) => match node.into_virtual_file_type() {
-                        Ok(virtual_file_type) => Some(Ok(DirEntry::new(&self.path.join(node.name()), node.name().clone(), virtual_file_type))), //TODO DirEntryExt (&Path, &Node) DirEntry
-                        Err(err) => Some(Err(err.into()))
-                    },
+                    Some(node) => Some(
+                        node.into_virtual_file_type()
+                            .and_then(|virtual_file_type|
+                                Ok(  //TODO DirEntryExt (&Path, &Node) DirEntry
+                                    DirEntry::new(
+                                        &self.path.join(node.name()),
+                                        node.name().clone(),
+                                        virtual_file_type
+                                    )
+                                )
+                            )
+                        )
+                    ,
                     None => {
                         self.state = Terminated;
                         self.next()

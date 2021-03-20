@@ -143,6 +143,14 @@ impl Preview {
 
         Ok(())
     }
+
+    fn _has_to_exist(&self, path: &Path, error: FileSystemError) -> Result<()> {
+        if path.preview_exists(self) {
+            Ok(())
+        } else {
+            Err(error)
+        }
+    }
 }
 
 // TODO map same error behaviors according to real std::fs
@@ -157,18 +165,13 @@ impl WriteFileSystem for Preview {
     fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         let path = path.as_ref();
         if let Some(parent) = path.parent() {
-            if path.preview_exists(self) {
-                if parent.preview_exists(self) {
-                    if parent.preview_is_a_dir(self) {
-                        self._create_dir(path)
-                    } else {
-                        Err(FileSystemError::Custom(String::from("Parent is not a directory")))
-                    }
-                } else {
-                    Err(FileSystemError::Custom(String::from("Parent doesn't exists")))
-                }
+            self._has_to_exist(path, FileSystemError::Custom(String::from("Path already exists")))?;
+            self._has_to_exist(parent, FileSystemError::Custom(String::from("Parent doesn't exists")))?;
+
+            if parent.preview_is_a_dir(self) {
+                self._create_dir(path)
             } else {
-                Err(FileSystemError::Custom(String::from("Path already exists")))
+                Err(FileSystemError::Custom(String::from("Parent is not a directory")))
             }
         } else {
             Err(FileSystemError::Custom(String::from(format!("Invalid path given {}", path.display()))))
@@ -197,14 +200,12 @@ impl WriteFileSystem for Preview {
     fn copy<P: AsRef<Path>, Q: AsRef<Path>>(&mut self, from: P, to: Q) -> Result<u64> {
         let from = from.as_ref();
         let to = to.as_ref();
-        if from.preview_exists(self) {
-            if from.preview_is_a_file(self) {
-                self._copy(from, to)
-            } else {
-                Err(FileSystemError::Custom("From is not a file".into()))
-            }
+        self._has_to_exist(from, FileSystemError::Custom("From does not exists".into()))?;
+
+        if from.preview_is_a_file(self) {
+            self._copy(from, to)
         } else {
-            Err(FileSystemError::Custom("From does not exists".into()))
+            Err(FileSystemError::Custom("From is not a file".into()))
         }
     }
 
@@ -221,29 +222,27 @@ impl WriteFileSystem for Preview {
     fn rename<P: AsRef<Path>, Q: AsRef<Path>>(&mut self, from: P, to: Q) -> Result<()> {
         let from = from.as_ref();
         let to = to.as_ref();
-        if from.preview_exists(self) {
-            if self._are_on_same_filesystem(from, to) {
-                if to.preview_exists(self) {
-                    let is_to_a_dir = to.preview_is_a_dir(self);
-                    if from.preview_is_a_dir(self) {
-                        if is_to_a_dir && to.preview_read_dir(self)?.next().is_none() {
-                            self._rename(from, to)
-                        } else {
-                            Err(FileSystemError::Custom("To has to be an empty dir".into()))
-                        }
-                    } else if ! is_to_a_dir {
+        self._has_to_exist(from, FileSystemError::Custom("From does not exists".into()))?;
+
+        if self._are_on_same_filesystem(from, to) {
+            if to.preview_exists(self) {
+                let is_to_a_dir = to.preview_is_a_dir(self);
+                if from.preview_is_a_dir(self) {
+                    if is_to_a_dir && to.preview_read_dir(self)?.next().is_none() {
                         self._rename(from, to)
                     } else {
-                        Err(FileSystemError::Custom("To cannot be a directory".into()))
+                        Err(FileSystemError::Custom("To has to be an empty dir".into()))
                     }
-                } else {
+                } else if ! is_to_a_dir {
                     self._rename(from, to)
+                } else {
+                    Err(FileSystemError::Custom("To cannot be a directory".into()))
                 }
             } else {
-                Err(FileSystemError::Custom("From and to are not on the same filesystem".into()))
+                self._rename(from, to)
             }
         } else {
-            Err(FileSystemError::Custom("From does not exists".into()))
+            Err(FileSystemError::Custom("From and to are not on the same filesystem".into()))
         }
     }
 
@@ -251,22 +250,17 @@ impl WriteFileSystem for Preview {
     fn rename<P: AsRef<Path>, Q: AsRef<Path>>(&mut self, from: P, to: Q) -> Result<()> {
         let from = from.as_ref();
         let to = to.as_ref();
-        if from.preview_exists(self) {
-            if self._are_on_same_filesystem(from, to) {
-                if to.preview_exists(self) {
-                    if to.preview_is_a_dir(self) {
-                        Err(FileSystemError::Custom("To cannot be a directory".into()))
-                    } else {
-                        self._rename(from, to)
-                    }
-                } else {
-                    self._rename(from, to)
+        self._has_to_exists(from, FileSystemError::Custom("From does not exists".into()))?;
+
+        if self._are_on_same_filesystem(from, to) {
+            if to.preview_exists(self) {
+                if to.preview_is_a_dir(self) {
+                    return Err(FileSystemError::Custom("To cannot be a directory".into()));
                 }
-            } else {
-                Err(FileSystemError::Custom("From and to are not on the same filesystem".into()))
             }
+            self._rename(from, to)
         } else {
-            Err(FileSystemError::Custom("From does not exists".into()))
+            Err(FileSystemError::Custom("From and to are not on the same filesystem".into()))
         }
     }
 
@@ -277,32 +271,28 @@ impl WriteFileSystem for Preview {
     /// * The directory isn't empty.
     fn remove_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         let path = path.as_ref();
-        if path.preview_exists(self) {
-            if path.preview_is_a_dir(self) {
-                if path.preview_read_dir(self)?.next().is_none() {
-                    self._remove(path)
-                } else {
-                    Err(FileSystemError::Custom("Path is not empty".into()))
-                }
+        self._has_to_exist(path, FileSystemError::Custom("Path does not exists".into()))?;
+
+        if path.preview_is_a_dir(self) {
+            if path.preview_read_dir(self)?.next().is_none() {
+                self._remove(path)
             } else {
-                Err(FileSystemError::Custom("Path is not a directory".into()))
+                Err(FileSystemError::Custom("Path is not empty".into()))
             }
         } else {
-            Err(FileSystemError::Custom("Path does not exists".into()))
+            Err(FileSystemError::Custom("Path is not a directory".into()))
         }
     }
 
     /// Errors:  cf remove_file & remove_dir
     fn remove_dir_all<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         let path = path.as_ref();
-        if path.preview_exists(self) {
-            if path.preview_is_a_dir(self) {
-                self._remove(path)
-            } else {
-                self.remove_file(path)
-            }
+        self._has_to_exist(path, FileSystemError::Custom("Path does not exists".into()))?;
+
+        if path.preview_is_a_dir(self) {
+            self._remove(path)
         } else {
-            Err(FileSystemError::Custom("Path does not exists".into()))
+            Err(FileSystemError::Custom("Path is not a directory".into()))
         }
     }
 
@@ -312,14 +302,12 @@ impl WriteFileSystem for Preview {
     /// * The user lacks permissions to remove the file.
     fn remove_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         let path = path.as_ref();
-        if path.preview_exists(self) {
-            if path.preview_is_a_dir(self) {
-                Err(FileSystemError::Custom("Path is a directory".into()))
-            } else {
-                self._remove(path)
-            }
+        self._has_to_exist(path, FileSystemError::Custom("Path does not exists".into()))?;
+
+        if path.preview_is_a_dir(self) {
+            Err(FileSystemError::Custom("Path is a directory".into()))
         } else {
-            Err(FileSystemError::Custom("Path does not exists".into()))
+            self._remove(path)
         }
     }
 }

@@ -84,6 +84,21 @@ impl Node {
         matches!(self.kind, Kind::Deleted)
     }
 
+    pub fn is_directory(&self) -> bool {
+        if let Kind::Directory(_) = self.kind {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn source(&self) -> Option<&Path> {
+        match self.kind {
+            Kind::File(source) => source.and_then(|src| Some(src.as_path())),
+            _ => None
+        }
+    }
+
     pub fn contains(&self, name: &str) -> Result<bool> {
         if let Kind::Directory(children) = &self.kind {
             for child in children {
@@ -214,14 +229,6 @@ impl Node {
             return Ok(Some(&self))
         }
         Ok(None)
-    }
-
-    pub fn is_directory(&self) -> bool {
-        if let Kind::Directory(_) = self.kind {
-            true
-        } else {
-            false
-        }
     }
 
     pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = (PathBuf, &Node)> + 'a>{
