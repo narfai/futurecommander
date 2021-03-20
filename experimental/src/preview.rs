@@ -78,6 +78,18 @@ impl ReadFileSystem for Preview {
 }
 
 impl Preview {
+    fn _create_file(&mut self, path: &Path) -> Result<()> {
+        match path.file_name() {
+            Some(file_name) => {
+                self.root = self.root
+                    .filtered(|parent_path, child| &parent_path.join(child.name()) != path)?
+                    .with_inserted_at(path, &Node::new_file(&file_name.to_string_lossy(), None))?;
+                Ok(())
+            },
+            None => Err(FileSystemError::Custom(String::from("Cannot obtain file name")))
+        }
+    }
+
     fn _create_dir(&mut self, path: &Path) -> Result<()> {
         match path.file_name() {
             Some(file_name) => {
@@ -90,17 +102,20 @@ impl Preview {
         }
     }
 
-    //TODO source inheritance ??
     fn _rename_file(&mut self, from: &Path, to: &Path) -> Result<()> {
+        let source = self.root.find_at_path(from)?
+            .and_then(|node| node.source())
+            .and_then(|src| Some(src.to_path_buf()))
+            .or(Some(from.to_path_buf()));
+
         self.root = self.root
-            .filtered(|parent_path, child| &parent_path.join(child.name()) != from)?
-            .filtered(|parent_path, child| &parent_path.join(child.name()) != to)?
+            .filtered(|parent_path, child| &parent_path.join(child.name()) != from || &parent_path.join(child.name()) != to)?
             .with_inserted_at(
                 to.parent().unwrap(),
                 &Node::new_deleted(&from.file_name().unwrap().to_string_lossy())
             )?.with_inserted_at(
                 to.parent().unwrap(),
-                &Node::new_file(&to.file_name().unwrap().to_string_lossy(), Some(to.to_path_buf()))
+                &Node::new_file(&to.file_name().unwrap().to_string_lossy(), source)
             )?;
         Ok(())
     }
@@ -151,11 +166,35 @@ impl Preview {
             Err(error)
         }
     }
+
+    fn _has_to_not_exist(&self, path: &Path, error: FileSystemError) -> Result<()> {
+        if path.preview_exists(self) {
+            Err(error)
+        } else {
+            Ok(())
+        }
+    }
 }
 
 // TODO map same error behaviors according to real std::fs
 // TODO use then / or to prevent if else nesting hell
 impl WriteFileSystem for Preview {
+    fn create_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
+        let path = path.as_ref();
+        if let Some(parent) = path.parent() {
+            self._has_to_not_exist(path, FileSystemError::Custom(String::from("Path already exists")))?;
+            self._has_to_exist(parent, FileSystemError::Custom(String::from("Parent doesn't exists")))?;
+
+            if parent.preview_is_a_dir(self) {
+                self._create_file(path)
+            } else {
+                Err(FileSystemError::Custom(String::from("Parent is not a directory")))
+            }
+        } else {
+            Err(FileSystemError::Custom(String::from(format!("Invalid path given {}", path.display()))))
+        }
+    }
+
     /**
      * Errors :
      * - User lacks permissions to create directory at `path`.
@@ -165,7 +204,7 @@ impl WriteFileSystem for Preview {
     fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         let path = path.as_ref();
         if let Some(parent) = path.parent() {
-            self._has_to_exist(path, FileSystemError::Custom(String::from("Path already exists")))?;
+            self._has_to_not_exist(path, FileSystemError::Custom(String::from("Path already exists")))?;
             self._has_to_exist(parent, FileSystemError::Custom(String::from("Parent doesn't exists")))?;
 
             if parent.preview_is_a_dir(self) {

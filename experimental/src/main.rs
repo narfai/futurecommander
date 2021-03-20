@@ -8,7 +8,7 @@ mod container;
 use std::{
     path::{ PathBuf, Path },
     result,
-    fs::{ create_dir, create_dir_all, copy, rename, remove_dir, remove_file, remove_dir_all, write }
+    fs::{ create_dir, create_dir_all, copy, rename, remove_dir, remove_file, remove_dir_all, File }
 };
 
 use self::{
@@ -18,7 +18,7 @@ use self::{
 
 pub use {
     container::Container,
-    filesystem::{ ReadFileSystem, WriteFileSystem, FileType, Metadata }
+    filesystem::{ ReadFileSystem, WriteFileSystem, FileType, Metadata, ReadDir }
 };
 
 type Result<T> = result::Result<T, FileSystemError>;
@@ -47,7 +47,7 @@ impl Operation {
             RemoveDirAll(path) => { remove_dir_all(&path)?; },
             CreateDir(path) => { create_dir(&path)?; },
             CreateDirAll(path) => { create_dir_all(&path)?; },
-            CreateFile(path) => { write(&path, b"")?; }
+            CreateFile(path) => { File::create(&path)?; }
         };
         Ok(())
     }
