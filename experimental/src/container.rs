@@ -29,6 +29,12 @@ impl ReadFileSystem for Container {
 }
 
 impl WriteFileSystem for Container {
+    fn create_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
+        self.preview.create_file(&path)?;
+        self.operation_list.push(Operation::CreateFile(path.as_ref().to_path_buf()));
+        Ok(())
+    }
+
     fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         self.preview.create_dir(&path)?;
         self.operation_list.push(Operation::CreateDir(path.as_ref().to_path_buf()));
