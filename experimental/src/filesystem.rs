@@ -24,7 +24,7 @@ pub trait ReadFileSystem {
     fn read_dir<P: AsRef<Path>>(&self, path: P) -> Result<ReadDir>;   // Returns an iterator over the entries within a directory.
 }
 
-pub trait WriteFileSystem {
+pub trait WriteFileSystem : ReadFileSystem {
     fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()>;       // Creates a new, empty directory at the provided path
     fn create_dir_all<P: AsRef<Path>>(&mut self, path: P) -> Result<()>;   // Recursively create a directory and all of its parent components if they are missing.
     fn copy<P: AsRef<Path>, Q: AsRef<Path>>(&mut self, from: P, to: Q) -> Result<u64>;    // Copies the contents of one file to another. This function will also copy the permission bits of the original file to the destination file.

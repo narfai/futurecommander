@@ -65,12 +65,23 @@ impl Node {
         }
     }
 
+    pub fn new_deleted(name: &str) -> Node {
+        Node {
+            kind: Kind::Deleted,
+            name: name.into()
+        }
+    }
+
     pub fn name(&self) -> &OsString {
         &self.name
     }
 
     pub fn kind(&self) -> &Kind {
         &self.kind
+    }
+
+    pub fn is_deleted(&self) -> bool {
+        matches!(self.kind, Kind::Deleted)
     }
 
     pub fn contains(&self, name: &str) -> Result<bool> {
@@ -174,10 +185,6 @@ impl Node {
             }
         }
         None
-    }
-
-    fn _seek_component<'a>(components: &'a Components) -> Option<Component<'a>> {
-        components.clone().next()
     }
 
     pub fn find_at_path(&self, path: &Path) -> Result<Option<&Node>> {

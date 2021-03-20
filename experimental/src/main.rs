@@ -44,7 +44,7 @@ impl Operation {
             Rename(from, to) => { rename(&from, &to)?; },
             RemoveFile(path) => { remove_file(&path)?; },
             RemoveDir(path) => { remove_dir(&path)?; },
-            RemoveDirAll(path) => { remove_dir(&path)?; },
+            RemoveDirAll(path) => { remove_dir_all(&path)?; },
             CreateDir(path) => { create_dir(&path)?; },
             CreateDirAll(path) => { create_dir_all(&path)?; },
             CreateFile(path) => { write(&path, b"")?; }
