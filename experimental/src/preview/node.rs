@@ -5,35 +5,18 @@ use std::{
     hash::{Hash, Hasher},
     ffi::{ OsString, OsStr },
     path::{ Path, PathBuf, Components, Component },
-    cmp::Ordering,
     iter
 };
 
 use crate::{
     path::normalize,
     FileSystemError,
-    Result,
-    FileType
+    Result
 };
 
-#[derive(Debug, Clone)]
-pub enum Kind {
-    Directory(HashSet<Node>),
-    File(Option<PathBuf>),
-    Symlink(PathBuf),
-    Deleted
-}
-
-impl Into<Option<FileType>> for Kind {
-    fn into(self) -> Option<FileType> {
-        match self {
-            Kind::Directory(_) => Some(FileType::Directory),
-            Kind::File(_) => Some(FileType::File),
-            Kind::Symlink(_) => Some(FileType::Symlink),
-            Deleted => None
-        }
-    }
-}
+use super::{
+    kind::Kind
+};
 
 #[derive(Debug, Clone)]
 pub struct Node {
@@ -42,6 +25,18 @@ pub struct Node {
 }
 
 impl Eq for Node {}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        self.name().eq(other.name())
+    }
+}
+
+impl Hash for Node {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name().hash(state);
+    }
+}
 
 impl Node {
     pub fn new_directory(name: &str) -> Node {
@@ -255,19 +250,6 @@ impl Node {
         }
     }
 }
-
-impl PartialEq for Node {
-    fn eq(&self, other: &Self) -> bool {
-        self.name().eq(other.name())
-    }
-}
-
-impl Hash for Node {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.name().hash(state);
-    }
-}
-
 
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]

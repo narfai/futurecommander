@@ -1,20 +1,20 @@
+mod dir_entry;
 mod readdir;
 mod metadata;
+mod file_type;
 mod path_ext;
 
 use std::{
-    path::{ Path, PathBuf },
-    ffi::OsString
+    path::{ Path }
 };
 
-use crate::{
-    Result,
-    error::FileSystemError
-};
+use crate::Result;
 
 pub use self::{
-    readdir::{ ReadDir, DirEntry },
-    metadata::{ FileType, Metadata, FileTypeExt, MetadataExt },
+    readdir::{ ReadDir },
+    dir_entry::{ DirEntry },
+    metadata::{ Metadata, MetadataExt },
+    file_type::{ FileType, FileTypeExt },
     path_ext::{ PathExt }
 };
 

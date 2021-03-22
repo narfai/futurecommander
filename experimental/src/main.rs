@@ -5,6 +5,9 @@ mod filesystem;
 mod preview;
 mod container;
 
+#[cfg(not(tarpaulin_include))]
+pub mod sample;
+
 use std::{
     path::{ PathBuf, Path },
     result,
@@ -18,40 +21,11 @@ use self::{
 
 pub use {
     container::Container,
-    filesystem::{ ReadFileSystem, WriteFileSystem, FileType, Metadata, ReadDir }
+    filesystem::{ ReadFileSystem, WriteFileSystem, FileType, FileTypeExt, Metadata, MetadataExt, ReadDir }
 };
 
 type Result<T> = result::Result<T, FileSystemError>;
 
-
-#[derive(Debug, Clone)]
-pub enum Operation {
-    Copy(PathBuf, PathBuf),
-    Rename(PathBuf, PathBuf),
-    RemoveFile(PathBuf),
-    RemoveDir(PathBuf),
-    RemoveDirAll(PathBuf),
-    CreateDirAll(PathBuf),
-    CreateDir(PathBuf),
-    CreateFile(PathBuf)
-}
-
-impl Operation {
-    pub fn apply(&self) -> Result<()> {
-        use Operation::*;
-        match self {
-            Copy(from, to) => { copy(&from, &to)?; },
-            Rename(from, to) => { rename(&from, &to)?; },
-            RemoveFile(path) => { remove_file(&path)?; },
-            RemoveDir(path) => { remove_dir(&path)?; },
-            RemoveDirAll(path) => { remove_dir_all(&path)?; },
-            CreateDir(path) => { create_dir(&path)?; },
-            CreateDirAll(path) => { create_dir_all(&path)?; },
-            CreateFile(path) => { File::create(&path)?; }
-        };
-        Ok(())
-    }
-}
 
 fn main(){
 
