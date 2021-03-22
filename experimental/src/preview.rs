@@ -81,9 +81,9 @@ impl Preview {
     fn _create_file(&mut self, path: &Path) -> Result<()> {
         match path.file_name() {
             Some(file_name) => {
-                self.root = self.root
-                    .filtered(|parent_path, child| &parent_path.join(child.name()) != path)?
-                    .with_inserted_at(path, &Node::new_file(&file_name.to_string_lossy(), None))?;
+                self.root
+                    .filter(|parent_path, child| &parent_path.join(child.name()) != path)?
+                    .insert_at(path, &Node::new_file(&file_name.to_string_lossy(), None))?;
                 Ok(())
             },
             None => Err(FileSystemError::Custom(String::from("Cannot obtain file name")))
@@ -93,9 +93,9 @@ impl Preview {
     fn _create_dir(&mut self, path: &Path) -> Result<()> {
         match path.file_name() {
             Some(file_name) => {
-                self.root = self.root
-                    .filtered(|parent_path, child| &parent_path.join(child.name()) != path)?
-                    .with_inserted_at(path, &Node::new_directory(&file_name.to_string_lossy()))?;
+                self.root
+                    .filter(|parent_path, child| &parent_path.join(child.name()) != path)?
+                    .insert_at(path, &Node::new_directory(&file_name.to_string_lossy()))?;
                 Ok(())
             },
             None => Err(FileSystemError::Custom(String::from("Cannot obtain file name")))
@@ -108,12 +108,12 @@ impl Preview {
             .and_then(|src| Some(src.to_path_buf()))
             .or(Some(from.to_path_buf()));
 
-        self.root = self.root
-            .filtered(|parent_path, child| &parent_path.join(child.name()) != from || &parent_path.join(child.name()) != to)?
-            .with_inserted_at(
+        self.root
+            .filter(|parent_path, child| &parent_path.join(child.name()) != from || &parent_path.join(child.name()) != to)?
+            .insert_at(
                 to.parent().unwrap(),
                 &Node::new_deleted(&from.file_name().unwrap().to_string_lossy())
-            )?.with_inserted_at(
+            )?.insert_at(
                 to.parent().unwrap(),
                 &Node::new_file(&to.file_name().unwrap().to_string_lossy(), source)
             )?;
@@ -137,24 +137,24 @@ impl Preview {
     }
 
     fn _copy(&mut self, from: &Path, to: &Path) -> Result<u64> {
-        self.root = self.root
-            .filtered(|parent_path, child| &parent_path.join(child.name()) != to)?
-            .with_inserted_at(
+        self.root
+            .filter(|parent_path, child| &parent_path.join(child.name()) != to)?
+            .insert_at(
                 to.parent().unwrap(),
-                &Node::new_file(&to.file_name().unwrap().to_string_lossy(), Some(to.to_path_buf()))
+                &Node::new_file(&to.file_name().unwrap().to_string_lossy(), Some(from.to_path_buf()))
             )?;
         Ok(0)
     }
 
     //TODO
-    fn _are_on_same_filesystem(&self, left: &Path, right: &Path) -> bool {
+    fn _are_on_same_filesystem(&self, _left: &Path, _right: &Path) -> bool {
         true
     }
 
     fn _remove(&mut self, path: &Path) -> Result<()> {
-        self.root = self.root
-            .filtered(|parent_path, child| &parent_path.join(child.name()) != path)?
-            .with_inserted_at(path, &Node::new_deleted(&path.file_name().unwrap().to_string_lossy()))?;
+        self.root
+            .filter(|parent_path, child| &parent_path.join(child.name()) != path)?
+            .insert_at(path, &Node::new_deleted(&path.file_name().unwrap().to_string_lossy()))?;
 
         Ok(())
     }

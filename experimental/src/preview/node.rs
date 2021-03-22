@@ -93,8 +93,8 @@ impl Node {
     }
 
     pub fn source(&self) -> Option<&Path> {
-        match self.kind {
-            Kind::File(source) => source.and_then(|src| Some(src.as_path())),
+        match &self.kind {
+            Kind::File(source) => source.as_ref().and_then(|src| Some(src.as_path())),
             _ => None
         }
     }
@@ -125,8 +125,8 @@ impl Node {
         }
     }
 
-    pub fn with_inserted_at(&self, target_parent_path: &Path, node: &Node) -> Result<Node> {
-        self.build(
+    pub fn insert_at(&mut self, target_parent_path: &Path, node: &Node) -> Result<&mut Self> {
+        *self = self.build(
             &|parent_path, name, kind| {
                 if parent_path.join(&name) == target_parent_path {
                     if let Kind::Directory(children) = kind {
@@ -149,12 +149,13 @@ impl Node {
                     Ok(Node { name, kind })
                 }
             }
-        )
+        )?;
+        Ok(self)
     }
 
-    pub fn filtered<P>(&self, predicate: P) -> Result<Node>
+    pub fn filter<P>(&mut self, predicate: P) -> Result<&mut Self>
     where P: Fn(&Path, &Node) -> bool  {
-        self.build(
+        *self = self.build(
             &|parent_path, name, kind|
             if let Kind::Directory(children) = kind {
                 Ok(Node {
@@ -168,13 +169,35 @@ impl Node {
             } else {
                 Ok(Node { name, kind })
             }
-        )
+        )?;
+        Ok(self)
     }
 
     pub fn build<'a, P>(&self, builder: &'a P) -> Result<Node>
     where P: Fn(PathBuf, OsString, Kind) -> Result<Node>  {
         let parent_path = PathBuf::from(self.name());
         Node::_build(self.kind.clone(), self.name.clone(), builder, parent_path)
+    }
+
+
+    pub fn find<'a, P>(&'a self, predicate: P) -> Option<(PathBuf, &'a Node)>
+    where P: Fn(&Path, &Node) -> bool {
+        for (path, node) in self.iter().skip(1) {
+            if predicate(&path, node){
+                return Some((path, node))
+            }
+        }
+        None
+    }
+
+    pub fn find_at_path(&self, path: &Path) -> Result<Option<&Node>> {
+        let buf = normalize(path);
+        let components = buf.components();
+        self._find_at_path_router(components)
+    }
+
+    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = (PathBuf, &Node)> + 'a>{
+        self._iter(PathBuf::from(self.name()))
     }
 
     fn _build<'a, P>(kind: Kind, name: OsString, builder: &'a P, parent_path: PathBuf) -> Result<Node>
@@ -192,21 +215,6 @@ impl Node {
         } else { builder(parent_path, name, kind ) }
     }
 
-    pub fn find<'a, P>(&'a self, predicate: P) -> Option<(PathBuf, &'a Node)>
-    where P: Fn(&Path, &Node) -> bool {
-        for (path, node) in self.iter().skip(1) {
-            if predicate(&path, node){
-                return Some((path, node))
-            }
-        }
-        None
-    }
-
-    pub fn find_at_path(&self, path: &Path) -> Result<Option<&Node>> {
-        let buf = normalize(path);
-        let components = buf.components();
-        self._find_at_path_router(components)
-    }
 
     fn _find_at_path_router(&self, mut components: Components) -> Result<Option<&Node>> {
         match components.next() {
@@ -229,10 +237,6 @@ impl Node {
             return Ok(Some(&self))
         }
         Ok(None)
-    }
-
-    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = (PathBuf, &Node)> + 'a>{
-        self._iter(PathBuf::from(self.name()))
     }
 
     fn _iter<'a>(&'a self, parent_path: PathBuf) -> Box<dyn Iterator<Item = (PathBuf, &Node)> + 'a>{
@@ -347,7 +351,8 @@ mod tests {
         assert_eq!(&node_a, node.find_at_path(&Path::new("/A")).unwrap().unwrap());
         assert_eq!(&node_c, node.find_at_path(&Path::new("/B/C")).unwrap().unwrap());
 
-        node = node.filtered(|parent_path, child| &parent_path.join(child.name()) != Path::new("/B")).unwrap();
+        node.filter(|parent_path, child| &parent_path.join(child.name()) != Path::new("/B")).unwrap();
+
         assert_eq!(&node_a, node.find_at_path(&Path::new("/A")).unwrap().unwrap());
         assert_eq!(None, node.find_at_path(&Path::new("/B/C")).unwrap());
     }
@@ -357,10 +362,11 @@ mod tests {
         let node_a = Node::new_directory("A");
         let node_d = Node::new_directory("D");
         let node_h = Node::new_file("H", None);
-        let node = Node::new_directory("/")
-            .with_inserted_at(&Path::new("/"), &node_a).unwrap()
-            .with_inserted_at(&Path::new("/A"), &node_d).unwrap()
-            .with_inserted_at(&Path::new("/A/D"), &node_h).unwrap();
+        let mut node = Node::new_directory("/");
+
+        node.insert_at(&Path::new("/"), &node_a).unwrap()
+            .insert_at(&Path::new("/A"), &node_d).unwrap()
+            .insert_at(&Path::new("/A/D"), &node_h).unwrap();
 
         assert_eq!(&node_a, node.find_at_path(&Path::new("/A")).unwrap().unwrap());
         assert_eq!(&node_d, node.find_at_path(&Path::new("/A/D")).unwrap().unwrap());
