@@ -4,12 +4,6 @@ mod metadata;
 mod file_type;
 mod path_ext;
 
-use std::{
-    path::{ Path }
-};
-
-use crate::Result;
-
 pub use self::{
     readdir::{ ReadDir },
     dir_entry::{ DirEntry },
@@ -18,6 +12,12 @@ pub use self::{
     path_ext::{ PathExt }
 };
 
+
+use std::{
+    path::{ Path }
+};
+
+use crate::Result;
 
 pub trait ReadFileSystem {
     fn metadata<P: AsRef<Path>>(&self, path: P) -> Result<Metadata>;  // Given a path, query the file system to get information about a file, directory, etc.
@@ -34,4 +34,3 @@ pub trait WriteFileSystem : ReadFileSystem {
     fn remove_dir_all<P: AsRef<Path>>(&mut self, path: P) -> Result<()>;   // Removes a directory at this path, after removing all its contents. Use carefully!
     fn remove_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()>;      // Removes a file from the filesystem.
 }
-

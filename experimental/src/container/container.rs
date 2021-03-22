@@ -15,6 +15,7 @@ use super::{
     operation::Operation
 };
 
+#[derive(Default)]
 pub struct Container {
     operation_list: Vec<Operation>,
     preview: Preview

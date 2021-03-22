@@ -9,6 +9,8 @@ use crate::{
 };
 
 use super::{ FileTypeExt, DirEntry };
+use std::convert::TryInto;
+use crate::error::FileSystemError;
 
 pub struct ReadDir {
     path: PathBuf,
@@ -31,6 +33,58 @@ impl ReadDir {
             state: ReadDirState::Uninitialized
         }
     }
+
+    fn _initialize(&mut self) -> Option<Result<DirEntry>>{
+        self.path.read_dir()
+            .and_then(|read_dir|
+                read_dir.filter(|entry_result|
+                    entry_result.as_ref().map_or(
+                        true,
+                        |entry |
+                            self.nodes.iter().find(|node|
+                                node.name() == &entry.file_name()
+                            ).is_none()
+                    )
+                ).collect()
+            )
+            .and_then(|children| {
+                self.state = ReadDirState::Real(children);
+                Ok(self.next())
+            })
+            .unwrap_or_else(|err| Some(Err(err.into())))
+    }
+
+    fn _next_real(&mut self, entry: Option<FsDirEntry>) -> Option<Result<DirEntry>> {
+        entry.map(|entry| entry.file_type()
+                .map_err(|err| err.into())
+                .and_then(|file_type| file_type.into_virtual_file_type())
+                .and_then(|virtual_file_type|
+                    Ok(DirEntry::new(&entry.path(), entry.file_name(), virtual_file_type))
+                )
+            ).or_else(|| {
+                self.state = ReadDirState::Virtual;
+                self.next()
+            })
+    }
+
+    fn _next_virtual(&mut self) -> Option<Result<DirEntry>> {
+        self.nodes.pop()
+            .map(|node|
+                node.into_virtual_file_type()
+                    .and_then(|virtual_file_type|
+                        Ok(
+                            DirEntry::new(
+                                &self.path.join(node.name()),
+                                node.name().clone(),
+                                virtual_file_type
+                            )
+                        )
+                    )
+            ).or_else(|| {
+                self.state = ReadDirState::Terminated;
+                self.next()
+            })
+    }
 }
 
 impl Iterator for ReadDir {
@@ -38,65 +92,9 @@ impl Iterator for ReadDir {
     fn next(&mut self) -> Option<Result<DirEntry>> {
         use ReadDirState::*;
         match &mut self.state {
-            Uninitialized => {
-                self.state = Real(
-                    match self.path.read_dir() {
-                        Ok(read_dir) =>
-                            match read_dir.filter(
-                                |entry_result|
-                                    match entry_result {
-                                        Ok(entry) => self.nodes.iter().find(
-                                            |node|node.name() == &entry.file_name()
-                                        ).is_none(),
-                                        Err(err) => true
-                                    }
-                            ).collect() {
-                                Ok(dir_entries) => dir_entries,
-                                Err(err) => return Some(Err(err.into()))
-                            },
-                        Err(err) => return Some(Err(err.into()))
-                    }
-                );
-
-                None
-            },
-            Real(dir_entries) => {
-                match dir_entries.pop() {
-                    Some(entry) => match entry.file_type() {
-                        Ok(file_type) => Some(
-                            file_type.into_virtual_file_type().and_then(
-                                |virtual_file_type| Ok(DirEntry::new(&entry.path(), entry.file_name(), virtual_file_type))
-                            )
-                        ),
-                        Err(err) => Some(Err(err.into()))
-                    },
-                    None => {
-                        self.state = Virtual;
-                        self.next()
-                    }
-                }
-            },
-            Virtual => {
-                match self.nodes.pop() {
-                    Some(node) => Some(
-                        node.into_virtual_file_type()
-                            .and_then(|virtual_file_type|
-                                Ok(  //TODO DirEntryExt (&Path, &Node) DirEntry
-                                    DirEntry::new(
-                                        &self.path.join(node.name()),
-                                        node.name().clone(),
-                                        virtual_file_type
-                                    )
-                                )
-                            )
-                        )
-                    ,
-                    None => {
-                        self.state = Terminated;
-                        self.next()
-                    }
-                }
-            },
+            Uninitialized => self._initialize(),
+            Real(dir_entries) => self._next_real(dir_entries.pop()),
+            Virtual => self._next_virtual(),
             Terminated => None
         }
     }

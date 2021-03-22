@@ -1,5 +1,3 @@
-// ================================================================= //
-
 use std::{
     collections::HashSet,
     hash::{Hash, Hasher},
@@ -22,6 +20,12 @@ use super::{
 pub struct Node {
     kind: Kind,
     name: OsString
+}
+
+impl Default for Node {
+    fn default() -> Self {
+        Node::new_directory("/")
+    }
 }
 
 impl Eq for Node {}
@@ -168,14 +172,14 @@ impl Node {
         Ok(self)
     }
 
-    pub fn build<'a, P>(&self, builder: &'a P) -> Result<Node>
+    pub fn build<P>(&self, builder: &P) -> Result<Node>
     where P: Fn(PathBuf, OsString, Kind) -> Result<Node>  {
         let parent_path = PathBuf::from(self.name());
         Node::_build(self.kind.clone(), self.name.clone(), builder, parent_path)
     }
 
 
-    pub fn find<'a, P>(&'a self, predicate: P) -> Option<(PathBuf, &'a Node)>
+    pub fn find<P>(&self, predicate: P) -> Option<(PathBuf, &Node)>
     where P: Fn(&Path, &Node) -> bool {
         for (path, node) in self.iter().skip(1) {
             if predicate(&path, node){
@@ -195,7 +199,7 @@ impl Node {
         self._iter(PathBuf::from(self.name()))
     }
 
-    fn _build<'a, P>(kind: Kind, name: OsString, builder: &'a P, parent_path: PathBuf) -> Result<Node>
+    fn _build<P>(kind: Kind, name: OsString, builder: &P, parent_path: PathBuf) -> Result<Node>
     where P: Fn(PathBuf, OsString, Kind) -> Result<Node>  {
         if let Kind::Directory(children) = kind {
             let new_parent_path = parent_path.join(&name);
@@ -271,7 +275,7 @@ mod tests {
                     .unwrap()
             ).unwrap();
 
-        let collection : Vec<PathBuf>= node.iter().map(|(path, item)| path.to_path_buf()).collect();
+        let collection : Vec<PathBuf>= node.iter().map(|(path, _item)| path.to_path_buf()).collect();
         collection.contains(&PathBuf::from("/"));
         collection.contains(&PathBuf::from("/A"));
         collection.contains(&PathBuf::from("/B"));

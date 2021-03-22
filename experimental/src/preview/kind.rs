@@ -1,10 +1,6 @@
 use std::{
     collections::HashSet,
-    hash::{Hash, Hasher},
-    ffi::{ OsString, OsStr },
-    path::{ Path, PathBuf, Components, Component },
-    cmp::Ordering,
-    iter
+    path::{ PathBuf },
 };
 
 use crate::{
@@ -29,7 +25,7 @@ impl Into<Option<FileType>> for Kind {
             Kind::Directory(_) => Some(FileType::Directory),
             Kind::File(_) => Some(FileType::File),
             Kind::Symlink(_) => Some(FileType::Symlink),
-            Deleted => None
+            Kind::Deleted => None
         }
     }
 }

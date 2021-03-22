@@ -1,8 +1,15 @@
 pub mod node;
 pub mod kind;
+
+mod read_filesystem;
+mod write_filesystem;
 mod preview;
 
 #[cfg(not(tarpaulin_include))]
-pub mod sample;
+#[cfg(test)]
+pub mod tests;
 
-pub use self::preview::Preview;
+#[derive(Default)]
+pub struct Preview {
+    root: node::Node
+}
