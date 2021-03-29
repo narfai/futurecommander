@@ -19,9 +19,9 @@ pub enum Kind {
     Deleted
 }
 
-impl Into<Option<FileType>> for Kind {
-    fn into(self) -> Option<FileType> {
-        match self {
+impl From<Kind> for Option<FileType> {
+    fn from(kind: Kind) -> Option<FileType> {
+        match kind {
             Kind::Directory(_) => Some(FileType::Directory),
             Kind::File(_) => Some(FileType::File),
             Kind::Symlink(_) => Some(FileType::Symlink),

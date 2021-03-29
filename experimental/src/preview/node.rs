@@ -84,16 +84,12 @@ impl Node {
     }
 
     pub fn is_directory(&self) -> bool {
-        if let Kind::Directory(_) = self.kind {
-            true
-        } else {
-            false
-        }
+        matches!(self.kind, Kind::Directory(_))
     }
 
     pub fn source(&self) -> Option<&Path> {
         match &self.kind {
-            Kind::File(source) => source.as_ref().and_then(|src| Some(src.as_path())),
+            Kind::File(source) => source.as_ref().map(|src| src.as_path()),
             _ => None
         }
     }

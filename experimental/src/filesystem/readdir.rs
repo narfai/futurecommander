@@ -9,8 +9,6 @@ use crate::{
 };
 
 use super::{ FileTypeExt, DirEntry };
-use std::convert::TryInto;
-use crate::error::FileSystemError;
 
 pub struct ReadDir {
     path: PathBuf,
@@ -47,9 +45,9 @@ impl ReadDir {
                     )
                 ).collect()
             )
-            .and_then(|children| {
+            .map(|children| {
                 self.state = ReadDirState::Real(children);
-                Ok(self.next())
+                self.next()
             })
             .unwrap_or_else(|err| Some(Err(err.into())))
     }
@@ -58,9 +56,7 @@ impl ReadDir {
         entry.map(|entry| entry.file_type()
                 .map_err(|err| err.into())
                 .and_then(|file_type| file_type.into_virtual_file_type())
-                .and_then(|virtual_file_type|
-                    Ok(DirEntry::new(&entry.path(), entry.file_name(), virtual_file_type))
-                )
+                .map(|virtual_file_type| DirEntry::new(&entry.path(), entry.file_name(), virtual_file_type))
             ).or_else(|| {
                 self.state = ReadDirState::Virtual;
                 self.next()
@@ -71,13 +67,11 @@ impl ReadDir {
         self.nodes.pop()
             .map(|node|
                 node.into_virtual_file_type()
-                    .and_then(|virtual_file_type|
-                        Ok(
-                            DirEntry::new(
-                                &self.path.join(node.name()),
-                                node.name().clone(),
-                                virtual_file_type
-                            )
+                    .map(|virtual_file_type|
+                        DirEntry::new(
+                            &self.path.join(node.name()),
+                            node.name().clone(),
+                            virtual_file_type
                         )
                     )
             ).or_else(|| {
@@ -93,7 +87,15 @@ impl Iterator for ReadDir {
         use ReadDirState::*;
         match &mut self.state {
             Uninitialized => self._initialize(),
-            Real(dir_entries) => self._next_real(dir_entries.pop()),
+            Real(dir_entries) =>
+                dir_entries.pop().map(|entry| entry.file_type()
+                    .map_err(|err| err.into())
+                    .and_then(|file_type| file_type.into_virtual_file_type())
+                    .map(|virtual_file_type| DirEntry::new(&entry.path(), entry.file_name(), virtual_file_type))
+                ).or_else(|| {
+                    self.state = ReadDirState::Virtual;
+                    self.next()
+                }),
             Virtual => self._next_virtual(),
             Terminated => None
         }

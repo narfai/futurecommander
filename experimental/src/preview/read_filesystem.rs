@@ -47,7 +47,7 @@ impl ReadFileSystem for Preview {
             if node.is_deleted(){
                 Err(FileSystemError::Custom(String::from("Path does not exists")))
             } else if let Kind::Directory(children) = node.kind() {
-                Ok(ReadDir::new(path, children.iter().map(|node| node.clone()).collect()))
+                Ok(ReadDir::new(path, children.iter().cloned().collect()))
             } else {
                 Err(FileSystemError::Custom(String::from("Not a directory")))
             }

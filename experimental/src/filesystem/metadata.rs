@@ -19,7 +19,7 @@ impl Metadata {
     pub fn new(file_type: FileType) -> Self {
         Metadata { file_type }
     }
-    pub fn file_type(&self) -> FileType { self.file_type.clone() }
+    pub fn file_type(&self) -> FileType { self.file_type }
     pub fn is_dir(&self) -> bool { self.file_type().is_dir() }
     pub fn is_file(&self) -> bool { self.file_type().is_file() }
     // pub fn len(&self) -> u64 { unimplemented!(); }

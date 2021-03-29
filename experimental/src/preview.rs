@@ -3,7 +3,7 @@ pub mod kind;
 
 mod read_filesystem;
 mod write_filesystem;
-mod preview;
+mod internal;
 
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]

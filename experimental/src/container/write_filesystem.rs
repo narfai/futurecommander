@@ -1,35 +1,15 @@
-use std::{
-    path::Path
-};
+use std::path::Path;
 
 use crate::{
     Result,
-    Preview,
-    WriteFileSystem,
-    ReadFileSystem,
-    Metadata,
-    ReadDir
+    WriteFileSystem
 };
 
 use super::{
+    Container,
     operation::Operation
 };
 
-#[derive(Default)]
-pub struct Container {
-    operation_list: Vec<Operation>,
-    preview: Preview
-}
-
-impl ReadFileSystem for Container {
-    fn metadata<P: AsRef<Path>>(&self, path: P) -> Result<Metadata> {
-        self.preview.metadata(path)
-    }
-
-    fn read_dir<P: AsRef<Path>>(&self, path: P) -> Result<ReadDir> {
-        self.preview.read_dir(path)
-    }
-}
 
 impl WriteFileSystem for Container {
     fn create_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {

@@ -15,29 +15,33 @@ use crate::{
 
 impl Preview {
     pub (in super) fn _create_file(&mut self, path: &Path) -> Result<()> {
-        path.file_name().map(|file_name| {
-            self.root
-                .filter(|parent_path, child| &parent_path.join(child.name()) != path)?
-                .insert_at(path, &Node::new_file(&file_name.to_string_lossy(), None))?;
-        }).ok_or(FileSystemError::Custom(String::from("Cannot obtain file name")))
+        let file_name = path.file_name().ok_or_else(|| FileSystemError::Custom(String::from("Cannot obtain file name")))?;
+
+        self.root
+            .filter(|parent_path, child| parent_path.join(child.name()) != path)?
+            .insert_at(path, &Node::new_file(&file_name.to_string_lossy(), None))?;
+
+        Ok(())
     }
 
     pub (in super) fn _create_dir(&mut self, path: &Path) -> Result<()> {
-        path.file_name().map(|file_name| {
-            self.root
-                .filter(|parent_path, child| &parent_path.join(child.name()) != path)?
-                .insert_at(path, &Node::new_directory(&file_name.to_string_lossy()))?;
-        }).ok_or(FileSystemError::Custom(String::from("Cannot obtain file name")))
+        let file_name = path.file_name().ok_or_else(|| FileSystemError::Custom(String::from("Cannot obtain file name")))?;
+
+        self.root
+            .filter(|parent_path, child| parent_path.join(child.name()) != path)?
+            .insert_at(path, &Node::new_directory(&file_name.to_string_lossy()))?;
+
+        Ok(())
     }
 
     pub (in super) fn _rename_file(&mut self, from: &Path, to: &Path) -> Result<()> {
         let source = self.root.find_at_path(from)?
             .and_then(|node| node.source())
-            .and_then(|src| Some(src.to_path_buf()))
-            .or(Some(from.to_path_buf()));
+            .map(|src| src.to_path_buf())
+            .or_else(|| Some(from.to_path_buf()));
 
         self.root
-            .filter(|parent_path, child| &parent_path.join(child.name()) != from || &parent_path.join(child.name()) != to)?
+            .filter(|parent_path, child| parent_path.join(child.name()) != from || parent_path.join(child.name()) != to)?
             .insert_at(
                 to.parent().unwrap(),
                 &Node::new_deleted(&from.file_name().unwrap().to_string_lossy())
@@ -66,7 +70,7 @@ impl Preview {
 
     pub (in super) fn _copy(&mut self, from: &Path, to: &Path) -> Result<u64> {
         self.root
-            .filter(|parent_path, child| &parent_path.join(child.name()) != to)?
+            .filter(|parent_path, child| parent_path.join(child.name()) != to)?
             .insert_at(
                 to.parent().unwrap(),
                 &Node::new_file(&to.file_name().unwrap().to_string_lossy(), Some(from.to_path_buf()))
@@ -81,7 +85,7 @@ impl Preview {
 
     pub (in super) fn _remove(&mut self, path: &Path) -> Result<()> {
         self.root
-            .filter(|parent_path, child| &parent_path.join(child.name()) != path)?
+            .filter(|parent_path, child| parent_path.join(child.name()) != path)?
             .insert_at(path, &Node::new_deleted(&path.file_name().unwrap().to_string_lossy()))?;
 
         Ok(())

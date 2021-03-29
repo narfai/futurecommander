@@ -28,7 +28,7 @@ impl WriteFileSystem for Preview {
                 Err(FileSystemError::Custom(String::from("Parent is not a directory")))
             }
         } else {
-            Err(FileSystemError::Custom(String::from(format!("Invalid path given {}", path.display()))))
+            Err(FileSystemError::Custom(format!("Invalid path given {}", path.display())))
         }
     }
 
@@ -50,7 +50,7 @@ impl WriteFileSystem for Preview {
                 Err(FileSystemError::Custom(String::from("Parent is not a directory")))
             }
         } else {
-            Err(FileSystemError::Custom(String::from(format!("Invalid path given {}", path.display()))))
+            Err(FileSystemError::Custom(format!("Invalid path given {}", path.display())))
         }
     }
 

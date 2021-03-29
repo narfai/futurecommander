@@ -1,4 +1,11 @@
-mod container;
 mod operation;
+mod read_filesystem;
+mod write_filesystem;
 
-pub use container::Container;
+use crate::Preview;
+
+#[derive(Default)]
+pub struct Container {
+    operation_list: Vec<operation::Operation>,
+    preview: Preview
+}
