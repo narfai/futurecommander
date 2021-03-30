@@ -5,7 +5,8 @@ use std::{
     fs::{ File, create_dir, remove_dir_all },
     io::Write,
     env::current_exe,
-    path::{ PathBuf, Path }
+    path::{ PathBuf, Path },
+    time::{ SystemTime, UNIX_EPOCH }
 };
 
 pub fn sample_path() -> PathBuf {
@@ -19,6 +20,7 @@ pub fn sample_path() -> PathBuf {
 
 pub fn static_samples_path() -> PathBuf {
     let sample_path = sample_path().join("static");
+    println!("SAMPLE PATH {:?}", sample_path);
     assert!(sample_path.join("A").exists());
     assert!(sample_path.join("B").exists());
     assert!(sample_path.join("F").exists());
@@ -51,61 +53,88 @@ pub fn create_sample_file(chroot: &Path, path: &Path) {
     assert!(chroot.join(path).exists());
 }
 
-pub fn init_empty_chroot(arbitrary_identifier: &str) -> PathBuf {
-    let chroot = dynamic_samples_path().join(format!("chroot_{}", arbitrary_identifier));
+pub struct Chroot {
+    pub name: String,
+    pub id: u32
+}
 
-    if chroot.exists() {
-        remove_dir_all(chroot.as_path()).unwrap();
+impl Chroot {
+    pub fn new(name: &str) -> Self {
+        Chroot {
+            name: name.to_owned(),
+            id: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .subsec_nanos()
+        }
     }
 
-    create_dir(chroot.as_path()).unwrap();
-    assert!(chroot.exists());
+    pub fn path(&self) -> PathBuf {
+        dynamic_samples_path().join(format!("chroot_{}_{}", self.name, self.id))
+    }
 
-    chroot
-}
+    pub fn init_empty(&self) -> PathBuf {
+        let path = self.clean();
 
-pub fn init_simple_chroot(arbitrary_identifier: &str) -> PathBuf {
-    let chroot = init_empty_chroot(arbitrary_identifier);
+        create_dir(&path).unwrap();
+        assert!(path.exists());
 
-    create_dir(chroot.join("RDIR")).unwrap();
-    assert!(chroot.join("RDIR").exists());
+        path
+    }
 
-    create_dir(chroot.join("RDIR2")).unwrap();
-    assert!(chroot.join("RDIR2").exists());
+    pub fn init_simple(&self) -> PathBuf {
+        let chroot = self.init_empty();
 
-    create_dir(chroot.join("RDIR3")).unwrap();
-    assert!(chroot.join("RDIR3").exists());
+        create_dir(chroot.join("RDIR")).unwrap();
+        assert!(chroot.join("RDIR").exists());
 
-    create_sample_file(chroot.as_path(), Path::new("RDIR").join("RFILEA").as_path());
-    create_sample_file(chroot.as_path(), Path::new("RDIR").join("RFILEB").as_path());
-    create_sample_file(chroot.as_path(), Path::new("RDIR2").join("RFILEA").as_path());
-    create_sample_file(chroot.as_path(), Path::new("RDIR2").join("RFILEC").as_path());
+        create_dir(chroot.join("RDIR2")).unwrap();
+        assert!(chroot.join("RDIR2").exists());
+
+        create_dir(chroot.join("RDIR3")).unwrap();
+        assert!(chroot.join("RDIR3").exists());
+
+        create_sample_file(chroot.as_path(), Path::new("RDIR").join("RFILEA").as_path());
+        create_sample_file(chroot.as_path(), Path::new("RDIR").join("RFILEB").as_path());
+        create_sample_file(chroot.as_path(), Path::new("RDIR2").join("RFILEA").as_path());
+        create_sample_file(chroot.as_path(), Path::new("RDIR2").join("RFILEC").as_path());
 
 
-    chroot
-}
+        chroot
+    }
 
-pub fn init_advanced_chroot(arbitrary_identifier: &str) -> PathBuf {
-    let chroot = init_empty_chroot(arbitrary_identifier);
+    pub fn init_advanced_chroot(&self) -> PathBuf {
+        let chroot = self.init_empty();
 
-    create_sample_file(chroot.as_path(), Path::new("F"));
+        create_sample_file(chroot.as_path(), Path::new("F"));
 
-    create_dir(chroot.join("A")).unwrap();
-    assert!(chroot.join("A").exists());
+        create_dir(chroot.join("A")).unwrap();
+        assert!(chroot.join("A").exists());
 
-    create_sample_file(chroot.as_path(), Path::new("A").join("C").as_path());
+        create_sample_file(chroot.as_path(), Path::new("A").join("C").as_path());
 
-    create_dir(chroot.join("B")).unwrap();
-    assert!(chroot.join("B").exists());
+        create_dir(chroot.join("B")).unwrap();
+        assert!(chroot.join("B").exists());
 
-    create_dir(chroot.join("B/D")).unwrap();
-    assert!(chroot.join("B/D").exists());
+        create_dir(chroot.join("B/D")).unwrap();
+        assert!(chroot.join("B/D").exists());
 
-    create_dir(chroot.join("B/D/E")).unwrap();
-    assert!(chroot.join("B/D/E").exists());
+        create_dir(chroot.join("B/D/E")).unwrap();
+        assert!(chroot.join("B/D/E").exists());
 
-    create_dir(chroot.join("B/D/G")).unwrap();
-    assert!(chroot.join("B/D/G").exists());
+        create_dir(chroot.join("B/D/G")).unwrap();
+        assert!(chroot.join("B/D/G").exists());
 
-    chroot
+        chroot
+    }
+
+    pub fn clean(&self) -> PathBuf {
+        let path = self.path();
+
+        if path.exists() {
+            remove_dir_all(&path).unwrap();
+        }
+
+        path
+    }
 }

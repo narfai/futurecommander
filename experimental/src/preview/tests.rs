@@ -24,7 +24,6 @@ fn file_dir_interversion() {
         └── E (File)
     */
 
-    let chroot = init_empty_chroot("preview_file_dir_interversion");
     let preview = Preview::default();
 
 

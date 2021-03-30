@@ -18,17 +18,15 @@ use crate::{
 impl WriteFileSystem for Preview {
     fn create_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         let path = path.as_ref();
-        if let Some(parent) = path.parent() {
-            self._has_to_not_exist(path, FileSystemError::Custom(String::from("Path already exists")))?;
-            self._has_to_exist(parent, FileSystemError::Custom(String::from("Parent doesn't exists")))?;
+        let parent = path.parent().ok_or_else(|| FileSystemError::Custom(format!("Invalid path given {}", path.display())))?;
 
-            if parent.preview_is_a_dir(self) {
-                self._create_file(path)
-            } else {
-                Err(FileSystemError::Custom(String::from("Parent is not a directory")))
-            }
+        self._has_to_not_exist(path, FileSystemError::Custom(String::from("Path already exists")))?;
+        self._has_to_exist(parent, FileSystemError::Custom(String::from("Parent doesn't exists")))?;
+
+        if parent.preview_is_a_dir(self) {
+            self._create_file(path)
         } else {
-            Err(FileSystemError::Custom(format!("Invalid path given {}", path.display())))
+            Err(FileSystemError::Custom(String::from("Parent is not a directory")))
         }
     }
 
@@ -40,17 +38,15 @@ impl WriteFileSystem for Preview {
      */
     fn create_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         let path = path.as_ref();
-        if let Some(parent) = path.parent() {
-            self._has_to_not_exist(path, FileSystemError::Custom(String::from("Path already exists")))?;
-            self._has_to_exist(parent, FileSystemError::Custom(String::from("Parent doesn't exists")))?;
+        let parent = path.parent().ok_or_else(|| FileSystemError::Custom(format!("Invalid path given {}", path.display())))?;
 
-            if parent.preview_is_a_dir(self) {
-                self._create_dir(path)
-            } else {
-                Err(FileSystemError::Custom(String::from("Parent is not a directory")))
-            }
+        self._has_to_not_exist(path, FileSystemError::Custom(String::from("Path already exists")))?;
+        self._has_to_exist(parent, FileSystemError::Custom(String::from("Parent doesn't exists")))?;
+
+        if parent.preview_is_a_dir(self) {
+            self._create_dir(path)
         } else {
-            Err(FileSystemError::Custom(format!("Invalid path given {}", path.display())))
+            Err(FileSystemError::Custom(String::from("Parent is not a directory")))
         }
     }
 
@@ -129,12 +125,11 @@ impl WriteFileSystem for Preview {
         self._has_to_exists(from, FileSystemError::Custom("From does not exists".into()))?;
 
         if self._are_on_same_filesystem(from, to) {
-            if to.preview_exists(self) {
-                if to.preview_is_a_dir(self) {
-                    return Err(FileSystemError::Custom("To cannot be a directory".into()));
-                }
+            if to.preview_exists(self) && to.preview_is_a_dir(self) {
+                Err(FileSystemError::Custom("To cannot be a directory".into()));
+            } else {
+                self._rename(from, to)
             }
-            self._rename(from, to)
         } else {
             Err(FileSystemError::Custom("From and to are not on the same filesystem".into()))
         }
@@ -185,5 +180,39 @@ impl WriteFileSystem for Preview {
         } else {
             self._remove(path)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::{
+        path::PathBuf,
+        collections::HashSet,
+        io::{ stdout }
+    };
+    use super::*;
+    use crate::{
+        sample::*,
+        filesystem::{PathExt, FileTypeExt},
+        preview::node::Node
+    };
+
+
+    #[test]
+    fn preview_created_file_exists_virtually() {
+        let chroot_path = static_samples_path();
+        let mut preview = Preview::default();
+        let target_path = chroot_path.join("HAS_TO_EXISTS");
+
+        // preview.create_file(&target_path).unwrap();
+        let mut root = preview.root;
+        //TODO insert_at a subpath with has no existing parents in the node doesn't work !!
+        root.insert_at(&chroot_path, &Node::new_file("HAS_TO_EXISTS", None));
+        println!("{:?}", root.find_at_path(&target_path).unwrap());
+
+
+        // preview.tree(&mut stdout(), &chroot_path).unwrap();
+        //println!("{:?}", target_path.preview_metadata(&preview).unwrap().file_type());
+        // assert!(target_path.preview_exists(&preview));
     }
 }

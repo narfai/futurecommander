@@ -62,3 +62,64 @@ impl ReadFileSystem for Preview {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::{
+        path::PathBuf,
+        collections::HashSet
+    };
+    use super::*;
+    use crate::{
+        sample::*,
+        filesystem::{PathExt, FileTypeExt}
+    };
+
+    #[test]
+    fn read_dir_preview_iso_with_real() {
+        let chroot = Chroot::new("read_dir_preview_iso_with_real");
+        let chroot_path = chroot.init_simple();
+
+        let preview = Preview::default();
+
+        let real_read_dir_path_set : HashSet<PathBuf> = chroot_path.read_dir().unwrap().map(|dir_entry| dir_entry.unwrap().path()).collect();
+        let preview_read_dir_path_set : HashSet<PathBuf> = chroot_path.preview_read_dir(&preview).unwrap().map(|dir_entry| dir_entry.unwrap().path()).collect();
+
+        assert_eq!(real_read_dir_path_set, preview_read_dir_path_set);
+        chroot.clean();
+    }
+
+    #[test]
+    fn dir_metadata_iso_with_real() {
+        let chroot = Chroot::new("dir_metadata_iso_with_real");
+        let chroot_path = chroot.init_simple();
+
+        let preview = Preview::default();
+
+        let real_metadata = chroot_path.join("RDIR").metadata().unwrap();
+        let preview_metadata = chroot_path.join("RDIR").preview_metadata(&preview).unwrap();
+
+        assert_eq!(real_metadata.is_dir(), preview_metadata.is_dir());
+        assert_eq!(real_metadata.is_file(), preview_metadata.is_file());
+        assert_eq!(real_metadata.file_type().into_virtual_file_type().unwrap(), preview_metadata.file_type());
+
+        chroot.clean();
+    }
+
+    #[test]
+    fn file_metadata_iso_with_real() {
+        let chroot = Chroot::new("file_metadata_iso_with_real");
+        let chroot_path = chroot.init_simple();
+
+        let preview = Preview::default();
+
+        let real_metadata = chroot_path.join("RDIR/RFILEA").metadata().unwrap();
+        let preview_metadata = chroot_path.join("RDIR/RFILEA").preview_metadata(&preview).unwrap();
+
+        assert_eq!(real_metadata.is_dir(), preview_metadata.is_dir());
+        assert_eq!(real_metadata.is_file(), preview_metadata.is_file());
+        assert_eq!(real_metadata.file_type().into_virtual_file_type().unwrap(), preview_metadata.file_type());
+
+        chroot.clean();
+    }
+}

@@ -17,6 +17,7 @@ impl Preview {
     pub (in super) fn _create_file(&mut self, path: &Path) -> Result<()> {
         let file_name = path.file_name().ok_or_else(|| FileSystemError::Custom(String::from("Cannot obtain file name")))?;
 
+        //TODO ensure the parent ancestors existence here
         self.root
             .filter(|parent_path, child| parent_path.join(child.name()) != path)?
             .insert_at(path, &Node::new_file(&file_name.to_string_lossy(), None))?;
@@ -27,6 +28,7 @@ impl Preview {
     pub (in super) fn _create_dir(&mut self, path: &Path) -> Result<()> {
         let file_name = path.file_name().ok_or_else(|| FileSystemError::Custom(String::from("Cannot obtain file name")))?;
 
+        //TODO ensure the parent ancestors existence here
         self.root
             .filter(|parent_path, child| parent_path.join(child.name()) != path)?
             .insert_at(path, &Node::new_directory(&file_name.to_string_lossy()))?;
@@ -40,6 +42,8 @@ impl Preview {
             .map(|src| src.to_path_buf())
             .or_else(|| Some(from.to_path_buf()));
 
+        //TODO ensure the parent ancestors existence here for to
+        //TODO clean the from
         self.root
             .filter(|parent_path, child| parent_path.join(child.name()) != from || parent_path.join(child.name()) != to)?
             .insert_at(
@@ -53,6 +57,8 @@ impl Preview {
     }
 
     pub (in super) fn _rename(&mut self, from: &Path, to: &Path) -> Result<()> {
+        //TODO ensure the parent ancestors existence here for to
+        //TODO clean the from
         if from.preview_is_a_dir(self) {
             for child_result in from.preview_read_dir(self)? {
                 let child = child_result?;
@@ -69,6 +75,8 @@ impl Preview {
     }
 
     pub (in super) fn _copy(&mut self, from: &Path, to: &Path) -> Result<u64> {
+        //TODO ensure the parent ancestors existence here for to
+        //TODO clean the from
         self.root
             .filter(|parent_path, child| parent_path.join(child.name()) != to)?
             .insert_at(

@@ -336,11 +336,12 @@ mod tests {
         node.filter(|parent_path, child| &parent_path.join(child.name()) != Path::new("/B")).unwrap();
 
         assert_eq!(&node_a, node.find_at_path(&Path::new("/A")).unwrap().unwrap());
+        assert_eq!(None, node.find_at_path(&Path::new("/B")).unwrap());
         assert_eq!(None, node.find_at_path(&Path::new("/B/C")).unwrap());
     }
 
     #[test]
-    fn test_insertion() {
+    fn test_insertion_at_root() {
         let node_a = Node::new_directory("A");
         let node_d = Node::new_directory("D");
         let node_h = Node::new_file("H", None);
@@ -353,5 +354,10 @@ mod tests {
         assert_eq!(&node_a, node.find_at_path(&Path::new("/A")).unwrap().unwrap());
         assert_eq!(&node_d, node.find_at_path(&Path::new("/A/D")).unwrap().unwrap());
         assert_eq!(&node_h, node.find_at_path(&Path::new("/A/D/H")).unwrap().unwrap());
+    }
+
+    #[test]
+    fn test_dangling_insertion() {
+
     }
 }
