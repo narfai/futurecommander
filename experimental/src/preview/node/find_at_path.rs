@@ -27,15 +27,16 @@ impl PreviewNode {
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod tests {
+    use std::{ ffi::OsStr, path::Component };
     use super::*;
 
     #[test]
     fn test_find_at_path() {
-        let node_c = PreviewNode::new_file("C", None);
-        let node_b = PreviewNode::new_directory_with_children("B", vec![node_c.clone()]);
-        let node_a = PreviewNode::new_file("A", None);
+        let node_c = PreviewNode::new_file(OsStr::new("C"), None);
+        let node_b = PreviewNode::new_directory_with_children(OsStr::new("B"), vec![node_c.clone()]);
+        let node_a = PreviewNode::new_file(OsStr::new("A"), None);
 
-        let node = PreviewNode::new_directory_with_children("/",
+        let node = PreviewNode::new_directory_with_children(Component::RootDir.as_os_str(),
             vec![
                 node_a.clone(),
                 node_b.clone()

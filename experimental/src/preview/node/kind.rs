@@ -21,7 +21,7 @@ use crate::preview::{
 //TODO  Rename in FileType and replace the actual filesystem FileTypeExt impl
 #[derive(Debug, Clone, Eq)]
 pub enum PreviewNodeKind {
-    Directory(HashSet<PreviewNode>),
+    Directory(Vec<PreviewNode>),
     File(Option<PathBuf>),
     Symlink(PathBuf),
     Deleted

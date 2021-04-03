@@ -29,7 +29,7 @@ pub struct PreviewNode {
 
 impl Default for PreviewNode {
     fn default() -> Self {
-        PreviewNode::new_directory("/")
+        PreviewNode::new_directory(Component::RootDir.as_os_str())
     }
 }
 
@@ -50,38 +50,38 @@ impl Hash for PreviewNode {
 impl PreviewNode {
     pub fn name(&self) -> &OsStr { &self.name }
 
-    pub fn new_directory(name: &str) -> Self {
+    pub fn new_directory(name: &OsStr) -> Self {
         PreviewNode {
-            kind: PreviewNodeKind::Directory(HashSet::new()),
-            name: name.into()
+            kind: PreviewNodeKind::Directory(Vec::new()),
+            name: name.to_owned(),
         }
     }
 
-    pub fn new_directory_with_children(name: &str, children: Vec<PreviewNode>) -> Self {
+    pub fn new_directory_with_children(name: &OsStr, children: Vec<PreviewNode>) -> Self {
         PreviewNode {
             kind: PreviewNodeKind::Directory(children.into_iter().collect()),
-            name: name.into()
+            name: name.to_owned(),
         }
     }
 
-    pub fn new_file(name: &str, source: Option<PathBuf>) -> Self {
+    pub fn new_file(name: &OsStr, source: Option<PathBuf>) -> Self {
         PreviewNode {
             kind: PreviewNodeKind::File(source),
-            name: name.into()
+            name: name.to_owned(),
         }
     }
 
-    pub fn new_symlink(name: &str, path: &Path) -> Self {
+    pub fn new_symlink(name: &OsStr, path: &Path) -> Self {
         PreviewNode {
             kind: PreviewNodeKind::Symlink(path.to_path_buf()),
-            name: name.into()
+            name: name.to_owned(),
         }
     }
 
-    pub fn new_deleted(name: &str) -> Self {
+    pub fn new_deleted(name: &OsStr) -> Self {
         PreviewNode {
             kind: PreviewNodeKind::Deleted,
-            name: name.into()
+            name: name.to_owned(),
         }
     }
 
@@ -96,9 +96,9 @@ impl PreviewNode {
         }
     }
 
-    pub fn children(&self) -> Option<&HashSet<PreviewNode>> {
+    pub fn children(&self) -> Option<&Vec<PreviewNode>> {
         if let PreviewNodeKind::Directory(children) = &self.kind {
-            Some(&children)
+            Some(children)
         } else {
             None
         }
@@ -107,139 +107,6 @@ impl PreviewNode {
     pub fn is_deleted(&self) -> bool {
         self.kind.is_deleted()
     }
-
-    // pub fn insert(&mut self, node: Node) -> Result<()>{
-    //     if let Kind::Directory(children) = &mut self.kind {
-    //         if children.contains(&node){
-    //             Err(FileSystemError::Custom(String::from("Cannot be inserted")))
-    //         } else {
-    //             children.insert(node);
-    //             Ok(())
-    //         }
-    //     } else {
-    //         Err(FileSystemError::Custom("Not a Directory".into()))
-    //     }
-    // }
-    //
-    // pub fn insert_at(&mut self, target_parent_path: &Path, node: &Node) -> Result<&mut Self> {
-    //     *self = self.build(
-    //         &|parent_path, name, kind| {
-    //             if parent_path.join(&name) == target_parent_path {
-    //                 if let Kind::Directory(children) = kind {
-    //                     if children.contains(node) {
-    //                         Err(FileSystemError::Custom(String::from("Cannot be inserted")))
-    //                     } else {
-    //                         Ok(Node {
-    //                             kind: Kind::Directory(
-    //                                 children.into_iter()
-    //                                 .chain(iter::once(node.clone()))
-    //                                 .collect()
-    //                             ),
-    //                             name
-    //                         })
-    //                     }
-    //                 } else {
-    //                     Err(FileSystemError::Custom("Not a Directory".into()))
-    //                 }
-    //             // else if parent_path contain target_parent_path and does not exists then return a directory ( if it is a file return an error )
-    //             } else {
-    //                 Ok(Node { name, kind })
-    //             }
-    //         }
-    //     )?;
-    //     Ok(self)
-    // }
-    //
-    // pub fn filter<P>(&mut self, predicate: P) -> Result<&mut Self>
-    // where P: Fn(&Path, &Node) -> bool  {
-    //     *self = self.build(
-    //         &|parent_path, name, kind|
-    //         if let Kind::Directory(children) = kind {
-    //             Ok(Node {
-    //                 kind: Kind::Directory(
-    //                     children.into_iter()
-    //                     .filter(|child| predicate(&parent_path, &child))
-    //                     .collect()
-    //                 ),
-    //                 name
-    //             })
-    //         } else {
-    //             Ok(Node { name, kind })
-    //         }
-    //     )?;
-    //     Ok(self)
-    // }
-    //
-    // pub fn build<P>(&self, builder: &P) -> Result<Node>
-    // where P: Fn(PathBuf, OsString, Kind) -> Result<Node>  {
-    //     let parent_path = PathBuf::from(self.name());
-    //     Node::_build(self.kind.clone(), self.name.clone(), builder, parent_path)
-    // }
-    //
-    // pub fn find_at_path(&self, path: &Path) -> Result<Option<&Node>> {
-    //     let buf = normalize(path);
-    //     let components = buf.components();
-    //     self._find_at_path_router(components)
-    // }
-    //
-    // pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = (PathBuf, &Node)> + 'a>{
-    //     self._iter(PathBuf::from(self.name()))
-    // }
-    //
-    // fn _build<P>(kind: Kind, name: OsString, builder: &P, parent_path: PathBuf) -> Result<Node>
-    // where P: Fn(PathBuf, OsString, Kind) -> Result<Node>  {
-    //     if let Kind::Directory(children) = kind {
-    //         let new_parent_path = parent_path.join(&name);
-    //         builder(
-    //             parent_path,
-    //             name,
-    //             Kind::Directory(children.into_iter()
-    //                 .map(|child| Node::_build(child.kind, child.name, builder, new_parent_path.clone()))
-    //                 .collect::<Result<HashSet<Node>>>()?
-    //             )
-    //         )
-    //     } else { builder(parent_path, name, kind ) }
-    // }
-    //
-    //
-    // fn _find_at_path_router(&self, mut components: Components) -> Result<Option<&Node>> {
-    //     match components.next() {
-    //         Some(Component::RootDir) => self._find_at_path_node(&OsStr::new("/"), components),
-    //         Some(Component::Normal(current)) => self._find_at_path_node(&current, components),
-    //         _ => Ok(None)
-    //     }
-    // }
-    //
-    // fn _find_at_path_node(&self, name: &OsStr, components: Components) -> Result<Option<&Node>> {
-    //     if let Some(Component::Normal(next)) = components.clone().next() {
-    //         if let Kind::Directory(children) = &self.kind {
-    //             for child in children.iter().filter(|node| node.name == next) {
-    //                 if let Some(node) = child._find_at_path_router(components.clone())? {
-    //                     return Ok(Some(node));
-    //                 }
-    //             }
-    //         }
-    //     } else if self.name == name {
-    //         return Ok(Some(&self))
-    //     }
-    //     Ok(None)
-    // }
-    //
-    // fn _iter<'a>(&'a self, parent_path: PathBuf) -> Box<dyn Iterator<Item = (PathBuf, &Node)> + 'a>{
-    //     if let Kind::Directory(children) = &self.kind {
-    //         let new_parent_path = parent_path.join(&self.name);
-    //         Box::new(
-    //             iter::once((parent_path, self))
-    //                 .chain(
-    //                     children.iter()
-    //                         .map(move |n| n._iter(new_parent_path.clone()))
-    //                         .flatten()
-    //                 )
-    //         )
-    //     } else {
-    //         Box::new(iter::once((parent_path, self)))
-    //     }
-    // }
 }
 
 

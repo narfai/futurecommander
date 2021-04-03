@@ -18,7 +18,7 @@ impl Preview {
         let file_name = path.file_name().ok_or_else(|| FileSystemError::Custom(String::from("Cannot obtain file name")))?;
 
         self.root.retain(|parent_path, child| parent_path.join(child.name()) != path)?;
-        self.root.insert_at_path(path, &PreviewNode::new_file(&file_name.to_string_lossy(), None))?;
+        self.root.insert_at_path(path, PreviewNode::new_file(&file_name, None))?;
 
         Ok(())
     }
@@ -27,7 +27,7 @@ impl Preview {
         let file_name = path.file_name().ok_or_else(|| FileSystemError::Custom(String::from("Cannot obtain file name")))?;
 
         self.root.retain(|parent_path, child| parent_path.join(child.name()) != path)?;
-        self.root.insert_at_path(path, &PreviewNode::new_directory(&file_name.to_string_lossy()))?;
+        self.root.insert_at_path(path, PreviewNode::new_directory(file_name))?;
 
         Ok(())
     }
@@ -41,11 +41,11 @@ impl Preview {
         self.root.retain(|parent_path, child| parent_path.join(child.name()) != from || parent_path.join(child.name()) != to)?;
         self.root.insert_at_path(
                 to.parent().unwrap(),
-                &PreviewNode::new_deleted(&from.file_name().unwrap().to_string_lossy())
+                PreviewNode::new_deleted(from.file_name().unwrap())
             )?;
         self.root.insert_at_path(
                 to.parent().unwrap(),
-                &PreviewNode::new_file(&to.file_name().unwrap().to_string_lossy(), source)
+                PreviewNode::new_file(to.file_name().unwrap(), source)
             )?;
         Ok(())
     }
@@ -70,7 +70,7 @@ impl Preview {
         self.root.retain(|parent_path, child| parent_path.join(child.name()) != to)?;
         self.root.insert_at_path(
                 to.parent().unwrap(),
-                &PreviewNode::new_file(&to.file_name().unwrap().to_string_lossy(), Some(from.to_path_buf()))
+                PreviewNode::new_file(to.file_name().unwrap(), Some(from.to_path_buf()))
             )?;
         Ok(0)
     }
@@ -82,7 +82,7 @@ impl Preview {
 
     pub (in super) fn _remove(&mut self, path: &Path) -> Result<()> {
         self.root.retain(|parent_path, child| parent_path.join(child.name()) != path)?;
-        self.root.insert_at_path(path, &PreviewNode::new_deleted(&path.file_name().unwrap().to_string_lossy()))?;
+        self.root.insert_at_path(path, PreviewNode::new_deleted(path.file_name().unwrap()))?;
 
         Ok(())
     }
