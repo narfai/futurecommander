@@ -33,3 +33,34 @@ impl PreviewNode {
         iter(self, PathBuf::from(self.name()))
     }
 }
+
+
+#[cfg(not(tarpaulin_include))]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        ffi::OsStr,
+        path::Component
+    };
+
+    #[test]
+    fn iter_recursively() {
+        let node_c = PreviewNode::new_file(OsStr::new("C"), None);
+        let node_b = PreviewNode::new_directory_with_children(OsStr::new("B"), vec![node_c.clone()]);
+        let node_a = PreviewNode::new_file(OsStr::new("A"), None);
+
+        let node = PreviewNode::new_directory_with_children(Component::RootDir.as_os_str(),
+            vec![
+                node_a.clone(),
+                node_b.clone()
+            ]
+        );
+
+        let collection : Vec<PathBuf>= node.iter().map(|(path, _item)| path.to_path_buf()).collect();
+        collection.contains(&PathBuf::from("/"));
+        collection.contains(&PathBuf::from("/A"));
+        collection.contains(&PathBuf::from("/B"));
+        collection.contains(&PathBuf::from("/B/C"));
+    }
+}

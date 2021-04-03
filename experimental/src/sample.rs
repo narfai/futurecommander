@@ -11,16 +11,16 @@ use std::{
 
 pub fn sample_path() -> PathBuf {
     current_exe().unwrap()
-        .parent().unwrap() //project root
         .parent().unwrap() //target
         .parent().unwrap() //debug
         .parent().unwrap() //deps
+        .parent().unwrap() //project root
         .join("samples")
 }
 
 pub fn static_samples_path() -> PathBuf {
     let sample_path = sample_path().join("static");
-    println!("SAMPLE PATH {:?}", sample_path);
+
     assert!(sample_path.join("A").exists());
     assert!(sample_path.join("B").exists());
     assert!(sample_path.join("F").exists());

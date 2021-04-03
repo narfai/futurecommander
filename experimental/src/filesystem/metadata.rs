@@ -1,9 +1,6 @@
 use std::fs::Metadata as FsMetadata;
 
-use crate::{
-    Result,
-    preview::PreviewNode
-};
+use crate::Result;
 
 use super::{
     FileType,
@@ -39,3 +36,5 @@ impl MetadataExt for FsMetadata {
         )
     }
 }
+
+//TODO test different preview of real

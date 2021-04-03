@@ -1,21 +1,9 @@
-use std::{
-    ffi::OsStr,
-    path::{Path, PathBuf}
-};
-
-pub use node::PreviewNode;
-
-use crate::{
-    FileTypeExt,
-    MetadataExt,
-    Result
-};
-
-pub mod node;
-
+mod node;
 mod read_filesystem;
 mod write_filesystem;
 mod internal;
+
+pub use node::{ PreviewNode, PreviewNodeKind };
 
 #[derive(Default)]
 pub struct Preview {

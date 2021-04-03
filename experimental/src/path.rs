@@ -32,11 +32,6 @@ pub fn normalize(p: &Path) -> PathBuf {
         return PathBuf::from(".");
     }
 
-    let mut norm_path = PathBuf::new();
-
-    for item in &stack {
-        norm_path.push(item);
-    }
-
-    norm_path
+    stack.iter()
+        .fold(PathBuf::new(), |acc, item| acc.join(item))
 }

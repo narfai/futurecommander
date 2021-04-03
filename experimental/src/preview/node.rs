@@ -1,25 +1,23 @@
-use std::{
-    collections::HashSet,
-    ffi::{OsStr, OsString},
-    hash::{Hash, Hasher},
-    path::{Component, Components, Path, PathBuf}
-};
-
-use kind::PreviewNodeKind;
-
-use crate::{
-    FileSystemError,
-    FileType, FileTypeExt,
-    Metadata, MetadataExt,
-    path::normalize, Result
-};
-
-pub mod kind;
+mod kind;
 mod iter;
 mod find_at_path;
 mod insert_at_path;
 mod retain;
 mod tree;
+
+use std::{
+    ffi::{OsStr, OsString},
+    hash::{Hash, Hasher},
+    path::{Component, Path, PathBuf}
+};
+
+pub use kind::PreviewNodeKind;
+
+use crate::{
+    FileType, FileTypeExt,
+    Metadata, MetadataExt,
+    Result
+};
 
 #[derive(Debug, Clone, PartialOrd, Ord)]
 pub struct PreviewNode {
@@ -108,8 +106,6 @@ impl PreviewNode {
         self.kind.is_deleted()
     }
 }
-
-
 
 impl MetadataExt for &PreviewNode {
     fn into_virtual_metadata(self) -> Result<Metadata> {

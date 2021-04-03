@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     Result,
-    preview::node::{ PreviewNode }
+    preview::PreviewNode
 };
 
 use super::{ FileTypeExt, DirEntry };
@@ -101,3 +101,7 @@ impl Iterator for ReadDir {
         }
     }
 }
+
+//TODO test fs
+//TODO test virtual
+//TODO test hybrid

@@ -1,6 +1,5 @@
 use std::{
     path::{ Path, PathBuf },
-    fs::{ DirEntry },
     ffi::OsStr,
     io::Write
 };
@@ -34,7 +33,7 @@ fn display_tree_line<W: Write>(out: &mut W, depth_list: &Option<Vec<bool>>, pare
 
 
 pub fn tree<W: Write, R: ReadFileSystem>(out: &mut W, preview: &R, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<()>{
-    let file_name = identity.file_name().unwrap_or(OsStr::new("ROOT"));
+    let file_name = identity.file_name().unwrap_or_else(|| OsStr::new("ROOT"));
 
     display_tree_line(
         out,

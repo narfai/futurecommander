@@ -1,7 +1,4 @@
-use std::{
-    iter,
-    path::Path
-};
+use std::path::Path;
 
 use crate::{
     filesystem::{
@@ -13,7 +10,6 @@ use crate::{
     ReadFileSystem,
     Result
 };
-use crate::preview::node::kind::PreviewNodeKind;
 
 use super::{
     Preview,
@@ -49,7 +45,7 @@ impl ReadFileSystem for Preview {
             if node.is_deleted(){
                 Err(FileSystemError::Custom(String::from("Path does not exists")))
             } else if let Some(children) = node.children() {
-                let mut v : Vec<PreviewNode> = children.iter().cloned().collect();
+                let mut v : Vec<PreviewNode> = children.to_vec();
                 v.sort();
                 Ok(ReadDir::new(path, v))
             } else {
@@ -57,7 +53,7 @@ impl ReadFileSystem for Preview {
             }
         } else if path.exists() {
             if path.is_dir() {
-                Ok(ReadDir::new(path, Vec::new()))
+                Ok(ReadDir::new(path, Vec::<PreviewNode>::new()))
             } else {
                 Err(FileSystemError::Custom(String::from("Not a directory")))
             }

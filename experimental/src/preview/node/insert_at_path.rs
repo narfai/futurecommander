@@ -10,7 +10,6 @@ use crate::{
 use super::{
     PreviewNode, PreviewNodeKind
 };
-use std::path::PathBuf;
 
 fn insert_at_path(parent: &mut PreviewNode, target_parent_path: &Path, node: PreviewNode) -> Result<()> {
     let mut components = target_parent_path.components();

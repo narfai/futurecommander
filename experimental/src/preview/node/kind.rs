@@ -4,7 +4,6 @@
  */
 
 use std::{
-    collections::HashSet,
     path::{ PathBuf },
     cmp::Ordering
 };

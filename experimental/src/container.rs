@@ -9,3 +9,9 @@ pub struct Container {
     operation_list: Vec<operation::Operation>,
     preview: Preview
 }
+
+//TODO apply
+//TODO to_json
+//TODO apply_json
+
+//TODO guards & so on ...

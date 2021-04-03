@@ -2,10 +2,9 @@ use std::fs::FileType as FsFileType;
 
 use crate::{
     FileSystemError,
-    preview::node::PreviewNode,
+    preview::PreviewNodeKind,
     Result
 };
-use crate::preview::node::kind::PreviewNodeKind;
 
 use super::FileTypeExt;
 
@@ -35,3 +34,6 @@ impl FileTypeExt for FsFileType {
         }
     }
 }
+
+
+//TODO test different preview of real

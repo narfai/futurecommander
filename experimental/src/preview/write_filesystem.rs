@@ -2,10 +2,7 @@ use std::{
     path::{ Path, PathBuf },
 };
 
-use super::{
-    Preview,
-    PreviewNode
-};
+use super::Preview;
 
 use crate::{
     Result,
@@ -118,6 +115,8 @@ impl WriteFileSystem for Preview {
         }
     }
 
+    // TODO THINK : a stored operation may not execute on the same system it was created initially and previewed
+    // Therefor, it may create differences between preview and actual future processing of the wanted operation
     #[cfg(target_family = "windows")]
     fn rename<P: AsRef<Path>, Q: AsRef<Path>>(&mut self, from: P, to: Q) -> Result<()> {
         let from = from.as_ref();
@@ -182,37 +181,42 @@ impl WriteFileSystem for Preview {
         }
     }
 }
-//
-// #[cfg(test)]
-// mod test {
-//     use std::{
-//         path::PathBuf,
-//         collections::HashSet,
-//         io::{ stdout }
-//     };
-//     use super::*;
-//     use crate::{
-//         sample::*,
-//         filesystem::{PathExt, FileTypeExt},
-//         preview::node::Node
-//     };
-//
-//
-//     #[test]
-//     fn preview_created_file_exists_virtually() {
-//         let chroot_path = static_samples_path();
-//         let mut preview = Preview::default();
-//         let target_path = chroot_path.join("HAS_TO_EXISTS");
-//
-//         // preview.create_file(&target_path).unwrap();
-//         let mut root = preview.root;
-//         //TODO insert_at a subpath with has no existing parents in the node doesn't work !!
-//         root.insert_at(&chroot_path, &PreviewNode::new_file("HAS_TO_EXISTS", None));
-//         println!("{:?}", root.find_at_path(&target_path).unwrap());
-//
-//
-//         // preview.tree(&mut stdout(), &chroot_path).unwrap();
-//         //println!("{:?}", target_path.preview_metadata(&preview).unwrap().file_type());
-//         // assert!(target_path.preview_exists(&preview));
-//     }
-// }
+
+#[cfg(test)]
+mod test {
+    use std::{
+        ffi::OsStr,
+        path::PathBuf,
+        collections::HashSet,
+        io::{ stdout }
+    };
+    use super::*;
+    use crate::{
+        sample::*,
+        filesystem::{PathExt, FileTypeExt},
+        PreviewNode
+    };
+
+
+    #[test]
+    fn preview_created_file_exists_virtually() {
+        let chroot_path = static_samples_path();
+        let target_path = chroot_path.join("HAS_TO_EXISTS");
+
+        let mut preview = Preview::default();
+        preview.create_file(&target_path).unwrap();
+        assert!(target_path.preview_exists(&preview));
+        assert!(!target_path.exists());
+    }
+
+    /*
+    TODO test
+    create_dir
+    create_dir_all
+    copy
+    rename
+    remove_dir
+    remove_dir_all
+    remove_file
+     */
+}

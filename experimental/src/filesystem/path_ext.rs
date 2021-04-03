@@ -28,3 +28,5 @@ impl PathExt for Path {
         fs.metadata(self).map(|m| m.is_dir()).unwrap_or(false)
     }
 }
+
+//TODO test preview different of real
