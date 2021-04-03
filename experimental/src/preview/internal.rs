@@ -33,7 +33,7 @@ impl Preview {
     }
 
     pub (in super) fn _rename_file(&mut self, from: &Path, to: &Path) -> Result<()> {
-        let source = self.root.find_at_path(from)?
+        let source = self.root.find_at_path(from)
             .and_then(|node| node.source())
             .map(|src| src.to_path_buf())
             .or_else(|| Some(from.to_path_buf()));

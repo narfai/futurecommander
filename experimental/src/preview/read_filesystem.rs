@@ -26,7 +26,7 @@ impl ReadFileSystem for Preview {
     /// * `path` does not exist.
     fn metadata<P: AsRef<Path>>(&self, path: P) -> Result<Metadata> {
         let path = path.as_ref();
-        if let Some(node) = self.root.find_at_path(path)? {
+        if let Some(node) = self.root.find_at_path(path) {
             if node.is_deleted(){
                 Err(FileSystemError::Custom(String::from("Path does not exists")))
             } else {
@@ -45,7 +45,7 @@ impl ReadFileSystem for Preview {
     /// * The `path` points at a non-directory file.
     fn read_dir<P: AsRef<Path>>(&self, path: P) -> Result<ReadDir> {
         let path = path.as_ref();
-        if let Some(node) = self.root.find_at_path(path)? {
+        if let Some(node) = self.root.find_at_path(path) {
             if node.is_deleted(){
                 Err(FileSystemError::Custom(String::from("Path does not exists")))
             } else if let Some(children) = node.children() {
