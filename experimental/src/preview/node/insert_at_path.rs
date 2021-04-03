@@ -26,7 +26,7 @@ fn insert_at_path(parent: &mut PreviewNode, target_parent_path: &Path, node: Pre
                 };
                 Ok(())
             },
-            Some(_) => unreachable!(),
+            Some(_) => insert_at_path(parent, components.as_path(), node),
             None => if children.contains(&node) {
                 Err(FileSystemError::Custom("Node already exists".into()))
             } else {
@@ -43,10 +43,7 @@ impl PreviewNode {
     pub fn insert_at_path(&mut self, target_parent_path: &Path, node: PreviewNode) -> Result<()> {
         insert_at_path(
             self,
-            normalize(target_parent_path).components()
-                .filter(|c| matches!(c, Component::Normal(_)))
-                .fold(PathBuf::new(), |acc, item| acc.join(item))
-                .as_path(),
+            normalize(target_parent_path).as_path(),
             node
         )
     }

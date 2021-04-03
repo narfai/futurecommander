@@ -17,7 +17,7 @@ impl Preview {
     pub (in super) fn _create_file(&mut self, path: &Path) -> Result<()> {
         let file_name = path.file_name().ok_or_else(|| FileSystemError::Custom(String::from("Cannot obtain file name")))?;
 
-        self.root.retain(|parent_path, child| parent_path.join(child.name()) != path)?;
+        self.root.retain(&|parent_path, child| parent_path.join(child.name()) != path)?;
         self.root.insert_at_path(path, PreviewNode::new_file(&file_name, None))?;
 
         Ok(())
@@ -26,7 +26,7 @@ impl Preview {
     pub (in super) fn _create_dir(&mut self, path: &Path) -> Result<()> {
         let file_name = path.file_name().ok_or_else(|| FileSystemError::Custom(String::from("Cannot obtain file name")))?;
 
-        self.root.retain(|parent_path, child| parent_path.join(child.name()) != path)?;
+        self.root.retain(&|parent_path, child| parent_path.join(child.name()) != path)?;
         self.root.insert_at_path(path, PreviewNode::new_directory(file_name))?;
 
         Ok(())
@@ -38,7 +38,7 @@ impl Preview {
             .map(|src| src.to_path_buf())
             .or_else(|| Some(from.to_path_buf()));
 
-        self.root.retain(|parent_path, child| parent_path.join(child.name()) != from || parent_path.join(child.name()) != to)?;
+        self.root.retain(&|parent_path, child| parent_path.join(child.name()) != from || parent_path.join(child.name()) != to)?;
         self.root.insert_at_path(
                 to.parent().unwrap(),
                 PreviewNode::new_deleted(from.file_name().unwrap())
@@ -67,7 +67,7 @@ impl Preview {
     }
 
     pub (in super) fn _copy(&mut self, from: &Path, to: &Path) -> Result<u64> {
-        self.root.retain(|parent_path, child| parent_path.join(child.name()) != to)?;
+        self.root.retain(&|parent_path, child| parent_path.join(child.name()) != to)?;
         self.root.insert_at_path(
                 to.parent().unwrap(),
                 PreviewNode::new_file(to.file_name().unwrap(), Some(from.to_path_buf()))
@@ -81,7 +81,7 @@ impl Preview {
     }
 
     pub (in super) fn _remove(&mut self, path: &Path) -> Result<()> {
-        self.root.retain(|parent_path, child| parent_path.join(child.name()) != path)?;
+        self.root.retain(&|parent_path, child| parent_path.join(child.name()) != path)?;
         self.root.insert_at_path(path, PreviewNode::new_deleted(path.file_name().unwrap()))?;
 
         Ok(())
