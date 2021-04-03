@@ -5,13 +5,7 @@ use crate::{
     filesystem:: { Metadata, ReadDir }
 };
 
-pub trait PathExt {
-    fn preview_exists<R: ReadFileSystem>(&self, fs: &R) -> bool;
-    fn preview_metadata<R: ReadFileSystem>(&self, fs: &R) -> Result<Metadata>;
-    fn preview_read_dir<R: ReadFileSystem>(&self, fs: &R) -> Result<ReadDir>;
-    fn preview_is_a_file<R: ReadFileSystem>(&self, fs: &R) -> bool;
-    fn preview_is_a_dir<R: ReadFileSystem>(&self, fs: &R) -> bool;
-}
+use super::PathExt;
 
 impl PathExt for Path {
     fn preview_exists<R: ReadFileSystem>(&self, fs: &R) -> bool {

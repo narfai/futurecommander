@@ -1,11 +1,13 @@
 use std::fs::FileType as FsFileType;
 
 use crate::{
-    Result,
     FileSystemError,
-    preview::node::Node,
-    preview::kind::Kind
+    preview::node::PreviewNode,
+    Result
 };
+use crate::preview::node::kind::PreviewNodeKind;
+
+use super::FileTypeExt;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum FileType {
@@ -20,11 +22,6 @@ impl FileType {
     pub fn is_symlink(&self) -> bool { matches!(self, FileType::Symlink) }
 }
 
-
-pub trait FileTypeExt {
-    fn into_virtual_file_type(self) -> Result<FileType>;
-}
-
 impl FileTypeExt for FsFileType {
     fn into_virtual_file_type(self) -> Result<FileType> {
         if self.is_symlink() {
@@ -35,17 +32,6 @@ impl FileTypeExt for FsFileType {
             Ok(FileType::File)
         } else {
             Err(FileSystemError::Custom(String::from("Unknow file type")))
-        }
-    }
-}
-
-impl FileTypeExt for &Node {
-    fn into_virtual_file_type(self) -> Result<FileType> {
-        match self.kind() {
-            Kind::Symlink(_) => Ok(FileType::Symlink),
-            Kind::Directory(_) => Ok(FileType::Directory),
-            Kind::File(_) => Ok(FileType::File),
-            Kind::Deleted => Err(FileSystemError::Custom(String::from("Delete file has no type")))
         }
     }
 }

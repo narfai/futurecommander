@@ -10,11 +10,6 @@ pub mod sample;
 
 use std::result;
 
-use self::{
-    error::FileSystemError,
-    preview::Preview,
-};
-
 pub use {
     container::Container,
     filesystem::{
@@ -22,7 +17,9 @@ pub use {
         FileType, FileTypeExt,
         Metadata, MetadataExt,
         ReadDir, DirEntry
-    }
+    },
+    error::FileSystemError,
+    preview::{ Preview, PreviewNode }
 };
 
 type Result<T> = result::Result<T, FileSystemError>;

@@ -5,14 +5,14 @@ use std::{
 
 use crate::{
     Result,
-    preview::node::Node
+    preview::node::{ PreviewNode }
 };
 
 use super::{ FileTypeExt, DirEntry };
 
 pub struct ReadDir {
     path: PathBuf,
-    nodes: Vec<Node>,
+    nodes: Vec<PreviewNode>,
     state: ReadDirState
 }
 
@@ -24,7 +24,7 @@ pub enum ReadDirState {
 }
 
 impl ReadDir {
-    pub fn new(path: &Path, nodes: Vec<Node>) -> Self {
+    pub fn new(path: &Path, nodes: Vec<PreviewNode>) -> Self {
         ReadDir {
             nodes,
             path: path.to_path_buf(),
@@ -70,7 +70,7 @@ impl ReadDir {
                     .map(|virtual_file_type|
                         DirEntry::new(
                             &self.path.join(node.name()),
-                            node.name().clone(),
+                            node.name().to_owned(),
                             virtual_file_type
                         )
                     )

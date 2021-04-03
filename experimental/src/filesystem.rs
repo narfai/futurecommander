@@ -7,15 +7,11 @@ mod path_ext;
 pub use self::{
     readdir::{ ReadDir },
     dir_entry::{ DirEntry },
-    metadata::{ Metadata, MetadataExt },
-    file_type::{ FileType, FileTypeExt },
-    path_ext::{ PathExt }
+    metadata::{ Metadata },
+    file_type::{ FileType }
 };
 
-
-use std::{
-    path::{ Path }
-};
+use std::path::Path;
 
 use crate::Result;
 
@@ -33,4 +29,20 @@ pub trait WriteFileSystem : ReadFileSystem {
     fn remove_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()>;       // Removes an empty directory.
     fn remove_dir_all<P: AsRef<Path>>(&mut self, path: P) -> Result<()>;   // Removes a directory at this path, after removing all its contents. Use carefully!
     fn remove_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()>;      // Removes a file from the filesystem.
+}
+
+pub trait FileTypeExt {
+    fn into_virtual_file_type(self) -> Result<FileType>;
+}
+
+pub trait MetadataExt {
+    fn into_virtual_metadata(self) -> Result<Metadata>;
+}
+
+pub trait PathExt {
+    fn preview_exists<R: ReadFileSystem>(&self, fs: &R) -> bool;
+    fn preview_metadata<R: ReadFileSystem>(&self, fs: &R) -> Result<Metadata>;
+    fn preview_read_dir<R: ReadFileSystem>(&self, fs: &R) -> Result<ReadDir>;
+    fn preview_is_a_file<R: ReadFileSystem>(&self, fs: &R) -> bool;
+    fn preview_is_a_dir<R: ReadFileSystem>(&self, fs: &R) -> bool;
 }

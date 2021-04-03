@@ -4,7 +4,7 @@ use std::{
 
 use super::{
     Preview,
-    node::Node
+    node::{ PreviewNode }
 };
 
 use crate::{
@@ -17,10 +17,8 @@ impl Preview {
     pub (in super) fn _create_file(&mut self, path: &Path) -> Result<()> {
         let file_name = path.file_name().ok_or_else(|| FileSystemError::Custom(String::from("Cannot obtain file name")))?;
 
-        //TODO ensure the parent ancestors existence here
-        self.root
-            .filter(|parent_path, child| parent_path.join(child.name()) != path)?
-            .insert_at(path, &Node::new_file(&file_name.to_string_lossy(), None))?;
+        self.root.retain(|parent_path, child| parent_path.join(child.name()) != path)?;
+        self.root.insert_at_path(path, &PreviewNode::new_file(&file_name.to_string_lossy(), None))?;
 
         Ok(())
     }
@@ -28,10 +26,8 @@ impl Preview {
     pub (in super) fn _create_dir(&mut self, path: &Path) -> Result<()> {
         let file_name = path.file_name().ok_or_else(|| FileSystemError::Custom(String::from("Cannot obtain file name")))?;
 
-        //TODO ensure the parent ancestors existence here
-        self.root
-            .filter(|parent_path, child| parent_path.join(child.name()) != path)?
-            .insert_at(path, &Node::new_directory(&file_name.to_string_lossy()))?;
+        self.root.retain(|parent_path, child| parent_path.join(child.name()) != path)?;
+        self.root.insert_at_path(path, &PreviewNode::new_directory(&file_name.to_string_lossy()))?;
 
         Ok(())
     }
@@ -42,23 +38,19 @@ impl Preview {
             .map(|src| src.to_path_buf())
             .or_else(|| Some(from.to_path_buf()));
 
-        //TODO ensure the parent ancestors existence here for to
-        //TODO clean the from
-        self.root
-            .filter(|parent_path, child| parent_path.join(child.name()) != from || parent_path.join(child.name()) != to)?
-            .insert_at(
+        self.root.retain(|parent_path, child| parent_path.join(child.name()) != from || parent_path.join(child.name()) != to)?;
+        self.root.insert_at_path(
                 to.parent().unwrap(),
-                &Node::new_deleted(&from.file_name().unwrap().to_string_lossy())
-            )?.insert_at(
+                &PreviewNode::new_deleted(&from.file_name().unwrap().to_string_lossy())
+            )?;
+        self.root.insert_at_path(
                 to.parent().unwrap(),
-                &Node::new_file(&to.file_name().unwrap().to_string_lossy(), source)
+                &PreviewNode::new_file(&to.file_name().unwrap().to_string_lossy(), source)
             )?;
         Ok(())
     }
 
     pub (in super) fn _rename(&mut self, from: &Path, to: &Path) -> Result<()> {
-        //TODO ensure the parent ancestors existence here for to
-        //TODO clean the from
         if from.preview_is_a_dir(self) {
             for child_result in from.preview_read_dir(self)? {
                 let child = child_result?;
@@ -75,13 +67,10 @@ impl Preview {
     }
 
     pub (in super) fn _copy(&mut self, from: &Path, to: &Path) -> Result<u64> {
-        //TODO ensure the parent ancestors existence here for to
-        //TODO clean the from
-        self.root
-            .filter(|parent_path, child| parent_path.join(child.name()) != to)?
-            .insert_at(
+        self.root.retain(|parent_path, child| parent_path.join(child.name()) != to)?;
+        self.root.insert_at_path(
                 to.parent().unwrap(),
-                &Node::new_file(&to.file_name().unwrap().to_string_lossy(), Some(from.to_path_buf()))
+                &PreviewNode::new_file(&to.file_name().unwrap().to_string_lossy(), Some(from.to_path_buf()))
             )?;
         Ok(0)
     }
@@ -92,9 +81,8 @@ impl Preview {
     }
 
     pub (in super) fn _remove(&mut self, path: &Path) -> Result<()> {
-        self.root
-            .filter(|parent_path, child| parent_path.join(child.name()) != path)?
-            .insert_at(path, &Node::new_deleted(&path.file_name().unwrap().to_string_lossy()))?;
+        self.root.retain(|parent_path, child| parent_path.join(child.name()) != path)?;
+        self.root.insert_at_path(path, &PreviewNode::new_deleted(&path.file_name().unwrap().to_string_lossy()))?;
 
         Ok(())
     }

@@ -2,12 +2,13 @@ use std::fs::Metadata as FsMetadata;
 
 use crate::{
     Result,
-    preview::node::Node
+    preview::PreviewNode
 };
 
 use super::{
     FileType,
-    FileTypeExt
+    FileTypeExt,
+    MetadataExt
 };
 
 #[derive(Clone)]
@@ -29,25 +30,11 @@ impl Metadata {
     // pub fn created(&self) -> io::Result<SystemTime> { unimplemented!; }
 }
 
-pub trait MetadataExt {
-    fn into_virtual_metadata(self) -> Result<Metadata>;
-}
-
 impl MetadataExt for FsMetadata {
     fn into_virtual_metadata(self) -> Result<Metadata> {
         Ok(
             Metadata {
                 file_type: self.file_type().into_virtual_file_type()?
-            }
-        )
-    }
-}
-
-impl MetadataExt for &Node {
-    fn into_virtual_metadata(self) -> Result<Metadata> {
-        Ok(
-            Metadata {
-                file_type: self.into_virtual_file_type()?
             }
         )
     }

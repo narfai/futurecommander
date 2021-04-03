@@ -1,21 +1,23 @@
 use std::{
-    path::{ Path },
-};
-
-use super::{
-    Preview,
-    kind::Kind
+    iter,
+    path::Path
 };
 
 use crate::{
-    Result,
-    FileSystemError,
-    ReadFileSystem,
     filesystem::{
         Metadata,
-        ReadDir,
         MetadataExt,
-    }
+        ReadDir,
+    },
+    FileSystemError,
+    ReadFileSystem,
+    Result
+};
+use crate::preview::node::kind::PreviewNodeKind;
+
+use super::{
+    Preview,
+    PreviewNode
 };
 
 impl ReadFileSystem for Preview {
@@ -46,8 +48,10 @@ impl ReadFileSystem for Preview {
         if let Some(node) = self.root.find_at_path(path)? {
             if node.is_deleted(){
                 Err(FileSystemError::Custom(String::from("Path does not exists")))
-            } else if let Kind::Directory(children) = node.kind() {
-                Ok(ReadDir::new(path, children.iter().cloned().collect()))
+            } else if let Some(children) = node.children() {
+                let mut v : Vec<PreviewNode> = children.iter().cloned().collect();
+                v.sort();
+                Ok(ReadDir::new(path, v))
             } else {
                 Err(FileSystemError::Custom(String::from("Not a directory")))
             }
@@ -66,14 +70,16 @@ impl ReadFileSystem for Preview {
 #[cfg(test)]
 mod test {
     use std::{
-        path::PathBuf,
-        collections::HashSet
+        collections::HashSet,
+        path::PathBuf
     };
-    use super::*;
+
     use crate::{
-        sample::*,
-        filesystem::{PathExt, FileTypeExt}
+        filesystem::{FileTypeExt, PathExt},
+        sample::*
     };
+
+    use super::*;
 
     #[test]
     fn read_dir_preview_iso_with_real() {
