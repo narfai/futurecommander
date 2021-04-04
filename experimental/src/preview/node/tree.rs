@@ -1,12 +1,18 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * Copyright (C) 2019-2021 François CADEILLAN
+ */
+
 use std::{
-    path::{ Path, PathBuf },
     ffi::OsStr,
-    io::Write
+    io::Write,
+    path::{Path, PathBuf}
 };
+
 use crate::{
-    Result,
+    Preview,
     ReadFileSystem,
-    Preview
+    Result
 };
 use crate::filesystem::PathExt;
 

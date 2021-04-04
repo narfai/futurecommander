@@ -1,10 +1,15 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * Copyright (C) 2019-2021 François CADEILLAN
+ */
+
 use std::{
-    path::{ Component, Path }
+    path::{Component, Path}
 };
 
 use crate::{
-    Result, FileSystemError,
-    path::normalize
+    FileSystemError, path::normalize,
+    Result
 };
 
 use super::{
@@ -52,7 +57,7 @@ impl PreviewNode {
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod tests {
-    use std::{ ffi::OsStr };
+    use std::{ffi::OsStr};
 
     use super::*;
 

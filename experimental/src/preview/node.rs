@@ -1,9 +1,7 @@
-mod kind;
-mod iter;
-mod find_at_path;
-mod insert_at_path;
-mod retain;
-mod tree;
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * Copyright (C) 2019-2021 François CADEILLAN
+ */
 
 use std::{
     ffi::{OsStr, OsString},
@@ -18,6 +16,13 @@ use crate::{
     Metadata, MetadataExt,
     Result
 };
+
+mod kind;
+mod iter;
+mod find_at_path;
+mod insert_at_path;
+mod retain;
+mod tree;
 
 #[derive(Debug, Clone, PartialOrd, Ord)]
 pub struct PreviewNode {

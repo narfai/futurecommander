@@ -1,3 +1,23 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * Copyright (C) 2019-2021 François CADEILLAN
+ */
+
+use std::result;
+
+pub use {
+    container::Container,
+    error::FileSystemError,
+    filesystem::{
+        DirEntry, FileType,
+        FileTypeExt, Metadata,
+        MetadataExt, PathExt,
+        ReadDir, ReadFileSystem,
+        WriteFileSystem
+    },
+    preview::{Preview, PreviewNode}
+};
+
 mod error;
 mod path;
 
@@ -7,21 +27,6 @@ mod container;
 
 #[cfg(not(tarpaulin_include))]
 pub mod sample;
-
-use std::result;
-
-pub use {
-    container::Container,
-    filesystem::{
-        ReadFileSystem, WriteFileSystem,
-        FileType, FileTypeExt,
-        Metadata, MetadataExt,
-        ReadDir, DirEntry,
-        PathExt
-    },
-    error::FileSystemError,
-    preview::{ Preview, PreviewNode }
-};
 
 type Result<T> = result::Result<T, FileSystemError>;
 

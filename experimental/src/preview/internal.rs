@@ -1,16 +1,21 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * Copyright (C) 2019-2021 François CADEILLAN
+ */
+
 use std::{
     path::Path,
 };
 
-use super::{
-    Preview,
-    node::{ PreviewNode }
+use crate::{
+    filesystem::PathExt,
+    FileSystemError,
+    Result
 };
 
-use crate::{
-    Result,
-    FileSystemError,
-    filesystem::PathExt
+use super::{
+    node::PreviewNode,
+    Preview
 };
 
 impl Preview {

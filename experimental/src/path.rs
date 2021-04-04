@@ -1,4 +1,9 @@
-use std::path::{ Path, PathBuf, Component };
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * Copyright (C) 2019-2021 François CADEILLAN
+ */
+
+use std::path::{Component, Path, PathBuf};
 
 /**
 * Thanks to ThatsGobbles ( https://github.com/ThatsGobbles ) for his solution : https://github.com/rust-lang/rfcs/issues/2208

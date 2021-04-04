@@ -8,9 +8,7 @@ use std::{
     path::PathBuf
 };
 
-use super::{
-    PreviewNode
-};
+use super::PreviewNode;
 
 fn iter<'a>(node: &'a PreviewNode, parent_path: PathBuf) -> Box<dyn Iterator<Item = (PathBuf, &PreviewNode)> + 'a>{
     if let Some(children) = node.children() {
@@ -38,11 +36,12 @@ impl PreviewNode {
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::{
         ffi::OsStr,
         path::Component
     };
+
+    use super::*;
 
     #[test]
     fn iter_recursively() {

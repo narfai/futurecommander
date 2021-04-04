@@ -3,7 +3,7 @@
  * Copyright (C) 2019-2021 François CADEILLAN
  */
 
-use std::path::{ Path, PathBuf };
+use std::path::{Path, PathBuf};
 
 use crate::Result;
 
@@ -33,7 +33,7 @@ impl PreviewNode {
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod tests {
-    use std::{ ffi::OsStr, path::Component };
+    use std::{ffi::OsStr, path::Component};
 
     use super::*;
 

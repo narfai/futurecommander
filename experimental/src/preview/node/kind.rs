@@ -4,15 +4,14 @@
  */
 
 use std::{
-    path::{ PathBuf },
-    cmp::Ordering
+    cmp::Ordering,
+    path::PathBuf
 };
 
 use crate::{
-    Result, FileSystemError,
-    FileType, FileTypeExt
+    FileSystemError, FileType,
+    FileTypeExt, Result
 };
-
 use crate::preview::{
     node::PreviewNode
 };

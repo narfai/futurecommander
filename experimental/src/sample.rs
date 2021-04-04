@@ -1,5 +1,7 @@
-// SPDX-License-Identifier: GPL-3.0-only
-// Copyright (C) 2019-2021 François CADEILLAN
+/*
+ * SPDX-License-Identifier: GPL-3.0-only
+ * Copyright (C) 2019-2021 François CADEILLAN
+ */
 
 use std::{
     fs::{ File, create_dir, remove_dir_all },
