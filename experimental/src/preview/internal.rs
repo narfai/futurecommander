@@ -103,17 +103,17 @@ impl Preview {
         Ok(())
     }
 
-    pub (in super) fn _has_to_exist(&self, path: &Path, error: FileSystemError) -> Result<()> {
+    pub (in super) fn _has_to_exist(&self, path: &Path, error_func: impl Fn(&Path) -> FileSystemError) -> Result<()> {
         if path.preview_exists(self) {
             Ok(())
         } else {
-            Err(error)
+            Err(error_func(path))
         }
     }
 
-    pub (in super) fn _has_to_not_exist(&self, path: &Path, error: FileSystemError) -> Result<()> {
+    pub (in super) fn _has_to_not_exist(&self, path: &Path, error_func: impl Fn(&Path) -> FileSystemError) -> Result<()> {
         if path.preview_exists(self) {
-            Err(error)
+            Err(error_func(path))
         } else {
             Ok(())
         }

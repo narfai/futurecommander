@@ -22,8 +22,8 @@ impl WriteFileSystem for Preview {
         let path = path.as_ref();
         let parent = path.parent().ok_or_else(|| FileSystemError::PathTerminatesInARootOrPrefix(path.to_owned()))?;
 
-        self._has_to_not_exist(path, FileSystemError::PathAlreadyExists(path.to_owned()))?;
-        self._has_to_exist(parent, FileSystemError::ParentDoesNotExists(parent.to_owned()))?;
+        self._has_to_not_exist(path, |path|FileSystemError::PathAlreadyExists(path.to_owned()))?;
+        self._has_to_exist(parent, |path| FileSystemError::ParentDoesNotExists(path.to_owned()))?;
 
         if parent.preview_is_a_dir(self) {
             self._create_file(path)
@@ -42,8 +42,8 @@ impl WriteFileSystem for Preview {
         let path = path.as_ref();
         let parent = path.parent().ok_or_else(|| FileSystemError::PathTerminatesInARootOrPrefix(path.to_owned()))?;
 
-        self._has_to_not_exist(path, FileSystemError::PathAlreadyExists(path.to_owned()))?;
-        self._has_to_exist(parent, FileSystemError::ParentDoesNotExists(parent.to_owned()))?;
+        self._has_to_not_exist(path, |path| FileSystemError::PathAlreadyExists(path.to_owned()))?;
+        self._has_to_exist(parent, |path| FileSystemError::ParentDoesNotExists(path.to_owned()))?;
 
         if parent.preview_is_a_dir(self) {
             self._create_dir(path)
@@ -74,7 +74,7 @@ impl WriteFileSystem for Preview {
     fn copy<P: AsRef<Path>, Q: AsRef<Path>>(&mut self, from: P, to: Q) -> Result<u64> {
         let from = from.as_ref();
         let to = to.as_ref();
-        self._has_to_exist(from, FileSystemError::FromDoesNotExists(from.to_owned()))?;
+        self._has_to_exist(from, |path| FileSystemError::FromDoesNotExists(path.to_owned()))?;
 
         if from.preview_is_a_file(self) {
             self._copy(from, to)
@@ -96,7 +96,7 @@ impl WriteFileSystem for Preview {
     fn rename<P: AsRef<Path>, Q: AsRef<Path>>(&mut self, from: P, to: Q) -> Result<()> {
         let from = from.as_ref();
         let to = to.as_ref();
-        self._has_to_exist(from, FileSystemError::FromDoesNotExists(from.to_owned()))?;
+        self._has_to_exist(from, |path| FileSystemError::FromDoesNotExists(path.to_owned()))?;
 
         if self._are_on_same_filesystem(from, to) {
             if to.preview_exists(self) {
@@ -126,7 +126,7 @@ impl WriteFileSystem for Preview {
     fn rename<P: AsRef<Path>, Q: AsRef<Path>>(&mut self, from: P, to: Q) -> Result<()> {
         let from = from.as_ref();
         let to = to.as_ref();
-        self._has_to_exists(from, FileSystemError::FromDoesNotExists(from.to_owned()))?;
+        self._has_to_exists(from, |path| FileSystemError::FromDoesNotExists(path.to_owned()))?;
 
         if self._are_on_same_filesystem(from, to) {
             if to.preview_exists(self) && to.preview_is_a_dir(self) {
@@ -146,7 +146,7 @@ impl WriteFileSystem for Preview {
     /// * The directory isn't empty.
     fn remove_dir<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         let path = path.as_ref();
-        self._has_to_exist(path, FileSystemError::PathDoesNotExists(path.to_owned()))?;
+        self._has_to_exist(path, |path| FileSystemError::PathDoesNotExists(path.to_owned()))?;
 
         if path.preview_is_a_dir(self) {
             if path.preview_read_dir(self)?.next().is_none() {
@@ -162,7 +162,7 @@ impl WriteFileSystem for Preview {
     /// Errors:  cf remove_file & remove_dir
     fn remove_dir_all<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         let path = path.as_ref();
-        self._has_to_exist(path, FileSystemError::PathDoesNotExists(path.to_owned()))?;
+        self._has_to_exist(path, |path| FileSystemError::PathDoesNotExists(path.to_owned()))?;
 
         if path.preview_is_a_dir(self) {
             self._remove(path)
@@ -177,7 +177,7 @@ impl WriteFileSystem for Preview {
     /// * The user lacks permissions to remove the file.
     fn remove_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
         let path = path.as_ref();
-        self._has_to_exist(path, FileSystemError::PathDoesNotExists(path.to_owned()))?;
+        self._has_to_exist(path, |path| FileSystemError::PathDoesNotExists(path.to_owned()))?;
 
         if path.preview_is_a_dir(self) {
             Err(FileSystemError::PathIsADirectory(path.to_owned()))
@@ -193,7 +193,7 @@ mod test {
         ffi::OsStr,
         path::PathBuf,
         collections::HashSet,
-        io::{ stdout }
+        io::{stdout}
     };
     use super::*;
     use crate::{
@@ -237,5 +237,5 @@ mod test {
     remove_dir
     remove_dir_all
     remove_file
-     */
+   */
 }

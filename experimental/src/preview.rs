@@ -19,7 +19,6 @@ pub struct Preview {
 #[cfg(test)]
 mod test {
     use std::{
-        collections::HashSet,
         path::{ PathBuf, Path }
     };
     use crate::{
