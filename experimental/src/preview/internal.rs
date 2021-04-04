@@ -14,7 +14,7 @@ use crate::{
 };
 
 use super::{
-    node::PreviewNode,
+    node::Node,
     Preview
 };
 
@@ -24,7 +24,7 @@ impl Preview {
         let parent = path.parent().ok_or_else(|| FileSystemError::PathTerminatesInARootOrPrefix(path.to_owned()))?;
 
         self.root.retain(&|parent_path, child| parent_path.join(child.name()) != path)?;
-        self.root.insert_at_path(parent, PreviewNode::new_file(&file_name, None))?;
+        self.root.insert_at_path(parent, Node::new_file(&file_name, None))?;
 
         Ok(())
     }
@@ -34,7 +34,7 @@ impl Preview {
         let parent = path.parent().ok_or_else(|| FileSystemError::PathTerminatesInARootOrPrefix(path.to_owned()))?;
 
         self.root.retain(&|parent_path, child| parent_path.join(child.name()) != path)?;
-        self.root.insert_at_path(parent, PreviewNode::new_directory(file_name))?;
+        self.root.insert_at_path(parent, Node::new_directory(file_name))?;
 
         Ok(())
     }
@@ -45,31 +45,39 @@ impl Preview {
             .map(|src| src.to_path_buf())
             .or_else(|| Some(from.to_path_buf()));
 
+        let from_parent = from.parent().ok_or_else(|| FileSystemError::PathTerminatesInARootOrPrefix(from.to_owned()))?;
         let to_parent = to.parent().ok_or_else(|| FileSystemError::PathTerminatesInARootOrPrefix(to.to_owned()))?;
+
         let from_file_name = from.file_name().ok_or_else(|| FileSystemError::PathTerminatesInTwoDot(from.to_owned()))?;
         let to_file_name = to.file_name().ok_or_else(|| FileSystemError::PathTerminatesInTwoDot(to.to_owned()))?;
 
-        self.root.retain(&|parent_path, child| parent_path.join(child.name()) != from || parent_path.join(child.name()) != to)?;
+        self.root.retain(&|parent_path, child| {
+            let node_path =  parent_path.join(child.name());
+            node_path != from && node_path != to
+        })?;
+
+        if from.exists() {
+            self.root.insert_at_path(
+                from_parent,
+                Node::new_deleted(from_file_name)
+            )?;
+        }
+
         self.root.insert_at_path(
             to_parent,
-            PreviewNode::new_deleted(from_file_name)
+            Node::new_file(to_file_name, source)
         )?;
-        self.root.insert_at_path(
-            to_parent,
-            PreviewNode::new_file(to_file_name, source)
-        )?;
+
         Ok(())
     }
 
     pub (in super) fn _rename(&mut self, from: &Path, to: &Path) -> Result<()> {
         if from.preview_is_a_dir(self) {
+            self._create_dir(to)?;
             for child_result in from.preview_read_dir(self)? {
                 let child = child_result?;
-                if child.file_type()?.is_dir() {
-                    self._rename(&from.join(child.file_name()), &to.join(child.file_name()))?;
-                }
+                self._rename(&from.join(child.file_name()), &to.join(child.file_name()))?;
             }
-            self._create_dir(to)?;
             self._remove(from)?;
         } else {
             self._rename_file(from, to)?;
@@ -84,7 +92,7 @@ impl Preview {
         self.root.retain(&|parent_path, child| parent_path.join(child.name()) != to)?;
         self.root.insert_at_path(
             to_parent,
-            PreviewNode::new_file(to_file_name, Some(from.to_path_buf()))
+            Node::new_file(to_file_name, Some(from.to_path_buf()))
         )?;
         Ok(0)
     }
@@ -98,7 +106,10 @@ impl Preview {
         let parent = path.parent().ok_or_else(|| FileSystemError::PathTerminatesInARootOrPrefix(path.to_owned()))?;
 
         self.root.retain(&|parent_path, child| parent_path.join(child.name()) != path)?;
-        self.root.insert_at_path(parent, PreviewNode::new_deleted(path.file_name().unwrap()))?;
+
+        if path.exists() {
+            self.root.insert_at_path(parent, Node::new_deleted(path.file_name().unwrap()))?;
+        }
 
         Ok(())
     }

@@ -7,7 +7,7 @@ use std::fs::FileType as FsFileType;
 
 use crate::{
     FileSystemError,
-    preview::PreviewNodeKind,
+    preview::NodeFileType,
     Result
 };
 

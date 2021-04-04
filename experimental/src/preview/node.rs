@@ -9,7 +9,7 @@ use std::{
     path::{Component, Path, PathBuf}
 };
 
-pub use kind::PreviewNodeKind;
+pub use kind::NodeFileType;
 
 use crate::{
     FileType, FileTypeExt,
@@ -25,82 +25,82 @@ mod retain;
 mod tree;
 
 #[derive(Debug, Clone, PartialOrd, Ord)]
-pub struct PreviewNode {
-    kind: PreviewNodeKind,
-    name: OsString
+pub struct Node {
+    name: OsString,
+    kind: NodeFileType,
 }
 
-impl Default for PreviewNode {
+impl Default for Node {
     fn default() -> Self {
-        PreviewNode::new_directory(Component::RootDir.as_os_str())
+        Node::new_directory(Component::RootDir.as_os_str())
     }
 }
 
-impl Eq for PreviewNode {}
+impl Eq for Node {}
 
-impl PartialEq for PreviewNode {
+impl PartialEq for Node {
     fn eq(&self, other: &Self) -> bool {
         self.name().eq(other.name())
     }
 }
 
-impl Hash for PreviewNode {
+impl Hash for Node {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.name().hash(state);
     }
 }
 
-impl PreviewNode {
+impl Node {
     pub fn name(&self) -> &OsStr { &self.name }
 
     pub fn new_directory(name: &OsStr) -> Self {
-        PreviewNode {
-            kind: PreviewNodeKind::Directory(Vec::new()),
+        Node {
+            kind: NodeFileType::Directory(Vec::new()),
             name: name.to_owned(),
         }
     }
 
-    pub fn new_directory_with_children(name: &OsStr, children: Vec<PreviewNode>) -> Self {
-        PreviewNode {
-            kind: PreviewNodeKind::Directory(children.into_iter().collect()),
+    pub fn new_directory_with_children(name: &OsStr, children: Vec<Node>) -> Self {
+        Node {
+            kind: NodeFileType::Directory(children.into_iter().collect()),
             name: name.to_owned(),
         }
     }
 
     pub fn new_file(name: &OsStr, source: Option<PathBuf>) -> Self {
-        PreviewNode {
-            kind: PreviewNodeKind::File(source),
+        Node {
+            kind: NodeFileType::File(source),
             name: name.to_owned(),
         }
     }
 
     pub fn new_symlink(name: &OsStr, path: &Path) -> Self {
-        PreviewNode {
-            kind: PreviewNodeKind::Symlink(path.to_path_buf()),
+        Node {
+            kind: NodeFileType::Symlink(path.to_path_buf()),
             name: name.to_owned(),
         }
     }
 
     pub fn new_deleted(name: &OsStr) -> Self {
-        PreviewNode {
-            kind: PreviewNodeKind::Deleted,
+        Node {
+            kind: NodeFileType::Deleted,
             name: name.to_owned(),
         }
     }
 
-    pub fn kind(&self) -> &PreviewNodeKind {
+    pub fn kind(&self) -> &NodeFileType {
         &self.kind
     }
 
     pub fn source(&self) -> Option<&Path> {
         match &self.kind {
-            PreviewNodeKind::File(source) => source.as_ref().map(|src| src.as_path()),
+            NodeFileType::File(source) => source.as_ref().map(|src| src.as_path()),
             _ => None
         }
     }
 
-    pub fn children(&self) -> Option<&Vec<PreviewNode>> {
-        if let PreviewNodeKind::Directory(children) = &self.kind {
+    pub fn children(&self) -> Option<&Vec<Node>> {
+        if let NodeFileType::Directory(children) = &self.kind {
             Some(children)
         } else {
             None
@@ -112,7 +112,7 @@ impl PreviewNode {
     }
 }
 
-impl MetadataExt for &PreviewNode {
+impl MetadataExt for &Node {
     fn into_virtual_metadata(self) -> Result<Metadata> {
         Ok(
             Metadata {
@@ -122,7 +122,7 @@ impl MetadataExt for &PreviewNode {
     }
 }
 
-impl FileTypeExt for &PreviewNode {
+impl FileTypeExt for &Node {
     fn into_virtual_file_type(self) -> Result<FileType> {
         self.kind.into_virtual_file_type()
     }

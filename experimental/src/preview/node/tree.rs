@@ -37,7 +37,7 @@ fn display_tree_line<W: Write>(out: &mut W, depth_list: &Option<Vec<bool>>, pare
     Ok(())
 }
 
-
+//TODO fix endless recursion
 pub fn tree<W: Write, R: ReadFileSystem>(out: &mut W, preview: &R, identity: &Path, depth_list: Option<Vec<bool>>, parent_last: bool) -> Result<()>{
     let file_name = identity.file_name().unwrap_or_else(|| OsStr::new("ROOT"));
 

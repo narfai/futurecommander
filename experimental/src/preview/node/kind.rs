@@ -13,35 +13,35 @@ use crate::{
     FileTypeExt, Result
 };
 use crate::preview::{
-    node::PreviewNode
+    node::Node
 };
 
 //TODO  Rename in FileType and replace the actual filesystem FileTypeExt impl
 #[derive(Debug, Clone, Eq)]
-pub enum PreviewNodeKind {
-    Directory(Vec<PreviewNode>),
+pub enum NodeFileType {
+    Directory(Vec<Node>),
     File(Option<PathBuf>),
     Symlink(PathBuf),
     Deleted
 }
 
-impl PreviewNodeKind {
+impl NodeFileType {
     pub fn is_directory(&self) -> bool {
-        matches!(self, PreviewNodeKind::Directory(_))
+        matches!(self, NodeFileType::Directory(_))
     }
 
-    pub fn is_file(&self) -> bool { matches!(self, PreviewNodeKind::File(_)) }
+    pub fn is_file(&self) -> bool { matches!(self, NodeFileType::File(_)) }
 
-    pub fn is_symlink(&self) -> bool { matches!(self, PreviewNodeKind::Symlink(_)) }
+    pub fn is_symlink(&self) -> bool { matches!(self, NodeFileType::Symlink(_)) }
 
     pub fn is_deleted(&self) -> bool {
-        matches!(self, PreviewNodeKind::Deleted)
+        matches!(self, NodeFileType::Deleted)
     }
 }
 
-impl Ord for PreviewNodeKind {
+impl Ord for NodeFileType {
     fn cmp(&self, other: &Self) -> Ordering {
-        use PreviewNodeKind::*;
+        use NodeFileType::*;
         match self {
             Directory(_) => match other {
                 Directory(_) => Ordering::Equal,
@@ -71,15 +71,15 @@ impl Ord for PreviewNodeKind {
     }
 }
 
-impl PartialOrd for PreviewNodeKind {
+impl PartialOrd for NodeFileType {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl PartialEq for PreviewNodeKind {
+impl PartialEq for NodeFileType {
     fn eq(&self, other: &Self) -> bool {
-        use PreviewNodeKind::*;
+        use NodeFileType::*;
         match self {
             Directory(left) => match other {
                 Directory(right) => left == right,
@@ -98,13 +98,13 @@ impl PartialEq for PreviewNodeKind {
     }
 }
 
-impl FileTypeExt for &PreviewNodeKind {
+impl FileTypeExt for &NodeFileType {
     fn into_virtual_file_type(self) -> Result<FileType> {
         match self {
-            PreviewNodeKind::Symlink(_) => Ok(FileType::Symlink),
-            PreviewNodeKind::Directory(_) => Ok(FileType::Directory),
-            PreviewNodeKind::File(_) => Ok(FileType::File),
-            PreviewNodeKind::Deleted => Err(FileSystemError::ConvertDeletedNodeToFileType)
+            NodeFileType::Symlink(_) => Ok(FileType::Symlink),
+            NodeFileType::Directory(_) => Ok(FileType::Directory),
+            NodeFileType::File(_) => Ok(FileType::File),
+            NodeFileType::Deleted => Err(FileSystemError::ConvertDeletedNodeToFileType)
         }
     }
 }

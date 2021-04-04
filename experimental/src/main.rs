@@ -15,7 +15,7 @@ pub use {
         ReadDir, ReadFileSystem,
         WriteFileSystem
     },
-    preview::{Preview, PreviewNode}
+    preview::{Preview, Node}
 };
 
 mod error;

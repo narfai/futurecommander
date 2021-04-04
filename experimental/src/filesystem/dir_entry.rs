@@ -15,6 +15,7 @@ use super::{
     FileType
 };
 
+#[derive(Debug)]
 pub struct DirEntry {
     path: PathBuf,
     name: OsString,

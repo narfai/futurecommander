@@ -10,14 +10,14 @@ use std::{
 
 use crate::{
     Result,
-    preview::PreviewNode
+    preview::Node
 };
 
 use super::{ FileTypeExt, DirEntry };
 
 pub struct ReadDir {
     path: PathBuf,
-    nodes: Vec<PreviewNode>,
+    nodes: Vec<Node>,
     state: ReadDirState
 }
 
@@ -29,7 +29,7 @@ pub enum ReadDirState {
 }
 
 impl ReadDir {
-    pub fn new(path: &Path, nodes: Vec<PreviewNode>) -> Self {
+    pub fn new(path: &Path, nodes: Vec<Node>) -> Self {
         ReadDir {
             nodes,
             path: path.to_path_buf(),
@@ -38,23 +38,28 @@ impl ReadDir {
     }
 
     fn _initialize(&mut self) -> Option<Result<DirEntry>>{
-        self.path.read_dir()
-            .and_then(|read_dir|
-                read_dir.filter(|entry_result|
-                    entry_result.as_ref().map_or(
-                        true,
-                        |entry |
-                            self.nodes.iter().find(|node|
-                                node.name() == &entry.file_name()
-                            ).is_none()
-                    )
-                ).collect()
-            )
-            .map(|children| {
-                self.state = ReadDirState::Real(children);
-                self.next()
-            })
-            .unwrap_or_else(|err| Some(Err(err.into())))
+        let children = if self.path.exists() {
+            self.path.read_dir()
+                .and_then(|read_dir|
+                    read_dir.filter(|entry_result|
+                        entry_result.as_ref().map_or(
+                            true,
+                            |entry|
+                                self.nodes.iter().find(|node|
+                                    node.name() == &entry.file_name()
+                                ).is_none()
+                        )
+                    ).collect()
+                )
+        } else {
+            Ok(Vec::new())
+        };
+
+        children.map(|children| {
+            self.state = ReadDirState::Real(children);
+            self.next()
+        })
+        .unwrap_or_else(|err| Some(Err(err.into())))
     }
 
     fn _next_real(&mut self, entry: Option<FsDirEntry>) -> Option<Result<DirEntry>> {

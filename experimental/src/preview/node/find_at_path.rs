@@ -7,10 +7,10 @@ use std::path::{Component, Path};
 
 use crate::path::normalize;
 
-use super::PreviewNode;
+use super::Node;
 
-impl PreviewNode {
-    pub fn find_at_path(&self, path: &Path) -> Option<&PreviewNode> {
+impl Node {
+    pub fn find_at_path(&self, path: &Path) -> Option<&Node> {
         let buf = normalize(path);
         buf.components()
             .filter(|c| matches!(c, Component::Normal(_)))
@@ -33,12 +33,12 @@ mod tests {
 
     #[test]
     fn test_find_at_path() {
-        let node_c = PreviewNode::new_file(OsStr::new("C"), None);
-        let node_b = PreviewNode::new_directory_with_children(OsStr::new("B"), vec![node_c.clone()]);
-        let node_a = PreviewNode::new_file(OsStr::new("A"), None);
+        let node_c = Node::new_file(OsStr::new("C"), None);
+        let node_b = Node::new_directory_with_children(OsStr::new("B"), vec![node_c.clone()]);
+        let node_a = Node::new_file(OsStr::new("A"), None);
 
-        let node = PreviewNode::new_directory_with_children(Component::RootDir.as_os_str(),
-            vec![
+        let node = Node::new_directory_with_children(Component::RootDir.as_os_str(),
+                                                     vec![
                 node_a.clone(),
                 node_b.clone()
             ]

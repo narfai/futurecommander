@@ -77,7 +77,14 @@ impl WriteFileSystem for Preview {
         self._has_to_exist(from, |path| FileSystemError::FromDoesNotExists(path.to_owned()))?;
 
         if from.preview_is_a_file(self) {
-            self._copy(from, to)
+            let parent = to.parent().ok_or_else(|| FileSystemError::PathTerminatesInARootOrPrefix(to.to_owned()))?;
+            if ! parent.preview_exists(self) {
+                Err(FileSystemError::ToParentDoesNotExists(parent.to_owned()))
+            } else if ! parent.preview_is_a_dir(self) {
+                Err(FileSystemError::ToParentIsNotADirectory(parent.to_owned()))
+            } else {
+                self._copy(from, to)
+            }
         } else {
             Err(FileSystemError::FromIsNotAFile(from.to_owned()))
         }
@@ -199,12 +206,12 @@ mod test {
     use crate::{
         sample::*,
         filesystem::{PathExt, FileTypeExt},
-        PreviewNode
+        Node
     };
 
 
     #[test]
-    fn preview_created_file_exists_virtually() {
+    fn created_file_exists_virtually() {
         let chroot_path = static_samples_path();
         let target_path = chroot_path.join("HAS_TO_EXISTS");
 
@@ -217,7 +224,7 @@ mod test {
     }
 
     #[test]
-    fn preview_created_dir_exists_virtually() {
+    fn created_dir_exists_virtually() {
         let chroot_path = static_samples_path();
         let target_path = chroot_path.join("HAS_TO_EXISTS");
 
@@ -228,14 +235,102 @@ mod test {
         assert!(!target_path.exists());
     }
 
-    /*
-    TODO test
-    create_dir
-    create_dir_all
-    copy
-    rename
-    remove_dir
-    remove_dir_all
-    remove_file
-   */
+    #[test]
+    fn create_dir_recursively() {
+        let chroot_path = static_samples_path();
+        let sub_a = chroot_path.join("SUBA");
+        let sub_b = sub_a.join("SUBB");
+        let target_path = sub_b.join("HAS_TO_EXISTS");
+
+        let mut preview = Preview::default();
+        preview.create_dir_all(&target_path).unwrap();
+        assert!(target_path.preview_exists(&preview));
+        assert!(sub_b.preview_exists(&preview));
+        assert!(sub_a.preview_exists(&preview));
+
+        assert!(target_path.preview_is_a_dir(&preview));
+        assert!(sub_b.preview_is_a_dir(&preview));
+        assert!(sub_a.preview_is_a_dir(&preview));
+
+        assert!(!target_path.exists());
+        assert!(!sub_b.exists());
+        assert!(!sub_a.exists());
+    }
+
+    #[test]
+    fn copied_file_exists_virtually_and_keep_track_of_source() {
+        let chroot_path = static_samples_path();
+        let source = chroot_path.join("F");
+        let target_path = chroot_path.join("HAS_TO_EXISTS");
+
+        let mut preview = Preview::default();
+        preview.copy(&source, &target_path).unwrap();
+        assert!(target_path.preview_exists(&preview));
+        assert!(target_path.preview_is_a_file(&preview));
+        assert!(!target_path.exists());
+
+        assert!(source.preview_exists(&preview));
+        assert_eq!(&source, preview.root.find_at_path(&target_path).unwrap().source().unwrap());
+    }
+
+    #[test]
+    fn renamed_file_exists_virtually_and_keep_track_of_source() {
+        let chroot_path = static_samples_path();
+        let source = chroot_path.join("F");
+        let target_path = chroot_path.join("HAS_TO_EXISTS");
+
+        let mut preview = Preview::default();
+        preview.rename(&source, &target_path).unwrap();
+        assert!(target_path.preview_exists(&preview));
+        assert!(target_path.preview_is_a_file(&preview));
+        assert!(!target_path.exists());
+
+        assert!(!source.preview_exists(&preview));
+        assert_eq!(&source, preview.root.find_at_path(&target_path).unwrap().source().unwrap());
+    }
+
+    #[test]
+    fn removed_empty_dir_does_not_exists_virtually() {
+        let chroot = Chroot::new("preview_removed_empty_dir_does_not_exists_virtually");
+        chroot.init_empty();
+        let a = chroot.create_dir("A");
+
+        let mut preview = Preview::default();
+        preview.remove_dir(&a).unwrap();
+        assert!(!a.preview_exists(&preview));
+        assert!(a.exists());
+
+        chroot.clean();
+    }
+
+    #[test]
+    fn removed_dir_and_children_does_not_exists_virtually() {
+        let chroot_path = static_samples_path();
+        let a = chroot_path.join("A");
+        let a_c = a.join("C");
+        let a_gitkeep = a.join(".gitkeep");
+
+        let mut preview = Preview::default();
+
+        preview.remove_dir_all(&a).unwrap();
+        assert!(!a.preview_exists(&preview));
+        assert!(!a_c.preview_exists(&preview));
+        assert!(!a_gitkeep.preview_exists(&preview));
+
+        assert!(a.exists());
+        assert!(a_c.exists());
+        assert!(a_gitkeep.exists());
+    }
+
+    #[test]
+    fn removed_file_does_not_exists_virtually() {
+        let chroot_path = static_samples_path();
+        let f = chroot_path.join("F");
+
+        let mut preview = Preview::default();
+
+        preview.remove_file(&f).unwrap();
+        assert!(!f.preview_exists(&preview));
+        assert!(f.exists());
+    }
 }

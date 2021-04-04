@@ -10,7 +10,7 @@ use std::{
     path::{ PathBuf }
 };
 
-use crate::{ PreviewNode };
+use crate::{Node};
 
 #[derive(Debug)]
 pub enum FileSystemError {
@@ -31,9 +31,11 @@ pub enum FileSystemError {
     FromIsNotAFile(PathBuf),
     ParentIsNotADirectory(PathBuf),
     PathIsADirectory(PathBuf),
-    NodeAlreadyExists(PreviewNode),
-    ParentNodeIsNotADirectory(PreviewNode),
+    NodeAlreadyExists(Node),
+    ParentNodeIsNotADirectory(Node),
     ConvertDeletedNodeToFileType,
+    ToParentDoesNotExists(PathBuf),
+    ToParentIsNotADirectory(PathBuf)
 }
 
 impl From<io::Error> for FileSystemError {
@@ -67,6 +69,8 @@ impl fmt::Display for FileSystemError {
             NodeAlreadyExists(node) => write!(f, "Node already exists {}", node.name().to_string_lossy()),
             ParentNodeIsNotADirectory(node) => write!(f, "Parent node is not a directory {}", node.name().to_string_lossy()),
             ConvertDeletedNodeToFileType => write!(f, "Convert deleted node to file type"),
+            ToParentDoesNotExists(path) => write!(f, "To parent does not exists {}", path.display()),
+            ToParentIsNotADirectory(path) => write!(f, "To parent is not a directory {}", path.display()),
         }
     }
 }

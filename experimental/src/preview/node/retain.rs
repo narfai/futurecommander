@@ -8,23 +8,23 @@ use std::path::{Path, PathBuf};
 use crate::Result;
 
 use super::{
-    PreviewNode,
-    PreviewNodeKind
+    Node,
+    NodeFileType
 };
 
-pub fn retain(parent: &mut PreviewNode, parent_path: PathBuf, predicate: &dyn Fn(&Path, &PreviewNode) -> bool) -> Result<()> {
+pub fn retain(parent: &mut Node, parent_path: PathBuf, predicate: &dyn Fn(&Path, &Node) -> bool) -> Result<()> {
     let new_parent_path = parent_path.join(parent.name());
-    if let PreviewNodeKind::Directory(children) = &mut parent.kind {
+    if let NodeFileType::Directory(children) = &mut parent.kind {
         children.retain(|node| predicate(new_parent_path.as_path(), node));
         for child in children {
-            child.retain(predicate)?;
+            retain(child, new_parent_path.clone(), predicate)?;
         }
     }
     Ok(())
 }
 
-impl PreviewNode {
-    pub fn retain(&mut self, predicate: &dyn Fn(&Path, &PreviewNode) -> bool) -> Result<()> {
+impl Node {
+    pub fn retain(&mut self, predicate: &dyn Fn(&Path, &Node) -> bool) -> Result<()> {
         retain(self, PathBuf::from(self.name()), predicate)
     }
 }
@@ -39,11 +39,11 @@ mod tests {
 
     #[test]
     fn test_retain() {
-        let node_c = PreviewNode::new_file(OsStr::new("C"), None);
-        let node_b = PreviewNode::new_directory_with_children(OsStr::new("B"), vec![node_c.clone()]);
-        let node_a = PreviewNode::new_file(OsStr::new("A"), None);
+        let node_c = Node::new_file(OsStr::new("C"), None);
+        let node_b = Node::new_directory_with_children(OsStr::new("B"), vec![node_c.clone()]);
+        let node_a = Node::new_file(OsStr::new("A"), None);
 
-        let mut node = PreviewNode::new_directory_with_children(
+        let mut node = Node::new_directory_with_children(
             Component::RootDir.as_os_str(),
             vec![
                 node_a.clone(),
@@ -61,4 +61,6 @@ mod tests {
         assert_eq!(None, node.find_at_path(&Path::new("/B")));
         assert_eq!(None, node.find_at_path(&Path::new("/B/C")));
     }
+
+    //TODO test proper parent_path
 }

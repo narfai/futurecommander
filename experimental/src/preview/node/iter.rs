@@ -8,9 +8,9 @@ use std::{
     path::PathBuf
 };
 
-use super::PreviewNode;
+use super::Node;
 
-fn iter<'a>(node: &'a PreviewNode, parent_path: PathBuf) -> Box<dyn Iterator<Item = (PathBuf, &PreviewNode)> + 'a>{
+fn iter<'a>(node: &'a Node, parent_path: PathBuf) -> Box<dyn Iterator<Item = (PathBuf, &Node)> + 'a>{
     if let Some(children) = node.children() {
         let new_parent_path = parent_path.join(node.name());
         Box::new(
@@ -26,8 +26,8 @@ fn iter<'a>(node: &'a PreviewNode, parent_path: PathBuf) -> Box<dyn Iterator<Ite
     }
 }
 
-impl PreviewNode {
-    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = (PathBuf, &PreviewNode)> + 'a> {
+impl Node {
+    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = (PathBuf, &Node)> + 'a> {
         iter(self, PathBuf::from(self.name()))
     }
 }
@@ -45,12 +45,12 @@ mod tests {
 
     #[test]
     fn iter_recursively() {
-        let node_c = PreviewNode::new_file(OsStr::new("C"), None);
-        let node_b = PreviewNode::new_directory_with_children(OsStr::new("B"), vec![node_c.clone()]);
-        let node_a = PreviewNode::new_file(OsStr::new("A"), None);
+        let node_c = Node::new_file(OsStr::new("C"), None);
+        let node_b = Node::new_directory_with_children(OsStr::new("B"), vec![node_c.clone()]);
+        let node_a = Node::new_file(OsStr::new("A"), None);
 
-        let node = PreviewNode::new_directory_with_children(Component::RootDir.as_os_str(),
-            vec![
+        let node = Node::new_directory_with_children(Component::RootDir.as_os_str(),
+                                                     vec![
                 node_a.clone(),
                 node_b.clone()
             ]

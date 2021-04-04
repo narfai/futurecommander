@@ -18,8 +18,16 @@ use crate::{
 
 use super::{
     Preview,
-    PreviewNode
+    Node
 };
+
+fn has_a_not_directory_ancestor(node: &Node, path: &Path) -> bool {
+    path.ancestors()
+        .skip(1)
+        .any(|path| node.find_at_path(path)
+            .map(|node| !node.kind().is_directory())
+            .unwrap_or(false))
+}
 
 impl ReadFileSystem for Preview {
     /// Errors :
@@ -27,7 +35,9 @@ impl ReadFileSystem for Preview {
     /// * `path` does not exist.
     fn metadata<P: AsRef<Path>>(&self, path: P) -> Result<Metadata> {
         let path = path.as_ref();
-        if let Some(node) = self.root.find_at_path(path) {
+        if has_a_not_directory_ancestor(&self.root, path) {
+            Err(FileSystemError::PathDoesNotExists(path.to_owned()))
+        } else if let Some(node) = self.root.find_at_path(path) {
             if node.is_deleted(){
                 Err(FileSystemError::PathDoesNotExists(path.to_owned()))
             } else {
@@ -46,11 +56,13 @@ impl ReadFileSystem for Preview {
     /// * The `path` points at a non-directory file.
     fn read_dir<P: AsRef<Path>>(&self, path: P) -> Result<ReadDir> {
         let path = path.as_ref();
-        if let Some(node) = self.root.find_at_path(path) {
+        if has_a_not_directory_ancestor(&self.root, path) {
+            Err(FileSystemError::PathDoesNotExists(path.to_owned()))
+        } else if let Some(node) = self.root.find_at_path(path) {
             if node.is_deleted(){
                 Err(FileSystemError::PathDoesNotExists(path.to_owned()))
             } else if let Some(children) = node.children() {
-                let mut v : Vec<PreviewNode> = children.to_vec();
+                let mut v : Vec<Node> = children.to_vec();
                 v.sort();
                 Ok(ReadDir::new(path, v))
             } else {
@@ -58,7 +70,7 @@ impl ReadFileSystem for Preview {
             }
         } else if path.exists() {
             if path.is_dir() {
-                Ok(ReadDir::new(path, Vec::<PreviewNode>::new()))
+                Ok(ReadDir::new(path, Vec::<Node>::new()))
             } else {
                 Err(FileSystemError::PathIsNotADirectory(path.to_owned()))
             }
