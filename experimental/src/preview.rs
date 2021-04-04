@@ -13,7 +13,17 @@ pub struct Preview {
 #[cfg(not(tarpaulin_include))]
 #[cfg(test)]
 mod test {
-    use crate::sample::*;
+    use std::{
+        collections::HashSet,
+        path::{ PathBuf, Path }
+    };
+    use crate::{
+        Container,
+        PathExt,
+        WriteFileSystem,
+        sample::*
+    };
+    use super::*;
 
     #[test]
     fn file_dir_interversion() {
@@ -35,8 +45,30 @@ mod test {
             └── E (File)
         */
 
-        //let preview = Preview::default();
-
+        // let chroot = Chroot::new("read_dir_preview_iso_with_real");
+        // let chroot_path = chroot.init_empty();
+        //
+        // let a = chroot.create_dir("A");
+        // let a_d = chroot.create_file("A/D");
+        // let a_e = chroot.create_file("A/E");
+        // let c = chroot.create_file("C");
+        //
+        // let z = chroot_path.join("Z");
+        // let c_d = chroot_path.join("C/D");
+        // let c_e = chroot_path.join("C/E");
+        //
+        // let mut container = Container::default();
+        // container.rename(&a, &z).unwrap();
+        // container.rename(&c, &a).unwrap();
+        // container.rename(&z, &c).unwrap();
+        //
+        // assert!(a.preview_is_a_file(&container));
+        // assert!(c.preview_is_a_dir(&container));
+        // assert!(c_d.preview_is_a_file(&container));
+        // assert!(c_e.preview_is_a_file(&container));
+        // assert!(! z.preview_exists(&container));
+        //
+        // chroot.clean();
 
     }
 

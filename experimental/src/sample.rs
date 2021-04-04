@@ -82,6 +82,18 @@ impl Chroot {
         path
     }
 
+    pub fn create_file(&self, path: &str) -> PathBuf {
+        create_sample_file(&self.path(), Path::new(path));
+        self.path().join(path)
+    }
+
+    pub fn create_dir(&self, path: &str) -> PathBuf {
+        let dir_path = self.path().join(path);
+        create_dir(&dir_path).unwrap();
+        assert!(dir_path.exists());
+        dir_path
+    }
+
     pub fn init_simple(&self) -> PathBuf {
         let chroot = self.init_empty();
 
@@ -98,7 +110,6 @@ impl Chroot {
         create_sample_file(chroot.as_path(), Path::new("RDIR").join("RFILEB").as_path());
         create_sample_file(chroot.as_path(), Path::new("RDIR2").join("RFILEA").as_path());
         create_sample_file(chroot.as_path(), Path::new("RDIR2").join("RFILEC").as_path());
-
 
         chroot
     }

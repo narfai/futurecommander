@@ -30,7 +30,7 @@ impl FileTypeExt for FsFileType {
         } else if self.is_file() {
             Ok(FileType::File)
         } else {
-            Err(FileSystemError::Custom(String::from("Unknow file type")))
+            Err(FileSystemError::UnknownFileType)
         }
     }
 }

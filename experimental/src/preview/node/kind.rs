@@ -105,7 +105,7 @@ impl FileTypeExt for &PreviewNodeKind {
             PreviewNodeKind::Symlink(_) => Ok(FileType::Symlink),
             PreviewNodeKind::Directory(_) => Ok(FileType::Directory),
             PreviewNodeKind::File(_) => Ok(FileType::File),
-            PreviewNodeKind::Deleted => Err(FileSystemError::Custom(String::from("Delete file has no type")))
+            PreviewNodeKind::Deleted => Err(FileSystemError::ConvertDeletedNodeToFileType)
         }
     }
 }

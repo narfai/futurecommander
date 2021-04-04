@@ -24,14 +24,14 @@ impl ReadFileSystem for Preview {
         let path = path.as_ref();
         if let Some(node) = self.root.find_at_path(path) {
             if node.is_deleted(){
-                Err(FileSystemError::Custom(String::from("Path does not exists")))
+                Err(FileSystemError::PathDoesNotExists(path.to_owned()))
             } else {
                 node.into_virtual_metadata()
             }
         } else if path.exists() {
             path.metadata()?.into_virtual_metadata()
         } else {
-            Err(FileSystemError::Custom(String::from("Path does not exists")))
+            Err(FileSystemError::PathDoesNotExists(path.to_owned()))
         }
     }
 
@@ -43,22 +43,22 @@ impl ReadFileSystem for Preview {
         let path = path.as_ref();
         if let Some(node) = self.root.find_at_path(path) {
             if node.is_deleted(){
-                Err(FileSystemError::Custom(String::from("Path does not exists")))
+                Err(FileSystemError::PathDoesNotExists(path.to_owned()))
             } else if let Some(children) = node.children() {
                 let mut v : Vec<PreviewNode> = children.to_vec();
                 v.sort();
                 Ok(ReadDir::new(path, v))
             } else {
-                Err(FileSystemError::Custom(String::from("Not a directory")))
+                Err(FileSystemError::PathIsNotADirectory(path.to_owned()))
             }
         } else if path.exists() {
             if path.is_dir() {
                 Ok(ReadDir::new(path, Vec::<PreviewNode>::new()))
             } else {
-                Err(FileSystemError::Custom(String::from("Not a directory")))
+                Err(FileSystemError::PathIsNotADirectory(path.to_owned()))
             }
         } else {
-            Err(FileSystemError::Custom(String::from("Path does not exists")))
+            Err(FileSystemError::PathDoesNotExists(path.to_owned()))
         }
     }
 }

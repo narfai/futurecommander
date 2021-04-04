@@ -27,14 +27,14 @@ fn insert_at_path(parent: &mut PreviewNode, target_parent_path: &Path, node: Pre
             },
             Some(_) => insert_at_path(parent, components.as_path(), node),
             None => if children.contains(&node) {
-                Err(FileSystemError::Custom("Node already exists".into()))
+                Err(FileSystemError::NodeAlreadyExists(node))
             } else {
                 children.push(node);
                 Ok(())
             }
         }
     } else {
-        Err(FileSystemError::Custom("Parent node is not a directory".into()))
+        Err(FileSystemError::ParentNodeIsNotADirectory(parent.clone()))
     }
 }
 

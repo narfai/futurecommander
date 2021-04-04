@@ -16,7 +16,8 @@ pub use {
         ReadFileSystem, WriteFileSystem,
         FileType, FileTypeExt,
         Metadata, MetadataExt,
-        ReadDir, DirEntry
+        ReadDir, DirEntry,
+        PathExt
     },
     error::FileSystemError,
     preview::{ Preview, PreviewNode }

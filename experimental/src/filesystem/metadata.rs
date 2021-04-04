@@ -8,7 +8,7 @@ use super::{
     MetadataExt
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Metadata {
     pub (in crate) file_type: FileType
 }
