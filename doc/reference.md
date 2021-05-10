@@ -203,3 +203,7 @@ https://dev.to/anshulgoyal15/a-beginners-guide-to-grpc-with-rust-3c7o
 ## Rust + webassembly to make webapp
 
 https://seed-rs.org
+
+## Immutable data structures
+
+https://docs.rs/im/15.0.0/im/

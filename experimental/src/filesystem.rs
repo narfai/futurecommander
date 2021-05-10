@@ -8,6 +8,8 @@ mod readdir;
 mod metadata;
 mod file_type;
 mod path_ext;
+mod read_filesystem;
+mod write_filesystem;
 
 pub use self::{
     readdir::{ ReadDir },
@@ -19,6 +21,8 @@ pub use self::{
 use std::path::Path;
 
 use crate::Result;
+
+pub struct FileSystem;
 
 pub trait ReadFileSystem {
     fn metadata<P: AsRef<Path>>(&self, path: P) -> Result<Metadata>;  // Given a path, query the file system to get information about a file, directory, etc.

@@ -13,7 +13,8 @@ pub use {
         FileTypeExt, Metadata,
         MetadataExt, PathExt,
         ReadDir, ReadFileSystem,
-        WriteFileSystem
+        WriteFileSystem,
+        FileSystem
     },
     preview::{Preview, Node}
 };

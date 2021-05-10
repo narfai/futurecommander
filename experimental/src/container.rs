@@ -7,18 +7,19 @@ mod operation;
 mod read_filesystem;
 mod write_filesystem;
 
-use crate::{ Result, Preview };
+use crate::{ Result, Preview, FileSystem };
 
 #[derive(Default)]
 pub struct Container {
     operation_list: Vec<operation::Operation>,
-    preview: Preview
+    preview: Preview,
+    filesystem: FileSystem
 }
 
 impl Container {
     pub fn apply(&mut self) -> Result<()> {
         for op in &self.operation_list {
-            op.apply()?
+            op.apply(&mut self.filesystem)?
         }
         self.operation_list = Vec::new();
         Ok(())

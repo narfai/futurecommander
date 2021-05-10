@@ -3,14 +3,8 @@
  * Copyright (C) 2019-2021 François CADEILLAN
  */
 
-use std::{
-    path::{ PathBuf },
-    fs::{ create_dir, create_dir_all, copy, rename, remove_dir, remove_file, remove_dir_all, File }
-};
-
-use crate::{
-    Result
-};
+use std::path::{PathBuf};
+use crate::{Result, WriteFileSystem};
 
 #[derive(Debug, Clone)]
 pub enum Operation {
@@ -24,18 +18,18 @@ pub enum Operation {
     CreateFile(PathBuf)
 }
 
-impl Operation {
-    pub fn apply(&self) -> Result<()> {
+impl <F: WriteFileSystem>Operation {
+    pub fn apply(&self, fs: &mut F) -> Result<()> {
         use Operation::*;
         match self {
-            Copy(from, to) => { copy(&from, &to)?; },
-            Rename(from, to) => { rename(&from, &to)?; },
-            RemoveFile(path) => { remove_file(&path)?; },
-            RemoveDir(path) => { remove_dir(&path)?; },
-            RemoveDirAll(path) => { remove_dir_all(&path)?; },
-            CreateDir(path) => { create_dir(&path)?; },
-            CreateDirAll(path) => { create_dir_all(&path)?; },
-            CreateFile(path) => { File::create(&path)?; }
+            Copy(from, to) => { fs.copy(&from, &to)?; },
+            Rename(from, to) => { fs.rename(&from, &to)?; },
+            RemoveFile(path) => { fs.remove_file(&path)?; },
+            RemoveDir(path) => { fs.remove_dir(&path)?; },
+            RemoveDirAll(path) => { fs.remove_dir_all(&path)?; },
+            CreateDir(path) => { fs.create_dir(&path)?; },
+            CreateDirAll(path) => { fs.create_dir_all(&path)?; },
+            CreateFile(path) => { fs.create_file(&path)?; }
         };
         Ok(())
     }
