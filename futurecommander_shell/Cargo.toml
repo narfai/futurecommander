@@ -6,7 +6,7 @@ edition = "2018"
 license = "GPL-3.0-or-later"
 
 [dependencies]
-rustyline = "6.2.0"
+rustyline = "8.1.0"
 clap = { version =  "2.32.0", features = ["yaml"] }
 futurecommander_filesystem = { version = "0.4.1", path = "../futurecommander_filesystem" }
 serde = { version = "1.0.117" }
