@@ -3,5 +3,5 @@ members = [
     "futurecommander",
     "futurecommander_shell",
     "futurecommander_filesystem",
-    "futurecommander_representation", "experimental"]
+    "futurecommander_representation", "experimental", "tdd"]
 exclude = []
