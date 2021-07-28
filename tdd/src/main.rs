@@ -11,15 +11,43 @@ fn main() {
  * STD -> INNER EDGE ( INPUT ) -> ( BUSINESS -> STRING ) -> INNER EDGE ( OUTPUT )
  */
 
+// EDGE
+pub trait DirEntry {
+    fn file_name(&self) -> &str;
+    fn is_dir(&self) -> bool;
+}
+
+// BUSINESS
+#[derive(PartialEq)]
+pub enum Node {
+    Directory {
+        name: String,
+        children: Vec<Node>
+    },
+    File {
+        name: String
+    }
+}
+
+impl Node {
+    pub fn from(dir_entry: &dyn DirEntry) -> Self {
+        if dir_entry.is_dir() {
+            Node::Directory { name: dir_entry.file_name().to_owned(), children: Vec::new() } 
+        } else {
+            Node::File { name: dir_entry.file_name().to_owned() }
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    trait DirEntry {
-        fn file_name(&self) -> &str;
-        fn is_dir(&self) -> bool;
-    }
+    use super::{
+        Node,
+        DirEntry
+    };
 
     // INNER EDGE
-    pub struct DirEntryStub {
+    struct DirEntryStub {
         name: String, 
         is_dir: bool
     }
@@ -31,28 +59,6 @@ mod test {
 
         fn is_dir(&self) -> bool {
             self.is_dir
-        }
-    }
-
-    // BUSINESS
-    #[derive(PartialEq)]
-    pub enum Node {
-        Directory {
-            name: String,
-            children: Vec<Node> 
-        },
-        File {
-            name: String
-        }
-    }
-
-    impl Node {
-        pub fn from(dir_entry: DirEntryStub) -> Self {
-            if dir_entry.is_dir() {
-                Node::Directory { name: dir_entry.file_name().to_owned(), children: Vec::new() } 
-            } else {
-                Node::File { name: dir_entry.file_name().to_owned() }
-            }
         }
     }
 
@@ -68,7 +74,7 @@ mod test {
             children: Vec::new()
         };
         
-        assert!(Node::from(dir_entry) == expected);
+        assert!(Node::from(&dir_entry) == expected);
     }
 
     #[test]
@@ -82,7 +88,7 @@ mod test {
             name: String::from("F") 
         };
 
-        assert!(Node::from(dir_entry) == expected);
+        assert!(Node::from(&dir_entry) == expected);
     }
 
     /*
@@ -106,4 +112,6 @@ mod test {
     // https://doc.rust-lang.org/std/os/unix/fs/trait.DirEntryExt.html
     // futurecommander::ReadDirExt
     // futurecommander::DirEntryExt
+
+    // Discuter de std::path::Path comme type natif ou outer edge
 }
