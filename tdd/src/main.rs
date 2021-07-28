@@ -19,22 +19,40 @@ pub trait DirEntry {
 
 // BUSINESS
 #[derive(PartialEq)]
-pub enum Node {
-    Directory {
-        name: String,
-        children: Vec<Node>
-    },
-    File {
-        name: String
+pub struct Directory {
+    children: Vec<Node>
+}
+
+impl Default for Directory {
+    fn default() -> Self {
+        Directory { children: Vec::new() } 
     }
+}
+
+#[derive(PartialEq)]
+pub struct File;
+
+#[derive(PartialEq)]
+pub enum NodeKind {
+    Directory(Directory),
+    File
+}
+
+#[derive(PartialEq)]
+pub struct Node {
+    name: String,
+    kind: NodeKind
 }
 
 impl Node {
     pub fn from(dir_entry: &dyn DirEntry) -> Self {
-        if dir_entry.is_dir() {
-            Node::Directory { name: dir_entry.file_name().to_owned(), children: Vec::new() } 
-        } else {
-            Node::File { name: dir_entry.file_name().to_owned() }
+        Node {
+            name: dir_entry.file_name().to_owned(),
+            kind: if dir_entry.is_dir() { 
+                    NodeKind::Directory(Directory::default())
+                } else {
+                    NodeKind::File
+                }
         }
     }
 }
@@ -43,6 +61,8 @@ impl Node {
 mod test {
     use super::{
         Node,
+        NodeKind,
+        Directory,
         DirEntry
     };
 
@@ -69,9 +89,11 @@ mod test {
             is_dir: true
         };
 
-        let expected = Node::Directory {
-            name: String::from("A"),      
-            children: Vec::new()
+        let expected = Node {
+            name: String::from("A"),
+            kind: NodeKind::Directory(
+                Directory::default()
+            )
         };
         
         assert!(Node::from(&dir_entry) == expected);
@@ -84,8 +106,9 @@ mod test {
             is_dir: false
         };
 
-        let expected = Node::File {
-            name: String::from("F") 
+        let expected = Node {
+            name: String::from("F"),
+            kind: NodeKind::File
         };
 
         assert!(Node::from(&dir_entry) == expected);
@@ -99,6 +122,9 @@ mod test {
     Node + Path => Node ( enfant )
     */
 
+    // TODO
+    // First TODO mandatory : Add a constructor for Node et NodeKind
+    
     // TODO
     // https://doc.rust-lang.org/std/fs/struct.ReadDir.html
     // pub struct ReadDirBridge<'a> {}
