@@ -20,12 +20,14 @@ pub trait DirEntry {
 // BUSINESS
 #[derive(PartialEq)]
 pub struct Directory {
-    children: Vec<Node>
+    children: Vec<Node>,
 }
 
 impl Default for Directory {
     fn default() -> Self {
-        Directory { children: Vec::new() } 
+        Directory {
+            children: Vec::new(),
+        }
     }
 }
 
@@ -35,41 +37,50 @@ pub struct File;
 #[derive(PartialEq)]
 pub enum NodeKind {
     Directory(Directory),
-    File
+    File,
 }
 
 #[derive(PartialEq)]
 pub struct Node {
     name: String,
-    kind: NodeKind
+    kind: NodeKind,
 }
 
 impl Node {
+    pub fn new_directory(name: &str) -> Self {
+        Node {
+            name: name.to_owned(),
+            kind: NodeKind::Directory(Directory::default()),
+        }
+    }
+
+    pub fn new_file(name: &str) -> Self {
+        Node {
+            name: name.to_owned(),
+            kind: NodeKind::File,
+        }
+    }
+
     pub fn from(dir_entry: &dyn DirEntry) -> Self {
         Node {
             name: dir_entry.file_name().to_owned(),
-            kind: if dir_entry.is_dir() { 
-                    NodeKind::Directory(Directory::default())
-                } else {
-                    NodeKind::File
-                }
+            kind: if dir_entry.is_dir() {
+                NodeKind::Directory(Directory::default())
+            } else {
+                NodeKind::File
+            },
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{
-        Node,
-        NodeKind,
-        Directory,
-        DirEntry
-    };
+    use super::{DirEntry, Directory, Node, NodeKind};
 
     // INNER EDGE
     struct DirEntryStub {
-        name: String, 
-        is_dir: bool
+        name: String,
+        is_dir: bool,
     }
 
     impl DirEntry for DirEntryStub {
@@ -86,16 +97,11 @@ mod test {
     fn test_extract_node_from_direntry_is_a_directory() {
         let dir_entry = DirEntryStub {
             name: String::from("A"),
-            is_dir: true
+            is_dir: true,
         };
 
-        let expected = Node {
-            name: String::from("A"),
-            kind: NodeKind::Directory(
-                Directory::default()
-            )
-        };
-        
+        let expected = Node::new_directory(&String::from("A"));
+
         assert!(Node::from(&dir_entry) == expected);
     }
 
@@ -103,13 +109,10 @@ mod test {
     fn test_extract_node_from_direntry_is_a_file() {
         let dir_entry = DirEntryStub {
             name: String::from("F"),
-            is_dir: false
+            is_dir: false,
         };
 
-        let expected = Node {
-            name: String::from("F"),
-            kind: NodeKind::File
-        };
+        let expected = Node::new_file(&String::from("F"));
 
         assert!(Node::from(&dir_entry) == expected);
     }
@@ -122,9 +125,6 @@ mod test {
     Node + Path => Node ( enfant )
     */
 
-    // TODO
-    // First TODO mandatory : Add a constructor for Node et NodeKind
-    
     // TODO
     // https://doc.rust-lang.org/std/fs/struct.ReadDir.html
     // pub struct ReadDirBridge<'a> {}
