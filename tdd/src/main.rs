@@ -17,6 +17,8 @@ pub trait DirEntry {
     fn is_dir(&self) -> bool;
 }
 
+// TODO : Interface for adapting ReadDir from std : something like that => pub trait ReadDir<'a>: Iterator<'a, Item=&DirEntry>;
+
 // BUSINESS
 #[derive(PartialEq)]
 pub struct Directory {
@@ -73,9 +75,31 @@ impl Node {
     }
 }
 
+pub struct NodeIterator<'a> {
+    inner_iterator: &'a Iterator<Item = &'a DirEntry>,
+}
+
+impl<'a> NodeIterator<'a> {
+    pub fn from(dir_entry_iterator: &'a Iterator<Item=&'a DirEntry>) -> NodeIterator<'a> {
+        NodeIterator {
+            inner_iterator: dir_entry_iterator,
+        }
+    }
+}
+
+impl<'a> Iterator for NodeIterator<'a> {
+    type Item = Node;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.inner_iterator.next() {
+            Some(dir_entry) => Some(Node::from(dir_entry)),
+            None => None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::{DirEntry, Directory, Node, NodeKind};
+    use super::{DirEntry, Directory, Node, NodeIterator, NodeKind};
 
     // INNER EDGE
     struct DirEntryStub {
@@ -91,6 +115,12 @@ mod test {
         fn is_dir(&self) -> bool {
             self.is_dir
         }
+        let node_iterator = NodeIterator::from(vec![dir_entry, file_entry].iter());
+
+        let node_vec = node_iterator.collect();
+
+        assert!(node_vec.contains(&Node::new_directory(&String::from("A"))));
+        // assert!(node_vec.contains(&Node::new_file(&String::from("F"))));
     }
 
     #[test]
@@ -117,6 +147,28 @@ mod test {
         assert!(Node::from(&dir_entry) == expected);
     }
 
+    #[test]
+    fn test_iterate_over_nodes_from_direntries_to_node() {
+        let dir_entry = DirEntryStub {
+            name: String::from("F"),
+            is_dir: false,
+        };
+        let file_entry = DirEntryStub {
+            name: String::from("A"),
+            is_dir: true,
+        };
+
+        let node_iterator = NodeIterator::from(&vec![dir_entry, file_entry].iter());
+
+        let node_vec = node_iterator.collect();
+
+        assert!(node_vec.contains(&Node::new_directory(&String::from("A"))));
+        // assert!(node_vec.contains(&Node::new_file(&String::from("F"))));
+    }
+
+
+
+    
     /*
     DRAFT
     We need to represents the children of a node because we need to display ordered list with ls
