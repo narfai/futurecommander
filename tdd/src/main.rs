@@ -9,7 +9,9 @@ fn main() {
 
 /**
  * STD -> INNER EDGE ( INPUT ) -> ( BUSINESS -> STRING ) -> INNER EDGE ( OUTPUT )
+ * STD -> Iterator<& dyn DirEntry> -> LIB ( DOMAIN ) -> Iterator<& dyn Node> -> SHELL / UX
  */
+use std::path::Path;
 
 // EDGE
 pub trait DirEntry {
@@ -17,7 +19,13 @@ pub trait DirEntry {
     fn is_dir(&self) -> bool;
 }
 
-// TODO : Interface for adapting ReadDir from std : something like that => pub trait ReadDir<'a>: Iterator<'a, Item=&DirEntry>;
+pub trait NodeTrait {
+    fn get_children() -> Vec<Node>;
+}
+
+trait FileSystem {
+    fn read_dir(&self, path: &Path) -> Vec<&dyn DirEntry>;
+}
 
 // BUSINESS
 #[derive(PartialEq)]
@@ -55,7 +63,6 @@ impl Node {
             kind: NodeKind::Directory(Directory::default()),
         }
     }
-
     pub fn new_file(name: &str) -> Self {
         Node {
             name: name.to_owned(),
@@ -75,31 +82,10 @@ impl Node {
     }
 }
 
-pub struct NodeIterator<'a> {
-    inner_iterator: &'a Iterator<Item = &'a DirEntry>,
-}
-
-impl<'a> NodeIterator<'a> {
-    pub fn from(dir_entry_iterator: &'a Iterator<Item=&'a DirEntry>) -> NodeIterator<'a> {
-        NodeIterator {
-            inner_iterator: dir_entry_iterator,
-        }
-    }
-}
-
-impl<'a> Iterator for NodeIterator<'a> {
-    type Item = Node;
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.inner_iterator.next() {
-            Some(dir_entry) => Some(Node::from(dir_entry)),
-            None => None,
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use super::{DirEntry, Directory, Node, NodeIterator, NodeKind};
+    use super::{DirEntry, Directory, FileSystem, Node, NodeKind};
+    use std::path::Path;
 
     // INNER EDGE
     struct DirEntryStub {
@@ -115,12 +101,6 @@ mod test {
         fn is_dir(&self) -> bool {
             self.is_dir
         }
-        let node_iterator = NodeIterator::from(vec![dir_entry, file_entry].iter());
-
-        let node_vec = node_iterator.collect();
-
-        assert!(node_vec.contains(&Node::new_directory(&String::from("A"))));
-        // assert!(node_vec.contains(&Node::new_file(&String::from("F"))));
     }
 
     #[test]
@@ -147,28 +127,66 @@ mod test {
         assert!(Node::from(&dir_entry) == expected);
     }
 
-    #[test]
-    fn test_iterate_over_nodes_from_direntries_to_node() {
-        let dir_entry = DirEntryStub {
-            name: String::from("F"),
-            is_dir: false,
-        };
-        let file_entry = DirEntryStub {
-            name: String::from("A"),
-            is_dir: true,
-        };
-
-        let node_iterator = NodeIterator::from(&vec![dir_entry, file_entry].iter());
-
-        let node_vec = node_iterator.collect();
-
-        assert!(node_vec.contains(&Node::new_directory(&String::from("A"))));
-        // assert!(node_vec.contains(&Node::new_file(&String::from("F"))));
+    fn read_nodes_at_path(fs: &FileSystem, path: &Path) -> Vec<Node> {
+        return fs
+            .read_dir(path)
+            .iter()
+            .map(|dir_entry| Node::from(dir_entry))
+            .collect();
     }
 
+    #[test]
+    fn the_test() {
+        struct EmptyFileSystemMock;
 
+        impl FileSystem for EmptyFileSystemMock {
+            fn read_dir(&self, path: &Path) -> Vec<&dyn DirEntry> {
+                return vec![];
+            }
+        }
 
-    
+        let fs = EmptyFileSystemMock;
+
+        let node_list = read_dir(&fs, Path::new("/A/B/C"));
+
+        /*
+            ROOT
+                A (Dossier)
+                B
+                C
+                D
+                    J
+                        F (Fichier)
+                    K
+                E
+
+            ON ASSUME QU'ON NE GERE PAS LA CONCURRENCE ( édition du fs simultanément a l'utilisation de futurecommander )
+            DADOU => LA LECTURE DOIT ETRE FAITE UNE FOIS AU DEBUT AU DEMARRAGE DE L'APPLICATION
+            TUX => TROP DE META DONNEES POTENTIELLES => TROP DE LECTURE DISQUE !
+            Solution :
+                Représente en mémoire :
+                    - Les nodes affectés par des opérations (a prevoir une possible serialization)
+                    - Tout leur parent recursivement jusqu'a la root
+                Si l'utilisateur visualise un node qui n'est pas stocké en mémoire => fallback sur le système de fichier
+
+            Mais pour le MVP :
+                - stocker tout en mémoire au démarrage
+                - potentiellement lancer le logiciel "chrooté" dans un sous-dossier
+                - faire des bench
+                - faire une configuration minimale
+
+            Point du jour session 7
+                - recupérer un noeud vide
+                - faire une interface
+
+            "shell first"
+                -> commencer l'implémentation du shell
+        */
+
+        assert!(node_list.len() == 0);
+    }
+    //preview extends std::fs
+    //override read_dir() -> comportement de preview
     /*
     DRAFT
     We need to represents the children of a node because we need to display ordered list with ls
