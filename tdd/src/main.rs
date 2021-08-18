@@ -7,15 +7,57 @@ fn main() {
     println!("Hello, world!");
 }
 
+use std::fs;
 /**
  * STD -> INNER EDGE ( INPUT ) -> ( BUSINESS -> STRING ) -> INNER EDGE ( OUTPUT )
  * STD -> Iterator<& dyn DirEntry> -> LIB ( DOMAIN ) -> Iterator<& dyn Node> -> SHELL / UX
  */
 use std::path::Path;
 
+// Implem std
+
+struct StdFileSystem;
+
+impl FileSystem for StdFileSystem {
+    //https://doc.rust-lang.org/std/fs/fn.read_dir.html
+    fn read_dir(&self, path: &Path) -> &Iterator<Item = &dyn DirEntry> {
+        let dir_entry_iterator = fs::read_dir(path).unwrap();
+        //https://doc.rust-lang.org/std/fs/struct.DirEntry.html
+        &dir_entry_iterator.map(|dir_entry_result| &DirEntryAdapter::new(dir_entry_result.unwrap()))
+
+        /* let mut dir_entries: Vec<&dyn DirEntry> = vec![];
+
+        for dir_entry_result in dir_entry_iterator {
+            let toto = DirEntryAdapter::new(dir_entry_result.unwrap());
+            dir_entries.push(&toto);
+        }
+
+        dir_entries */
+    }
+}
+
+struct DirEntryAdapter<T> {
+    inner: T,
+}
+
+impl<T> DirEntryAdapter<T> {
+    fn new(inner: T) -> Self {
+        DirEntryAdapter { inner }
+    }
+}
+
+impl DirEntry for DirEntryAdapter<fs::DirEntry> {
+    fn file_name(&self) -> String {
+        self.inner.file_name().into_string().unwrap()
+    }
+    fn is_dir(&self) -> bool {
+        self.inner.metadata().unwrap().is_dir()
+    }
+}
+
 // EDGE
 pub trait DirEntry {
-    fn file_name(&self) -> &str;
+    fn file_name(&self) -> String;
     fn is_dir(&self) -> bool;
 }
 
@@ -23,7 +65,7 @@ pub trait NodeTrait {
     fn get_children() -> Vec<Node>;
 }
 
-trait  {
+trait FileSystem {
     fn read_dir(&self, path: &Path) -> Vec<&dyn DirEntry>;
 }
 
@@ -94,8 +136,8 @@ mod test {
     }
 
     impl DirEntry for DirEntryStub {
-        fn file_name(&self) -> &str {
-            &self.name
+        fn file_name(&self) -> String {
+            self.name.clone()
         }
 
         fn is_dir(&self) -> bool {
@@ -136,7 +178,7 @@ mod test {
     }
 
     #[test]
-    fn the_test() {
+    fn test_that_when_reading_empty_folder_whe_got_empty_nodes() {
         struct EmptyFileSystemMock;
 
         impl FileSystem for EmptyFileSystemMock {
@@ -149,65 +191,14 @@ mod test {
 
         let node_list = read_nodes_at_path(&fs, Path::new("/A/B/C"));
 
-        /*
-            ROOT
-                A (Dossier)
-                B
-                C
-                D
-                    J
-                        F (Fichier)
-                    K
-                E
-
-            ON ASSUME QU'ON NE GERE PAS LA CONCURRENCE ( édition du fs simultanément a l'utilisation de futurecommander )
-            DADOU => LA LECTURE DOIT ETRE FAITE UNE FOIS AU DEBUT AU DEMARRAGE DE L'APPLICATION
-            TUX => TROP DE META DONNEES POTENTIELLES => TROP DE LECTURE DISQUE !
-            Solution :
-                Représente en mémoire :
-                    - Les nodes affectés par des opérations (a prevoir une possible serialization)
-                    - Tout leur parent recursivement jusqu'a la root
-                Si l'utilisateur visualise un node qui n'est pas stocké en mémoire => fallback sur le système de fichier
-
-            Mais pour le MVP :
-                - stocker tout en mémoire au démarrage
-                - potentiellement lancer le logiciel "chrooté" dans un sous-dossier
-                - faire des bench
-                - faire une configuration minimale
-
-            Point du jour session 7
-                - recupérer un noeud vide
-                - faire une interface
-
-            "shell first"
-                -> commencer l'implémentation du shell
-        */
-
         assert!(node_list.len() == 0);
     }
-    //preview extends std::fs
-    //override read_dir() -> comportement de preview
-    /*
-    DRAFT
-    We need to represents the children of a node because we need to display ordered list with ls
-    Ls prends un Path en argument
-    Node doit être capable de représenter un arbre de donnée
-    Node + Path => Node ( enfant )
-    */
-
-    // TODO
-    // https://doc.rust-lang.org/std/fs/struct.ReadDir.html
-    // pub struct ReadDirBridge<'a> {}
-    // ReadDirBridge<'a> => NodeIterator<'a>
-
-    // TODO ABSTRAIRE L'OUTPUT
-    // Définir l'abstraction d'UI => trait / générique
-
-    // TODO ABSTRAIRE L'INPUT
-    // Définir l'abstraction pour wrapper les ReadDir et les DirEntry
-    // https://doc.rust-lang.org/std/os/unix/fs/trait.DirEntryExt.html
-    // futurecommander::ReadDirExt
-    // futurecommander::DirEntryExt
-
-    // Discuter de std::path::Path comme type natif ou outer edge
 }
+
+/*
+Approche mémoire tout stocker
+1/ read_dir du vrai dossier et l'afficher
+2/ scan du vrai dossier en mémoire ( construire la représentation en mémoire )
+    Faire une fonction unitaire pour ajouter un node a la représentation
+3/ read_dir du "faux" dossier
+*/
