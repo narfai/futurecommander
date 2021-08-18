@@ -23,7 +23,7 @@ pub trait NodeTrait {
     fn get_children() -> Vec<Node>;
 }
 
-trait FileSystem {
+trait  {
     fn read_dir(&self, path: &Path) -> Vec<&dyn DirEntry>;
 }
 
@@ -127,11 +127,11 @@ mod test {
         assert!(Node::from(&dir_entry) == expected);
     }
 
-    fn read_nodes_at_path(fs: &FileSystem, path: &Path) -> Vec<Node> {
+    fn read_nodes_at_path(fs: &dyn FileSystem, path: &Path) -> Vec<Node> {
         return fs
             .read_dir(path)
             .iter()
-            .map(|dir_entry| Node::from(dir_entry))
+            .map(|&dir_entry| Node::from(dir_entry))
             .collect();
     }
 
@@ -147,7 +147,7 @@ mod test {
 
         let fs = EmptyFileSystemMock;
 
-        let node_list = read_dir(&fs, Path::new("/A/B/C"));
+        let node_list = read_nodes_at_path(&fs, Path::new("/A/B/C"));
 
         /*
             ROOT
