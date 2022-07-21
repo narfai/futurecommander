@@ -7,7 +7,7 @@ license = "GPL-3.0-or-later"
 
 [dependencies]
 rustyline = "6.2.0"
-clap = { version =  "2.32.0", features = ["yaml"] }
+clap = { version =  "3.2.14", features = ["yaml"] }
 futurecommander_filesystem = { version = "0.4.1", path = "../futurecommander_filesystem" }
 serde = { version = "1.0.117" }
 typetag = { version = "0.1" }
