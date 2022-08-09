@@ -6,7 +6,7 @@ edition = "2018"
 license = "GPL-3.0-or-later"
 
 [dependencies]
-serde = { version = "1.0.117" }
+serde = { version = "1.0.143" }
 serde_json = { version = "1.0" }
 typetag = { version = "0.1" }
 futurecommander_representation = { version = "0.4.1", path = "../futurecommander_representation" }
